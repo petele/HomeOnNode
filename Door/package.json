@@ -1,0 +1,10 @@
+{
+  "name": "KeypadController",
+  "description": "hello world test app",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "rpi-gpio": "^0.5.0"
+  },
+  "devDependencies": {}
+}
