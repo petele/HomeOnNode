@@ -4,17 +4,9 @@ var log = require("./SystemLog");
 var Home = require("./Home");
 var Keys = require("./Keys");
 
-
-
-//var favicon = require('serve-favicon');
-//var logger = require('morgan');
 var methodOverride = require('method-override');
-//var session = require('express-session');
 var bodyParser = require('body-parser');
 var multer = require('multer');
-//var errorHandler = require('errorhandler');
-
-//log.appStart();
 
 function HTTPServer(home) {
 
@@ -22,33 +14,13 @@ function HTTPServer(home) {
 
   log.init("[HTTPServer]");
 
-  // all environments
   server.set('port', process.env.PORT || 3000);
-  //server.set('views', path.join(__dirname, 'views'));
-  //server.set('view engine', 'jade');
-  //server.use(favicon(__dirname + '/public/favicon.ico'));
-  //server.use(logger('dev'));
   server.use(methodOverride());
-  //server.use(session({ resave: true, saveUninitialized: true, secret: 'uwotm8' }));
   server.use(bodyParser.json());
   server.use(bodyParser.urlencoded({ extended: true }));
   server.use(multer());
   server.use(bodyParser.text());
   server.use(express.static(path.join(__dirname, 'web')));
-
-  
-
-
-  // // development only
-  // if ('development' == server.get('env')) {
-  //   server.use(errorHandler());
-  // }
-
-  //server.get('/', routes.index);
-  //server.get('/users', user.list);
-
-  
-
 
   server.use(function(req, res, next) {
     log.http(req.method, req.path + " [" + req.ip + "]");
