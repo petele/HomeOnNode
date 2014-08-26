@@ -22,6 +22,8 @@ function GoogleVoice(baseInterval) {
           interval = result.pollInterval;
           if ((result.unreadCounts.all === 0) && (_self.unread !== 0)) {
             _self.emit("zero", result.unreadCounts);
+          } else if (result.unreadCounts.all < _self.unread) {
+            _self.emit("change", result.unreadCounts);
           } else if (result.unreadCounts.all > _self.unread) {
             _self.emit("new", result.unreadCounts);
           }
@@ -33,6 +35,7 @@ function GoogleVoice(baseInterval) {
       }
       if (result.error) {
         if (_self.error === false) {
+          log.error("[GOOGLEVOICE] " + result.error);
           _self.emit("error");
           _self.error = true;
         }
