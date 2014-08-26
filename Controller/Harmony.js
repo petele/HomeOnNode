@@ -49,7 +49,7 @@ function Harmony(ip, uuid) {
         } else if (payload["attrs"]["type"] === "harmony.engine?startActivityFinished") {
           text = payload["children"];
           console.log("-ACTIVITY STARTED");
-          _self.emit("activity", text);
+          _self.emit("change", text);
         } else {
           console.log("-UNKNOWN MESSAGE", payload);
         }

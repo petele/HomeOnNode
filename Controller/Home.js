@@ -14,7 +14,6 @@ var GoogleVoice = require("./GoogleVoice");
 
 function Home(fb) {
   this.state = {};
-  this.errors = [];
   this.harmonyConfig = {};
   var ready = false;
   var config;
@@ -137,7 +136,7 @@ function Home(fb) {
       fbSet("state/temperature/inside", error);
       log.error("[HOME] Error reading inside temperature: " + error);
     });
-    insideTemp.on("update", function(data) {
+    insideTemp.on("change", function(data) {
       _self.state.temperature.inside = data.f;
       fbSet("state/temperature/inside", data.f);
       log.debug("[HOME] Inside temperature is " + data.f + "F");
@@ -174,7 +173,7 @@ function Home(fb) {
 
   function initHarmony() {
     harmony = new Harmony(config.harmony.ip, Keys.keys.harmony);
-    harmony.on("activity", function(activity) {
+    harmony.on("change", function(activity) {
       _self.state.harmony_activity = activity;
       fbSet("state/harmony_activity", activity);
       log.debug("[HOME] Harmony activity changed: " + activity);
@@ -185,9 +184,10 @@ function Home(fb) {
     });
     harmony.on("error", function(err) {
       log.error("[HOME] Harmony Error");
-      log.debug(err);
+      log.debug("[HARMONY] " + err.toString());
     });
     harmony.getConfig();
+    harmony.getActivity();
   }
 
   function initHue() {
@@ -201,7 +201,7 @@ function Home(fb) {
       _self.state.hue = error;
       fbSet("state/hue", error);
       log.error("[HOME] Error reading Hue state.");
-      log.debug(JSON.stringify(err));
+      log.debug("[HUE] " + JSON.stringify(err));
     });
   }
 
@@ -213,7 +213,7 @@ function Home(fb) {
       fbSet("state/door", null);
       log.error("[HOME] No GPIO found for door detection.");
     });
-    door.on("changed", function(data) {
+    door.on("change", function(data) {
       if (_self.state.system_state === "AWAY") {
         _self.set("HOME");
       }

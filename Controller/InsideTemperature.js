@@ -82,7 +82,7 @@ var update = function(self) {
     } else {
       if (self.temperature !== response.f) {
         self.temperature = response.f;
-        self.emit("update", response);
+        self.emit("change", response);
       }
       self.interval = self.baseInterval;
     }
