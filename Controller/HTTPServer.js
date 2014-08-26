@@ -20,6 +20,8 @@ function HTTPServer(home) {
 
   var server = express();
 
+  log.init("[HTTPServer]");
+
   // all environments
   server.set('port', process.env.PORT || 3000);
   //server.set('views', path.join(__dirname, 'views'));
