@@ -2,49 +2,48 @@ var express = require('express');
 var path = require('path');
 var log = require("./SystemLog");
 var Home = require("./Home");
+var Keys = require("./Keys");
 
-var favicon = require('serve-favicon');
+//var favicon = require('serve-favicon');
 //var logger = require('morgan');
 var methodOverride = require('method-override');
-var session = require('express-session');
+//var session = require('express-session');
 var bodyParser = require('body-parser');
 var multer = require('multer');
 //var errorHandler = require('errorhandler');
 
-
 log.appStart();
 
-var app = express();
+var server = express();
 
 // all environments
-app.set('port', process.env.PORT || 3000);
-//app.set('views', path.join(__dirname, 'views'));
-//app.set('view engine', 'jade');
-//app.use(favicon(__dirname + '/public/favicon.ico'));
-//app.use(logger('dev'));
-app.use(methodOverride());
-//app.use(session({ resave: true, saveUninitialized: true, secret: 'uwotm8' }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(multer());
-app.use(bodyParser.text());
-app.use(express.static(path.join(__dirname, 'web')));
-
-
-
+server.set('port', process.env.PORT || 3000);
+//server.set('views', path.join(__dirname, 'views'));
+//server.set('view engine', 'jade');
+//server.use(favicon(__dirname + '/public/favicon.ico'));
+//server.use(logger('dev'));
+server.use(methodOverride());
+//server.use(session({ resave: true, saveUninitialized: true, secret: 'uwotm8' }));
+server.use(bodyParser.json());
+server.use(bodyParser.urlencoded({ extended: true }));
+server.use(multer());
+server.use(bodyParser.text());
+server.use(express.static(path.join(__dirname, 'web')));
 
 var home = new Home();
 
 
 // // development only
-// if ('development' == app.get('env')) {
-//   app.use(errorHandler());
+// if ('development' == server.get('env')) {
+//   server.use(errorHandler());
 // }
 
-//app.get('/', routes.index);
-//app.get('/users', user.list);
+//server.get('/', routes.index);
+//server.get('/users', user.list);
 
-app.use(function(req, res, next) {
+server.use("/logs", express.static(path.join(__dirname, "logs")));
+
+server.use(function(req, res, next) {
   log.http(req.method, req.path + " [" + req.ip + "]");
   var body = req.body;
   if (typeof body === "object") {
@@ -56,13 +55,14 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.post("/shutdown", function(req, res) {
+server.post("/shutdown", function(req, res) {
   var body = req.body;
   if (typeof body === "string") {
     body = JSON.parse(body);
   }
   if (body.confirmation === "shutdown") {
     var timeout = 5000;
+    home.shutdown();
     res.send({"shutdown": true, "timeout": timeout});
     setTimeout(function() {
       process.exit();
@@ -73,11 +73,11 @@ app.post("/shutdown", function(req, res) {
   }
 });
 
-app.get('/state', function(req, res) {
+server.get('/state', function(req, res) {
   res.send(home.state);
 });
 
-app.get('/state/:obj', function(req, res) {
+server.get('/state/:obj', function(req, res) {
   var result = home.state[req.params.obj];
   if (result === undefined) {
     res.status(404);
@@ -88,7 +88,7 @@ app.get('/state/:obj', function(req, res) {
   }
 });
 
-app.post("/state", function(req, res) {
+server.post("/state", function(req, res) {
   var body = req.body;
   if (typeof body === "string") {
     body = JSON.parse(body);
@@ -97,20 +97,18 @@ app.post("/state", function(req, res) {
   res.send(result);
 });
 
-app.use(function(req, res){
+server.use(function(req, res){
   res.status(404);
   res.send({ error: "Requested URL not found." });
   log.error(req.path + " [" + req.ip + "]");
 });
 
-app.use(function(err, req, res, next) {
+server.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.send({ error: err.message });
   log.error(req.path + " [" + req.ip + "] " + err.message);
 });
 
-
-
-app.listen(app.get('port'), function() {
-  log.log("Express server started on port " + app.get('port'));
+server.listen(server.get('port'), function() {
+  log.log("Express server started on port " + server.get('port'));
 });
