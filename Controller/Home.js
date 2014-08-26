@@ -221,25 +221,26 @@ function Home(fb) {
 
   function initGoogleVoice() {
     gv = new GoogleVoice(config.gvoice.interval);
-    gv.on("changed", function(changeType, data) {
-      if (changeType === "new") {
-        if (_self.state.system_state === "HOME") {
-          _self.set("GV_NEW");
-        }
-      } else if (changeType === "zero") {
-        if (_self.state.system_state === "HOME") {
-          _self.set("GV_ZERO");
-        }
+    gv.on("zero", function(count) {
+      if (_self.state.system_state === "HOME") {
+        _self.set("GV_ZERO");
+        _self.state.gvoice = count;
+        fbSet("state/gvoice", count);
       }
-      _self.state.gvoice = data;
-      fbSet("state/gvoice", data);
+    });
+    gv.on("new", function(count) {
+      if (_self.state.system_state === "HOME") {
+        _self.set("GV_NEW");
+        _self.state.gvoice = count;
+        fbSet("state/gvoice", count);
+      }
     });
     gv.on("error", function(error) {
       if (_self.state.system_state === "HOME") {
         // TODO: add better error logging here
         _self.set("GV_ERROR");
-        _self.state.gvoice = error;
-        fbSet("state/gvoice", error);
+        //_self.state.gvoice = error;
+        //fbSet("state/gvoice", error);
       }
     });
   }
