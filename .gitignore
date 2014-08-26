@@ -1,1 +1,9 @@
 node_modules
+
+/Controller/keys.json
+
+/Controller/Keys.js
+
+/Controller/temp.js
+
+/temp/
