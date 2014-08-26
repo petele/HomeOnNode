@@ -11,6 +11,7 @@ var sys = require("sys");
 var exec = require("child_process").exec;
 var util = require("util");
 var log = require("./SystemLog");
+var Keys = require("./Keys");
 
 var fb, hue, harmony, airConditioners;
 
@@ -31,11 +32,14 @@ function Home() {
     "gvoice": {}
   };
   this.config = null;
-  this.keys = null;
   readConfig(this);
 }
 
 util.inherits(Home, EventEmitter);
+
+Home.prototype.shutdown = function() {
+  // TODO: shutdown harmony connection
+};
 
 Home.prototype.set = function(command, options) {
   log.log("Command Received: " + command + " " + "[" + options + "]");
@@ -86,11 +90,6 @@ Home.prototype.setACTemperature = function(id, temperature) {
   return {"result": "OK"};
 };
 
-Home.prototype.exit = function() {
-  log.log("Home EXIT");
-  process.exit();
-};
-
 function fbPush(path, value) {
   var fbObj = fb;
   if (path) {
@@ -137,15 +136,6 @@ function readConfig(self) {
       onReady(self);
     }
   });
-  fs.readFile("keys.json", {"encoding": "utf8"}, function(err, data) {
-    if (err) {
-      log.error("[HOME] Unable to read keys.json");
-    } else {
-      self.keys = JSON.parse(data);
-      log.log("[HOME] keys.json read and parsed");
-      onReady(self);
-    }
-  });
 }
 
 var playSound = function(file) {
@@ -154,7 +144,7 @@ var playSound = function(file) {
     cmd += file;
     exec(cmd, function(error, stdout, stderr) {
       if (error !== null) {
-        //logger.debug("playSound", error);
+        log.error("[HOME] PlaySound Error: " + error.toString());
       }
     });
     log.debug("PlaySound: " + file);
@@ -213,7 +203,7 @@ function initHarmony(self) {
 }
 
 function initHue(self) {
-  hue = new Hue(self.config.hue.interval, self.keys.hue, self.config.hue.ip);
+  hue = new Hue(self.config.hue.interval, Keys.keys.hue, self.config.hue.ip);
   hue.on("update", function(data) {
     self.state.hue = data;
     fbSet("state/hue", data);
@@ -271,20 +261,21 @@ function initGoogleVoice(self) {
 
 function initFirebase(self) {
   fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
-  fb.auth(self.keys.fb, function(error) {
+  fb.auth(Keys.keys.fb, function(error) {
     if(error) {
       
     } else {
       
     }
   });
+  fbSet("config", self.config);
   fbPush("system", {"date": Date.now(), "action": "started"});
   fb.child("state").remove();
   fbSet("state", self.state);
 }
 
 function onReady(self) {
-  if ((self.keys) && (self.config)) {
+  if (self.config) {
     self.state.system_state = "AWAY";
     initFirebase(self);
     initAC(self);
