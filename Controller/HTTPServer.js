@@ -105,7 +105,7 @@ function HTTPServer(home) {
     if (typeof body === "string") {
       body = JSON.parse(body);
     }
-    var result = home.set(body.command, body.options);
+    var result = home.set(body.command, body.options, "[HTTP " + req.ip + "]");
     res.send(result);
   });
 
