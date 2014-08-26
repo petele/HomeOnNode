@@ -17,9 +17,15 @@ function init() {
       home = new Home(fb);
       home.on("ready", function() {
         httpServer = new HTTPServer(home);
-        // fb.child("commands").on("child_added", function(snapshot) {
-        //   console.log("ZZZZZ", snapshot.val());
-        // });
+        fb.child("commands").on("child_added", function(snapshot) {
+          try {
+            var cmd = snapshot.val();
+            home.set(cmd.command, cmd.modifier, "FB");
+            snapshot.ref().remove();
+          } catch (ex) {
+            log.error("Unable to execute FireBase Command: " + JSON.stringify(cmd));
+          }
+        });
       });
     }
   });
