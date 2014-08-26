@@ -23,8 +23,12 @@ function Home(fb) {
   var awayTimer;
   var hue, harmony, airConditioners, insideTemp, door, gv;
 
-  this.set = function(command, options) {
-    log.log("Command Received: " + command + " " + "[" + options + "]");
+  this.set = function(command, options, source) {
+    var logMsg = "Command Received: " + command + " " + "[" + options + "]";
+    if (source) {
+      logMsg += " from: " + source;
+    }
+    log.log(logMsg);
     var cmd = config.commands[command];
     if (cmd) {
       if (cmd.system_state) {
@@ -224,23 +228,24 @@ function Home(fb) {
     gv.on("zero", function(count) {
       if (_self.state.system_state === "HOME") {
         _self.set("GV_ZERO");
-        _self.state.gvoice = count;
-        fbSet("state/gvoice", count);
       }
+      _self.state.gvoice = count;
+      fbSet("state/gvoice", count);
     });
     gv.on("new", function(count) {
       if (_self.state.system_state === "HOME") {
         _self.set("GV_NEW");
-        _self.state.gvoice = count;
-        fbSet("state/gvoice", count);
       }
+      _self.state.gvoice = count;
+      fbSet("state/gvoice", count);
     });
-    gv.on("error", function(error) {
+    gv.on("change", function(count) {
+      _self.state.gvoice = count;
+      fbSet("state/gvoice", count);
+    });
+    gv.on("error", function() {
       if (_self.state.system_state === "HOME") {
-        // TODO: add better error logging here
         _self.set("GV_ERROR");
-        //_self.state.gvoice = error;
-        //fbSet("state/gvoice", error);
       }
     });
   }
