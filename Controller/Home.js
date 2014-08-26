@@ -77,6 +77,7 @@ function Home(fb) {
 
   this.shutdown = function() {
     harmony.close();
+    // would be nice to have a shutdown time.
   };
 
   function fbPush(path, value) {
