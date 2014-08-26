@@ -1,6 +1,6 @@
 var fs = require("fs");
 var DEBUG = true;
-var file = "rpi-system.log";
+var file = "./logs/rpi-system.log";
 
 function build(level, message) {
   var msg = new Date().toISOString() + " | ";
