@@ -44,7 +44,7 @@ function Home(fb) {
         var acKeys = Object.keys(cmd.ac);
         for (var i = 0; i < acKeys.length; i++) {
           var temperature = cmd.ac[acKeys[i]];
-          _self.setACTemperature(acKeys[i], temperature);
+          _self.setTemperature(acKeys[i], temperature);
         }
       }
       if (cmd.harmony) {
@@ -68,7 +68,9 @@ function Home(fb) {
       }
     }
     if (temperature !== null) {
-      airConditioners[id].setTemperature(temperature);
+      var x = airConditioners[id].setTemperature(temperature, function(x) {
+        console.log("X", x);
+      });
       _self.state.ac[id] = temperature;
       fbSet("state/ac/" + id, temperature);
     }
@@ -165,8 +167,9 @@ function Home(fb) {
     var port = config.airconditioners.itach_port;
     config.airconditioners.ac.forEach(function(elem) {
       var id = elem.id;
+      var itach_port = elem.port;
       var cmds = config.airconditioners.commands[elem.protocol];
-      airConditioners[id] = new AirConditioner(id, ip, port, cmds);
+      airConditioners[id] = new AirConditioner(id, ip, port, itach_port, cmds);
       _self.state.ac[id] = 0;
       fbSet("state/ac/" + id, 0);
     });
@@ -268,7 +271,7 @@ function Home(fb) {
     ready = true;
     fb.child("state/time").update({"started": Date.now()});
     log.log("[HOME] Initalizing components.");
-    _self.state.system_state = "AWAY";
+    setState("AWAY");
     initAC();
     initGoogleVoice();
     initInsideTemp();
