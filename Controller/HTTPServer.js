@@ -77,7 +77,8 @@ function HTTPServer(home) {
     if (typeof body === "string") {
       body = JSON.parse(body);
     }
-    var result = home.set(body.command, body.options, "[HTTP " + req.ip + "]");
+    log.debug("[POST] " + JSON.stringify(body));
+    var result = home.set(body.command, body.modifier, "[HTTP " + req.ip + "]");
     res.send(result);
   });
 
