@@ -264,7 +264,7 @@ function Home(config, fb) {
       if (ready === false) {
         init();
       }
-      fs.writeFile("config.json", JSON.stringify(config));
+      fs.writeFile("config.json", JSON.stringify(config, null, 2));
     });
   }
 
