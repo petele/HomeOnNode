@@ -19,7 +19,7 @@ function Home(config, fb) {
   var ready = false;
   var _self = this;
 
-  var awayTimer;
+  var armingTimer, awayTimer;
   var hue, harmony, airConditioners, insideTemp, door, gv;
 
   this.set = function(command, options, source) {
@@ -78,6 +78,7 @@ function Home(config, fb) {
   };
 
   this.shutdown = function() {
+    clearTimeout(awayTimer);
     harmony.close();
     // would be nice to have a shutdown time.
   };
@@ -103,13 +104,13 @@ function Home(config, fb) {
   function setState(state) {
     log.log("Set State: " + state);
     if (state === "ARMED") {
-      if (awayTimer) {
-        clearTimeout(awayTimer);
+      if (armingTimer) {
+        clearTimeout(armingTimer);
       }
-      awayTimer = setTimeout(function() {
-        awayTimer = null;
+      armingTimer = setTimeout(function() {
+        armingTimer = null;
         setState("AWAY");
-      }, config.away_timeout);
+      }, config.arming_delay);
     }
     _self.state.system_state = state;
     fbSet("state/system_state", state);
@@ -256,6 +257,15 @@ function Home(config, fb) {
     });
   }
 
+  function initAwayWatcher() {
+    awayTimer = setInterval(function() {
+      if (_self.state.system_state === "AWAY") {
+        log.debug("[AWAY Monitor] - Turning Lights Off");
+        hue.setLights([0], {"on": false});
+      }
+    }, config.away_watch_timer);
+  }
+
   function loadConfig() {
     log.log("[HOME] Reading config from Firebase.");
     fb.child("config").on("value", function(snapshot) {
@@ -280,6 +290,7 @@ function Home(config, fb) {
     initDoor();
     initHarmony();
     initHue();
+    initAwayWatcher();
     _self.emit("ready");
     playSound(config.ready_sound);
   }

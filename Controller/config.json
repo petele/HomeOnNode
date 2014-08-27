@@ -67,7 +67,8 @@
     "itach_ip": "192.168.1.10",
     "itach_port": 4998
   },
-  "away_timeout": 90000,
+  "arming_delay": 90000,
+  "away_watch_timer": 600000,
   "commands": {
     "AWAY": {
       "ac": {
