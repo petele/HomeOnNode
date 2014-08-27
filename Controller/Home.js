@@ -78,7 +78,10 @@ function Home(config, fb) {
   };
 
   this.shutdown = function() {
-    clearTimeout(awayTimer);
+    clearInterval(awayTimer);
+    if (armingTimer) {
+      clearTimeout(armingTimer);
+    }
     harmony.close();
     // would be nice to log a shutdown time.
   };
@@ -110,6 +113,7 @@ function Home(config, fb) {
       armingTimer = setTimeout(function() {
         armingTimer = null;
         setState("AWAY");
+        hue.setLights([0], {"on": false});
       }, config.arming_delay);
     }
     _self.state.system_state = state;
@@ -179,11 +183,25 @@ function Home(config, fb) {
   function initHarmony() {
     harmony = new Harmony(config.harmony.ip, Keys.keys.harmony);
     harmony.on("activity", function(activity) {
-      _self.state.harmony_activity = activity;
-      fbSet("state/harmony_activity", activity);
-      log.log("[HOME] Harmony activity changed: " + activity);
+      var activityName = activity;
+      if (_self.harmonyConfig.activitiesByID) {
+        activityName = _self.harmonyConfig.activitiesByID[activity];
+      }
+      _self.state.harmony_activity_id = activity;
+      fbSet("state/harmony_activity_id", activity);
+      _self.state.harmony_activity_name = activityName;
+      fbSet("state/harmony_activity_name", activityName);
+      log.log("[HOME] Harmony activity changed: " + activityName);
     });
     harmony.on("config", function(cfg) {
+      var activities = cfg.activity;
+      cfg.activitiesByID = {};
+      cfg.activitiesByName = {};
+      for (var i = 0; i < activities.length; i++) {
+        var activity = activities[i];
+        cfg.activitiesByID[activity.id] = activity.label;
+        cfg.activitiesByName[activity.label] = activity.id;
+      }
       _self.harmonyConfig = cfg;
       fbSet("harmony_config", cfg);
     });
