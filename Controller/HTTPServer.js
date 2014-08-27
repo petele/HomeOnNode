@@ -8,7 +8,7 @@ var methodOverride = require('method-override');
 var bodyParser = require('body-parser');
 var multer = require('multer');
 
-function HTTPServer(home) {
+function HTTPServer(home, fb) {
 
   var server;
 
@@ -22,6 +22,8 @@ function HTTPServer(home) {
   };
 
   var exp = express();
+
+  fb.child("logs/app").push({"date": Date.now(), "module": "EXPRESS", "state": "STARTING"});
 
   log.init("[HTTPServer]");
 
@@ -101,12 +103,14 @@ function HTTPServer(home) {
   });
 
   exp.use(function(err, req, res, next) {
+    fb.child("logs/app").push({"date": Date.now(), "module": "EXPRESS", "state": "ERROR", "err": err});
     res.status(err.status || 500);
     res.send({ error: err.message });
     log.error(req.path + " [" + req.ip + "] " + err.message);
   });
 
   server = exp.listen(exp.get('port'), function() {
+    fb.child("logs/app").push({"date": Date.now(), "module": "EXPRESS", "state": "READY"});
     log.log("Express server started on port " + exp.get('port'));
   });
 }

@@ -78,6 +78,7 @@ function Home(config, fb) {
   };
 
   this.shutdown = function() {
+    fbPush("logs/app", {"date": Date.now(), "module": "HOME", "state": "SHUTDOWN"});
     clearInterval(awayTimer);
     if (armingTimer) {
       clearTimeout(armingTimer);
@@ -118,7 +119,7 @@ function Home(config, fb) {
     }
     _self.state.system_state = state;
     fbSet("state/system_state", state);
-    fbPush("system_state", {"date": Date.now(), "state": state});
+    fbPush("logs/system_state", {"date": Date.now(), "state": state});
   }
 
   function playSound(file) {
@@ -242,7 +243,7 @@ function Home(config, fb) {
       }
       _self.state.door = data;
       fbSet("state/door", data);
-      fbPush("door", {"date": Date.now(), "state": data});
+      fbPush("logs/door", {"date": Date.now(), "state": data});
     });
   }
 
@@ -312,10 +313,12 @@ function Home(config, fb) {
     initHue();
     initAwayWatcher();
     _self.emit("ready");
+    fbPush("logs/app", {"date": Date.now(), "module": "HOME", "state": "READY"});
     playSound(config.ready_sound);
   }
 
   loadConfig();
+  fbPush("logs/app", {"date": Date.now(), "module": "HOME", "state": "STARTING"});
 }
 
 

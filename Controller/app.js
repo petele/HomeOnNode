@@ -18,7 +18,7 @@ function init() {
       fs.readFile("./config.json", {"encoding": "utf8"}, function(data) {
         home = new Home(data, fb);
         home.on("ready", function() {
-          httpServer = new HTTPServer(home);
+          httpServer = new HTTPServer(home, fb);
           fb.child("commands").on("child_added", function(snapshot) {
             try {
               var cmd = snapshot.val();
@@ -41,7 +41,6 @@ function exit() {
   setTimeout(function() {
     process.exit();
   }, 5000);
-  
 }
 
 process.on('SIGINT', exit);
