@@ -61,7 +61,7 @@ var readData = function(file, callback) {
         var temp_string = lines[1].substring(equals_pos+2);
         var temp_c = parseFloat(temp_string) / 1000.0;
         var temp_f = temp_c * 9.0 / 5.0 + 32.0;
-        callback({"f": temp_f, "c": temp_c});
+        callback({"f": temp_f.toFixed(2), "c": temp_c.toFixed(2)});
       } else {
         callback({"error": "t= not found."});
       }
