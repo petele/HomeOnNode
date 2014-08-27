@@ -174,10 +174,10 @@ function Home(fb) {
 
   function initHarmony() {
     harmony = new Harmony(config.harmony.ip, Keys.keys.harmony);
-    harmony.on("change", function(activity) {
+    harmony.on("activity", function(activity) {
       _self.state.harmony_activity = activity;
       fbSet("state/harmony_activity", activity);
-      log.debug("[HOME] Harmony activity changed: " + activity);
+      log.log("[HOME] Harmony activity changed: " + activity);
     });
     harmony.on("config", function(cfg) {
       _self.harmonyConfig = cfg;
@@ -187,8 +187,10 @@ function Home(fb) {
       log.error("[HOME] Harmony Error");
       log.debug("[HARMONY] " + err.toString());
     });
-    harmony.getConfig();
-    harmony.getActivity();
+    harmony.on("ready", function() {
+      harmony.getConfig();
+      harmony.getActivity();
+    });
   }
 
   function initHue() {
@@ -264,6 +266,7 @@ function Home(fb) {
 
   function init() {
     ready = true;
+    fb.child("state/time").update({"started": Date.now()});
     log.log("[HOME] Initalizing components.");
     _self.state.system_state = "AWAY";
     initAC();

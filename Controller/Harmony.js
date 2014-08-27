@@ -1,6 +1,7 @@
 var EventEmitter = require("events").EventEmitter;
 var util = require("util");
 var XMPP = require("node-xmpp");
+var log = require("./SystemLog");
 
 
 function Harmony(ip, uuid) {
@@ -26,6 +27,8 @@ function Harmony(ip, uuid) {
     client.on("connect", handleConnect);
     client.on("reconnect", handleReconnect);
     client.on("disconnect", handleDisconnect);
+    //client.connection.reconnect = true;
+    log.debug("[HARMONY] connect.");
   }
 
   function handleError(err) {
@@ -33,59 +36,86 @@ function Harmony(ip, uuid) {
   }
 
   function handleOnline(connection) {
-    console.log("-ONLINE", connection);
+    log.debug("[HARMONY] Online.");
     _self.emit("ready");
+    keepAlive();
   }
 
   function handleStanza(data) {
-    if (data.children.length === 1) {
-      var payload = data.children[0];
-      var text;
-      if (payload["errorcode"] === "200") {
-        if (payload["attrs"]["mime"] === "vnd.logitech.harmony/vnd.logitech.harmony.engine?config") {
-          text = payload["children"].join("");
-          console.log("-CONFIG");
-          _self.emit("config", text);
-        } else if (payload["attrs"]["type"] === "harmony.engine?startActivityFinished") {
-          text = payload["children"];
-          console.log("-ACTIVITY STARTED");
-          _self.emit("change", text);
-        } else {
-          console.log("-UNKNOWN MESSAGE", payload);
-        }
-      } else {
-        console.log("-ERROR READING STANZA");
-        _self.emit("error", payload["errorcode"]);
-      }
-    } else if (data.children.length === 0) {
-      _self.emit("error", "Stanza has no children.");
-      console.log("-Stanza has no children", data);
-    } else {
-      _self.emit("error", "Stanza has more than 1 child.");
-      console.log("-Stanza has more than one child.", data);
+    var result;
+    //console.log("R", data);
+    if (data.children.length >= 1) {
+      var child = data.children[0];
+      //console.log("-R", child.name, child["attrs"]);
+      if (child["attrs"]["mime"] === "vnd.logitech.harmony/vnd.logitech.harmony.engine?config") {
+        result = child.children.join("");
+        result = JSON.parse(result);
+        _self.emit("config", result);
+        log.debug("[HARMONY] handleStanza(log)");
+      } else if (child["attrs"]["mime"] === "vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity") {
+        result = child.children.join("");
+        result = result.split("=");
+        _self.emit("activity", result[1]);
+        _self.currentActivity = result[1];
+        log.debug("[HARMONY] handleStanza(getCurrentActivity) " + result[1]);
+      } else if (child["attrs"]["type"] === "harmony.engine?startActivityFinished") {
+        result = child.children.join("");
+        result = result.split(":");
+        for (var i = 0; i < result.length; i++) {
+          if (result[i].indexOf("activityId") === 0) {
+            result = result[i].split("=");
+            _self.emit("activity", result[1]);
+            _self.currentActivity = result[1];
+            log.debug("[HARMONY] handleStanza(startActivityFinished) " + result[1]);
+            break;
+          }
+        } // for loop
+      } // else statements
+    } // no children
+
+  }
+
+  function handleOffline() {
+    log.debug("[HARMONY] Offline.");
+    if (reconnect) {
+      connect();
     }
+    //console.log("-OFFLINE");
   }
 
-  function handleOffline(a, b) {
-    console.log("-OFFLINE", a, b);
-  }
-
-  function handleConnect(a, b) {
-    console.log("-CONNECT", a, b);
+  function handleConnect(connection) {
+    log.debug("[HARMONY] Connected.");
+    //console.log("-CONNECT", a, b);
   }
 
   function handleReconnect(a, b) {
-    console.log("-RECONNECT", a, b);
+    log.debug("[HARMONY] Reconnected.");
+    //console.log("-RECONNECT", a, b);
   }
 
   function handleDisconnect(a, b) {
-    console.log("-DISCONNECT", a, b);
+    log.debug("[HARMONY] Disconnected.");
+    //console.log("-DISCONNECT", client.connection.reconnect);
+  }
+
+  function keepAlive() {
+    //log.debug("[HARMONY] KeepAlive");
+    if (client !== undefined) {
+      var cmd = new XMPP.Element("iq", {"id": _uuid});
+      client.send(cmd);
+    }
+    setTimeout(function() {
+      if (reconnect) {
+        keepAlive();
+      }
+    }, 15*1000);
   }
 
   this.getConfig = function(callback) {
     if (client === undefined) {
       _self.emit("error", "Client not connected.");
     } else {
+      log.debug("[HARMONY] getConfig.");
       var cmd = new XMPP.Element("iq", {"id": _uuid})
         .c("oa", {
           "xmlns": "connect.logitech.com",
@@ -102,6 +132,7 @@ function Harmony(ip, uuid) {
     if (client === undefined) {
       _self.emit("error", "Client not connected.");
     } else {
+      log.debug("[HARMONY] getActivity.");
       var cmd = new XMPP.Element("iq", {"id": _uuid})
         .c("oa", {
           "xmlns": "connect.logitech.com",
@@ -118,8 +149,9 @@ function Harmony(ip, uuid) {
     if (client === undefined) {
       _self.emit("error", "Client not connected.");
     } else {
+      log.debug("[HARMONY] setActivity.");
       var cmdText = "activityId=" + activityID.toString() + ":timestamp=0";
-      var cmd = new XMPP.Element("iq", {"id": _uuid})
+      var cmd = new XMPP.Element("iq", {"id": _uuid, "type": "get"})
         .c("oa", {
           "xmlns": "connect.logitech.com",
           "mime": "harmony.engine?startactivity"
@@ -135,6 +167,7 @@ function Harmony(ip, uuid) {
     if (client === undefined) {
       _self.emit("error", "Client not connected.");
     } else {
+      log.debug("[HARMONY] turnOff.");
       if (this.currentActivity !== -1) {
         this.setActivity(-1, callback);
       }
@@ -145,6 +178,8 @@ function Harmony(ip, uuid) {
     if (client === undefined) {
 
     } else {
+      log.debug("[HARMONY] close()");
+      //client.connection.reconnect = false;
       reconnect = false;
       client.end();
       client = undefined;
