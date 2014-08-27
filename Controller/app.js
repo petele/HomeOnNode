@@ -11,26 +11,31 @@ var fb, home, httpServer;
 function init() {
   log.appStart("HomeOnNode");
   fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
+
   fb.auth(Keys.keys.fb, function(error) {
     if(error) {
-      
+      log.error("[FIREBASE] Auth failed. " + error.toString());
     } else {
-      fs.readFile("./config.json", {"encoding": "utf8"}, function(data) {
-        home = new Home(data, fb);
-        home.on("ready", function() {
-          httpServer = new HTTPServer(home, fb);
-          fb.child("commands").on("child_added", function(snapshot) {
-            try {
-              var cmd = snapshot.val();
-              home.set(cmd.command, cmd.modifier, "FB");
-              snapshot.ref().remove();
-            } catch (ex) {
-              log.error("Unable to execute FireBase Command: " + JSON.stringify(cmd));
-            }
-          });
-        });
-      });
+      log.log("[FIREBASE] Auth success.");
     }
+  });
+
+  log.log("[APP] Reading local config file.");
+
+  fs.readFile("./config.json", {"encoding": "utf8"}, function(data) {
+    home = new Home(data, fb);
+    home.on("ready", function() {
+      httpServer = new HTTPServer(home, fb);
+      fb.child("commands").on("child_added", function(snapshot) {
+        try {
+          var cmd = snapshot.val();
+          home.set(cmd.command, cmd.modifier, "FB");
+          snapshot.ref().remove();
+        } catch (ex) {
+          log.error("Unable to execute FireBase Command: " + JSON.stringify(cmd));
+        }
+      });
+    });
   });
 }
 
