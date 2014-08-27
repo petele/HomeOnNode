@@ -83,6 +83,15 @@
           "lights": [
             0
           ]
+        },
+        {
+          "Command": "NightRed",
+          "lights": [
+            3,
+            7,
+            4,
+            1
+          ]
         }
       ],
       "sound": "sounds/away.mp3",
@@ -353,6 +362,12 @@
       "system_state": "SLEEP"
     }
   },
+  "doors": [
+    {
+      "label": "FRONT DOOR",
+      "pin": 23
+    }
+  ],
   "gvoice": {
     "interval": 2000
   },
@@ -366,11 +381,11 @@
   },
   "light_recipes": {
     "ColorCycle": {
-      "bri": 200,
+      "bri": 250,
       "effect": "colorloop",
       "hue": 0,
       "on": true,
-      "sat": 100
+      "sat": 250
     },
     "Concentrate": {
       "bri": 219,
