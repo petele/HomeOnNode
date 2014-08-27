@@ -59,7 +59,7 @@ function Home(config, fb) {
 
   this.setTemperature = function(id, temperature) {
     log.log("Set AC [" + id + "] to " + temperature.toString() + "F");
-    
+
     // determine if we should turn the AC on or not. If not, we'll set the
     // temp to -1.
     if (temperature === "AUTO") {
@@ -152,9 +152,10 @@ function Home(config, fb) {
       log.error("[HOME] Error reading inside temperature: " + error);
     });
     insideTemp.on("change", function(data) {
-      _self.state.temperature.inside = data.f;
-      fbSet("state/temperature/inside", data.f);
-      log.debug("[HOME] Inside temperature is " + data.f + "F");
+      var val = parseFloat(data.f).toFixed(2);
+      _self.state.temperature.inside = val;
+      fbSet("state/temperature/inside", val);
+      log.debug("[HOME] Inside temperature is " + val + "F");
     });
   }
 
