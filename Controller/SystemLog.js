@@ -71,3 +71,4 @@ exports.appStart = appStart;
 exports.appStop = appStop;
 exports.init = init;
 exports.http = http;
+exports.level = http;
