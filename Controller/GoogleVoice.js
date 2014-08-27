@@ -35,7 +35,7 @@ function GoogleVoice(baseInterval) {
       }
       if (result.error) {
         if (_self.error === false) {
-          log.error("[GOOGLEVOICE] " + result.error);
+          log.debug("[GOOGLEVOICE] " + JSON.stringify(result));
           _self.emit("error");
           _self.error = true;
         }

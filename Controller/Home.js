@@ -80,7 +80,7 @@ function Home(config, fb) {
   this.shutdown = function() {
     clearTimeout(awayTimer);
     harmony.close();
-    // would be nice to have a shutdown time.
+    // would be nice to log a shutdown time.
   };
 
   function fbPush(path, value) {
@@ -188,8 +188,7 @@ function Home(config, fb) {
       fbSet("harmony_config", cfg);
     });
     harmony.on("error", function(err) {
-      log.error("[HOME] Harmony Error");
-      log.debug("[HARMONY] " + err.toString());
+      log.error("[HOME] Harmony Error: " + JSON.stringify(err));
     });
     harmony.on("ready", function() {
       harmony.getConfig();
@@ -207,8 +206,7 @@ function Home(config, fb) {
       var error = {"error": true, "result": err};
       _self.state.hue = error;
       fbSet("state/hue", error);
-      log.error("[HOME] Error reading Hue state.");
-      log.debug("[HUE] " + JSON.stringify(err));
+      log.error("[HOME] Error reading Hue state: " + JSON.stringify(err));
     });
   }
 
@@ -238,6 +236,7 @@ function Home(config, fb) {
       }
       _self.state.gvoice = count;
       fbSet("state/gvoice", count);
+      log.log("[GOOGLEVOICE] Zero");
     });
     gv.on("new", function(count) {
       if (_self.state.system_state === "HOME") {
@@ -245,22 +244,25 @@ function Home(config, fb) {
       }
       _self.state.gvoice = count;
       fbSet("state/gvoice", count);
+      log.log("[GOOGLEVOICE] New");
     });
     gv.on("change", function(count) {
       _self.state.gvoice = count;
       fbSet("state/gvoice", count);
+      log.log("[GOOGLEVOICE] Change");
     });
-    gv.on("error", function() {
+    gv.on("error", function(e) {
       if (_self.state.system_state === "HOME") {
         _self.set("GV_ERROR");
       }
+      log.error("[GOOGLEVOICE] Error: " + JSON.stringify(e));
     });
   }
 
   function initAwayWatcher() {
     awayTimer = setInterval(function() {
       if (_self.state.system_state === "AWAY") {
-        log.debug("[AWAY Monitor] - Turning Lights Off");
+        log.debug("[AWAYMONITOR] - Turning Lights Off");
         hue.setLights([0], {"on": false});
       }
     }, config.away_watch_timer);
