@@ -16,7 +16,7 @@
     "ENTER": "HOME"
   },
   "modifiers": {
-    "TAB": "OFF",
+    "TAB": "Off",
     "/": "VirginBlue",
     "*": "NightRed",
     "BS": "DimWhite",
