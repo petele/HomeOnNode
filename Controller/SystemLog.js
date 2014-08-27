@@ -1,5 +1,7 @@
 var fs = require("fs");
+
 var DEBUG = true;
+
 var file = "./logs/rpi-system.log";
 
 function build(level, message) {
@@ -40,8 +42,17 @@ function http(method, message) {
 }
 
 function appStart() {
-  var msg = "                         | ***** |\n";
+  var msg = build("START", "");
   msg += build("START", "System Starting");
+  msg += build("START", "");
+  write(msg);
+}
+
+function appStop(receivedFrom) {
+  var msg = build("STOP", "");
+  msg += build("STOP", "System Shutting Down");
+  msg += build("STOP", " - Stop message received from: " + receivedFrom);
+  msg += build("STOP", "\n\n");
   write(msg);
 }
 
@@ -49,5 +60,6 @@ exports.log = log;
 exports.error = error;
 exports.debug = debug;
 exports.appStart = appStart;
+exports.appStop = appStop;
 exports.init = init;
 exports.http = http;
