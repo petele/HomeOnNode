@@ -6,16 +6,21 @@ var config;
 var modifier;
 
 function sendCommand(command, modifier) {
+  var body = JSON.stringify({
+    "command": command,
+    "modifier": modifier
+  });
   var options = {
     hostname: config.ip,
     port: config.port,
     path: "/state",
-    method: "POST"
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Content-Length": body.length
+    }
   };
-  var body = {
-    "command": command,
-    "modifier": modifier
-  };
+
   var request = http.request(options, function(response) {
     var result = "";
     response.setEncoding('utf8');
@@ -33,7 +38,7 @@ function sendCommand(command, modifier) {
     request.abort();
   });
 
-  request.write(JSON.stringify(body));
+  request.write(body);
 
   request.end();
 
