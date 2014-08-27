@@ -41,18 +41,26 @@ function http(method, message) {
   write(build(method.toUpperCase(), message));
 }
 
-function appStart() {
-  var msg = build("START", "");
-  msg += build("START", "System Starting");
+function appStart(appName) {
+  var msg = "";
+  if (appName) {
+    msg += build("START", "") + "\n";
+    msg += build("START", appName || "") + "\n";
+  } else {
+    msg += build("START", "") + "\n";
+  }
+  msg += build("START", "System Starting") + "\n";
   msg += build("START", "");
   write(msg);
 }
 
 function appStop(receivedFrom) {
-  var msg = build("STOP", "");
-  msg += build("STOP", "System Shutting Down");
-  msg += build("STOP", " - Stop message received from: " + receivedFrom);
-  msg += build("STOP", "\n\n");
+  var msg = build("STOP", "") + "\n";
+  msg += build("STOP", "System Shutting Down")  + "\n";
+  if (receivedFrom) {
+    msg += build("STOP", " - Stop message received from: " + receivedFrom)  + "\n";
+  }
+  msg += build("STOP", "");
   write(msg);
 }
 
