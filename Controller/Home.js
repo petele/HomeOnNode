@@ -74,7 +74,6 @@ function Home(config, fb) {
 
     if (temperature >= 0) {
       airConditioners[id].setTemperature(temperature, function(response) {
-        console.log("AC RESPONSE CHECK", response);
       });
       _self.state.ac[id] = temperature;
       fbSet("state/ac/" + id, temperature);
