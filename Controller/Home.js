@@ -3,6 +3,7 @@ var util = require("util");
 var exec = require("child_process").exec;
 var log = require("./SystemLog");
 var Keys = require("./Keys");
+var fs = require("fs");
 
 var InsideTemperature = require("./InsideTemperature");
 var Firebase = require("firebase");
@@ -12,11 +13,10 @@ var Hue = require("./Hue");
 var Door = require("./Door");
 var GoogleVoice = require("./GoogleVoice");
 
-function Home(fb) {
+function Home(config, fb) {
   this.state = {};
   this.harmonyConfig = {};
   var ready = false;
-  var config;
   var _self = this;
 
   var awayTimer;
@@ -264,6 +264,7 @@ function Home(fb) {
       if (ready === false) {
         init();
       }
+      fs.writeFile("config.json", JSON.stringify(config));
     });
   }
 
