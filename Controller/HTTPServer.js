@@ -10,6 +10,15 @@ var multer = require('multer');
 
 function HTTPServer(home) {
 
+  this.shutdown = function() {
+    if (server) {
+      server.close();
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   var server = express();
 
   log.init("[HTTPServer]");
@@ -48,6 +57,7 @@ function HTTPServer(home) {
       var timeout = 5000;
       home.shutdown();
       res.send({"shutdown": true, "timeout": timeout});
+      log.appStop("HTTP [" + req.ip + "]");
       setTimeout(function() {
         process.exit();
       }, timeout);
