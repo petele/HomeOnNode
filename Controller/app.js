@@ -31,4 +31,16 @@ function init() {
   });
 }
 
+function exit() {
+  log.appStop("SIGINT");
+  home.shutdown();
+  httpServer.shutdown();
+  setTimeout(function() {
+    process.exit();
+  }, 5000);
+  
+}
+
+process.on('SIGINT', exit);
+
 init();
