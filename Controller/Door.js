@@ -4,26 +4,26 @@ var gpio = require("rpi-gpio");
 var log = require("./SystemLog");
 
 
-function Door() {
-  this.opened = false;
-  this.closed = !this.opened;
-
+function Door(label, pin) {
+  this.label = label;
+  this.state = "UNKNOWN";
   var self = this;
+
   gpio.on("change", function(channel, value) {
-    if (value === true) {
-      self.opened = true;
-    } else {
-      self.opened = false;
+    if (channel === pin) {
+      if (value === true) {
+        self.state = "OPEN";
+      } else {
+        self.state = "CLOSED";
+      }
+      self.emit("changed", self.state);
     }
-    self.emit("changed", value);
   });
   gpio.setPollFrequency(600);
-  gpio.setup(23, gpio.DIR_IN, function(ex) {
+  gpio.setup(pin, gpio.DIR_IN, function(ex) {
     self.emit("no-gpio", ex);
-    self.opened = undefined;
-    self.closed = undefined;
   });
-  log.init("[Door]");
+  log.init("[Door] " + label + " Pin: " + pin);
 }
 
 util.inherits(Door, EventEmitter);

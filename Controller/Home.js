@@ -20,7 +20,7 @@ function Home(config, fb) {
   var _self = this;
 
   var armingTimer, awayTimer;
-  var hue, harmony, airConditioners, insideTemp, door, gv;
+  var hue, harmony, airConditioners, insideTemp, doors, gv;
 
   this.set = function(command, options, source) {
     var logMsg = "Command Received: " + command + " " + "[" + options + "]";
@@ -235,20 +235,25 @@ function Home(config, fb) {
   }
 
   function initDoor() {
-    _self.state.door = false;
-    door = new Door();
-    door.on("no-gpio", function() {
-      _self.state.door = undefined;
-      fbSet("state/door", null);
-      log.error("[HOME] No GPIO found for door detection.");
-    });
-    door.on("change", function(data) {
-      if (_self.state.system_state === "AWAY") {
-        _self.set("HOME");
-      }
-      _self.state.door = data;
-      fbSet("state/door", data);
-      fbPush("logs/door", {"date": Date.now(), "state": data});
+    doors = {};
+    _self.state.doors = {};
+    config.doors.forEach(function(elem) {
+      var door = new Door(elem.label, elem.pin);
+      door.on("no-gpio", function() {
+        _self.state.doors[elem.label] = "NO_GPIO";
+        fbSet("state/doors/" + elem.label, "NO_GPIO");
+        log.error("[HOME] No GPIO for door " + elem.label);
+      });
+      door.on("change", function(data) {
+        if (_self.state.system_state === "AWAY") {
+          _self.set("HOME");
+        }
+        _self.state.doors[elem.label] = data;
+        fbSet("state/doors/" + elem.label, data);
+        fbPush("logs/door", {"date": Date.now(), "label": elem.label, "state": data});
+        log.log("[DOOR] " + elem.label + " " + data);
+      });
+      doors[elem.label] = door;
     });
   }
 
