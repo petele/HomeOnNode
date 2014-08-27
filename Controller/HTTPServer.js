@@ -10,6 +10,8 @@ var multer = require('multer');
 
 function HTTPServer(home) {
 
+  var server;
+
   this.shutdown = function() {
     if (server) {
       server.close();
@@ -19,19 +21,19 @@ function HTTPServer(home) {
     }
   };
 
-  var server = express();
+  var exp = express();
 
   log.init("[HTTPServer]");
 
-  server.set('port', process.env.PORT || 3000);
-  server.use(methodOverride());
-  server.use(bodyParser.json());
-  server.use(bodyParser.urlencoded({ extended: true }));
-  server.use(multer());
-  server.use(bodyParser.text());
-  server.use(express.static(path.join(__dirname, 'web')));
+  exp.set('port', process.env.PORT || 3000);
+  exp.use(methodOverride());
+  exp.use(bodyParser.json());
+  exp.use(bodyParser.urlencoded({ extended: true }));
+  exp.use(multer());
+  exp.use(bodyParser.text());
+  exp.use(express.static(path.join(__dirname, 'web')));
 
-  server.use(function(req, res, next) {
+  exp.use(function(req, res, next) {
     log.http(req.method, req.path + " [" + req.ip + "]");
     var body = req.body;
     if (typeof body === "object") {
@@ -43,12 +45,12 @@ function HTTPServer(home) {
     next();
   });
 
-  server.get("/logs/", function(req, res) {
+  exp.get("/logs/", function(req, res) {
     res.sendFile(path.join(__dirname, "/logs/rpi-system.log"));
   });
-  server.use("/logs/", express.static(path.join(__dirname, "logs")));
+  exp.use("/logs/", express.static(path.join(__dirname, "logs")));
 
-  server.post("/shutdown", function(req, res) {
+  exp.post("/shutdown", function(req, res) {
     var body = req.body;
     if (typeof body === "string") {
       body = JSON.parse(body);
@@ -67,11 +69,11 @@ function HTTPServer(home) {
     }
   });
 
-  server.get('/state', function(req, res) {
+  exp.get('/state', function(req, res) {
     res.send(home.state);
   });
 
-  server.get('/state/:obj', function(req, res) {
+  exp.get('/state/:obj', function(req, res) {
     var result = home.state[req.params.obj];
     if (result === undefined) {
       res.status(404);
@@ -82,7 +84,7 @@ function HTTPServer(home) {
     }
   });
 
-  server.post("/state", function(req, res) {
+  exp.post("/state", function(req, res) {
     var body = req.body;
     if (typeof body === "string") {
       body = JSON.parse(body);
@@ -92,20 +94,20 @@ function HTTPServer(home) {
     res.send(result);
   });
 
-  server.use(function(req, res){
+  exp.use(function(req, res){
     res.status(404);
     res.send({ error: "Requested URL not found." });
     log.error(req.path + " [" + req.ip + "]");
   });
 
-  server.use(function(err, req, res, next) {
+  exp.use(function(err, req, res, next) {
     res.status(err.status || 500);
     res.send({ error: err.message });
     log.error(req.path + " [" + req.ip + "] " + err.message);
   });
 
-  server.listen(server.get('port'), function() {
-    log.log("Express server started on port " + server.get('port'));
+  server = exp.listen(exp.get('port'), function() {
+    log.log("Express server started on port " + exp.get('port'));
   });
 }
 
