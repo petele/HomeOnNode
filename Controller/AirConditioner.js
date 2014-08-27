@@ -1,68 +1,68 @@
 var net = require("net");
 var log = require("./SystemLog");
 
-function AirConditioner(id, ip, port, itach_port, cmds) {
-  this.id = id;
-  this.ip = ip;
-  this.port = port;
-  this.itach_port = itach_port;
-  this.cmds = cmds;
+
+function AirConditioner(acID, ip, irConnector, cmds) {
+  var port = 4998;
   this.temperature = 0;
-  log.init("[AirConditioner] " + id);
-}
 
-AirConditioner.prototype.setTemperature = function(temperature, callback) {
-  if (temperature === 0) {
-    sendCommand(this.ip, this.port, this.itach_port, this.cmds["OFF"], callback);
-    this.temperature = 0;
-  } else {
-    if ((this.temperature === 0) && (temperature > 0)) {
-      sendCommand(this.ip, this.port, this.itach_port, this.cmds["ON"]);
-    }
-    var command = this.cmds[temperature.toString()];
-    if (command) {
-      sendCommand(this.ip, this.port, this.itach_port, command, callback);
-      this.temperature = temperature;
-    } else {
-      if (callback) {
-        callback({"error": "Command not found."});
-      }
-    }
+  function buildCommand(cmd) {
+    return "sendir,1:" + irConnector + "," + cmd;
   }
-};
 
-function sendCommand(ip, port, itach_port, command, callback) {
-  command = "sendir,1:" + itach_port + "," + command;
+    function sendCommand(commands, callback) {
+    var client = new net.Socket();
+    var response = "";
+    var responseCount = 0;
+    client.setEncoding("ascii");
+    client.setTimeout(1500);
+    client.connect(port, ip, function() {
+      for (var i = 0; i < commands.length; i++) {
+        client.write(commands[i] + "\r", "ascii");
+      }
+    });
+    client.on("error", function(er) {
+      if (callback) {
+        callback({"error": er});
+      }
+    });
+    client.on("timeout", function() {
+      client.destroy();
+    });
+    client.on("data", function(data) {
+      responseCount++;
+      response += data;
+      if (responseCount === commands.length) {
+        client.destroy();
+      }
+    });
+    client.on("close", function() {
+      if (callback) {
+        callback(response);
+      }
+    });
+  }
 
-  log.debug("[AC] IP:Port " + ip + ":" + port);
-  log.debug("[AC] " + itach_port)
-  log.debug("[AC] sendCommand " + command);
-
-  var client = new net.Socket();
-  var response = "";
-  client.setEncoding("ascii");
-  //client.setTimeout(750);
-  client.connect(port, ip, function() {
-    client.write(command + "\r", "ascii");
-  });
-  client.on("error", function(er) {
-    if (callback) {
-      callback({"error": er});
+  this.setTemperature = function(temperature, callback) {
+    var commands = [];
+    if (temperature === 0) {
+      commands.push(buildCommand(cmds["OFF"]));
+      this.temperature = 0;
+    } else {
+      if (this.temperature === 0) {
+        commands.push(buildCommand(cmds["ON"]));
+      }
+      commands.push(buildCommand(cmds[temperature.toString()]));
+      this.temperature = parseInt(temperature, 10);
     }
-  });
-  client.on("timeout", function() {
-    client.destroy();
-  });
-  client.on("data", function(data) {
-    console.log("D", data);
-    response += data;
-    client.destroy();
-  });
-  client.on("close", function() {
-    if (callback) {
-      callback(response);
+    if (commands.length >= 1) {
+      sendCommand(commands, callback);
     }
-  });
+  };
+
+  var initMsg = "[AirConditioner] ID IRCON".replace("ID", acID);
+  initMsg = initMsg.replace("IRCON", irConnector);
+  log.init(initMsg);
 }
 
 module.exports = AirConditioner;

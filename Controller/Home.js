@@ -58,22 +58,28 @@ function Home(config, fb) {
   };
 
   this.setTemperature = function(id, temperature) {
-    log.log("Set AC [" + id + "] to " + temperature + "F");
+    log.log("Set AC [" + id + "] to " + temperature.toString() + "F");
+    
+    // determine if we should turn the AC on or not. If not, we'll set the
+    // temp to -1.
     if (temperature === "AUTO") {
       if ((_self.state.temperature.inside >= config.airconditioners.auto.inside) ||
           (_self.state.temperature.outside >= config.airconditioners.auto.outside)) {
         temperature = config.airconditioners.default_temperature;
       } else {
-        temperature = null;
+        temperature = -1;
       }
     }
-    if (temperature !== null) {
-      var x = airConditioners[id].setTemperature(temperature, function(x) {
-        console.log("X", x);
+    temperature = parseInt(temperature, 10);
+
+    if (temperature >= 0) {
+      airConditioners[id].setTemperature(temperature, function(response) {
+        console.log("AC RESPONSE CHECK", response);
       });
       _self.state.ac[id] = temperature;
       fbSet("state/ac/" + id, temperature);
     }
+
     return {"result": "OK"};
   };
 
@@ -170,12 +176,11 @@ function Home(config, fb) {
     airConditioners = {};
     _self.state.ac = {};
     var ip = config.airconditioners.itach_ip;
-    var port = config.airconditioners.itach_port;
     config.airconditioners.ac.forEach(function(elem) {
       var id = elem.id;
       var itach_port = elem.port;
       var cmds = config.airconditioners.commands[elem.protocol];
-      airConditioners[id] = new AirConditioner(id, ip, port, itach_port, cmds);
+      airConditioners[id] = new AirConditioner(id, ip, itach_port, cmds);
       _self.state.ac[id] = 0;
       fbSet("state/ac/" + id, 0);
     });
