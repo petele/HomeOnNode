@@ -1,32 +1,30 @@
 var EventEmitter = require("events").EventEmitter;
 var util = require("util");
-//var Gpio = require("onoff").Gpio;
+var gpio = require("onoff").Gpio;
 var log = require("./SystemLog");
 
+
 function Door(label, pin_num) {
-  var Gpio = require("onoff").Gpio,
-      pin = new Gpio(pin_num, "in");
   this.label = label;
   this.state = "UNKNOWN";
   var self = this;
 
+  try {
+    var pin = new Gpio(pin_num, "in");
 
-  pin.watch(function(err, value) {
-    log.debug("PIN HERE " + value.toString());
-    if (err) {
-      log.error("PIN CHANGE ERROR " + err);
-      self.emit("error", err);
-    } else {
-      log.debug("PIN CHANGE " + value.toString());
-      if (value === 1) {
+    pin.watch(function(err, val) {
+      log.debug("PIN WATCH" + val.toString());
+      if (val === 1) {
         self.state = "OPEN";
       } else {
         self.state = "CLOSED";
       }
       self.emit("change", self.state);
-    }
-  });
-  log.init("[Door] " + label + " Pin: " + pin_num);
+    });
+  } except (ex) {
+    self.emit("error", ex);
+  }
+  log.init("[Door] " + label + " Pin: " + pin);
 }
 
 util.inherits(Door, EventEmitter);
