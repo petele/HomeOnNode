@@ -239,10 +239,10 @@ function Home(config, fb) {
     _self.state.doors = {};
     config.doors.forEach(function(elem) {
       var door = new Door(elem.label, elem.pin);
-      door.on("no-gpio", function() {
+      door.on("no-gpio", function(e) {
         _self.state.doors[elem.label] = "NO_GPIO";
         fbSet("state/doors/" + elem.label, "NO_GPIO");
-        log.error("[HOME] No GPIO for door " + elem.label);
+        log.error("[HOME] No GPIO for door " + elem.label + " " e.toString());
       });
       door.on("change", function(data) {
         if (_self.state.system_state === "AWAY") {
