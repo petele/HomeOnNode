@@ -20,7 +20,7 @@ function Door(label, pin) {
       }
       self.emit("change", self.state);
     });
-  } except (ex) {
+  } catch (ex) {
     self.emit("error", ex);
   }
   log.init("[Door] " + label + " Pin: " + pin);
