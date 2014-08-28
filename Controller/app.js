@@ -4,9 +4,45 @@ var Keys = require("./Keys");
 var HTTPServer = require("./HTTPServer");
 var Firebase = require("firebase");
 var fs = require("fs");
+var keypress = require("keypress");
+
+var key_config, modifier, fb, home, httpServer;
+
+function listen() {
+  // make `process.stdin` begin emitting "keypress" events
+  keypress(process.stdin);
+
+  // listen for the "keypress" event
+  process.stdin.on('keypress', function (ch, key) {
+    if (ch === "\r") {
+      ch = "ENTER";
+    } else if (ch === "\t") {
+      ch = "TAB";
+    } else if (ch === "\x7f") {
+      ch = "BS";
+    }
+    var m = key_config.modifiers[ch];
+    var k = key_config.keys[ch];
+    if (m) {
+      modifier = m;
+      setTimeout(function() {
+        modifier = undefined;
+      }, 5000);
+    } else if (k) {
+      home.set(k, modifier, "local");
+      modifier = undefined;
+    }
+
+    if (key && key.ctrl && key.name === 'c') {
+      exit();
+    }
+  });
+
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+}
 
 
-var fb, home, httpServer;
 
 function init() {
   log.appStart("HomeOnNode");
@@ -36,6 +72,16 @@ function init() {
         }
       });
     });
+  });
+
+  fs.readFile("./main_keypad.json", {"encoding": "utf8"}, function(err, data) {
+    if (err) {
+      console.log(err);
+      log.error("Unable to open keypad config file.");
+    } else {
+      key_config = JSON.parse(data);
+      listen();
+    }
   });
 }
 
