@@ -77,6 +77,7 @@
         "LR": 0
       },
       "description": "Away",
+      "harmony": "PowerOff",
       "hue": [
         {
           "command": "Off",
@@ -299,7 +300,7 @@
         "LR": "AUTO"
       },
       "description": "Morning",
-      "harmony": "FMRadio",
+      "harmony": "FM",
       "hue": [
         {
           "command": "Default",
@@ -327,6 +328,7 @@
         "LR": 0
       },
       "description": "Sleep",
+      "harmony": "PowerOff",
       "hue": [
         {
           "command": "Reading",
@@ -375,6 +377,8 @@
     "interval": 90000,
     "ip": "192.168.1.14"
   },
+  "http-ip": "192.168.1.201",
+  "http-port": 3000,
   "hue": {
     "interval": 3000,
     "ip": "192.168.1.5"
@@ -461,6 +465,7 @@
       "sat": 25
     }
   },
+  "logToFirebase": false,
   "ready_sound": "sounds/ready.mp3",
   "temperature": {
     "inside": {
