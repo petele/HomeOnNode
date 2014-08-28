@@ -5,7 +5,7 @@ var log = require("./SystemLog");
 
 function Door(label, pin_num) {
   var Gpio = require("onoff").Gpio,
-      pin = new Gpio(pin_num, in);
+      pin = new Gpio(pin_num, "in");
   this.label = label;
   this.state = "UNKNOWN";
   var self = this;
