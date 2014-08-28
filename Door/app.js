@@ -1,6 +1,6 @@
 var fs = require("fs");
 var Door = require("../Controller/Door");
-var sendCommand = require("./sendCommand");
+var sendCommand = require("../Keypad/sendCommand");
 var log = require("../Controller/SystemLog");
 var fbHelper = require("../Controller/fbHelper");
 var Keys = require("../Controller/Keys");
