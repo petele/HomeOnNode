@@ -238,12 +238,16 @@ function Home(config, fb) {
       _self.state.temperature = {};
     }
     var url = "https://publicdata-weather.firebaseio.com/";
-    url += config.temperature.outside.city + "/currently";
+    url += config.temperature.outside.city;
     var weatherRef = new Firebase(url);
-    weatherRef.child('temperature').on('value', function(snapshot) {
+    weatherRef.child('currently/temperature').on('value', function(snapshot) {
       _self.state.temperature.outside = snapshot.val();
       fbSet("state/temperature/outside", snapshot.val());
       log.debug("[HOME] Outside temperature is " + snapshot.val() + "F");
+    });
+    weatherRef.child("daily/data/0").on("value", function(snapshot) {
+      _self.state.sunrise = snapshot.val()["sunriseTime"];
+      _self.state.sunset = snapshot.val()["sunsetTime"];
     });
   }
 
@@ -253,9 +257,9 @@ function Home(config, fb) {
     var ip = config.airconditioners.itach_ip;
     config.airconditioners.ac.forEach(function(elem) {
       var id = elem.id;
-      var itach_port = elem.port;
+      var irPort = elem.irPort;
       var cmds = config.airconditioners.commands[elem.protocol];
-      airConditioners[id] = new AirConditioner(id, ip, itach_port, cmds);
+      airConditioners[id] = new AirConditioner(id, ip, irPort, cmds);
       _self.state.ac[id] = 0;
       fbSet("state/ac/" + id, 0);
     });
