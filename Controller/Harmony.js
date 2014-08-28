@@ -109,7 +109,7 @@ function Harmony(ip, uuid) {
   this.getConfig = function() {
     if (client === undefined) {
       _self.emit("error", "Client not connected.");
-      return false;
+      return {"error": "Client not connected"};
     } else {
       log.debug("[HARMONY] getConfig.");
       var cmd = new XMPP.Element("iq", {"id": _uuid})
@@ -118,14 +118,14 @@ function Harmony(ip, uuid) {
           "mime": "vnd.logitech.harmony/vnd.logitech.harmony.engine?config"
         });
       client.send(cmd);
-      return true;
+      return {"action": "getConfig"};
     }
   };
 
   this.getActivity = function(callback) {
     if (client === undefined) {
       _self.emit("error", "Client not connected.");
-      return false;
+      return {"error": "Client not connected"};
     } else {
       log.debug("[HARMONY] getActivity.");
       var cmd = new XMPP.Element("iq", {"id": _uuid})
@@ -134,14 +134,14 @@ function Harmony(ip, uuid) {
           "mime": "vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity"
         });
       client.send(cmd);
-      return true;
+      return {"action": "getActivity"};
     }
   };
 
   this.setActivity = function(activityID) {
     if (client === undefined) {
       _self.emit("error", "Client not connected.");
-      return false;
+      return {"error": "Client not connected"};
     } else {
       log.debug("[HARMONY] setActivity.");
       var cmdText = "activityId=" + activityID.toString() + ":timestamp=0";
@@ -151,19 +151,19 @@ function Harmony(ip, uuid) {
           "mime": "harmony.engine?startactivity"
         }).t(cmdText);
       client.send(cmd);
-      return true;
+      return {"action": "setActivity", "activityID": activityID};
     }
   };
 
   this.close = function() {
     reconnect = false;
     if (client === undefined) {
-      return false;
+      return {"error": "Client not connected"};
     } else {
       log.debug("[HARMONY] close()");
       client.end();
       client = undefined;
-      return true;
+      return {"action": "close"};
     }
   };
 
