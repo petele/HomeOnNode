@@ -18,6 +18,10 @@ function listen() {
 
   // listen for the "keypress" event
   process.stdin.on('keypress', function (ch, key) {
+    if ((key && key.ctrl && key.name === 'c') || (ch === "q")) {
+      exit("SIGINT", 0);
+    }
+
     if (ch === "\r") {
       ch = "ENTER";
     } else if (ch === "\t") {
@@ -49,11 +53,7 @@ function listen() {
       sendCommand.send(k, modifier);
       modifier = undefined;
     }
-    
-    if (key && key.ctrl && key.name === 'c') {
-      exit("SIGINT", 0);
-      process.stdin.pause();
-    }
+
   });
 
   process.stdin.setRawMode(true);
