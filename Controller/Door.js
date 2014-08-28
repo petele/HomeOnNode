@@ -12,7 +12,7 @@ function Door(label, pin_num) {
     var pin = new Gpio(pin_num, "in");
 
     pin.watch(function(err, val) {
-      if (val === true) {
+      if (value === 1) {
         self.state = "OPEN";
       } else {
         self.state = "CLOSED";
