@@ -54,9 +54,33 @@ function Hue(interval, key, ip) {
   };
 
   this.setLights = function(lights, command, callback) {
-    lights.forEach(function(elem, idx, arr) {
+    
+    lights.forEach(function(elem) {
       var path = ["lights", elem, "state"].join("/");
       path = path.replace("[ID]", elem);
+      if ((command === "UP") || (command === "DOWN")) {
+        // get the current brightness
+        var light;
+        try {
+          light = _self.state.lights[elem].state;
+        } catch (ex) {
+          light = {"bri": 125, "on": true, "ct": 369};
+        }
+        if (light.on === false) {
+          light.bri = 0;
+        }
+        if (command === "UP") {
+          command = {"bri": light.bri + 10};
+        } else if (command === "DOWN") {
+          command = {"bri": light.bri - 10};
+        }
+        command.on = true;
+        if (command.bri > 255) {
+          command.bri = 255;
+        } else if (command.bri < 0) {
+          command.bri = 0;
+        }
+      }
       hueRequest("PUT", path, JSON.stringify(command), callback);
     });
   };

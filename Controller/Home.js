@@ -35,9 +35,18 @@ function Home(config, fb) {
       }
       if (cmd.hue) {
         for (var i = 0; i < cmd.hue.length; i++) {
-          var hue_cmd = modifier || cmd.hue[i].command;
-          hue_cmd = config.light_recipes[hue_cmd];
-          hue.setLights(cmd.hue[i].lights, hue_cmd);
+          var hue_cmd;
+          if ((modifier === "UP") || (modifier === "DOWN")) {
+            hue_cmd = modifier;
+          } else {
+            hue_cmd = modifier || cmd.hue[i].command;
+            hue_cmd = config.light_recipes[hue_cmd];
+          }
+          if (hue_cmd !== undefined) {
+            hue.setLights(cmd.hue[i].lights, hue_cmd);
+          } else {
+            log.error("[HOME] Invalid modifier (" + modifier + ") for Hue.");
+          }
         }
       }
       if (cmd.ac) {
