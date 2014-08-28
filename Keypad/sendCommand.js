@@ -1,5 +1,5 @@
 var http = require("http");
-var log = require("./SystemLog");
+var log = require("../Controller/SystemLog");
 
 var config;
 
