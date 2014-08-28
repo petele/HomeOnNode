@@ -246,8 +246,11 @@ function Home(config, fb) {
       log.debug("[HOME] Outside temperature is " + snapshot.val() + "F");
     });
     weatherRef.child("daily/data/0").on("value", function(snapshot) {
-      _self.state.sunrise = snapshot.val()["sunriseTime"];
-      _self.state.sunset = snapshot.val()["sunsetTime"];
+      _self.state.daylight = {
+        "sunrise": snapshot.val()["sunriseTime"],
+        "sunset": snapshot.val()["sunsetTime"]
+      };
+      fbSet("state/daylight", _self.state.daylight);
     });
   }
 
