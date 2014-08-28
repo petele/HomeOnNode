@@ -12,25 +12,41 @@ function init(key, appName, exit) {
     }
   });
 
+  var def = {
+    "started_at": Date.now(),
+    "heartbeat": Date.now(),
+    "restart": false,
+    "shutdown": false
+  };
+  fb.child("devices/" + appName).update(def);
+
+  setInterval(function() {
+    fb.child("devices/" + appName + "/heartbeat").set(Date.now());
+  }, 60000);
+
   log.initFirebase(fb, appName);
 
-  fb.child(appName + "/restart").on("value", function(snapshot) {
-    if (snapshot.val() === "restart") {
+  fb.child("devices/" + appName + "/restart").on("value", function(snapshot) {
+    if (snapshot.val() === true) {
       snapshot.ref().remove();
       exit("fbRestart", 10);
     }
   });
 
-  fb.child(appName + "/shutdown").on("value", function(snapshot) {
-    if (snapshot.val() === "shutdown") {
+  fb.child("devices/" + appName + "/shutdown").on("value", function(snapshot) {
+    if (snapshot.val() === true) {
       snapshot.ref().remove();
       exit("fbShutdown", 0);
     }
   });
 
-  fb.child("config/logToFirebase").on("value", function(snapshot) {
-    log.enableFirebase(snapshot.val());
-    log.log("[APP] Firebase logging enabled: " + snapshot.val());
+  fb.child("devices/" + appName + "/logToFirebase").on("value", function(snapshot) {
+    var result = false;
+    if (snapshot.val() === true) {
+      result = true;
+    }
+    log.enableFirebase(result);
+    log.log("[APP] Firebase logging enabled: " + result);
   });
 
   return fb;
