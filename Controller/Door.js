@@ -1,6 +1,6 @@
 var EventEmitter = require("events").EventEmitter;
 var util = require("util");
-var gpio = require("rpi-gpio");
+var gpio = require("onoff").Gpio;
 var log = require("./SystemLog");
 
 
@@ -9,25 +9,20 @@ function Door(label, pin) {
   this.state = "UNKNOWN";
   var self = this;
 
-  gpio.on("change", function(channel, value) {
-    log.debug("GPIO-CHANGE");
-    log.debug(channel);
-    log.debug(value);
-    if (channel === pin) {
-      if (value === true) {
+  try {
+    var pin = new Gpio(pin, "in", "both");
+
+    pin.watch(function(err, val) {
+      if (val === true) {
         self.state = "OPEN";
       } else {
         self.state = "CLOSED";
       }
-      self.emit("changed", self.state);
-    }
-  });
-  gpio.setPollFrequency(600);
-  gpio.setup(pin, gpio.DIR_IN, function(err) {
-    if (err) {
-      self.emit("no-gpio", ex);
-    }
-  });
+      self.emit("change", self.state);
+    });
+  } except (ex) {
+    self.emit("error", ex);
+  }
   log.init("[Door] " + label + " Pin: " + pin);
 }
 
