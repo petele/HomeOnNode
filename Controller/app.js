@@ -5,6 +5,7 @@ var HTTPServer = require("./HTTPServer");
 var Firebase = require("firebase");
 var fs = require("fs");
 var keypress = require("keypress");
+var fbHelper = require("./fbHelper");
 
 var key_config, config, modifier, fb, home, httpServer;
 
@@ -45,38 +46,6 @@ function listen() {
 }
 
 function init() {
-  
-  fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
-
-  fb.auth(Keys.keys.fb, function(error) {
-    if(error) {
-      log.error("[FIREBASE] Auth failed. " + error.toString());
-      exit("fbAuthFailure", 1);
-    } else {
-      log.log("[FIREBASE] Auth success.");
-    }
-  });
-
-  log.initFirebase(fb);
-
-  fb.child("restart").on("value", function(snapshot) {
-    if (snapshot.val() !== null) {
-      snapshot.ref().remove();
-      exit("fbRestart", 10);
-    }
-  });
-
-  fb.child("shutdown").on("value", function(snapshot) {
-    if (snapshot.val() !== null) {
-      snapshot.ref().remove();
-      exit("fbShutdown", 0);
-    }
-  });
-
-  fb.child("config/logToFirebase").on("value", function(snapshot) {
-    log.enableFirebase(snapshot.val());
-    log.log("[APP] Firebase logging enabled: " + snapshot.val());
-  });
 
   log.log("[APP] Reading local config file.");
 
@@ -143,5 +112,7 @@ function exit(sender, exitCode) {
 process.on('SIGINT', function() {
   exit("SIGINT", 0);
 });
+
+fb = fbHelper.init(Keys.keys.fb, "controller", exit);
 
 init();

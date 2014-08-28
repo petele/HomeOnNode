@@ -6,8 +6,9 @@ var fb;
 
 var file = "./logs/rpi-system.log";
 
-function initFirebase(fbRoot) {
-  fb = fbRoot.child("logs/logs");
+function initFirebase(fbRoot, appName) {
+  appName = appName || "default";
+  fb = fbRoot.child("logs/" + appName);
   TO_FIREBASE = false;
 }
 
