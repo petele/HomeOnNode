@@ -47,7 +47,7 @@ function listen() {
 
 
 
-fs.readFile("config.json", {"encoding": "utf8"}, function(err, data) {
+fs.readFile("keypad.json", {"encoding": "utf8"}, function(err, data) {
   if (err) {
     log.error("Unable to open config file.");
   } else {
