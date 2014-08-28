@@ -1,10 +1,10 @@
 var keypress = require("keypress");
 var fs = require("fs");
 var sendCommand = require("./sendCommand");
-var log = require("./SystemLog");
+var log = require("../Controller/SystemLog");
 //var Firebase = require("firebase");
-var fbHelper = require("./fbHelper");
-var Keys = require("./Keys");
+var fbHelper = require("../Controller/fbHelper");
+var Keys = require("../Controller/Keys");
 
 
 var config;
