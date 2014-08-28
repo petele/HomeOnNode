@@ -23,6 +23,11 @@ function Home(config, fb) {
   var hue, harmony, airConditioners, insideTemp, doors, gv;
 
   this.set = function(command, modifier, source) {
+    var response = {
+      "command": command,
+      "modifier": modifier,
+      "source": source
+    };
     var logMsg = "Command Received: " + command + " " + "[" + modifier + "]";
     if (source) {
       logMsg += " from: " + source;
@@ -31,9 +36,10 @@ function Home(config, fb) {
     var cmd = config.commands[command];
     if (cmd) {
       if (cmd.system_state) {
-        setState(cmd.system_state);
+        response.state = setState(cmd.system_state);
       }
       if (cmd.hue) {
+        response.hue = [];
         for (var i = 0; i < cmd.hue.length; i++) {
           var hue_cmd;
           if ((modifier === "UP") || (modifier === "DOWN")) {
@@ -43,13 +49,21 @@ function Home(config, fb) {
             hue_cmd = config.light_recipes[hue_cmd];
           }
           if (hue_cmd !== undefined) {
-            hue.setLights(cmd.hue[i].lights, hue_cmd);
+            try  {
+              response.hue.push(hue.setLights(cmd.hue[i].lights, hue_cmd));
+            } catch (ex) {
+              response.hue.push(ex);
+              log.error("[HOME] Could not set Hue. " + ex.toString());
+            }
           } else {
-            log.error("[HOME] Invalid modifier (" + modifier + ") for Hue.");
+            var msg = "Invalid modifier (" + modifier + ") for Hue.";
+            response.hue.push(msg);
+            log.error("[HOME] " + msg);
           }
         }
       }
       if (cmd.ac) {
+        response.ac = [];
         var acKeys = Object.keys(cmd.ac);
         for (var i = 0; i < acKeys.length; i++) {
           var acID = acKeys[i];
@@ -73,7 +87,7 @@ function Home(config, fb) {
           }
 
           if (newTemp !== undefined) {
-            _self.setTemperature(acID, newTemp);
+            response.ac.push(_self.setTemperature(acID, newTemp));
           } else {
             var errorMessage = "[HOME] Invalid modifier (" + String(modifier);
             errorMessage += ") setting air conditioner [" + acID + "]";
@@ -82,27 +96,35 @@ function Home(config, fb) {
         }
       }
       if (cmd.harmony) {
-        var activityID = _self.harmonyConfig.activitiesByName[cmd.harmony];
-        harmony.setActivity(activityID);
+        try {
+          var activityID = _self.harmonyConfig.activitiesByName[cmd.harmony];
+          response.harmony = harmony.setActivity(activityID);
+        } catch (ex) {
+          log.error("[HOME] Count net set Harmony activity. " + ex.toString());
+          response.harmony = ex;
+        }
       }
       if (cmd.sound) {
         playSound(cmd.sound);
       }
     }
-    return {"result": "OK"};
+    return response;
   };
 
   this.setTemperature = function(id, temperature) {
+    var response = {
+      "id": id,
+      "requestedTemp": temperature
+    };
     log.log("Set AC [" + id + "] to " + temperature.toString() + "F");
 
-    // determine if we should turn the AC on or not. If not, we'll set the
-    // temp to -1.
     if (temperature === "AUTO") {
       if ((_self.state.temperature.inside >= config.airconditioners.auto.inside) ||
           (_self.state.temperature.outside >= config.airconditioners.auto.outside)) {
         temperature = config.airconditioners.default_temperature;
       } else {
-        temperature = -1;
+        response.result = "Inside/Outside temp did not meet threshold.";
+        return;
       }
     }
 
@@ -110,21 +132,28 @@ function Home(config, fb) {
       temperature = parseInt(temperature, 10);
     } catch (ex) {
       log.error("[HOME] New AirConditioner temp not an integer: " + temperature);
+      response.warning("Temperature was not an int, used default temp instead.");
       temperature = config.airconditioners.default_temperature;
     }
+    response.temperature = temperature;
 
-    if ((temperature === 0)|| ((temperature >= 60) && (temperature <= 75))) {
-      airConditioners[id].setTemperature(temperature, function(response) {
-      });
-      _self.state.ac[id] = temperature;
-      fbSet("state/ac/" + id, temperature);
-    } else {
-      var msg = "[HOME] Invalid temperature (" + temperature;
-      msg += ") send to air conditioner [" + id + "]";
-      log.debug(msg);
+    try {
+      if ((temperature === 0)|| ((temperature >= 60) && (temperature <= 75))) {
+        airConditioners[id].setTemperature(temperature, function() {
+        });
+        _self.state.ac[id] = temperature;
+        fbSet("state/ac/" + id, temperature);
+      } else {
+        var msg = "[HOME] Invalid temperature (" + temperature;
+        msg += ") send to air conditioner [" + id + "]";
+        log.debug(msg);
+        response.error ="Temperature out of range.";
+      }
+    } catch (ex) {
+      response.error = ex;
     }
 
-    return {"result": "OK"};
+    return response;
   };
 
   this.shutdown = function() {
@@ -170,6 +199,7 @@ function Home(config, fb) {
     _self.state.system_state = state;
     fbSet("state/system_state", state);
     fbPush("logs/system_state", {"date": Date.now(), "state": state});
+    return state;
   }
 
   function playSound(file) {
