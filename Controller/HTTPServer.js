@@ -8,7 +8,7 @@ var methodOverride = require('method-override');
 var bodyParser = require('body-parser');
 var multer = require('multer');
 
-function HTTPServer(home, fb) {
+function HTTPServer(config, home, fb) {
 
   var server;
 
@@ -27,7 +27,7 @@ function HTTPServer(home, fb) {
 
   log.init("[HTTPServer]");
 
-  exp.set('port', process.env.PORT || 3000);
+  exp.set('port', config["http-port"]);
   exp.use(methodOverride());
   exp.use(bodyParser.json());
   exp.use(bodyParser.urlencoded({ extended: true }));

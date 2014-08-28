@@ -72,7 +72,7 @@ function init() {
         config = JSON.parse(data);
         home = new Home(config, fb);
         home.on("ready", function() {
-          httpServer = new HTTPServer(home, fb);
+          httpServer = new HTTPServer(config, home, fb);
           fb.child("commands").on("child_added", function(snapshot) {
             try {
               var cmd = snapshot.val();
@@ -105,7 +105,9 @@ function init() {
 }
 
 function exit(sender, exitCode) {
-  exitCode = exitCode || 0;
+  if (exitCode === undefined) {
+    exitCode = 0;
+  }
   log.log("[APP] Starting shutdown process");
   log.log("[APP] Will exit with error code: " + String(exitCode));
   if (home) {
