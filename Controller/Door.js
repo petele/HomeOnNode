@@ -1,30 +1,36 @@
+var os = require("os");
 var EventEmitter = require("events").EventEmitter;
 var util = require("util");
 var log = require("./SystemLog");
 
-
 function Door(label, pin_num) {
-  this.label = label;
   this.state = "UNKNOWN";
   var self = this;
 
-  // try {
-  //   var Gpio = require("onoff").Gpio;
-  //   var pin = new Gpio(pin_num, "in");
+  function init() {
 
-  //   pin.watch(function(err, val) {
-  //     log.debug("PIN WATCH" + val.toString());
-  //     if (val === 1) {
-  //       self.state = "OPEN";
-  //     } else {
-  //       self.state = "CLOSED";
-  //     }
-  //     self.emit("change", self.state);
-  //   });
-  // } catch (ex) {
-  //   self.emit("error", ex);
-  // }
-  log.init("[Door] " + label + " Pin: " + pin_num);
+    log.init("[Door] " + label + " Pin: " + pin_num);
+    if (os.arch() !== "arm") {
+      // This is a hack because otherwise the no-gpio event is not caught
+      setTimeout(function() {
+        self.emit("no-gpio", "Invalid architecture.");
+      }, 150);
+    } else {
+      var Gpio = require("onoff").Gpio;
+      var pin = new Gpio(pin_num, "in", "both");
+      pin.watch(function(error, value) {
+        log.debug("[DOOR] Pin Changed: " + value);
+        if (value === 1) {
+          self.state = "OPEN";
+        } else {
+          self.state = "CLOSED";
+        }
+        self.emit("change", self.state);
+      });
+    }
+  }
+  
+  init();
 }
 
 util.inherits(Door, EventEmitter);
