@@ -22,8 +22,8 @@ function Home(config, fb) {
   var armingTimer, awayTimer;
   var hue, harmony, airConditioners, insideTemp, doors, gv;
 
-  this.set = function(command, options, source) {
-    var logMsg = "Command Received: " + command + " " + "[" + options + "]";
+  this.set = function(command, modifier, source) {
+    var logMsg = "Command Received: " + command + " " + "[" + modifier + "]";
     if (source) {
       logMsg += " from: " + source;
     }
@@ -35,7 +35,7 @@ function Home(config, fb) {
       }
       if (cmd.hue) {
         for (var i = 0; i < cmd.hue.length; i++) {
-          var hue_cmd = options || cmd.hue[i].command;
+          var hue_cmd = modifier || cmd.hue[i].command;
           hue_cmd = config.light_recipes[hue_cmd];
           hue.setLights(cmd.hue[i].lights, hue_cmd);
         }
@@ -43,12 +43,37 @@ function Home(config, fb) {
       if (cmd.ac) {
         var acKeys = Object.keys(cmd.ac);
         for (var i = 0; i < acKeys.length; i++) {
-          var temperature = cmd.ac[acKeys[i]];
-          _self.setTemperature(acKeys[i], temperature);
+          var acID = acKeys[i];
+          var curTemp = _self.state.ac[acID];
+          try {
+            curTemp = parseInt(curTemp, 10);
+          } catch (ex) {
+            log.error("[HOME] Current AirConditioner[" + acID + "] Temp not an integer. " + curTemp);
+            curTemp = config.airconditioners.default_temperature;
+          }
+          var newTemp;
+
+          if (modifier === undefined) {
+            newTemp = cmd.ac[acID];
+          } else if (modifier === "Off") {
+            newTemp = 0;
+          } else if (modifier === "DOWN") {
+            newTemp = curTemp - 1;
+          } else if (modifier === "UP") {
+            newTemp = curTemp + 1;
+          }
+
+          if (newTemp !== undefined) {
+            _self.setTemperature(acID, newTemp);
+          } else {
+            var errorMessage = "[HOME] Invalid modifier (" + String(modifier);
+            errorMessage += ") setting air conditioner [" + acID + "]";
+            log.error(errorMessage);
+          }
         }
       }
       if (cmd.harmony) {
-        var activityID = harmonyConfig.activitiesByName[cmd.harmony];
+        var activityID = _self.harmonyConfig.activitiesByName[cmd.harmony];
         harmony.setActivity(activityID);
       }
       if (cmd.sound) {
@@ -71,13 +96,23 @@ function Home(config, fb) {
         temperature = -1;
       }
     }
-    temperature = parseInt(temperature, 10);
 
-    if (temperature >= 0) {
+    try {
+      temperature = parseInt(temperature, 10);
+    } catch (ex) {
+      log.error("[HOME] New AirConditioner temp not an integer: " + temperature);
+      temperature = config.airconditioners.default_temperature;
+    }
+
+    if ((temperature === 0)|| ((temperature >= 60) && (temperature <= 75))) {
       airConditioners[id].setTemperature(temperature, function(response) {
       });
       _self.state.ac[id] = temperature;
       fbSet("state/ac/" + id, temperature);
+    } else {
+      var msg = "[HOME] Invalid temperature (" + temperature;
+      msg += ") send to air conditioner [" + id + "]";
+      log.debug(msg);
     }
 
     return {"result": "OK"};
