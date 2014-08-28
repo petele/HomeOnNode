@@ -3,6 +3,7 @@ var log = require("./SystemLog");
 
 function init(key, appName, exit) {
   var fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
+  appName = appName.toLowerCase();
 
   fb.auth(key, function(error) {
     if(error) {
