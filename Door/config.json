@@ -1,4 +1,6 @@
 {
+  "id": "CLOSET",
+  "pin": 23,
   "ip": "192.168.1.201",
   "port": 3000,
   "onOpen": {"command": "CLOSET"},
