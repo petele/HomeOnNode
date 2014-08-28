@@ -48,7 +48,8 @@ function Home(config, fb) {
         }
       }
       if (cmd.harmony) {
-        harmony.startActivity(cmd.harmony);
+        var activityID = harmonyConfig.activitiesByName[cmd.harmony];
+        harmony.setActivity(activityID);
       }
       if (cmd.sound) {
         playSound(cmd.sound);
