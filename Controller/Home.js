@@ -163,7 +163,6 @@ function Home(config, fb) {
       clearTimeout(armingTimer);
     }
     harmony.close();
-    // would be nice to log a shutdown time.
   };
 
   function fbPush(path, value) {
@@ -304,9 +303,13 @@ function Home(config, fb) {
 
   function initHue() {
     hue = new Hue(config.hue.interval, Keys.keys.hue, config.hue.ip);
-    hue.on("update", function(data) {
+    hue.on("change", function(data) {
       _self.state.hue = data;
       fbSet("state/hue", data);
+    });
+    hue.on("update", function(data) {
+      //_self.state.hue = data;
+      //fbSet("state/hue", data);
     });
     hue.on("error", function (err) {
       var error = {"error": true, "result": err};

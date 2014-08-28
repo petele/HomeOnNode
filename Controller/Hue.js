@@ -1,5 +1,6 @@
 var EventEmitter = require("events").EventEmitter;
 var util = require("util");
+var diff = require('deep-diff').diff;
 var httpHelper = require("./httpHelper");
 var httpsHelper = require("./httpsHelper");
 
@@ -35,9 +36,16 @@ function Hue(interval, key, ip) {
           _interval = 1 + Math.floor(_interval * 1.75);
         }
       } else {
-        _self.state = response;
+        // delete response.config.UTC;
+        // delete response.config.localtime;
+        var differences = diff(_self.state, response);
+        if (differences.length > 2) {
+          _self.state = response;
+          _self.emit("change", response);
+          _interval = _baseInterval;
+        }
         _self.emit("update", response);
-        _interval = _baseInterval;
+        console.log("******* Num Changes: ", differences.length);
       }
       setTimeout(refresh, _interval);
     });
@@ -96,6 +104,5 @@ function Hue(interval, key, ip) {
 }
 
 util.inherits(Hue, EventEmitter);
-
 
 module.exports = Hue;
