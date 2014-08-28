@@ -11,13 +11,19 @@ function Door(label, pin_num) {
   try {
     var pin = new Gpio(pin_num, "in");
 
-    pin.watch(function(err, val) {
-      if (value === 1) {
-        self.state = "OPEN";
+    pin.watch(function(err, value) {
+      if (err) {
+        log.error("PIN CHANGE ERROR " + err);
+        self.emit("error", err);
       } else {
-        self.state = "CLOSED";
+        log.debug("PIN CHANGE " + value.toString());
+        if (value === 1) {
+          self.state = "OPEN";
+        } else {
+          self.state = "CLOSED";
+        }
+        self.emit("change", self.state);
       }
-      self.emit("change", self.state);
     });
   } catch (ex) {
     self.emit("error", ex);
