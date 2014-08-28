@@ -17,12 +17,28 @@ function listen() {
 
   // listen for the "keypress" event
   process.stdin.on('keypress', function (ch, key) {
+    if ((key && key.ctrl && key.name === 'c') || (ch === "q")) {
+      exit("SIGINT", 0);
+    }
+
     if (ch === "\r") {
       ch = "ENTER";
     } else if (ch === "\t") {
       ch = "TAB";
     } else if (ch === "\x7f") {
       ch = "BS";
+    } else if (ch === ".") {
+      ch = "DOT";
+    } else if (ch === "/") {
+      ch = "FW";
+    } else if (ch === "#") {
+      ch = "HASH";
+    } else if (ch === "$") {
+      ch = "DOLLAR";
+    } else if (ch === "[") {
+      ch = "SQOPEN";
+    } else if (ch === "]") {
+      ch = "SQCLOSE";
     }
     var m = key_config.modifiers[ch];
     var k = key_config.keys[ch];
@@ -36,9 +52,6 @@ function listen() {
       modifier = undefined;
     }
 
-    if (key && key.ctrl && key.name === 'c') {
-      exit();
-    }
   });
 
   process.stdin.setRawMode(true);
