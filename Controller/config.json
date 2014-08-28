@@ -364,7 +364,7 @@
   },
   "doors": [
     {
-      "label": "FRONT DOOR",
+      "label": "FRONT_DOOR",
       "pin": 23
     }
   ],
