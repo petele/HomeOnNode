@@ -54,7 +54,7 @@ function Hue(interval, key, ip) {
   };
 
   this.setLights = function(lights, command, callback) {
-    
+    var response = [];
     lights.forEach(function(elem) {
       var path = ["lights", elem, "state"].join("/");
       path = path.replace("[ID]", elem);
@@ -82,7 +82,10 @@ function Hue(interval, key, ip) {
         }
       }
       hueRequest("PUT", path, JSON.stringify(command), callback);
+      command.lightID = elem;
+      response.push(command);
     });
+    return response;
   };
 
   if (_ip === undefined) {
