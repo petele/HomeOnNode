@@ -2,12 +2,12 @@ var net = require("net");
 var log = require("./SystemLog");
 
 
-function AirConditioner(acID, ip, irConnector, cmds) {
+function AirConditioner(acID, ip, irPort, cmds) {
   var port = 4998;
   this.temperature = 0;
 
   function buildCommand(cmd) {
-    return "sendir,1:" + irConnector + "," + cmd;
+    return "sendir,1:" + irPort + "," + cmd;
   }
 
     function sendCommand(commands, callback) {
@@ -61,7 +61,7 @@ function AirConditioner(acID, ip, irConnector, cmds) {
   };
 
   var initMsg = "[AirConditioner] ID IRCON".replace("ID", acID);
-  initMsg = initMsg.replace("IRCON", irConnector);
+  initMsg = initMsg.replace("IRCON", irPort);
   log.init(initMsg);
 }
 
