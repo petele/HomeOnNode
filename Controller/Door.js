@@ -12,6 +12,7 @@ function Door(label, pin_num) {
     var pin = new Gpio(pin_num, "in");
 
     pin.watch(function(err, value) {
+      log.debug("PIN HERE " + value.toString());
       if (err) {
         log.error("PIN CHANGE ERROR " + err);
         self.emit("error", err);
@@ -26,6 +27,7 @@ function Door(label, pin_num) {
       }
     });
   } catch (ex) {
+    log.error("DOOR EXCEPTION " + ex.toString());
     self.emit("error", ex);
   }
   log.init("[Door] " + label + " Pin: " + pin_num);
