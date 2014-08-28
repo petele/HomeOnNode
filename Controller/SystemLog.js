@@ -1,8 +1,19 @@
 var fs = require("fs");
 
 var DEBUG = true;
+var TO_FIREBASE = false;
+var fb;
 
 var file = "./logs/rpi-system.log";
+
+function initFirebase(fbRoot) {
+  fb = fbRoot.child("logs/logs");
+  TO_FIREBASE = false;
+}
+
+function enableFirebase(enabled) {
+  TO_FIREBASE = enabled;
+}
 
 function build(level, message) {
   var msg = new Date().toISOString() + " | ";
@@ -15,12 +26,19 @@ function build(level, message) {
 }
 
 function write(msg) {
+  if (fb && TO_FIREBASE) {
+    fb.push(msg);
+  }
   console.log(msg);
   fs.appendFile(file, msg + "\n");
 }
 
 function log(message) {
   write(build("INFO", message));
+}
+
+function warn(message) {
+  write(build("WARN", message));
 }
 
 function error(message) {
@@ -67,8 +85,11 @@ function appStop(receivedFrom) {
 exports.log = log;
 exports.error = error;
 exports.debug = debug;
+exports.warn = warn;
 exports.appStart = appStart;
 exports.appStop = appStop;
 exports.init = init;
 exports.http = http;
 exports.level = http;
+exports.initFirebase = initFirebase;
+exports.enableFirebase = enableFirebase;

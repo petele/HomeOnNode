@@ -57,14 +57,25 @@ function init() {
     }
   });
 
-  fb.child("restart").on("child_added", function(snapshot) {
-    snapshot.ref().remove();
-    exit("fbRestart", 10);
+  log.initFirebase(fb);
+
+  fb.child("restart").on("value", function(snapshot) {
+    if (snapshot.val() !== null) {
+      snapshot.ref().remove();
+      exit("fbRestart", 10);
+    }
   });
 
-  fb.child("shutdown").on("child_added", function(snapshot) {
-    snapshot.ref().remove();
-    exit("fbShutdown", 0);
+  fb.child("shutdown").on("value", function(snapshot) {
+    if (snapshot.val() !== null) {
+      snapshot.ref().remove();
+      exit("fbShutdown", 0);
+    }
+  });
+
+  fb.child("config/logToFirebase").on("value", function(snapshot) {
+    log.enableFirebase(snapshot.val());
+    log.log("[APP] Firebase logging enabled: " + snapshot.val());
   });
 
   log.log("[APP] Reading local config file.");
@@ -113,12 +124,20 @@ function init() {
 
 function exit(sender, exitCode) {
   exitCode = exitCode || 0;
-  log.appStop(sender);
-  home.shutdown();
-  httpServer.shutdown();
+  log.log("[APP] Starting shutdown process");
+  log.log("[APP] Will exit with error code: " + String(exitCode));
+  if (home) {
+    log.log("[APP] Shutting down [HOME]");
+    home.shutdown();
+  }
+  if (httpServer) {
+    log.log("[APP] Shutting down [HTTP]");
+    httpServer.shutdown();
+  }
   setTimeout(function() {
+    log.appStop(sender);
     process.exit(exitCode);
-  }, 5000);
+  }, 2500);
 }
 
 process.on('SIGINT', function() {
