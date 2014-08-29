@@ -50,6 +50,15 @@ function init(key, appName, exit) {
     log.log("[APP] Firebase logging enabled: " + result);
   });
 
+  fb.child("devices/" + appName + "/debugLog").on("value", function(snapshot) {
+    var result = false;
+    if (snapshot.val() === true) {
+      result = true;
+    }
+    log.enableDebug(result);
+    log.log("[APP] Debug level logging enabled: " + result);
+  });
+
   return fb;
 }
 

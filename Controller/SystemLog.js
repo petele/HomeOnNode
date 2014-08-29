@@ -16,6 +16,10 @@ function enableFirebase(enabled) {
   TO_FIREBASE = enabled;
 }
 
+function enableDebug(enabled) {
+  DEBUG = enabled;
+}
+
 function getDateString() {
   var now = new Date();
   var result = now.getFullYear() + "-";
@@ -59,7 +63,7 @@ function error(message) {
 }
 
 function debug(message) {
-  if (process.env.HOMEDEBUG || false || DEBUG) {
+  if (DEBUG) {
     write(build("DEBUG", message));
   }
 }
