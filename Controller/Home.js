@@ -343,9 +343,9 @@ function Home(config, fb) {
         log.error("[HOME] No GPIO for door " + elem.label + " " + e.toString());
       });
       door.on("change", function(data) {
-        if (_self.state.system_state === "AWAY") {
-          _self.set("HOME");
-        }
+        // if (_self.state.system_state === "AWAY") {
+        //   _self.set("HOME");
+        // }
         _self.state.doors[elem.label] = data;
         fbSet("state/doors/" + elem.label, data);
         fbPush("logs/door", {"date": Date.now(), "label": elem.label, "state": data});
