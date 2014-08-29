@@ -196,6 +196,17 @@ function Home(config, fb) {
         setState("AWAY");
         hue.setLights([0], {"on": false});
       }, config.arming_delay);
+    } else if (state === "HOME") {
+      // Check if we have any new GoogleVoice Messages
+      try {
+        if (_self.state.gvoice.all > 0) {
+          _self.set("GV_NEW");
+        }
+      } catch (ex) {
+        _self.set("GV_ERROR");
+        var msg = "[HOME] Error checking GVoice messages on HOME state change.";
+        log.error(msg);
+      }
     }
     _self.state.system_state = state;
     fbSet("state/system_state", state);
