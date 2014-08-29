@@ -24,6 +24,7 @@ function Home(config, fb) {
 
   this.set = function(command, modifier, source) {
     var response = {
+      "date": Date.now(),
       "command": command,
       "modifier": modifier,
       "source": source
@@ -108,6 +109,7 @@ function Home(config, fb) {
         playSound(cmd.sound);
       }
     }
+    log.debug(response);
     return response;
   };
 
