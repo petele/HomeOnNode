@@ -194,7 +194,7 @@ function Home(config, fb) {
       armingTimer = setTimeout(function() {
         armingTimer = null;
         setState("AWAY");
-        hue.setLights([0], {"on": false});
+        _self.set("LIGHTSOFF");
       }, config.arming_delay);
     } else if (state === "HOME") {
       // Check if we have any new GoogleVoice Messages
@@ -390,9 +390,10 @@ function Home(config, fb) {
 
   function initAwayWatcher() {
     awayTimer = setInterval(function() {
+      console.log("AWAY Watcher Fired", _self.state.system_state);
       if (_self.state.system_state === "AWAY") {
         log.debug("[AWAYMONITOR] - Turning Lights Off");
-        hue.setLights([0], {"on": false});
+        _self.set("LIGHTSOFF");
       }
     }, config.away_watch_timer);
   }

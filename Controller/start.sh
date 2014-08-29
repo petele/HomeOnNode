@@ -9,10 +9,11 @@ check_exit_code() {
   else
     echo "Unknown exit code: ${1}"
     echo "${1}" >> exitcodes.txt
-  fi  
+  fi
 }
 
 git reset --hard
+git pull
 npm install
 sudo node app.js
 
