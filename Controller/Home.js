@@ -249,6 +249,9 @@ function Home(config, fb) {
     if (_self.state.temperature === undefined) {
       _self.state.temperature = {};
     }
+    if (_self.state.time === undefined) {
+      _self.state.time = {};
+    }
     var url = "https://publicdata-weather.firebaseio.com/";
     url += config.temperature.outside.city;
     var weatherRef = new Firebase(url);
