@@ -16,8 +16,20 @@ function enableFirebase(enabled) {
   TO_FIREBASE = enabled;
 }
 
+function getDateString() {
+  var now = new Date();
+  var result = now.getFullYear() + "-";
+  result += ("00" + (now.getMonth()+1).toString()).slice(-2) + "-";
+  result += ("00" + (now.getDate().toString())).slice(-2) + "T";
+  result += ("00" + (now.getHours().toString())).slice(-2) + ":";
+  result += ("00" + (now.getMinutes().toString())).slice(-2) + ":";
+  result += ("00" + (now.getSeconds().toString())).slice(-2) + ".";
+  result += ("000" + (now.getMilliseconds().toString())).slice(-3);
+  return result;
+}
+
 function build(level, message) {
-  var msg = new Date().toISOString() + " | ";
+  var msg = getDateString() + " | ";
   msg += ("     " + level).slice(-5) + " | ";
   if (typeof message === "object") {
     message = JSON.stringify(message);
