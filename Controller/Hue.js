@@ -45,7 +45,6 @@ function Hue(interval, key, ip) {
           _interval = _baseInterval;
         }
         _self.emit("update", response);
-        console.log("******* Num Changes: ", differences.length);
       }
       setTimeout(refresh, _interval);
     });
