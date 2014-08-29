@@ -26,7 +26,7 @@ echo Updating any node modules...
 npm install
 
 echo Starting app...
-sudo node app.js
+node app.js
 
 # node temp.js
 
