@@ -261,8 +261,8 @@ function Home(config, fb) {
       log.debug("[HOME] Outside temperature is " + snapshot.val() + "F");
     });
     weatherRef.child("daily/data/0").on("value", function(snapshot) {
-      _self.state.time.sunrise = snapshot.val()["sunriseTime"];
-      _self.state.time.sunset = snapshot.val()["sunsetTime"];
+      _self.state.time.sunrise = snapshot.val()["sunriseTime"] * 1000;
+      _self.state.time.sunset = snapshot.val()["sunsetTime"] * 1000;
       fbSet("state/time/sunrise", _self.state.time.sunrise);
       fbSet("state/time/sunset", _self.state.time.sunset);
     });
@@ -390,9 +390,7 @@ function Home(config, fb) {
 
   function initAwayWatcher() {
     awayTimer = setInterval(function() {
-      console.log("AWAY Watcher Fired", _self.state.system_state);
       if (_self.state.system_state === "AWAY") {
-        log.debug("[AWAYMONITOR] - Turning Lights Off");
         _self.set("LIGHTSOFF");
       }
     }, config.away_watch_timer);
