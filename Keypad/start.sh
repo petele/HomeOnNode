@@ -18,6 +18,10 @@ git reset --hard
 echo Getting latest version...
 git pull
 
+echo Getting latest keyboard commands...
+rm ./keypad.json
+cp ../KeypadConfigs/bedside.json ./keypad.json
+
 echo Updating any node modules...
 npm install
 
