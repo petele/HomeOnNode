@@ -94,7 +94,7 @@ function Harmony(ip, uuid) {
   }
 
   function keepAlive() {
-    log.debug("[HARMONY] KeepAlive");
+    //log.debug("[HARMONY] KeepAlive");
     if (client !== undefined) {
       var cmd = new XMPP.Element("iq", {"id": _uuid});
       client.send(cmd);
