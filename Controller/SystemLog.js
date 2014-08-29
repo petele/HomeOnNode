@@ -110,3 +110,4 @@ exports.http = http;
 exports.level = http;
 exports.initFirebase = initFirebase;
 exports.enableFirebase = enableFirebase;
+exports.enableDebug = enableDebug;
