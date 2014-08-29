@@ -14,6 +14,8 @@ check_exit_code() {
 
 git reset --hard
 git pull
+rm ./keypad.json
+cp ../KeypadConfigs/primary.json ./keypad.json
 npm install
 sudo node app.js
 
