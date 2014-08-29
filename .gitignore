@@ -7,3 +7,5 @@ node_modules
 /Controller/temp.js
 
 /temp/
+
+/Keypad/keypad.json
