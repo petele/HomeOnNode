@@ -304,6 +304,8 @@ function Home(config, fb) {
         cfg.activitiesByID[activity.id] = activity.label;
         cfg.activitiesByName[activity.label] = activity.id;
       }
+      cfg.activitiesByID["-100"] = "UNKNOWN";
+      cfg.activitiesByName["UNKNOWN"] = "-100";
       _self.harmonyConfig = cfg;
       fbSet("harmony_config", cfg);
     });

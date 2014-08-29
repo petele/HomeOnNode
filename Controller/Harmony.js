@@ -15,7 +15,7 @@ function Harmony(ip, uuid) {
   };
   var client;
   var _self = this;
-  this.currentActivity = -1;
+  this.currentActivity = -100;
   var reconnect = true;
 
   function connect() {
@@ -70,7 +70,7 @@ function Harmony(ip, uuid) {
       } else {
         log.debug("[HARMONY] Unhandled response. <" + child.name + " ... />");
       } // End of IF statements
-    } // There is at least one child 
+    } // There is at least one child
   } // End of function
 
   function handleOffline() {
