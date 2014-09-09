@@ -33,7 +33,6 @@ function HTTPServer(config, home, fb) {
   exp.use(bodyParser.urlencoded({ extended: true }));
   exp.use(multer());
   exp.use(bodyParser.text());
-  exp.use(express.static(path.join(__dirname, 'status')));
 
   exp.use(function(req, res, next) {
     log.http(req.method, req.path + " [" + req.ip + "]");
@@ -46,6 +45,8 @@ function HTTPServer(config, home, fb) {
     }
     next();
   });
+
+  exp.use(express.static("web", path.join(__dirname, 'web')));
 
   exp.get("/logs/", function(req, res) {
     res.sendFile(path.join(__dirname, "/logs/rpi-system.log"));
