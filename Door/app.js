@@ -16,7 +16,7 @@ function listen() {
     log.error("No GPIO found.");
     //exit("NO-GPIO", 1);
   });
-  door.on("changed", function(data) {
+  door.on("change", function(data) {
     if (data === "OPEN") {
       sendCommand.send(config.onOpen.command, config.onOpen.modifier);
     } else {

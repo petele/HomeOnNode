@@ -21,9 +21,10 @@ git pull
 echo Updating any node modules...
 npm install
 
-echo Starting app...
-sudo node app.js
+echo Exporting pin 23 and pulling up
+gpio-admin export 23 pullup
 
-# node temp.js
+echo Starting app...
+node app.js
 
 check_exit_code $?
