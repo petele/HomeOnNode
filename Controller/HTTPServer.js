@@ -33,7 +33,7 @@ function HTTPServer(config, home, fb) {
   exp.use(bodyParser.urlencoded({ extended: true }));
   exp.use(multer());
   exp.use(bodyParser.text());
-  exp.use(express.static(path.join(__dirname, 'web')));
+  exp.use(express.static(path.join(__dirname, 'status')));
 
   exp.use(function(req, res, next) {
     log.http(req.method, req.path + " [" + req.ip + "]");
