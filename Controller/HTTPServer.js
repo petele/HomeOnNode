@@ -46,7 +46,7 @@ function HTTPServer(config, home, fb) {
     next();
   });
 
-  exp.use(express.static("web", path.join(__dirname, 'web')));
+  exp.use("/web/", express.static(path.join(__dirname, 'web')));
 
   exp.get("/logs/", function(req, res) {
     res.sendFile(path.join(__dirname, "/logs/rpi-system.log"));
