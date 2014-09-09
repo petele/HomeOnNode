@@ -13,6 +13,7 @@ function Door(label, pin_num) {
     if (os.arch() !== "arm") {
       // This is a hack because otherwise the no-gpio event is not caught
       setTimeout(function() {
+        self.state = "NOT_AVAILABLE";
         self.emit("no-gpio", "Invalid architecture.");
       }, 150);
     } else {
@@ -29,7 +30,7 @@ function Door(label, pin_num) {
       });
     }
   }
-  
+
   init();
 }
 
