@@ -10,16 +10,14 @@ function AirConditioner(acID, ip, irPort, cmds) {
     return "sendir,1:" + irPort + "," + cmd;
   }
 
-    function sendCommand(commands, callback) {
+  function sendCommand(command, callback) {
     var client = new net.Socket();
     var response = "";
     var responseCount = 0;
     client.setEncoding("ascii");
-    client.setTimeout(1500);
+    client.setTimeout(2000);
     client.connect(port, ip, function() {
-      for (var i = 0; i < commands.length; i++) {
-        client.write(commands[i] + "\r", "ascii");
-      }
+      client.write(command + "\r", "ascii");
     });
     client.on("error", function(er) {
       if (callback) {
@@ -30,11 +28,8 @@ function AirConditioner(acID, ip, irPort, cmds) {
       client.destroy();
     });
     client.on("data", function(data) {
-      responseCount++;
-      response += data;
-      if (responseCount === commands.length) {
-        client.destroy();
-      }
+      response = data;
+      client.destroy();
     });
     client.on("close", function() {
       if (callback) {
@@ -44,19 +39,19 @@ function AirConditioner(acID, ip, irPort, cmds) {
   }
 
   this.setTemperature = function(temperature, callback) {
-    var commands = [];
     if (temperature === 0) {
-      commands.push(buildCommand(cmds["OFF"]));
+      sendCommand(buildCommand(cmds["OFF"]), callback);
       this.temperature = 0;
     } else {
+      var cmd = buildCommand(cmds[temperature.toString()]);
       if (this.temperature === 0) {
-        commands.push(buildCommand(cmds["ON"]));
+        sendCommand(buildCommand(cmds["ON"]), function() {
+          sendCommand(cmd, callback);
+        });
+      } else {
+        sendCommand(cmd, callback);
       }
-      commands.push(buildCommand(cmds[temperature.toString()]));
       this.temperature = parseInt(temperature, 10);
-    }
-    if (commands.length >= 1) {
-      sendCommand(commands, callback);
     }
   };
 
