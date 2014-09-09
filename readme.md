@@ -1,11 +1,8 @@
 TODO
 ----
 
-[ ] Change AC to work synchronously when turning on
-[ ] Up away watch timer to 600000
 [ ] Add external web front end
 [ ] Add internal web front end
-[ ] Setup log rotation
 [ ] Add method to clean up logs as they get older
 [ ] Add Phone support for front door
 
