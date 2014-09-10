@@ -11,3 +11,5 @@ node_modules
 /Keypad/keypad.json
 
 /web/js/keys.js
+
+.DS_Store
