@@ -20,13 +20,19 @@ function Door(label, pin_num) {
       var Gpio = require("onoff").Gpio;
       var pin = new Gpio(pin_num, "in", "both");
       pin.watch(function(error, value) {
-        log.debug("[DOOR] Pin Changed: " + value);
-        if (value === 1) {
-          self.state = "OPEN";
-        } else {
-          self.state = "CLOSED";
+        if (error) {
+          log.error("[DOOR] Error watching door: " + error);
         }
-        self.emit("change", self.state);
+        log.debug("[DOOR] Pin Changed: " + value);
+        if ((value === 1) && (self.state === "CLOSED")) {
+          self.state = "OPEN";
+          self.emit("change", self.state);
+        } else if ((value === 0) && (self.state === "OPEN")) {
+          self.state = "CLOSED";
+          self.emit("change", self.state);
+        } else {
+          log.warn("[DOOR] Fired for unchanged state.");
+        }
       });
     }
   }
