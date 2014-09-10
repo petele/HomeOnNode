@@ -35,8 +35,8 @@ function init() {
   });
   fb.child("state/time").on("value", function(snapshot) {
     var val = snapshot.val();
-    $("#timeUpdated .itemVal").text(moment(val.last_updated).format("dddd, MMMM Do YYYY, h:mm:ss a"));
-    $("#timeStarted .itemVal").text(moment(val.started).format("dddd, MMMM Do YYYY, h:mm:ss a"));
+    $("#timeUpdated .itemVal").text(moment(val.last_updated).format("L LT"));
+    $("#timeStarted .itemVal").text(moment(val.started).format("L LT"));
   });
   fb.child("state/hue/lights").on("value", function(snapshot) {
     var val = snapshot.val();
@@ -47,9 +47,9 @@ function init() {
         l = l.replace("[NAME]", val[i].name);
         l = l.replace("[VAL]", val[i].state.on);
         if (val[i].state.on === true) {
-          l = l.replace("[LABEL_VAL]", "label-success");
+          l = l.replace("[LABEL_VAL]", "label-primary");
         } else {
-          l = l.replace("[LABEL_VAL]", "label-danger");
+          l = l.replace("[LABEL_VAL]", "label-default");
         }
         var item = $(l);
         $("#lightList").append(item);
@@ -96,8 +96,17 @@ function init() {
     var li = $("<li></li>")
     var dt = $("<div class='itemDesc'></div>");
     dt.text(moment(val.date).format("L LT"));
-    var sp = $("<span class='label label-default'></span>");
+    var sp = $("<span class='label'></span>");
     sp.text(val.state);
+    if (val.state === "HOME") {
+      sp.addClass("label-success");
+    } else if (val.state === "AWAY") {
+      sp.addClass("label-primary");
+    } else if (val.state === "ARMED") {
+      sp.addClass("label-info");
+    } else if (val.state === "SLEEP") {
+      sp.addClass("label-default");
+    }
     li.append(dt);
     li.append(sp);
     $("#stateList").prepend(li);
@@ -107,8 +116,13 @@ function init() {
     var li = $("<li></li>")
     var dt = $("<div class='itemDesc'></div>");
     dt.text(moment(val.date).format("L LT"));
-    var sp = $("<span class='label label-default'></span>");
+    var sp = $("<span class='label'></span>");
     sp.text(val.state);
+    if (val.state === "CLOSED") {
+      sp.addClass("label-primary");
+    } else {
+      sp.addClass("label-danger");
+    }
     li.append(dt);
     li.append(sp);
     $("#doorList").prepend(li);
