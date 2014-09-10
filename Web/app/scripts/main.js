@@ -282,6 +282,9 @@ function commandPressed(evt) {
   var buttonPressed = $(evt.target);
   var command = buttonPressed.data("command");
   var modifier = modifierList.val();
+  if (modifier === "Default") {
+    modifier = null;
+  }
   var cmd = {
     "command": command,
     "modifier": modifier
