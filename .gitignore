@@ -9,3 +9,5 @@ node_modules
 /temp/
 
 /Keypad/keypad.json
+
+/web/js/keys.js
