@@ -24,14 +24,16 @@ function Door(label, pin_num) {
           log.error("[DOOR] Error watching door: " + error);
         }
         log.debug("[DOOR] Pin Changed: " + value);
-        if ((value === 1) && (self.state === "CLOSED")) {
+        if ((value === 1) && (self.state != "OPEN")) {
           self.state = "OPEN";
           self.emit("change", self.state);
-        } else if ((value === 0) && (self.state === "OPEN")) {
+        } else if ((value === 0) && (self.state != "CLOSED")) {
           self.state = "CLOSED";
           self.emit("change", self.state);
         } else {
           log.warn("[DOOR] Fired for unchanged state.");
+          log.warn("[DOOR] state = " + self.state);
+          log.warn("[DOOR] value = " + value);
         }
       });
     }
