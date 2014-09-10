@@ -13,3 +13,5 @@ node_modules
 /web/js/keys.js
 
 .DS_Store
+
+/Controller/logs/rpi-system.log
