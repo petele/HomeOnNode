@@ -106,3 +106,9 @@ body {
 #curTime {
   font-size: 6em;
 }
+
+.time {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
