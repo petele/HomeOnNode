@@ -50,7 +50,7 @@ function init() {
     var icon = snapshot.icon;
     icon = icon.replace("-day", "");
     icon = icon.replace("-night", "");
-    $("#tempIcon").attr("src", "./images/" + snapshot.icon + ".png");
+    $("#tempIcon").attr("src", "./images/" + icon + ".png");
   });
   weatherRef.child('daily/data/0').on('value', function(snapshot) {
     snapshot = snapshot.val();
