@@ -15,3 +15,11 @@ node_modules
 .DS_Store
 
 /Controller/logs/rpi-system.log
+
+/Web/dist/
+
+/Web/.tmp/
+
+/Web/.sass-cache/
+
+/Web/app/scripts/keys.js
