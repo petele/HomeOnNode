@@ -46,8 +46,11 @@ function init() {
   var weatherRef = new Firebase('https://publicdata-weather.firebaseio.com/newyork');
   weatherRef.child('currently').on('value', function(snapshot) {
     snapshot = snapshot.val();
-    $("#tempNow").html(snapshot.temperature);
-    $("#tempIcon").attr("src", "./images/" + snapshot.icon + ".png");
+    $("#tempNow").html(Math.round(snapshot.temperature) + "&deg;F");
+    var icon = snapshot.icon;
+    icon = icon.replace("-day", "");
+    icon = icon.replace("-night", "");
+    $("#tempIcon").attr("src", "./images/" + icon + ".png");
   });
   weatherRef.child('daily/data/0').on('value', function(snapshot) {
     snapshot = snapshot.val();
@@ -69,6 +72,6 @@ function init() {
 }
 
 $("document").ready(function() {
-  
+
   init();
 });
