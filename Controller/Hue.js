@@ -87,6 +87,7 @@ function Hue(interval, key, ip) {
         } else if (command.bri < 0) {
           command.bri = 0;
         }
+        _self.state.lights[elem].state.bri = command.bri;
       }
       hueRequest("PUT", path, JSON.stringify(command), callback);
       command.lightID = elem;
