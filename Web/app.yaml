@@ -1,0 +1,58 @@
+application: petele-home-automation
+version: 20140723-1
+runtime: python27
+threadsafe: yes
+api_version: 1
+
+
+handlers:
+- url: /set/.*
+  script: main.app
+  secure: always
+
+- url: /cmds/.*
+  script: main.app
+  secure: always
+
+- url: /track/.*
+  script: main.app
+  secure: always
+
+- url: /get/.*
+  script: main.app
+  secure: always
+
+- url: /door/.*
+  script: main.app
+  secure: always
+
+- url: /state/.*
+  script: main.app
+  secure: always
+
+- url: /images
+  static_dir: images
+  secure: always
+
+- url: /scripts
+  static_dir: scripts
+  secure: always
+
+- url: /fonts
+  static_dir: fonts
+  secure: always
+
+- url: /styles
+  static_dir: styles
+  secure: always
+
+- url: /.*
+  script: main.app
+  login: required
+  secure: always
+
+libraries:
+- name: webapp2
+  version: latest
+- name: jinja2
+  version: latest

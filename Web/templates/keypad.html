@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html ng-app ng-csp>
+<head>
+  <title>PiControl</title>
+  <link href="/styles/bootstrap.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, maximum-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" sizes="196x196" href="/images/hue196.png">
+  <link rel="icon" sizes="128x128" href="/images/hue128.png">
+  <link rel="apple-touch-icon" sizes="128x128" href="/images/hue128.png">
+  <style type="text/css">
+    .container {
+      margin-top: 5px;
+      width: 100%;
+      height: 100%;
+    }
+
+    table.keypad {
+      width: 100%;
+    }
+
+    table.keypad td {
+      width: 25%;
+      padding: 2px;
+    }
+
+    td.top {
+      vertical-align: top;
+    }
+
+    .btn {
+      height: 70px;
+      white-space: normal;
+    }
+
+    .btnVDouble {
+      height: 144px;
+    }
+
+    table.keypad .label {
+      width: 100%;
+      box-sizing: border-box;
+      display: inline-block;
+    }
+
+    .xlabel {
+      display: inline-block;
+      width: 30px;
+      text-align: left;
+    }
+
+    .fwLabel {
+      display: inline-block;
+      width: 80px;
+    }
+
+    .label-primary {
+      background-color: #428bca;
+    }
+
+    .iRefresh {
+      float: right;
+    }
+
+    div.loader {
+      width: 40px;
+      margin-left: auto;
+      margin-right: auto;
+      margin-top: 20%;
+    }
+
+    div.loader img {
+      width: 40px;
+      height: 40px;
+    }
+
+    .hide {
+      display: none;
+    }
+
+    .show {
+      display: block !important;
+    }
+
+    .spin {
+      -webkit-animation-name: spin;
+      -webkit-animation-duration: 1000ms;
+      -webkit-animation-iteration-count: infinite;
+      -webkit-animation-timing-function: linear;
+    }
+
+    @-webkit-keyframes spin {
+      from {
+        -webkit-transform:rotate(0deg);
+      }
+      
+      to {
+        -webkit-transform:rotate(360deg);
+      }
+    }
+
+    .nav > li {
+      display: table-cell;
+    }
+    
+    .nav-tabs.nav-justified > li {
+      width: 1%;
+    }
+  </style>
+</head>
+<body ng-controller="KeyPadController">
+  <div class="hide">
+    {% raw %}
+  </div>
+  <div class="container">
+    <div class="loader" ng-class="{hide: visible!='none'}">
+      <img src="/images/loader.png">
+    </div>
+    <ul class="nav nav-tabs nav-justified hide" ng-class="{show: visible!='none'}">
+      <li ng-class="{active: visible=='table'}"><a ng-click="setVisible('table')">Controls</a></li>
+      <li ng-class="{active: visible=='door'}"><a ng-click="setVisible('door')">Door</a></li>
+      <li ng-class="{active: visible=='state'}"><a ng-click="setVisible('state')">State</a></li>
+    </ul>
+    <div class="hide" ng-class="{show: visible=='table'}">
+      <table class="keypad">
+        <tbody>
+          <tr>
+            <td class="text-center">
+              <span class="label" ng-class="{'label-success': state=='HOME', 'label-primary': state=='AWAY'}">{{state}}</span><br><span class="label" ng-class="{'label-danger': door=='OPEN', 'label-success': door=='CLOSED'}">{{door}}</span>
+            </td>
+            <td class="text-center">
+              <span class="xlabel">LR</span> <span class="badge" ng-class="{'label-info': lr_temp!='Off'}">{{lr_temp}}</span><br>
+              <span class="xlabel">BR</span> <span class="badge" ng-class="{'label-info': br_temp!='Off'}">{{br_temp}}</span>
+            </td>
+            <td class="text-center">
+              <span class="xlabel">IN</span> <span class="badge">{{inside_temp | number:0}}</span><br>
+              <span class="xlabel">OUT</span> <span class="badge">{{outside_temp | number:0}}</span>
+            </td>
+            <td class="text-center">
+              <span class="label" ng-class="{'label-primary': harmony_activity!='Off', 'label-default': harmony_activity=='Off'}">{{harmony_activity}}</span>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <button class="btn btn-block btn-danger" ng-click="setModifier('Off')" ng-class="{active: modifier=='Off'}">Off</button>
+            </td>
+            <td>
+              <button class="btn btn-block btn-info" ng-click="setModifier('VirginBlue')" ng-class="{active: modifier=='VirginBlue'}">Virgin Blue</button>
+            </td>
+            <td>
+              <button class="btn btn-block btn-info" ng-click="setModifier('NightRed')" ng-class="{active: modifier=='NightRed'}">Night Red</button>
+            </td>
+            <td>
+              <button class="btn btn-block btn-info" ng-click="setModifier('DimWhite')" ng-class="{active: modifier=='DimWhite'}">Dim White</button>
+            </td>
+          </tr>
+          <tr>
+            <!-- <td><button class="btn btn-block" ng-click="pushButton('SLEEP')" ng-class="{'active btn-success': state=='SLEEP'}">Sleep</button></td> -->
+            <td><button class="btn btn-block" ng-click="pushButton('FAST_COOL')" ng-class="{'active btn-success': acFastCool}">Fast Cool</button></td>
+            <td><button class="btn btn-block" ng-click="pushButton('LR_AC')" ng-class="{'active btn-success': acLROn}">Living Room A/C</button></td>
+            <td><button class="btn btn-block" ng-click="pushButton('BR_AC')" ng-class="{'active btn-success': acBROn}">Bedroom A/C</button></td>
+            <td>
+              <button class="btn btn-block btn-info" ng-click="setModifier('DOWN')" ng-class="{'btn-success': modifier=='DOWN'}">-</button>
+            </td>
+          </tr>
+          <tr>
+            <td><button class="btn btn-block" ng-click="pushButton('KITCHEN')" ng-class="{'active btn-success': lightKI}">Kitchen</button></td>
+            <td><button class="btn btn-block" ng-click="pushButton('BR_OVERHEAD')" ng-class="{'active btn-success': lightBR}">Bedroom</button></td>
+            <td><button class="btn btn-block" ng-click="pushButton('BR_SIDE')" ng-class="{'active btn-success': lightBS}">Bedside Lamp</button></td>
+            <td>
+              <button class="btn btn-block btn-info" ng-click="setModifier('UP')" ng-class="{active: modifier=='UP'}">+</button>
+            </td>
+          </tr>
+          <tr>
+            <td><button class="btn btn-block" ng-click="pushButton('FRONT_HALL')" ng-class="{'active btn-success': lightFH}">Front Hall</button></td>
+            <td><button class="btn btn-block" ng-click="pushButton('LR_OVERHEAD')" ng-class="{'active btn-success': lightLR}">Living Room</button></td>
+            <td><button class="btn btn-block" ng-click="pushButton('LR_IKEA')" ng-class="{'active btn-success': lightIK}">Ikea</button></td>
+            <td rowspan=2>
+              <button class="btn btn-block btnVDouble btn-primary" ng-click="pushButton('HOME')" ng-class="{active: state=='HOME'}">Home</button>
+            </td>
+          </tr>
+          <tr>
+            <td colspan=2>
+              <button class="btn btn-block btn-primary" ng-click="pushButton('AWAY')" ng-class="{active: state=='AWAY'}">Away</button>
+            </td>
+            <td>
+              <button class="btn btn-block" ng-click="pushButton('MORNING')" ng-class="{'active btn-success': bMorn}">Morning</button>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2" class="top">
+              <small><strong>Updated:</strong> {{time_updated | date:'medium'}}</small>
+            </td>
+            <td colspan="2" class="top">
+              <small><strong>Started:</strong> {{time_started | date:'medium'}}</small>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="hide" ng-class="{show: visible=='door'}">
+      <table class="table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th style="width:60%;">Date</th>
+            <th>State <span ng-click="getDoorState()" class="spin iRefresh glyphicon glyphicon-refresh" ng-class="{'spin':doorSpin}"></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="door in doorState" ng-cloak>
+            <td>{{door.event_time | date:'medium'}}</td>
+            <td><span class="label fwLabel" ng-class="{'label-success': door.value=='CLOSED', 'label-danger': door.value=='OPEN'}">{{door.value}}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="hide" ng-class="{show: visible=='state'}">
+      <table class="table table-striped table-condensed">
+        <thead>
+          <tr>
+            <th style="width:60%;">Date</th>
+            <th>State <span ng-click="getHomeState()" class="iRefresh glyphicon glyphicon-refresh" ng-class="{'spin':homeSpin}"></span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="state in homeState" ng-cloak>
+            <td>{{state.event_time | date:'medium'}}</td>
+            <td><span class="label fwLabel" ng-class="{'label-success': state.value=='HOME', 'label-danger': state.value=='SHUTDOWN', 'label-default': state.value=='SLEEP', 'label-primary': state.value=='AWAY', 'label-info': state.value=='ARMED'}">{{state.value}}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="hide">
+    {% endraw %}
+  </div>
+
+  <script src="/scripts/angular-1.0.7.js"></script>
+  <script type="text/javascript" src="/_ah/channel/jsapi"></script>
+  <script type="text/javascript">
+    var piController = {
+      status: null,
+      url_base: "",
+      user_key: "{{ user_key }}",
+      user_uuid: "{{ user_uuid }}",
+      appengine_channel: new goog.appengine.Channel("{{channel_id}}"),
+      local: false
+    };
+
+    try {
+      piController.status = {{ initial_status }};
+    } catch (ex) {
+      console.log(ex);
+    }
+  </script>
+  <script type="text/javascript" src="/scripts/app.js"></script>
+</body>
+</html>
