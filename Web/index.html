@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="/favicon.ico">
+
+    <title>Home Status</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./css/app.css">
+
+  </head>
+<!-- NAVBAR
+================================================== -->
+  <body>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-3">
+          <div class="itemState" id="acBR">
+            <div class="itemDesc">Bedroom AC</div>
+            <span class="itemVal label label-default">N/A</span>
+          </div>
+          <div class="itemState" id="acLR">
+            <div class="itemDesc">Living Room AC</div>
+            <span class="itemVal label label-default">N/A</span>
+          </div>
+          <div class="itemState" id="acKI">
+            <div class="itemDesc">Kitchen AC</div>
+            <span class="itemVal label label-default">N/A</span>
+          </div>
+          <div class="itemState" id="doorFront">
+            <div class="itemDesc">Front Door</div>
+            <span class="itemVal label label-default">N/A</span>
+          </div>
+          <div class="itemState" id="harmonyActivityName">
+            <div class="itemDesc">Media Center</div>
+            <span class="itemVal label label-default">N/A</span>
+          </div>
+          <div class="itemState" id="systemState">
+            <div class="itemDesc">System State</div>
+            <span class="itemVal label label-default">N/A</span>
+          </div>
+          <div class="itemState" id="tempInside">
+            <div class="itemDesc">Inside Temperature</div>
+            <span class="itemVal label label-default">N/A</span>
+          </div>
+          <div class="itemState" id="tempOutside">
+            <div class="itemDesc">Outside Temperature</div>
+            <span class="itemVal label label-default">N/A</span>
+          </div>
+          <div class="itemState" id="timeUpdated">
+            <div class="itemDesc">Last Updated</div>
+            <span class="itemVal">N/A</span>
+          </div>
+          <div class="itemState" id="timeStarted">
+            <div class="itemDesc">Time Started</div>
+            <span class="itemVal">N/A</span>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <ul id="lightList">
+          </ul>
+        </div>
+        <div class="col-md-2" id="pnlBut">
+        </div>
+        <div class="col-md-2">
+          <ul id="doorList">
+          </ul>
+        </div>
+        <div class="col-md-2">
+          <ul id="stateList">
+          </ul>
+        </div>
+      </div>
+
+
+    </div><!-- /.container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://cdn.firebase.com/js/client/1.0.21/firebase.js"></script>
+    <script src="./js/jquery-2.1.1.min.js"></script>
+    <script src="./js/bootstrap.min.js"></script>
+    <script src="./js/moment-2.8.3.js"></script>
+    <script src="./js/keys.js"></script>
+    <script src="./js/app.js"></script>
+  </body>
+</html>

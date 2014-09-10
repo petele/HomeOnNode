@@ -6,53 +6,31 @@ api_version: 1
 
 
 handlers:
-- url: /set/.*
-  script: main.app
-  secure: always
-
-- url: /cmds/.*
-  script: main.app
-  secure: always
-
-- url: /track/.*
-  script: main.app
-  secure: always
-
-- url: /get/.*
-  script: main.app
-  secure: always
-
-- url: /door/.*
-  script: main.app
-  secure: always
-
-- url: /state/.*
-  script: main.app
-  secure: always
-
 - url: /images
   static_dir: images
   secure: always
 
-- url: /scripts
-  static_dir: scripts
+- url: /js
+  static_dir: js
   secure: always
 
 - url: /fonts
   static_dir: fonts
   secure: always
 
-- url: /styles
-  static_dir: styles
+- url: /css
+  static_dir: css
   secure: always
+
+- url: /
+  static_files: index.html
+  upload: index.html
+  expiration: "0s"
+  login: admin
 
 - url: /.*
-  script: main.app
-  login: required
-  secure: always
+  static_files: 404.html
+  upload: 404.html
+  application_readable: true
+  expiration: "60m"
 
-libraries:
-- name: webapp2
-  version: latest
-- name: jinja2
-  version: latest
