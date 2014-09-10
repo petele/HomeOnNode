@@ -83,6 +83,15 @@ function init() {
               log.error("Unable to execute FireBase Command: " + JSON.stringify(cmd));
             }
           });
+          fb.child(".info/connected").on("value", function(snapshot) {
+            if (snapshot.val() === true) {
+              log.log("[NETWORK] Connected.");
+              home.set("NETWORK_OK", undefined, "FB-APP");
+            } else {
+              log.error("[NETWORK] Disconnected");
+              home.set("NETWORK_ERROR", undefined, "FB-APP");
+            }
+          });
         });
       } catch (ex) {
         log.error("[APP] Error parsing local config.json " + ex.toString());
