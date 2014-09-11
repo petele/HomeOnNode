@@ -415,7 +415,7 @@ function Home(config, fb) {
   function initAwayWatcher() {
     awayTimer = setInterval(function() {
       if (_self.state.system_state === "AWAY") {
-        _self.set("LIGHTSOFF");
+        _self.set("ALL_LIGHTS", "Off", "AWAY_TIMER");
       }
     }, config.away_watch_timer);
   }
