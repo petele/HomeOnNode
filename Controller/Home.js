@@ -22,6 +22,22 @@ function Home(config, fb) {
   var armingTimer, awayTimer;
   var hue, harmony, airConditioners, insideTemp, doors, gv;
 
+  this.setLights = function(lights, state, source) {
+    var response = {
+      "date": Date.now(),
+      "lights": lights,
+      "state": state,
+      "source": source
+    };
+    var logMsg = "Set Lights: [" + lights.toString() + "] " + JSON.stringify(state);
+    if (source) {
+      logMsg += " from: " + source;
+    }
+    log.log(logMsg);
+    response.response = hue.setLights(lights, state);
+    return response;
+  };
+
   this.set = function(command, modifier, source) {
     var response = {
       "date": Date.now(),

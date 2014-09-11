@@ -97,6 +97,19 @@ function HTTPServer(config, home, fb) {
     res.send(result);
   });
 
+  exp.post("/lights", function(req, res) {
+    var body = req.body;
+    if (typeof body === "string") {
+      body = JSON.parse(body);
+    }
+    log.debug("[POST] " + JSON.stringify(body));
+    var result = home.setLights(body.lights, body.state, "[HTTP " + req.ip + "]");
+    res.send(result);
+  });
+  exp.get('/lights', function(req, res) {
+    res.send(home.state.hue.lights);
+  });
+
   exp.use(function(req, res){
     res.status(404);
     res.send({ error: "Requested URL not found." });
