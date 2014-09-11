@@ -31,9 +31,7 @@ function Door(label, pin_num) {
           self.state = "CLOSED";
           self.emit("change", self.state);
         } else {
-          log.warn("[DOOR] Fired for unchanged state.");
-          log.warn("[DOOR] state = " + self.state);
-          log.warn("[DOOR] value = " + value);
+          log.debug("[DOOR] Fired for unchanged state.");
         }
       });
     }
