@@ -15,6 +15,7 @@ function GoogleVoice(baseInterval) {
     exec(cmd, function(error, stdout, stderr) {
       var result;
       if (stderr) {
+        log.debug("[GOOGLEVOICE] STDError: " + stderr);
         result = {"error": stderr};
       } else {
         try {
@@ -30,13 +31,19 @@ function GoogleVoice(baseInterval) {
           _self.unread = result.unreadCounts.all;
           _self.error = false;
         } catch (ex) {
-          result = {"error": ex.message};
+          log.debug("[GOOGLEVOICE] Error: " + ex.message);
+          log.debug("[GOOGLEVOICE] STDOut: " + stdout);
+          log.debug("[GOOGLEVOICE] Result: " + result);
+          result = {
+            "error": ex.message,
+            "stdout": stdout,
+            "result": result
+          };
         }
       }
       if (result.error) {
         if (_self.error === false) {
-          log.debug("[GOOGLEVOICE] " + JSON.stringify(result));
-          _self.emit("error");
+          _self.emit("error", result);
           _self.error = true;
         }
         if (interval < (baseInterval * 12)) {
