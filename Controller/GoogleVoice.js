@@ -13,10 +13,14 @@ function GoogleVoice(baseInterval) {
   function refresh() {
     var cmd = "lynx -source https://www.google.com/voice/request/unread";
     exec(cmd, function(error, stdout, stderr) {
-      var result;
+      var result = {};
       if (stderr) {
-        log.debug("[GOOGLEVOICE] STDError: " + stderr);
-        result = {"error": stderr};
+        if (stderr === "") {
+          log.warn("[GOOGLEVOICE] Empty STDError");
+        } else {
+          log.error("[GOOGLEVOICE] STDError: " + stderr);
+          result = {"error": stderr};
+        }
       } else {
         try {
           result = JSON.parse(stdout);
