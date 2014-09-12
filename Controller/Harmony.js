@@ -35,7 +35,7 @@ function Harmony(ip, uuid) {
   }
 
   function handleOnline(connection) {
-    log.debug("[HARMONY] Online. " + String(connection.toString));
+    log.debug("[Harmony] Online. " + String(connection.toString));
     _self.emit("ready", connection);
     keepAlive();
   }
@@ -48,13 +48,13 @@ function Harmony(ip, uuid) {
         result = child.children.join("");
         result = JSON.parse(result);
         _self.emit("config", result);
-        log.debug("[HARMONY] handleStanza(log)");
+        log.debug("[Harmony] handleStanza(log)");
       } else if (child["attrs"]["mime"] === "vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity") {
         result = child.children.join("");
         result = result.split("=");
         _self.emit("activity", result[1]);
         _self.currentActivity = result[1];
-        log.debug("[HARMONY] handleStanza(getCurrentActivity) " + result[1]);
+        log.debug("[Harmony] handleStanza(getCurrentActivity) " + result[1]);
       } else if (child["attrs"]["type"] === "harmony.engine?startActivityFinished") {
         result = child.children.join("");
         result = result.split(":");
@@ -63,34 +63,34 @@ function Harmony(ip, uuid) {
             result = result[i].split("=");
             _self.emit("activity", result[1]);
             _self.currentActivity = result[1];
-            log.debug("[HARMONY] handleStanza(startActivityFinished) " + result[1]);
+            log.debug("[Harmony] handleStanza(startActivityFinished) " + result[1]);
             break;
           } // if
         } // fpr
       } else {
-        log.debug("[HARMONY] Unhandled response. <" + child.name + " ... />");
+        log.warn("[Harmony] Unhandled response. <" + child.name + " ... />");
       } // End of IF statements
     } // There is at least one child
   } // End of function
 
   function handleOffline() {
-    log.debug("[HARMONY] Offline.");
+    log.debug("[Harmony] Offline.");
     if (reconnect) {
       connect();
     }
   }
 
   function handleConnect(connection) {
-    log.debug("[HARMONY] Connected. " + String(connection));
+    log.debug("[Harmony] Connected. " + String(connection));
     //console.log("-CONNECT", a, b);
   }
 
   function handleReconnect() {
-    log.debug("[HARMONY] Reconnected.");
+    log.debug("[Harmony] Reconnected.");
   }
 
   function handleDisconnect() {
-    log.debug("[HARMONY] Disconnected.");
+    log.debug("[Harmony] Disconnected.");
   }
 
   function keepAlive() {
@@ -111,7 +111,7 @@ function Harmony(ip, uuid) {
       _self.emit("error", "Client not connected.");
       return {"error": "Client not connected"};
     } else {
-      log.debug("[HARMONY] getConfig.");
+      log.debug("[Harmony] getConfig.");
       var cmd = new XMPP.Element("iq", {"id": _uuid})
         .c("oa", {
           "xmlns": "connect.logitech.com",
@@ -127,7 +127,7 @@ function Harmony(ip, uuid) {
       _self.emit("error", "Client not connected.");
       return {"error": "Client not connected"};
     } else {
-      log.debug("[HARMONY] getActivity.");
+      log.debug("[Harmony] getActivity.");
       var cmd = new XMPP.Element("iq", {"id": _uuid})
         .c("oa", {
           "xmlns": "connect.logitech.com",
@@ -143,7 +143,7 @@ function Harmony(ip, uuid) {
       _self.emit("error", "Client not connected.");
       return {"error": "Client not connected"};
     } else {
-      log.debug("[HARMONY] setActivity.");
+      log.debug("[Harmony] setActivity.");
       var cmdText = "activityId=" + activityID.toString() + ":timestamp=0";
       var cmd = new XMPP.Element("iq", {"id": _uuid, "type": "get"})
         .c("oa", {
@@ -160,7 +160,7 @@ function Harmony(ip, uuid) {
     if (client === undefined) {
       return {"error": "Client not connected"};
     } else {
-      log.debug("[HARMONY] close()");
+      log.debug("[Harmony] close()");
       client.end();
       client = undefined;
       return {"action": "close"};

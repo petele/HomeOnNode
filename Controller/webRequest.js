@@ -29,30 +29,32 @@ function makeRequest(uri, body, callback) {
       result += chunk
     });
     response.on("end", function() {
+      log.debug("[WebRequest] Response: " + response);
       if (callback) {
         try {
           callback(JSON.parse(result));
         } catch (ex) {
-          log.error("[WEBREQUEST] Response Error: " + ex);
+          log.error("[WebRequest] Response Error: " + ex);
           callback({"error": ex});
         }
       }
     });
   }
 
+  log.debug("[WebRequest] Request: " + JSON.stringify(options));
   if (uri.secure) {
     request = https.request(options, handleResponse);
   } else {
     request = http.request(options, handleResponse);
   }
   request.on("error", function(error) {
-    log.error("[WEBREQUEST] Request Error: " + error);
+    log.error("[WebRequest] Request Error: " + error);
     if (callback) {
       callback({"error": error});
     }
   });
   request.setTimeout(2500, function() {
-    log.warn("[WEBREQUEST] Timeout Exceeded");
+    log.warn("[WebRequest] Timeout Exceeded");
     request.abort();
   });
   if (body) {

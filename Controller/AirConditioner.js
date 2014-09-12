@@ -20,11 +20,13 @@ function AirConditioner(acID, ip, irPort, cmds) {
       client.write(command + "\r", "ascii");
     });
     client.on("error", function(er) {
+      log.error("[AirConditioner] Error: " + er.toString());
       if (callback) {
         callback({"error": er});
       }
     });
     client.on("timeout", function() {
+      log.warn("[AirConditioner] Timeout");
       client.destroy();
     });
     client.on("data", function(data) {
@@ -32,6 +34,7 @@ function AirConditioner(acID, ip, irPort, cmds) {
       client.destroy();
     });
     client.on("close", function() {
+      log.debug("[AirConditioner] Response: " + response);
       if (callback) {
         callback(response);
       }

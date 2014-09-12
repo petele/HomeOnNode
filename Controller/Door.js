@@ -21,9 +21,9 @@ function Door(label, pin_num) {
       var pin = new Gpio(pin_num, "in", "both");
       pin.watch(function(error, value) {
         if (error) {
-          log.error("[DOOR] Error watching door: " + error);
+          log.error("[Door] Error watching door: " + error);
         }
-        log.debug("[DOOR] Pin Changed: " + value);
+        log.debug("[Door] Pin Changed: " + value);
         if ((value === 1) && (self.state != "OPEN")) {
           self.state = "OPEN";
           self.emit("change", self.state);
@@ -31,7 +31,7 @@ function Door(label, pin_num) {
           self.state = "CLOSED";
           self.emit("change", self.state);
         } else {
-          log.debug("[DOOR] Fired for unchanged state.");
+          log.debug("[Door] Fired for unchanged state.");
         }
       });
     }
