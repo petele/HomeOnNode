@@ -29,7 +29,7 @@ function makeRequest(uri, body, callback) {
       result += chunk
     });
     response.on("end", function() {
-      log.debug("[WebRequest] Response: " + response);
+      log.debug("[WebRequest] Response: " + result);
       if (callback) {
         try {
           callback(JSON.parse(result));
