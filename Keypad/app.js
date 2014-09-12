@@ -1,11 +1,9 @@
 var keypress = require("keypress");
 var fs = require("fs");
-var sendCommand = require("./sendCommand");
 var log = require("../Controller/SystemLog");
-//var Firebase = require("firebase");
 var fbHelper = require("../Controller/fbHelper");
 var Keys = require("../Controller/Keys");
-
+var webRequest = require("../Controller/webRequest");
 
 var config;
 var modifier;
@@ -42,6 +40,7 @@ function listen() {
       ch = "SQCLOSE";
     }
     //ch = ch.toString();
+    log.http("KEY", ch);
     var m = config.modifiers[ch];
     var k = config.keys[ch];
     if (m) {
@@ -50,10 +49,23 @@ function listen() {
         modifier = undefined;
       }, 5000);
     } else if (k) {
-      sendCommand.send(k, modifier);
+      var uri = {
+        "host": config.ip,
+        "port": 3000,
+        "path": "/state",
+        "method": "POST"
+      };
+      var body = {
+        "command": k,
+        "modifier": modifier
+      };
+      body = JSON.stringify(body);
+      log.http("REQ", body);
+      webRequest.request(uri, body, function(resp) {
+        log.http("RESP", JSON.stringify(resp));
+      });
       modifier = undefined;
     }
-
   });
 
   process.stdin.setRawMode(true);
@@ -68,7 +80,6 @@ fs.readFile("keypad.json", {"encoding": "utf8"}, function(err, data) {
   } else {
     config = JSON.parse(data);
     fb = fbHelper.init(Keys.keys.fb, "keypad-" + config.id, exit);
-    sendCommand.setConfig(config);
     log.log("Ready.");
     listen();
   }

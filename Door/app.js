@@ -1,9 +1,9 @@
 var fs = require("fs");
 var Door = require("../Controller/Door");
-var sendCommand = require("../Keypad/sendCommand");
 var log = require("../Controller/SystemLog");
 var fbHelper = require("../Controller/fbHelper");
 var Keys = require("../Controller/Keys");
+var webRequest = require("../Controller/webRequest");
 
 var config;
 var fb;
@@ -17,11 +17,27 @@ function listen() {
     //exit("NO-GPIO", 1);
   });
   door.on("change", function(data) {
+    var uri = {
+      "host": config.ip,
+      "port": 3000,
+      "path": "/state",
+      "method": "POST"
+    };
+    var body = {};
     if (data === "OPEN") {
-      sendCommand.send(config.onOpen.command, config.onOpen.modifier);
+      log.http("DOOR", "Opened");
+      body.command = config.onOpen.command;
+      body.modifier = config.onOpen.modifier;
     } else {
-      sendCommand.send(config.onClose.command, config.onClose.modifier);
+      log.http("DOOR", "Closed");
+      body.command = config.onClose.command;
+      body.modifier = config.onClose.modifier;
     }
+    body = JSON.stringify(body);
+    log.http("REQ", body);
+    webRequest.request(uri, body, function(resp) {
+      log.http("RESP", JSON.stringify(resp));
+    });
   });
 }
 
@@ -31,7 +47,6 @@ fs.readFile("config.json", {"encoding": "utf8"}, function(err, data) {
   } else {
     config = JSON.parse(data);
     fb = fbHelper.init(Keys.keys.fb, "door-" + config.id, exit);
-    sendCommand.setConfig(config);
     log.log("Ready.");
     listen();
   }
