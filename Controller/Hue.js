@@ -1,8 +1,7 @@
 var EventEmitter = require("events").EventEmitter;
 var util = require("util");
 var diff = require('deep-diff').diff;
-var httpHelper = require("./httpHelper");
-var httpsHelper = require("./httpsHelper");
+var webRequest = require("./webRequest");
 
 function Hue(interval, key, ip) {
   var _ip = ip;
@@ -17,13 +16,12 @@ function Hue(interval, key, ip) {
     if (path) {
       url += "/" + path;
     }
-    var options = {
-      hostname: _ip,
-      port: 80,
-      path: url,
-      method: method
+    var uri = {
+      "host": _ip,
+      "path": url,
+      "method": method
     };
-    httpHelper.request(options, body, callback);
+    webRequest.request(uri, body, callback);
   }
 
   function refresh() {
@@ -36,8 +34,6 @@ function Hue(interval, key, ip) {
           _interval = 1 + Math.floor(_interval * 1.75);
         }
       } else {
-        // delete response.config.UTC;
-        // delete response.config.localtime;
         var differences = diff(_self.state, response);
         if (differences.length > 2) {
           _self.state = response;
@@ -51,7 +47,12 @@ function Hue(interval, key, ip) {
   }
 
   this.findHue = function() {
-    httpsHelper.get("www.meethue.com", "/api/nupnp", function(response) {
+    var uri = {
+      "host": "www.meethue.com",
+      "path": "/api/nupnp",
+      "secure": true
+    }
+    webRequest.request(uri, null, function(response) {
       response = JSON.parse(response);
       if (response.ipaddress) {
         _ip = response.ipaddress;
