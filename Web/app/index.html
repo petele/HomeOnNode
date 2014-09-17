@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="A front-end template that helps you build fast, modern mobile web apps.">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Web Starter Kit</title>
+    <title>Home Automation</title>
 
     <!-- Add to homescreen for Chrome on Android -->
     <meta name="mobile-web-app-capable" content="yes">
@@ -46,7 +46,6 @@
       <ul>
         <li><a data-page="#dCommands">Commands</a></li>
         <li><a data-page="#dStatus">Status</a></li>
-        <li><a data-page="#dLights">Lights</a></li>
         <li><a data-page="#dState">State</a></li>
         <li><a data-page="#dDoor">Door</a></li>
       </ul>
@@ -60,52 +59,54 @@
         </div>
       </div>
       <div id="dStatus" class="page" hidden>
-        <ul class="list--reset">
-          <li class="itemState" id="acBR">
-            <p class="itemDesc">Bedroom A/C</p>
-            <span class="itemVal label label-gray">N/A</span>
-          </li>
-          <li class="itemState" id="acLR">
-            <div class="itemDesc">Living Room A/C</div>
-            <span class="itemVal label label-gray">N/A</span>
-          </li>
-          <li class="itemState" id="acKI">
-            <div class="itemDesc">Kitchen A/C</div>
-            <span class="itemVal label label-gray">N/A</span>
-          </li>
-          <li class="itemState" id="doorFront">
-            <div class="itemDesc">Front Door</div>
-            <span class="itemVal label label-gray">N/A</span>
-          </li>
-          <li class="itemState" id="harmonyActivityName">
-            <div class="itemDesc">Media Center</div>
-            <span class="itemVal label label-gray">N/A</span>
-          </li>
-          <li class="itemState" id="systemState">
-            <div class="itemDesc">System State</div>
-            <span class="itemVal label label-gray">N/A</span>
-          </li>
-          <li class="itemState" id="tempInside">
-            <div class="itemDesc">Inside Temperature</div>
-            <span class="itemVal">N/A</span>
-          </li>
-          <li class="itemState" id="tempOutside">
-            <div class="itemDesc">Outside Temperature</div>
-            <span class="itemVal">N/A</span>
-          </li>
-          <li class="itemState" id="timeUpdated">
-            <div class="itemDesc">Last Updated</div>
-            <span class="itemVal">N/A</span>
-          </li>
-          <li class="itemState" id="timeStarted">
-            <div class="itemDesc">Time Started</div>
-            <span class="itemVal">N/A</span>
-          </li>
-        </ul>
-      </div>
-      <div id="dLights" class="page" hidden>
-        <ul id="ulLights" class="list--reset">
-        </ul>
+        <div class="g--half">
+          <ul class="list--reset" id="ulStatus">
+            <li class="itemState" id="systemState">
+              <div class="itemDesc">System State</div>
+              <span class="itemVal label label-gray">N/A</span>
+            </li>
+            <li class="itemState" id="doorFront">
+              <div class="itemDesc">Front Door</div>
+              <span class="itemVal label label-gray">N/A</span>
+            </li>
+            <li class="itemState" id="harmonyActivityName">
+              <div class="itemDesc">Media Center</div>
+              <span class="itemVal label label-gray">N/A</span>
+            </li>
+            <li class="itemState" id="acBR">
+              <p class="itemDesc">Bedroom A/C</p>
+              <span class="itemVal label label-gray">N/A</span>
+            </li>
+            <li class="itemState" id="acLR">
+              <div class="itemDesc">Living Room A/C</div>
+              <span class="itemVal label label-gray">N/A</span>
+            </li>
+            <li class="itemState" id="acKI">
+              <div class="itemDesc">Kitchen A/C</div>
+              <span class="itemVal label label-gray">N/A</span>
+            </li>
+            <li class="itemState" id="tempInside">
+              <div class="itemDesc">Inside Temperature</div>
+              <span class="itemVal label label-gray">N/A</span>
+            </li>
+            <li class="itemState" id="tempOutside">
+              <div class="itemDesc">Outside Temperature</div>
+              <span class="itemVal label label-gray">N/A</span>
+            </li>
+            <li class="itemState" id="timeUpdated">
+              <div class="itemDesc">Last Updated</div>
+              <span class="itemVal dtLabel">N/A</span>
+            </li>
+            <li class="itemState" id="timeStarted">
+              <div class="itemDesc">Time Started</div>
+              <span class="itemVal dtLabel">N/A</span>
+            </li>
+          </ul>
+        </div>
+        <div class="g--half g--last">
+          <ul id="ulLights" class="list--reset">
+          </ul>
+        </div>
       </div>
       <div id="dState" class="page" hidden>
         <ul id="ulState" class="list--reset">

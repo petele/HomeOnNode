@@ -261,7 +261,17 @@ function init() {
   fb.child("state/system_state").on("value", function(snapshot) {
     var val = snapshot.val();
     systemStateLabel.text(val);
-    val = val.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();})
+    systemStateLabel.removeClass("label-gray label-blue label-blue-secondary label-gray");
+    if (val === "HOME") {
+      systemStateLabel.addClass("label-green");
+    } else if (val === "AWAY") {
+      systemStateLabel.addClass("label-blue");
+    } else if (val === "ARMED") {
+      systemStateLabel.addClass("label-blue-secondary");
+    } else if (val === "SLEEP") {
+      systemStateLabel.addClass("label-gray");
+    }
+    val = val.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
     document.querySelector("h1.logo strong").innerText = "@" + val;
   });
   fb.child("state/temperature").on("value", function(snapshot) {
