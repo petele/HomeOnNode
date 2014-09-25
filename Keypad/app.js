@@ -4,11 +4,9 @@ var log = require("../Controller/SystemLog");
 var fbHelper = require("../Controller/fbHelper");
 var Keys = require("../Controller/Keys");
 var webRequest = require("../Controller/webRequest");
-var PowerMate = require('node-powermate');
 
 var config;
 var modifier;
-var powermateLight;
 
 log.appStart("KeyPad");
 
@@ -74,76 +72,6 @@ function listen() {
   process.stdin.resume();
 }
 
-function initPowermate(lights, interval) {
-  var powermate = new PowerMate();
-  var uri = {
-    "host": config.powermate.hueIP,
-    "path": "/api/" + Keys.keys.hue + "/lights/" + lights[0]
-  }
-  setInterval(function() {
-    webRequest.request(uri, null, function(resp) {
-      powermateLight.on = resp.state.on;
-      powermateLight.bri = resp.state.bri;
-      if (resp.state.on) {
-        powermate.setBrightness(resp.state.bri);
-      } else {
-        powermate.setBrightness(0);
-      }
-    });
-  }, interval);
-  powermateLight = {
-    "on": true,
-    "bri": 0,
-    "transitiontime": 1
-  };
-  powermate.on('buttonDown', function(f) {
-    powermateLight.on = !powermateLight.on;
-    setLights(lights, powermateLight);
-    if (powermateLight.on === false) {
-      powermate.setBrightness(0);
-    } else {
-      powermate.setBrightness(powermateLight.bri);
-    }
-  });
-  powermate.on('wheelTurn', function(f) {
-    var newBri = powermateLight.bri + (10 * f) ;
-    if (newBri > 255) {
-      newBri = 255;
-    } else if (newBri < 0) {
-      newBri = 0;
-    }
-    if ((newBri != powermateLight.bri) && (powermateLight.on === true)) {
-      try {
-        powermateLight.bri = newBri;
-        powermate.setBrightness(newBri);
-        setLights(lights, powermateLight);
-      } catch (ex) {
-        console.log("Oops", ex);
-      }
-    }
-  });
-  powermate.on("error", function(e) {
-    console.log("EEEE",e);
-  });
-}
-
-function setLights(lights, state) {
-  log.log("[POWERMATE] Lights " + lights.toString() + " " + JSON.stringify(state));
-  lights.forEach(function(l) {
-    var uri = {
-      "host": config.powermate.hueIP,
-      "path": "/api/" + Keys.keys.hue + "/lights/" + l.toString() + "/state",
-      "method": "PUT"
-    }
-    //delete state.on;
-    var body = JSON.stringify(state);
-    webRequest.request(uri, body, function(resp) {
-      log.debug("[PowerMate] Response" + JSON.stringify(resp));
-    });
-  });
-}
-
-
 
 fs.readFile("keypad.json", {"encoding": "utf8"}, function(err, data) {
   if (err) {
@@ -151,9 +79,6 @@ fs.readFile("keypad.json", {"encoding": "utf8"}, function(err, data) {
   } else {
     config = JSON.parse(data);
     fb = fbHelper.init(Keys.keys.fb, "keypad-" + config.id, exit);
-    if (config.powermate) {
-      initPowermate(config.powermate.lights, config.powermate.interval);
-    }
     log.log("Ready.");
     listen();
   }
