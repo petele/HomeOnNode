@@ -23,11 +23,11 @@ html, body {
 }
 
 .carousel-caption h1 {
-  font-size: 6em;
+  font-size: 5em;
 }
 
 .carousel-caption p {
-  font-size: 2em;
+  font-size: 1.5em;
 }
 
 /* Declare heights because of positioning of img element */

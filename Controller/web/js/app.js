@@ -7,7 +7,9 @@ function init() {
   window.castReceiverManager.start();
   curTimeElem = $("#curTime");
   updateTime();
+  updateDays();
   setInterval(updateTime, 1000);
+  setInterval(updateDays, 90000);
   var weatherRef = new Firebase('https://publicdata-weather.firebaseio.com/newyork');
   weatherRef.child('currently').on('value', function(snapshot) {
     snapshot = snapshot.val();
@@ -26,6 +28,13 @@ function init() {
     msg = msg.replace("[RAIN]", Math.floor(snapshot.precipProbability * 100));
     $("#weatherForecast p").html(msg);
   });
+}
+
+function updateDays() {
+  var now = moment();
+  var tripStart = moment("2014-12-26");
+  var duration = Math.floor(moment.duration(tripStart - now).as("days"));
+  $("#antarcticaCountdown h1").text(duration);
 }
 
 function updateTime() {
