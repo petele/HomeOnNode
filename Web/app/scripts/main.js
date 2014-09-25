@@ -286,6 +286,10 @@ function init() {
     timeUpdatedLabel.text(tlu);
     timeStartedLabel.text(ts);
   });
+  fb.child("state/version").on("value", function(snapshot) {
+    var val = snapshot.val();
+    $("#gitHead span").text(val);
+  });
 }
 
 function commandPressed(evt) {
