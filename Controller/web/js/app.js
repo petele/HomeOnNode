@@ -1,52 +1,19 @@
-var fb;
+
 var curTimeElem;
-var carousels;
-var carouselIndicators;
-
-
-function addCarousel(heading, body, imgSrc) {
-
-
-  var msg = "<h1>[HEADING]</h1><p>[BODY]</p>";
-  msg = msg.replace("[HEADING]", heading);
-  msg = msg.replace("[BODY]", body);
-  var content = $("<div class='carousel-caption'></div>");
-  content.html(msg);
-  var container = $("<div class='container'></div>");
-  container.append(content);
-  var item = $("<div class='item'></div>");
-  if (imgSrc) {
-    var img = $("<img>");
-    img.attr("src", imgSrc);
-    item.append(img);
-  }
-  item.append(container);
-
-  var indicator = $("<li></li>")
-    .attr("data-target", "#myCarousel")
-    .attr("data-slide-to", carousels.children().length);
-
-  if (carousels.children().length === 0) {
-    item.addClass("active");
-  }
-  carousels.append(item);
-  carouselIndicators.append(indicator);
-}
-
-
-
-
 
 
 function init() {
+  window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+  window.castReceiverManager.start();
   curTimeElem = $("#curTime");
-  carousels = $(".carousel-inner");
-  carouselIndicators = $(".carousel-indicators");
-
+  updateTime();
+  updateDays();
+  setInterval(updateTime, 1000);
+  setInterval(updateDays, 90000);
   var weatherRef = new Firebase('https://publicdata-weather.firebaseio.com/newyork');
   weatherRef.child('currently').on('value', function(snapshot) {
     snapshot = snapshot.val();
-    $("#tempNow").html(Math.round(snapshot.temperature) + "&deg;F");
+    $("#tempNow").html(Math.round(snapshot.temperature));
     var icon = snapshot.icon;
     icon = icon.replace("-day", "");
     icon = icon.replace("-night", "");
@@ -54,24 +21,26 @@ function init() {
   });
   weatherRef.child('daily/data/0').on('value', function(snapshot) {
     snapshot = snapshot.val();
-    $("#tempHigh").html("<b>High</b> " + snapshot.temperatureMax);
-    $("#tempLow").html("<b>Low</b> " + snapshot.temperatureMin);
-    $("#tempRain").html("<b>Rain</b> " + snapshot.precipProbability * 100 + "%");
-    $("#tempWind").html("<b>Wind</b> " + snapshot.windSpeed);
-    $("#tempSummary").html(snapshot.summary);
+    $("#weatherForecast h1").text(snapshot.summary);
+    var msg = "High of [HIGH]&deg;F with a low of [LOW]&deg;F, [RAIN]% chance of precipitation.";
+    msg = msg.replace("[HIGH]", Math.floor(snapshot.temperatureMax));
+    msg = msg.replace("[LOW]", Math.floor(snapshot.temperatureMin));
+    msg = msg.replace("[RAIN]", Math.floor(snapshot.precipProbability * 100));
+    $("#weatherForecast p").html(msg);
   });
-
-
-  setInterval(function() {
-    var now = moment();
-    var tripStart = moment("2014-12-26");
-    var duration = Math.floor(moment.duration(tripStart - now).as("days"));
-    $("#daysToAntartica").text(duration);
-    curTimeElem.text(now.format("h:mm a"));
-  }, 1000);
 }
 
-$("document").ready(function() {
+function updateDays() {
+  var now = moment();
+  var tripStart = moment("2014-12-26");
+  var duration = Math.floor(moment.duration(tripStart - now).as("days"));
+  $("#antarcticaCountdown h1").text(duration);
+}
 
-  init();
-});
+function updateTime() {
+  var now = moment();
+  curTimeElem.text(now.format("h:mm a"));
+}
+
+
+init();

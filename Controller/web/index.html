@@ -9,90 +9,54 @@
     <link rel="icon" href="/favicon.ico">
 
     <title>Home Status</title>
+    <link href='http://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
 
     <!-- Bootstrap core CSS -->
-    <link href="./css/bootstrap.min.css" rel="stylesheet">
+    <link href="./css/bootstrap.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./css/custom.css">
 
     <!-- Custom styles for this template -->
-    <link href="./css/carousel.css" rel="stylesheet">
   </head>
-<!-- NAVBAR
-================================================== -->
   <body>
 
-    <!-- Carousel
-    ================================================== -->
-    <div id="myCarousel" class="carousel slide" data-ride="carousel">
-      <!-- Indicators -->
-      <ol class="carousel-indicators">
-        <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
-      </ol>
+    <div id="castCarousel" class="carousel slide" data-ride="carousel">
+      <!-- Wrapper for slides -->
       <div class="carousel-inner">
-        <div class="item active">
+        <div class="item active" id="antarcticaCountdown">
           <img src="./images/antartica.jpg">
-          <div class="container">
-            <div class="carousel-caption">
-              <h1 id="daysToAntartica"></h1>
-              <p>Days to Antartica</p>
-            </div>
+          <div class="carousel-caption">
+            <h1></h1>
+            <p>Day to Antarctica</p>
+          </div>
+        </div>
+        <div class="item" id="weatherForecast">
+          <img>
+          <div class="carousel-caption">
+            <h1></h1>
+            <p></p>
           </div>
         </div>
       </div>
-      <a class="left carousel-control" href="#myCarousel" role="button" data-slide="prev"><span class="glyphicon glyphicon-chevron-left"></span></a>
-      <a class="right carousel-control" href="#myCarousel" role="button" data-slide="next"><span class="glyphicon glyphicon-chevron-right"></span></a>
-    </div><!-- /.carousel -->
+    </div>
+    <div class="row now">
+      <div class="col-lg-6 weather">
+        <img id="tempIcon">
+        <span id="tempNow"></span>&deg;F
+      </div>
+      <div class="col-lg-6 time">
+        <span id="curTime"></span>
+      </div>
+    </div>
 
 
-
-    <!-- Marketing messaging and featurettes
-    ================================================== -->
-    <!-- Wrap the rest of the page in another container to center all the content. -->
-
-    <div class="container marketing">
-
-      <!-- Three columns of text below the carousel -->
-      <div class="row">
-        <div class="col-lg-4 weather">
-          <div>
-            <img id="tempIcon">
-            <span id="tempNow"></span>
-          </div>
-          <div>
-            <span id="tempHigh"></span>
-            <span id="tempRain"></span>
-          </div>
-          <div>
-            <span id="tempLow"></span>
-            <span id="tempWind"></span>
-          </div>
-          <div>
-            <span id="tempSummary"></span>
-          </div>
-        </div><!-- /.col-lg-4 -->
-        <div class="col-lg-4 time">
-          inside temp<br>
-          sunrise/sunset<br>
-          house state<br>
-          ac temp 1<br>
-          ac temp 2<br>
-          ac temp 3
-        </div><!-- /.col-lg-4 -->
-        <div class="col-lg-4 time">
-          <span id="curTime"></span>
-        </div><!-- /.col-lg-4 -->
-
-      </div><!-- /.row -->
-
-    </div><!-- /.container -->
-
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
     <script src="https://cdn.firebase.com/js/client/1.0.21/firebase.js"></script>
     <script src="./js/jquery-2.1.1.min.js"></script>
     <script src="./js/bootstrap.min.js"></script>
     <script src="./js/moment-2.8.3.js"></script>
     <script src="./js/app.js"></script>
+    <script type="text/javascript">
+        $("#castCarousel").carousel();
+    </script>
   </body>
 </html>
