@@ -15,6 +15,7 @@ var GoogleVoice = require("./GoogleVoice");
 
 function Home(config, fb) {
   this.state = {};
+  this.state.time = {};
   this.harmonyConfig = {};
   var ready = false;
   var _self = this;
@@ -440,9 +441,8 @@ function Home(config, fb) {
   function init() {
     ready = true;
     var timeStarted = Date.now();
-    _self.state.time = {};
     _self.state.time.started = timeStarted;
-    _self.state.time.last_updated = timeStarted
+    _self.state.time.last_updated = timeStarted;
     fb.child("state/time").update({"started": timeStarted});
     log.log("[HOME] Initalizing components.");
     setState("AWAY");
