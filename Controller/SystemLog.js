@@ -1,4 +1,6 @@
 var fs = require("fs");
+var gitHead = require("./version");
+
 
 var DEBUG = true;
 var TO_FIREBASE = false;
@@ -84,6 +86,7 @@ function appStart(appName) {
   } else {
     msg += build("START", "") + "\n";
   }
+  msg += build("START", "Git Head: " + gitHead.head) + "\n";
   msg += build("START", "System Starting") + "\n";
   msg += build("START", "");
   write(msg);
@@ -111,3 +114,4 @@ exports.level = http;
 exports.initFirebase = initFirebase;
 exports.enableFirebase = enableFirebase;
 exports.enableDebug = enableDebug;
+exports.version = gitHead.head;

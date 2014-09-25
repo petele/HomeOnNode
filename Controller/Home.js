@@ -448,6 +448,7 @@ function Home(config, fb) {
     initAwayWatcher();
     _self.emit("ready");
     fbPush("logs/app", {"date": Date.now(), "module": "HOME", "state": "READY"});
+    fbSet("state/version", log.version);
     playSound(config.ready_sound);
   }
 

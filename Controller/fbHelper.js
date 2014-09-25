@@ -17,7 +17,8 @@ function init(key, appName, exit) {
     "started_at": Date.now(),
     "heartbeat": Date.now(),
     "restart": false,
-    "shutdown": false
+    "shutdown": false,
+    "version": log.version
   };
   fb.child("devices/" + appName).update(def);
 
