@@ -138,13 +138,5 @@ process.on('SIGINT', function() {
   exit("SIGINT", 0);
 });
 
-// process.on("uncaughtException", function(err) {
-//   log.error("**** UNCAUGHT EXCEPTION ****");
-//   log.error(err);
-//   log.error("Exiting with error code 2.");
-//   exit("UNCAUGHT_EXCEPTION", 2);
-// });
-
-
 
 init();
