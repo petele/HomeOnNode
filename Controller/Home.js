@@ -188,8 +188,10 @@ function Home(config, fb) {
     if (path) {
       fbObj = fb.child(path);
     }
-    fb.child("state/time").update({"last_updated": Date.now()});
+    var updateTime = Date.now();
+    fb.child("state/time").update({"last_updated": updateTime});
     fbObj.push(value);
+    _self.state.time.last_updated = updateTime;
   }
 
   function fbSet(path, value) {
@@ -197,8 +199,10 @@ function Home(config, fb) {
     if (path) {
       fbObj = fb.child(path);
     }
-    fb.child("state/time").update({"last_updated": Date.now()});
+    var updateTime = Date.now();
+    fb.child("state/time").update({"last_updated": updateTime});
     fbObj.set(value);
+    _self.state.time.last_updated = updateTime;
   }
 
   function setState(state) {
@@ -435,7 +439,11 @@ function Home(config, fb) {
 
   function init() {
     ready = true;
-    fb.child("state/time").update({"started": Date.now()});
+    var timeStarted = Date.now();
+    _self.state.time = {};
+    _self.state.time.started = timeStarted;
+    _self.state.time.last_updated = timeStarted
+    fb.child("state/time").update({"started": timeStarted});
     log.log("[HOME] Initalizing components.");
     setState("AWAY");
     initAC();
@@ -448,6 +456,7 @@ function Home(config, fb) {
     initAwayWatcher();
     _self.emit("ready");
     fbPush("logs/app", {"date": Date.now(), "module": "HOME", "state": "READY"});
+    _self.state.version = log.version;
     fbSet("state/version", log.version);
     playSound(config.ready_sound);
   }

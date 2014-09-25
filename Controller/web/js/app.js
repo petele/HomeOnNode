@@ -31,7 +31,7 @@ function init() {
     msg = msg.replace("[RAIN]", Math.floor(snapshot.precipProbability * 100));
     $("#weatherForecast p").html(msg);
   });
-  
+
   $("#gitHead").text("NYI");
   var now = moment();
   $("#startedAt").text(now.format(timeFormat));
@@ -59,7 +59,7 @@ function addCarouselCountdown(img, date, tripName) {
   var item = $("<div class='item'></div>");
   var image = $("<img>");
   if (img) {
-    img.attr("src", img);
+    image.attr("src", img);
   }
   var cap = $("<div class='carousel-caption'></div>");
   var tripStart = moment(date);
@@ -90,7 +90,7 @@ function addCarouselItem(img, header, message) {
   var item = $("<div class='item'></div>");
   var image = $("<img>");
   if (img) {
-    img.attr("src", img);
+    image.attr("src", img);
   }
   var cap = $("<div class='carousel-caption'></div>");
   var h = $("<h1></h1>").html(header);
