@@ -1,0 +1,6 @@
+{
+  "id": "bedside",
+  "lights": [1,2],
+  "refreshInterval": 800,
+  "interval": 200
+}
