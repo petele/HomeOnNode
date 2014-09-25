@@ -5,6 +5,7 @@ var log = require("./SystemLog");
 var Keys = require("./Keys");
 var fs = require("fs");
 
+var Chromecast = require("./Chromecast");
 var InsideTemperature = require("./InsideTemperature");
 var Firebase = require("firebase");
 var AirConditioner = require("./AirConditioner");
@@ -21,7 +22,7 @@ function Home(config, fb) {
   var _self = this;
 
   var armingTimer, awayTimer;
-  var hue, harmony, airConditioners, insideTemp, doors, gv;
+  var hue, harmony, airConditioners, insideTemp, doors, chromecast, gv;
 
   this.setLights = function(lights, state, source) {
     var response = {
@@ -120,6 +121,13 @@ function Home(config, fb) {
         } catch (ex) {
           log.error("[HOME] Count net set Harmony activity. " + ex.toString());
           response.harmony = ex;
+        }
+      }
+      if (cmd.billboard) {
+        if (cmd.billboard === true) {
+          chromecast.startApp();
+        } else {
+          chromecast.stopApp();
         }
       }
       if (cmd.sound) {
@@ -451,6 +459,7 @@ function Home(config, fb) {
     initInsideTemp();
     initOutsideTemp();
     initDoor();
+    chromecast = new Chromecast("192.168.1.12");
     initHarmony();
     initHue();
     initAwayWatcher();
