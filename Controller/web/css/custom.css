@@ -1,0 +1,36 @@
+html, body {
+  overflow: hidden;
+}
+
+.now {
+  text-align: center;
+  font-size: 6em;
+}
+
+#tempIcon {
+  height: 1.2em;
+}
+
+/* Carousel base class */
+.carousel {
+  height: 550px;
+  margin-bottom: 0;
+}
+/* Since positioning the image, we need to help out the caption */
+.carousel-caption {
+  z-index: 10;
+}
+
+/* Declare heights because of positioning of img element */
+.carousel .item {
+  height: 550px;
+  background-color: #777;
+}
+.carousel-inner > .item > img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  min-width: 100%;
+  min-height: 550px;
+}
+
