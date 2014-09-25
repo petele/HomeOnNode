@@ -22,6 +22,10 @@ git reset --hard
 echo Getting latest version...
 git pull
 
+echo Creating lastest version file...
+last_commit=$(git rev-list HEAD --max-count=1 | cut -c1-7)
+sed "s/\[HEAD\]/$last_commit/g" version.js > v.js && mv v.js version.js
+
 echo Getting latest keyboard commands...
 rm ./keypad.json
 cp ../KeypadConfigs/primary.json ./keypad.json
