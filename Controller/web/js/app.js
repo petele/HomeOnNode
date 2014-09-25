@@ -1,15 +1,18 @@
-
 var curTimeElem;
+var timeFormat = "M/DD/YY h:mm:ss a";
 
+var carouselTemp = [
+  {"type": "countdown", "tripName": "Antartica", "startDate": "2014-12-26", "image": "./images/antartica.jpg", "visible": true},
+  {"type": "message", "header": "Title", "message": "Yay, this is fun", "image": "", "visible": false},
+  {"type": "message", "header": "Title", "message": "Yay, this is fun", "image": "", "visible": false},
+];
 
 function init() {
   window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
   window.castReceiverManager.start();
   curTimeElem = $("#curTime");
   updateTime();
-  updateDays();
   setInterval(updateTime, 1000);
-  setInterval(updateDays, 90000);
   var weatherRef = new Firebase('https://publicdata-weather.firebaseio.com/newyork');
   weatherRef.child('currently').on('value', function(snapshot) {
     snapshot = snapshot.val();
@@ -28,18 +31,77 @@ function init() {
     msg = msg.replace("[RAIN]", Math.floor(snapshot.precipProbability * 100));
     $("#weatherForecast p").html(msg);
   });
-}
-
-function updateDays() {
+  
+  $("#gitHead").text("NYI");
   var now = moment();
-  var tripStart = moment("2014-12-26");
-  var duration = Math.floor(moment.duration(tripStart - now).as("days"));
-  $("#antarcticaCountdown h1").text(duration);
+  $("#startedAt").text(now.format(timeFormat));
+  $("#updatedAt").text(now.format(timeFormat));
+
+  for (var i = 0; i < carouselTemp.length; i++) {
+    var item = carouselTemp[i];
+    if (item.visible === true) {
+      if (item.type === "message") {
+        addCarouselItem(item.image, item.header, item.message);
+      } else if (item.type ==="countdown") {
+        addCarouselCountdown(item.image, item.startDate, item.tripName);
+      }
+    }
+  }
+  $("#castCarousel").carousel();
 }
 
 function updateTime() {
   var now = moment();
   curTimeElem.text(now.format("h:mm a"));
+}
+
+function addCarouselCountdown(img, date, tripName) {
+  var item = $("<div class='item'></div>");
+  var image = $("<img>");
+  if (img) {
+    img.attr("src", img);
+  }
+  var cap = $("<div class='carousel-caption'></div>");
+  var tripStart = moment(date);
+  var h = $("<h1></h1>");
+  var p = $("<p></p>");
+  cap
+    .append(h)
+    .append(p);
+  item
+    .append(image)
+    .append(cap);
+  $("#castCarousel .carousel-inner").append(item);
+
+  var refreshCountdown = function() {
+    var duration = Math.floor(moment.duration(tripStart - moment()).as("hours"));
+    p.text("Hours until " + tripName);
+    if (duration > 1000) {
+      duration = Math.floor(moment.duration(tripStart - moment()).as("days"));
+      p.text("Days until " + tripName);
+    }
+    h.text(duration);
+    setTimeout(refreshCountdown, 60000);
+  }
+  refreshCountdown();
+}
+
+function addCarouselItem(img, header, message) {
+  var item = $("<div class='item'></div>");
+  var image = $("<img>");
+  if (img) {
+    img.attr("src", img);
+  }
+  var cap = $("<div class='carousel-caption'></div>");
+  var h = $("<h1></h1>").html(header);
+  var p = $("<p></p>").html(message);
+  cap
+    .append(h)
+    .append(p);
+  item
+    .append(image)
+    .append(cap);
+  $("#castCarousel .carousel-inner").append(item);
 }
 
 

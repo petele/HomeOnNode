@@ -8,6 +8,11 @@ html, body {
   font-size: 6em;
 }
 
+.versionInfo {
+  text-align: center;
+  font-size: 0.75em;
+}
+
 #tempIcon {
   height: 1.2em;
 }
