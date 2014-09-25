@@ -299,6 +299,7 @@ function Home(config, fb) {
   }
 
   function initHarmony() {
+    _self.state.harmony = {};
     harmony = new Harmony(config.harmony.ip, Keys.keys.harmony);
     harmony.on("activity", function(activity) {
       var activityName = "";
@@ -312,10 +313,10 @@ function Home(config, fb) {
         log.error("[HOME] Error determining Harmony activity.");
         activityName = "ERROR";
       }
-      _self.state.harmony_activity_id = activity;
-      fbSet("state/harmony_activity_id", activity);
-      _self.state.harmony_activity_name = activityName;
-      fbSet("state/harmony_activity_name", activityName);
+      _self.state.harmony.activity_id = activity;
+      fbSet("state/harmony/activity_id", activity);
+      _self.state.harmony.activity_name = activityName;
+      fbSet("state/harmony/activity_name", activityName);
     });
     harmony.on("config", function(cfg) {
       var activities = cfg.activity;

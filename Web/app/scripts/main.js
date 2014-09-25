@@ -244,7 +244,7 @@ function init() {
         .removeClass("label-blue");
     }
   });
-  fb.child("state/harmony_activity_name").on("value", function(snapshot) {
+  fb.child("state/harmony/activity_name").on("value", function(snapshot) {
     var val = snapshot.val();
     if (val === "PowerOff") {
       harmonyActivityNameLabel
