@@ -20,11 +20,11 @@ function init() {
   weatherRef.child('daily/data/0').on('value', function(snapshot) {
     snapshot = snapshot.val();
     $("#weatherForecast h1").text(snapshot.summary);
-    var msg = "High of [HIGH] with a low of [LOW], [RAIN]% chance of precipitation.";
+    var msg = "High of [HIGH]&deg;F with a low of [LOW]&deg;F, [RAIN]% chance of precipitation.";
     msg = msg.replace("[HIGH]", Math.floor(snapshot.temperatureMax));
     msg = msg.replace("[LOW]", Math.floor(snapshot.temperatureMin));
     msg = msg.replace("[RAIN]", Math.floor(snapshot.precipProbability * 100));
-    $("#weatherForecast p").text(msg);
+    $("#weatherForecast p").html(msg);
   });
 }
 

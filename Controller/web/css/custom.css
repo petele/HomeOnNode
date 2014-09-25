@@ -1,5 +1,6 @@
 html, body {
   overflow: hidden;
+  font-family: 'Roboto', sans-serif;
 }
 
 .now {
@@ -14,11 +15,19 @@ html, body {
 /* Carousel base class */
 .carousel {
   height: 550px;
-  margin-bottom: 0;
+  margin-bottom: 20px;
 }
 /* Since positioning the image, we need to help out the caption */
 .carousel-caption {
   z-index: 10;
+}
+
+.carousel-caption h1 {
+  font-size: 6em;
+}
+
+.carousel-caption p {
+  font-size: 2em;
 }
 
 /* Declare heights because of positioning of img element */
