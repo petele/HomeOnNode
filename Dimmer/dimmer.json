@@ -2,5 +2,6 @@
   "id": "bedside",
   "lights": [1,2],
   "refreshInterval": 800,
-  "interval": 200
+  "interval": 200,
+  "hueIP": "192.168.1.210"
 }

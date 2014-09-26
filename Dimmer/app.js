@@ -6,17 +6,17 @@ var Keys = require("../Controller/Keys");
 var PowerMate = require('node-powermate');
 
 var fb, config, powerMate;
-var butPressed; 
-var lightCurrent, lightNew;
+var butPressed, delta;
+var lightCurrent;
 
 log.appStart("Dimmer");
 
 function initPowermate() {
   butPressed = false;
-  lightNew = {};
+  delta = 0;
   lightCurrent = {
-    "on": false,
-    "bri": 0
+    bri: 0,
+    on: true
   };
   try {
     powerMate = new PowerMate();
@@ -33,15 +33,22 @@ function initPowermate() {
 
 function handleButDown(f) {
   butPressed = true;
+  lightCurrent.on = !lightCurrent.on;
+  setLights({"on": lightCurrent.on});
 }
 
 function handleButUp(f) {
   butPressed = false;
-
 }
 
-function handleWheelTurn(delta) {
-
+function handleWheelTurn(d) {
+  if ((lightCurrent.on === true) && (delta < 255) && (delta > -255)) {
+    delta += d;
+  } else if ( (lightCurrent.on === false) && (d > 0)  ) {
+    lightCurrent.bri = d;
+    lightCurrent.on = true;
+    setLights({"on": true, "bri": d})
+  }
 }
 
 function handlePowermateError(err) {
@@ -49,7 +56,17 @@ function handlePowermateError(err) {
 }
 
 function updateLightState() {
-
+  if ((delta !== 0)  &&  (lightCurrent.on)) {
+    var newBri = lightCurrent.bri + delta;
+    if (newBri < 0) {
+      newBri = 0;
+    } else if (newBri > 255) {
+      newBri = 255;
+    }
+    delta = 0;
+    lightCurrent.bri = newBri;
+    setLights({"bri": lightCurrent.bri});
+  }
 }
 
 function getLightState() {
@@ -58,32 +75,43 @@ function getLightState() {
     "path": "/api/" + Keys.keys.hue + "/lights/" + config.lights[0]
   };
   webRequest.request(uri, null, function(resp) {
-    powermateLight.on = resp.state.on;
-    powermateLight.bri = resp.state.bri;
-    if (resp.state.on) {
-      powerMate.setBrightness(resp.state.bri);
-    } else {
-      powerMate.setBrightness(0);
+    try {
+      lightCurrent.on = resp.state.on;
+      lightCurrent.bri = resp.state.bri;
+      if (resp.state.on) {
+        powerMate.setBrightness(resp.state.bri);
+      } else {
+        powerMate.setBrightness(0);
+      }
+    } catch (ex) {
+
     }
   });
 }
 
+function setLights(state) {
+  log.log("[PowerMate] " + lightCurrent.on  + " " + lightCurrent.bri);
+  var ledBri = 0;
+  if (lightCurrent.on === true) {
+    ledBri = lightCurrent.bri;
+  }
+  try {
+    powerMate.setBrightness(ledBri);
+  } catch (ex) {
 
-// function setLights(lights, state) {
-//   log.log("[POWERMATE] Lights " + lights.toString() + " " + JSON.stringify(state));
-//   lights.forEach(function(l) {
-//     var uri = {
-//       "host": config.hueIP,
-//       "path": "/api/" + Keys.keys.hue + "/lights/" + l.toString() + "/state",
-//       "method": "PUT"
-//     }
-//     //delete state.on;
-//     var body = JSON.stringify(state);
-//     webRequest.request(uri, body, function(resp) {
-//       log.debug("[PowerMate] Response" + JSON.stringify(resp));
-//     });
-//   });
-// }
+  }
+  config.lights.forEach(function(l) {
+    var uri = {
+      "host": config.hueIP,
+      "path": "/api/" + Keys.keys.hue + "/lights/" + l.toString() + "/state",
+      "method": "PUT"
+    }
+    var body = JSON.stringify(state);
+    webRequest.request(uri, body, function(resp) {
+      log.debug("[PowerMate] Response" + JSON.stringify(resp));
+    });
+  });
+}
 
 fs.readFile("dimmer.json", {"encoding": "utf8"}, function(err, data) {
   if (err) {
