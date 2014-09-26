@@ -256,6 +256,10 @@ function Home(config, fb) {
     }, 1);
   }
 
+  function initChromecast() {
+    chromecast = new Chromecast(config.chromecast.ip);
+  }
+
   function initInsideTemp() {
     insideTemp = new InsideTemperature(config.temperature.inside.interval);
     if (_self.state.temperature === undefined) {
@@ -455,11 +459,11 @@ function Home(config, fb) {
     log.log("[HOME] Initalizing components.");
     setState("AWAY");
     initAC();
+    initChromecast();
     initGoogleVoice();
     initInsideTemp();
     initOutsideTemp();
     initDoor();
-    chromecast = new Chromecast("192.168.1.12");
     initHarmony();
     initHue();
     initAwayWatcher();
