@@ -22,7 +22,7 @@
     <div id="castCarousel" class="carousel slide" data-ride="carousel">
       <!-- Wrapper for slides -->
       <div class="carousel-inner">
-        <div class="active item" id="weatherForecast">
+        <div class="item" id="weatherForecast">
           <img>
           <div class="carousel-caption">
             <h1></h1>
@@ -42,18 +42,19 @@
     </div>
     <div class="row versionInfo">
       <div class="col-lg-4">
-        Started At <span id="startedAt">N/A</span>
+        Started At <span id="startedAt">unknown</span>
       </div>
       <div class="col-lg-4">
-        Last Updated <span id="updatedAt">N/A</span>
+        Last Updated <span id="updatedAt">unknown</span>
       </div>
       <div class="col-lg-4">
-        Head <span id="gitHead">N/A</span>
+        Head <span id="gitHead">unknown</span>
       </div>
     </div>
 
 
     <script src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+    <script src="./js/keys.js"></script>
     <script src="https://cdn.firebase.com/js/client/1.0.21/firebase.js"></script>
     <script src="./js/jquery-2.1.1.min.js"></script>
     <script src="./js/bootstrap.min.js"></script>

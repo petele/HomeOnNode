@@ -15,6 +15,7 @@ html, body {
 
 #tempIcon {
   height: 1.2em;
+  vertical-align: text-bottom;
 }
 
 /* Carousel base class */
@@ -28,7 +29,7 @@ html, body {
 }
 
 .carousel-caption h1 {
-  font-size: 5em;
+  font-size: 4.5em;
 }
 
 .carousel-caption p {

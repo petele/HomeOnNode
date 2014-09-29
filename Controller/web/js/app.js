@@ -1,11 +1,6 @@
 var curTimeElem;
 var timeFormat = "M/DD/YY h:mm:ss a";
 
-var carouselTemp = [
-  {"type": "countdown", "tripName": "Antartica", "startDate": "2014-12-26", "image": "./images/antartica.jpg", "visible": true},
-  {"type": "message", "header": "Title", "message": "Yay, this is fun", "image": "", "visible": false},
-  {"type": "message", "header": "Title", "message": "Yay, this is fun", "image": "", "visible": false},
-];
 
 function init() {
   window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
@@ -31,32 +26,50 @@ function init() {
     msg = msg.replace("[RAIN]", Math.floor(snapshot.precipProbability * 100));
     $("#weatherForecast p").html(msg);
   });
+}
 
-  $("#gitHead").text("NYI");
-  var now = moment();
-  $("#startedAt").text(now.format(timeFormat));
-  $("#updatedAt").text(now.format(timeFormat));
-
-  for (var i = 0; i < carouselTemp.length; i++) {
-    var item = carouselTemp[i];
-    if (item.visible === true) {
-      if (item.type === "message") {
-        addCarouselItem(item.image, item.header, item.message);
-      } else if (item.type ==="countdown") {
-        addCarouselCountdown(item.image, item.startDate, item.tripName);
+function fbInit() {
+  var fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
+  fb.auth(FBKey, function(error) {
+    if(error) {
+      console.error("[FIREBASE] Auth failed. " + error.toString());
+    } else {
+      console.log("[FIREBASE] Auth success.");
+    }
+  });
+  fb.child("state/version").on("value", function(snapshot) {
+    snapshot = snapshot.val();
+    $("#gitHead").text(snapshot);
+  });
+  fb.child("state/time").on("value", function(snapshot) {
+    snapshot = snapshot.val();
+    $("#startedAt").text(moment(snapshot.started).format(timeFormat));
+    $("#updatedAt").text(moment(snapshot.last_updated).format(timeFormat));
+  });
+  fb.child("carousel").on("value", function(snapshot) {
+    $(".fbCarItem").remove();
+    $("#weatherForecast").addClass("active");
+    snapshot = snapshot.val();
+    for (var i = 0; i < snapshot.length; i++) {
+      var item = snapshot[i];
+      if (item.visible === true) {
+        if (item.type === "message") {
+          addCarouselItem(item.image, item.header, item.message);
+        } else if (item.type ==="countdown") {
+          addCarouselCountdown(item.image, item.startDate, item.tripName);
+        }
       }
     }
-  }
-  $("#castCarousel").carousel();
+    $("#castCarousel").carousel();
+  });
 }
 
 function updateTime() {
-  var now = moment();
-  curTimeElem.text(now.format("h:mm a"));
+  curTimeElem.text(moment().format("h:mm a"));
 }
 
 function addCarouselCountdown(img, date, tripName) {
-  var item = $("<div class='item'></div>");
+  var item = $("<div class='item fbCarItem'></div>");
   var image = $("<img>");
   if (img) {
     image.attr("src", img);
@@ -87,7 +100,7 @@ function addCarouselCountdown(img, date, tripName) {
 }
 
 function addCarouselItem(img, header, message) {
-  var item = $("<div class='item'></div>");
+  var item = $("<div class='item fbCarItem'></div>");
   var image = $("<img>");
   if (img) {
     image.attr("src", img);
@@ -106,3 +119,5 @@ function addCarouselItem(img, header, message) {
 
 
 init();
+fbInit();
+
