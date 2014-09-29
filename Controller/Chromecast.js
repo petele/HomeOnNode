@@ -37,7 +37,7 @@ function Chromecast(ip) {
 
       // display receiver status updates
       receiver.on("message", function(data, broadcast) {
-        log.debug("[CHROMECAST Receiver] " + data.toString());
+        log.debug("[CHROMECAST Receiver] " + JSON.stringify(data));
       });
 
       log.log("[CHROMECAST] Connected.");
@@ -45,7 +45,7 @@ function Chromecast(ip) {
   };
 
   this.stopApp = function() {
-    log.log("[CHROMECAST] Disconnect.")
+    log.log("[CHROMECAST] Disconnect.");
     if (heartbeatId) {
       clearInterval(heartbeatId);
       heartbeatId = null;
@@ -62,7 +62,7 @@ function Chromecast(ip) {
       connection = null;
     }
     connected = false;
-  }
+  };
 
   log.init("[CHROMECAST]");
 }
