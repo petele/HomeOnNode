@@ -27,10 +27,12 @@ handlers:
   upload: index.html
   expiration: "0s"
   login: admin
+  secure: always
 
 - url: /.*
   static_files: 404.html
   upload: 404.html
   application_readable: true
   expiration: "60m"
+  secure: always
 
