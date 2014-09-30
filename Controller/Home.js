@@ -37,6 +37,14 @@ function Home(config, fb) {
     }
     log.log(logMsg);
     response.response = hue.setLights(lights, state);
+    var fbLog = {
+      "time": Date.now(),
+      "type": "light",
+      "lights": lights || [],
+      "state": state || {},
+      "source": source || "--UNKNOWN--"
+    };
+    fbPush("logs/commands", fbLog);
     return response;
   };
 
@@ -134,7 +142,14 @@ function Home(config, fb) {
         playSound(cmd.sound);
       }
     }
-    fbPush("logs/commands", response);
+    var fbLog = {
+      "time": Date.now(),
+      "type": "command",
+      "command": command || "--UNKNOWN--",
+      "modifier": modifier || "--NONE--",
+      "source": source || "--UNKNOWN--"
+    };
+    fbPush("logs/commands", fbLog);
     log.debug(response);
     return response;
   };
@@ -175,7 +190,7 @@ function Home(config, fb) {
         var msg = "[HOME] Invalid temperature (" + temperature;
         msg += ") send to air conditioner [" + id + "]";
         log.debug(msg);
-        response.error ="Temperature out of range.";
+        response.error = "Temperature out of range.";
       }
     } catch (ex) {
       response.error = ex;
@@ -198,10 +213,17 @@ function Home(config, fb) {
     if (path) {
       fbObj = fb.child(path);
     }
-    var updateTime = Date.now();
-    fb.child("state/time").update({"last_updated": updateTime});
-    fbObj.push(value);
-    _self.state.time.last_updated = updateTime;
+    try {
+      var updateTime = Date.now();
+      fb.child("state/time").update({"last_updated": updateTime});
+      fbObj.push(value);
+      _self.state.time.last_updated = updateTime;
+    } catch (ex) {
+      log.error("[HOME] Unable to PUSH data to firebase.");
+      log.error(" - " + ex.toString());
+      log.error(" - FBPath: " + path);
+      log.error(" - Value: " + JSON.stringify(value));
+    }
   }
 
   function fbSet(path, value) {
@@ -209,10 +231,17 @@ function Home(config, fb) {
     if (path) {
       fbObj = fb.child(path);
     }
-    var updateTime = Date.now();
-    fb.child("state/time").update({"last_updated": updateTime});
-    fbObj.set(value);
-    _self.state.time.last_updated = updateTime;
+    try {
+      var updateTime = Date.now();
+      fb.child("state/time").update({"last_updated": updateTime});
+      fbObj.set(value);
+      _self.state.time.last_updated = updateTime;
+    } catch (ex) {
+      log.error("[HOME] Unable to SET data to firebase.");
+      log.error(" - " + ex.toString());
+      log.error(" - FBPath: " + path);
+      log.error(" - Value: " + JSON.stringify(value));
+    }
   }
 
   function setState(state) {
