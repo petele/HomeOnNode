@@ -23,6 +23,18 @@ function init(key, appName, exit) {
   fb.child("devices/" + appName + "/online").onDisconnect().set(false);
   fb.child("devices/" + appName + "/shutdown_at").onDisconnect().set(Date.now());
 
+  fb.child(".info/connected").on("value", function(snapshot) {
+    if (snapshot.val() === true) {
+      log.log("[NETWORK] Connected.");
+      var def = {
+        "heartbeat": Date.now(),
+        "online": true
+      };
+      fb.child("devices/" + appName).update(def);
+    } else {
+      log.warn("[NETWORK] Disconnected.");
+    }
+  });
 
   setInterval(function() {
     fb.child("devices/" + appName + "/heartbeat").set(Date.now());
