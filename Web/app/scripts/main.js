@@ -423,7 +423,8 @@ function init() {
         .append(liFirst)
         .append(liSecond)
         .append(liThird)
-        .append(liFourth);
+        .append(liFourth)
+        .append("<div class='clear'></div>");
       $("#ulCarousel").append(li);
     });
   });
