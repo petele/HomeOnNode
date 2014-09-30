@@ -16,11 +16,13 @@ function init(key, appName, exit) {
   var def = {
     "started_at": Date.now(),
     "heartbeat": Date.now(),
-    "restart": false,
-    "shutdown": false,
-    "version": log.version
+    "version": log.version,
+    "online": true
   };
-  fb.child("devices/" + appName).update(def);
+  fb.child("devices/" + appName).set(def);
+  fb.child("devices/" + appName + "/online").onDisconnect().set(false);
+  fb.child("devices/" + appName + "/shutdown_at").onDisconnect().set(Date.now());
+
 
   setInterval(function() {
     fb.child("devices/" + appName + "/heartbeat").set(Date.now());
