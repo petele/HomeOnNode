@@ -134,6 +134,7 @@ function Home(config, fb) {
         playSound(cmd.sound);
       }
     }
+    fbPush("logs/commands", response);
     log.debug(response);
     return response;
   };
@@ -274,6 +275,7 @@ function Home(config, fb) {
       var val = parseFloat(data.f).toFixed(2);
       _self.state.temperature.inside = val;
       fbSet("state/temperature/inside", val);
+      fbPush("logs/temperature/inside", {"temperature": val, "time": Date.now()});
       log.debug("[HOME] Inside temperature is " + val + "F");
     });
   }
@@ -325,6 +327,7 @@ function Home(config, fb) {
         if (_self.harmonyConfig.activitiesByID) {
           activityName = _self.harmonyConfig.activitiesByID[activity];
         }
+        fbPush("logs/harmony", {"activity": activityName, "time": Date.now()});
         log.log("[HOME] Harmony activity changed: " + activityName);
       } catch (ex) {
         log.error("[HOME] Error determining Harmony activity.");
