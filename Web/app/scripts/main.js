@@ -64,6 +64,8 @@ var timeFormat = "M/DD/YY h:mm:ss a";
       var toShow = elem.dataset["page"];
       var title = elem.innerText;
       showPage(toShow, title);
+      $("nav li a").removeClass("navActive");
+      elem.classList.add("navActive");
       closeMenu();
     }
   });
@@ -99,6 +101,47 @@ function init() {
   butToggleCarouselAdd = $("#butTogAddCar");
   formCarousel = $("#dCarousel form");
   
+  butToggleCarouselAdd.click(function() {
+    if (formCarousel.attr("hidden") === "hidden") {
+      $("#butTogAddCar").css("display", "none");
+      formCarousel.removeAttr("hidden");
+      clearCarouselForm();
+    } else {
+      formCarousel.attr("hidden", "hidden");
+      $("#butTogAddCar").css("display", "inline-block");
+    }
+  });
+  $("#butResetCarItem").click(function() {
+    butToggleCarouselAdd.click();
+  });
+  $("input[name='carType']").on("change", function() {
+    if ($("#carTypeMessage").is(":checked") === true) {
+      $("#carStart").parent().attr("hidden", "hidden");
+      $("#carMessage").parent().removeAttr("hidden");
+    } else {
+      $("#carStart").parent().removeAttr("hidden");
+      $("#carMessage").parent().attr("hidden", "hidden");
+    }
+  });
+  $("#butAddCarItem").click(function() {
+    var item = {};
+    item.header = formCarousel.find("#carHeader").val();
+    item.image = formCarousel.find("#carImage").val();
+    if (formCarousel.find("#carVisible").is(":checked")) {
+      item.visible = true;
+    } else {
+      item.visible = false;
+    }
+    if (formCarousel.find("#carTypeMessage").is(":checked")) {
+      item.type = "message";
+      item.message = formCarousel.find("#carMessage").val();
+    } else {
+      item.type = "countdown";
+      item.startDate = formCarousel.find("#carStart").val();
+    }
+    fb.child("carousel").push(item);
+    clearCarouselForm();
+  });
 
   fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
   fb.auth(fbKey, function(error) {
@@ -293,53 +336,9 @@ function init() {
     var val = snapshot.val();
     $("#gitHead span").text(val);
   });
-  butToggleCarouselAdd.click(function() {
-    if (formCarousel.attr("hidden") === "hidden") {
-      $("#butTogAddCar").css("display", "none");
-      formCarousel.removeAttr("hidden");
-      clearCarouselForm();
-    } else {
-      formCarousel.attr("hidden", "hidden");
-      $("#butTogAddCar").css("display", "inline-block");
-    }
-  });
-  $("#butResetCarItem").click(function() {
-    butToggleCarouselAdd.click();
-  });
-  $("input[name='carType']").on("change", function() {
-    if ($("#carTypeMessage").is(":checked") === true) {
-      console.log("hide")
-      $("#carStart").parent().attr("hidden", "hidden");
-      $("#carMessage").parent().removeAttr("hidden");
-    } else {
-      console.log("show");
-      $("#carStart").parent().removeAttr("hidden");
-      $("#carMessage").parent().attr("hidden", "hidden");
-    }
-  });
-  $("#butAddCarItem").click(function() {
-    var item = {};
-    item.header = formCarousel.find("#carHeader").val();
-    item.image = formCarousel.find("#carImage").val();
-    if (formCarousel.find("#carVisible").is(":checked")) {
-      item.visible = true;
-    } else {
-      item.visible = false;
-    }
-    if (formCarousel.find("#carTypeMessage").is(":checked")) {
-      item.type = "message";
-      item.message = formCarousel.find("#carMessage").val();
-    } else {
-      item.type = "countdown";
-      item.startDate = formCarousel.find("#carStart").val();
-    }
-    fb.child("carousel").push(item);
-    clearCarouselForm();
-  });
   fb.child("carousel").on("value", function(snapshot) {
     $("#ulCarousel li").remove();
     snapshot.forEach(function(childSnap) {
-      console.log(childSnap.val());
       var id = childSnap.name();
       var item = childSnap.val();
       var li = $("<li></li>")

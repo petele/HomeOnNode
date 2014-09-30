@@ -487,3 +487,12 @@ main {
   margin-top: 10px;
   margin-bottom: 20px;
 }
+
+#ulCarousel li {
+  height: 2em;
+  margin-bottom: 10px;
+}
+
+.navActive {
+  background-color: rgba(255, 255, 255, 0.1);
+}
