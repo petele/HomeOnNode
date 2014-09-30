@@ -23,6 +23,7 @@ var acLRLabel, acBRLabel, acKILabel, doorFrontLabel, harmonyActivityNameLabel;
 var modifierList;
 var systemStateLabel, tempInsideLabel, tempOutsideLabel;
 var timeStartedLabel, timeUpdatedLabel;
+var butToggleCarouselAdd, butAddCarouselItem, formCarousel;
 
 var buttonList, lampList, ulState, ulDoor;
 var ulLights;
@@ -95,6 +96,8 @@ function init() {
   ulDoor = $("#ulDoor");
   ulState = $("#ulState");
   modifierList = $("#modifierSelector");
+  butToggleCarouselAdd = $("#butTogAddCar");
+  formCarousel = $("#dCarousel form");
   
 
   fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
@@ -290,6 +293,154 @@ function init() {
     var val = snapshot.val();
     $("#gitHead span").text(val);
   });
+  butToggleCarouselAdd.click(function() {
+    if (formCarousel.attr("hidden") === "hidden") {
+      $("#butTogAddCar").css("display", "none");
+      formCarousel.removeAttr("hidden");
+      clearCarouselForm();
+    } else {
+      formCarousel.attr("hidden", "hidden");
+      $("#butTogAddCar").css("display", "inline-block");
+    }
+  });
+  $("#butResetCarItem").click(function() {
+    butToggleCarouselAdd.click();
+  });
+  $("input[name='carType']").on("change", function() {
+    if ($("#carTypeMessage").is(":checked") === true) {
+      console.log("hide")
+      $("#carStart").parent().attr("hidden", "hidden");
+      $("#carMessage").parent().removeAttr("hidden");
+    } else {
+      console.log("show");
+      $("#carStart").parent().removeAttr("hidden");
+      $("#carMessage").parent().attr("hidden", "hidden");
+    }
+  });
+  $("#butAddCarItem").click(function() {
+    var item = {};
+    item.header = formCarousel.find("#carHeader").val();
+    item.image = formCarousel.find("#carImage").val();
+    if (formCarousel.find("#carVisible").is(":checked")) {
+      item.visible = true;
+    } else {
+      item.visible = false;
+    }
+    if (formCarousel.find("#carTypeMessage").is(":checked")) {
+      item.type = "message";
+      item.message = formCarousel.find("#carMessage").val();
+    } else {
+      item.type = "countdown";
+      item.startDate = formCarousel.find("#carStart").val();
+    }
+    fb.child("carousel").push(item);
+    clearCarouselForm();
+  });
+  fb.child("carousel").on("value", function(snapshot) {
+    $("#ulCarousel li").remove();
+    snapshot.forEach(function(childSnap) {
+      console.log(childSnap.val());
+      var id = childSnap.name();
+      var item = childSnap.val();
+      var li = $("<li></li>")
+        .data("item", item);
+      var header = $("<input type='text'>")
+        .val(item.header)
+        .attr("placeholder", "Header")
+        .change(function() {
+          var self = $(this);
+          var parent = self.parent().parent();
+          parent.find(".bSave").removeAttr("disabled");
+          var item = parent.data("item");
+          item.header = self.val();
+          parent.data("item", item);
+        });
+      var message;
+      if (item.type === "message") {
+        message = $("<input type='text'>").val(item.message);
+      } else {
+        message = $("<input type='date'>").val(item.startDate);
+      }
+      message.attr("placeholder", "Message")
+        .change(function() {
+          var self = $(this);
+          var parent = self.parent().parent();
+          parent.find(".bSave").removeAttr("disabled");
+          var item = parent.data("item");
+          item.message = self.val();
+          parent.data("item", item);
+        });
+      var image = $("<input type='text'>")
+        .val(item.image)
+        .attr("placeholder", "./images/image.png")
+        .change(function() {
+          var self = $(this);
+          var parent = self.parent().parent();
+          parent.find(".bSave").removeAttr("disabled");
+          var item = parent.data("item");
+          item.image = self.val();
+          parent.data("item", item);
+        });
+      var visible = $("<input type='checkbox'>")
+        .prop("checked", item.visible)
+        .change(function() {
+          var self = $(this);
+          var parent = self.parent().parent();
+          parent.find(".bSave").removeAttr("disabled");
+          var item = parent.data("item");
+          item.visible = self.is(":checked");
+          parent.data("item", item);
+        });
+      var butEdit = $("<button>Save</button>")
+        .attr("type", "button")
+        .attr("disabled", "disabled")
+        .addClass("bSave button--primary button--inline")
+        .data("key", id)
+        .click(function() {
+          var parent = $(this).parent().parent();
+          var k = $(this).data("key");
+          fb.child("carousel/" + k).update(parent.data("item"));
+        });
+      var butDelete = $("<button>Delete</button>")
+        .attr("type", "button")
+        .addClass("button--primary button--inline")
+        .data("key", id)
+        .click(function() {
+          var k = $(this).data("key");
+          fb.child("carousel/" + k).remove();
+        });
+      var liFirst = $("<div class='g-medium--half g-wide--1'></div>")
+        .append(header);
+      var liSecond = $("<div class='g-medium--half g-medium--last g-wide--1'></div>")
+        .append(message);
+      var liThird = $("<div class='g-medium--half g-wide--1'></div>")
+        .append(image);
+      var liFourth = $("<div class='g-medium--half g-medium--last g-wide--1 g-wide--last'></div>")
+        .append(visible)
+        .append(butEdit)
+        .append(butDelete);
+      li
+        .data("key", id)
+        .append(liFirst)
+        .append(liSecond)
+        .append(liThird)
+        .append(liFourth);
+      $("#ulCarousel").append(li);
+    });
+  });
+}
+
+function clearCarouselForm() {
+  formCarousel.find("#carHeader").val("");
+  formCarousel.find("#carImage").val("");
+  formCarousel.find("#carStart").val("");
+  formCarousel.find("#carMessage")
+    .val("")
+    .parent().removeAttr("hidden");
+  formCarousel.find("#carVisible").prop("checked", true);
+  formCarousel.find("#carTypeMessage").prop("checked", true);
+  formCarousel.find("#carStart").parent().attr("hidden", "hidden");
+
 }
 
 function commandPressed(evt) {

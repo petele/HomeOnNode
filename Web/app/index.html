@@ -48,6 +48,7 @@
         <li><a data-page="#dStatus">Status</a></li>
         <li><a data-page="#dState">State</a></li>
         <li><a data-page="#dDoor">Door</a></li>
+        <li><a data-page="#dCarousel">Carousel</a></li>
       </ul>
     </nav>
 
@@ -118,6 +119,48 @@
       </div>
       <div id="dDoor" class="page" hidden>
         <ul id="ulDoor" class="list--reset">
+        </ul>
+      </div>
+      <div id="dCarousel" class="page" hidden>
+        <button type="button" id="butTogAddCar" class="button--primary">Add New</button>
+        <form hidden>
+          <div class="g-medium--half g-wide--1">
+            <label><span>Header</span>
+              <input type="text" required id="carHeader" name="carHeader" placeholder="Header">
+            </label>
+          </div>
+          <div class="g-medium--half g-medium--last g-wide--1">
+            <label><span>Message</span>
+              <input type="text" id="carMessage" name="carMessage" placeholder="Message">
+            </label>
+            <label><span>Start Date</span>
+              <input type="date" id="carStart" name="carStart">
+            </label>
+          </div>
+          <div class="g-medium--half g-wide--1">
+            <label><span>Image</span>
+              <input type="text" id="carImage" name="carImage" placeholder="./images/image.png">
+            </label>
+          </div>
+          <div class="g-medium--half g-medium--last g-wide--1 g-wide--last">
+            <label>
+              <input type="checkbox" id="carVisible" name="carVisible">
+              Visible
+            </label>
+            <br>
+            <label>
+              <input type="radio" id="carTypeMessage" value="message" name="carType"> Message
+            </label>
+            <label>
+              <input type="radio" id="carTypeCountdown" value="countdown" name="carType"> Count Down
+            </label>
+          </div>
+          <div class="g-medium--full g-wide--full">
+            <button type="button" class="button--primary" id="butAddCarItem">Add New</button>
+            <button type="button" class="button--primary" id="butResetCarItem">Cancel</button>
+          </div>
+        </form>
+        <ul id="ulCarousel" class="list--reset">
         </ul>
       </div>
     </main>

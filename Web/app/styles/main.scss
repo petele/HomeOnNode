@@ -367,7 +367,6 @@ main {
   src: local('Roboto Condensed Bold Italic'), local('RobotoCondensed-BoldItalic'), url(/fonts/RobotoCondensed-BoldItalic.eot) format('embedded-opentype'), url(/fonts/RobotoCondensed-BoldItalic.woff) format('woff');
 }
 
-
 .page {
 
 }
@@ -449,4 +448,42 @@ main {
 
 #buttonList {
   margin-bottom: 50px;
+}
+
+#dCarousel form label span {
+  display: block;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+.button--inline {
+  padding: 0;
+  margin-left: 4px;
+  width: 80px;
+  height: 1.5em;
+  vertical-align: middle;
+}
+
+.button--inline:disabled {
+  background-color: hsl(217, 89%, 80%);
+  border: 1px solid hsl(217, 89%, 70%);
+}
+
+#dCarousel input[type='text'],
+#dCarousel input[type='date'] {
+  padding: 6px 12px;
+  display: block;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  height: 2em;
+}
+
+#butTogAddCar {
+  margin-top: 10px;
+}
+
+#dCarousel form div:last-of-type {
+  margin-top: 10px;
+  margin-bottom: 20px;
 }
