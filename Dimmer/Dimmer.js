@@ -13,7 +13,8 @@ function Dimmer(config) {
     bri: 0,
     on: true
   };
-  
+  var self = this;
+
   function init() {
     delta = 0;
     powerMate = new PowerMate();
@@ -26,23 +27,23 @@ function Dimmer(config) {
   }
 
   function handleButDown() {
-    this.butPressed = true;
-    this.lightCurrent.on = !this.lightCurrent.on;
-    setLights({"on": this.lightCurrent.on});
+    self.butPressed = true;
+    self.lightCurrent.on = !self.lightCurrent.on;
+    setLights({"on": self.lightCurrent.on});
     log.debug("[PowerMate] Button Down");
   }
 
   function handleButUp() {
-    this.butPressed = false;
+    self.butPressed = false;
     log.debug("[PowerMate] Button Up");
   }
 
   function handleWheelTurn(d) {
-    if ((this.lightCurrent.on === true) && (delta < 255) && (delta > -255)) {
+    if ((self.lightCurrent.on === true) && (delta < 255) && (delta > -255)) {
       delta += d;
-    } else if ((this.lightCurrent.on === false) && (d > 0)) {
-      this.lightCurrent.bri = d;
-      this.lightCurrent.on = true;
+    } else if ((self.lightCurrent.on === false) && (d > 0)) {
+      self.lightCurrent.bri = d;
+      self.lightCurrent.on = true;
       setLights({"on": true, "bri": d});
     }
     log.debug("[PowerMate] Wheel Turn - Delta: " + d.toString());
@@ -53,16 +54,16 @@ function Dimmer(config) {
   }
 
   function updateLightState() {
-    if ((delta !== 0)  &&  (this.lightCurrent.on)) {
-      var newBri = this.lightCurrent.bri + delta;
+    if ((delta !== 0)  &&  (self.lightCurrent.on)) {
+      var newBri = self.lightCurrent.bri + delta;
       if (newBri < 0) {
         newBri = 0;
       } else if (newBri > 255) {
         newBri = 255;
       }
       delta = 0;
-      this.lightCurrent.bri = newBri;
-      setLights({"bri": this.lightCurrent.bri});
+      self.lightCurrent.bri = newBri;
+      setLights({"bri": self.lightCurrent.bri});
     }
   }
 
@@ -73,8 +74,8 @@ function Dimmer(config) {
     };
     webRequest.request(uri, null, function(resp) {
       try {
-        this.lightCurrent.on = resp.state.on;
-        this.lightCurrent.bri = resp.state.bri;
+        self.lightCurrent.on = resp.state.on;
+        self.lightCurrent.bri = resp.state.bri;
         if (resp.state.on) {
           powerMate.setBrightness(resp.state.bri);
         } else {
@@ -87,10 +88,10 @@ function Dimmer(config) {
   }
 
   function setLights(state) {
-    log.log("[PowerMate] " + this.lightCurrent.on  + " " + this.lightCurrent.bri);
+    log.log("[PowerMate] " + self.lightCurrent.on  + " " + self.lightCurrent.bri);
     var ledBri = 0;
-    if (this.lightCurrent.on === true) {
-      ledBri = this.lightCurrent.bri;
+    if (self.lightCurrent.on === true) {
+      ledBri = self.lightCurrent.bri;
     }
     try {
       powerMate.setBrightness(ledBri);
