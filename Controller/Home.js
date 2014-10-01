@@ -126,16 +126,14 @@ function Home(config, fb) {
         try {
           var activityID = _self.harmonyConfig.activitiesByName[cmd.harmony];
           response.harmony = harmony.setActivity(activityID);
+          if (activityID === -1) {
+            chromecast.stopApp();
+          } else if (cmd.billboard === true) {
+            chromecast.startApp();
+          }
         } catch (ex) {
-          log.error("[HOME] Count net set Harmony activity. " + ex.toString());
+          log.error("[HOME] Count not set Harmony activity. " + ex.toString());
           response.harmony = ex;
-        }
-      }
-      if (cmd.billboard) {
-        if (cmd.billboard === true) {
-          chromecast.startApp();
-        } else {
-          chromecast.stopApp();
         }
       }
       if (cmd.sound) {
