@@ -470,13 +470,15 @@ main {
 }
 
 #dCarousel input[type='text'],
-#dCarousel input[type='date'] {
-  padding: 6px 12px;
+#dCarousel input[type='date'],
+#dCarousel input[type='datetime-local'] {
+  padding: 6px 6px;
   display: block;
   width: 100%;
   border: 1px solid #ccc;
   border-radius: 4px;
   height: 2em;
+  font-size: 16px;
 }
 
 #butTogAddCar {

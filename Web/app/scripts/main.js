@@ -124,23 +124,31 @@ function init() {
     }
   });
   $("#butAddCarItem").click(function() {
-    var item = {};
-    item.header = formCarousel.find("#carHeader").val();
-    item.image = formCarousel.find("#carImage").val();
-    if (formCarousel.find("#carVisible").is(":checked")) {
-      item.visible = true;
+    if ($("form")[0].checkValidity() === true) {
+      var item = {};
+      item.header = formCarousel.find("#carHeader").val();
+      item.image = formCarousel.find("#carImage").val();
+      if (formCarousel.find("#carVisible").is(":checked")) {
+        item.visible = true;
+      } else {
+        item.visible = false;
+      }
+      if (formCarousel.find("#carTypeMessage").is(":checked")) {
+        item.type = "message";
+        item.message = formCarousel.find("#carMessage").val();
+      } else {
+        item.type = "countdown";
+        var tempDate = formCarousel.find("#carStart").val();
+        console.log("tempDate", tempDate);
+        tempDate = moment(tempDate);
+        console.log("tempDate", tempDate);
+        item.startDate = tempDate.format();
+      }
+      fb.child("carousel").push(item);
+      clearCarouselForm();
     } else {
-      item.visible = false;
+      console.log("Form is not valid!");
     }
-    if (formCarousel.find("#carTypeMessage").is(":checked")) {
-      item.type = "message";
-      item.message = formCarousel.find("#carMessage").val();
-    } else {
-      item.type = "countdown";
-      item.startDate = formCarousel.find("#carStart").val();
-    }
-    fb.child("carousel").push(item);
-    clearCarouselForm();
   });
 
   fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
@@ -355,10 +363,11 @@ function init() {
           parent.data("item", item);
         });
       var message;
-      if (item.type === "message") {
-        message = $("<input type='text'>").val(item.message);
+      if ((item.type === "countdown") || (item.type === "tripit")) {
+        var s = moment(item.startDate);
+        message = $("<input type='datetime-local'>").val(s.format("YYYY-MM-DDTHH:mm"));
       } else {
-        message = $("<input type='date'>").val(item.startDate);
+        message = $("<input type='text'>").val(item.message);
       }
       message.attr("placeholder", "Message")
         .change(function() {
