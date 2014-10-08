@@ -24,7 +24,7 @@ function init() {
     msg = msg.replace("[HIGH]", Math.floor(snapshot.temperatureMax));
     msg = msg.replace("[LOW]", Math.floor(snapshot.temperatureMin));
     msg = msg.replace("[RAIN]", Math.floor(snapshot.precipProbability * 100));
-    msg = msg.replace("[PRECIPTYPE]", snapshot.precipType);
+    msg = msg.replace("[PRECIPTYPE]", snapshot.precipType || "rain");
     $("#weatherForecast p").html(msg);
   });
 }
@@ -58,7 +58,7 @@ function fbInit() {
         if (item.type === "message") {
           header = item.header;
           message = item.message;
-        } else if (item.type ==="countdown") {
+        } else if ((item.type === "countdown") || (item.type === "tripit")) {
           var tripStart = moment(item.startDate);
           var duration = Math.floor(moment.duration(tripStart - moment()).as("hours"));
           header = duration + " hours";
