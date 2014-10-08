@@ -442,14 +442,6 @@ function Home(config, fb) {
     });
   }
 
-  function initAwayWatcher() {
-    awayTimer = setInterval(function() {
-      if (_self.state.system_state === "AWAY") {
-        _self.set("ALL_LIGHTS", "Off", "AWAY_TIMER");
-      }
-    }, config.away_watch_timer);
-  }
-
   function loadConfig() {
     log.log("[HOME] Reading config from Firebase.");
     fb.child("config").on("value", function(snapshot) {
@@ -478,7 +470,6 @@ function Home(config, fb) {
     initDoor();
     initHarmony();
     initHue();
-    initAwayWatcher();
     _self.emit("ready");
     fbPush("logs/app", {"date": Date.now(), "module": "HOME", "state": "READY"});
     _self.state.version = log.version;
