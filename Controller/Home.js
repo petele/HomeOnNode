@@ -4,6 +4,7 @@ var exec = require("child_process").exec;
 var log = require("./SystemLog");
 var Keys = require("./Keys");
 var fs = require("fs");
+var moment = require("moment");
 
 var Chromecast = require("./Chromecast");
 var InsideTemperature = require("./InsideTemperature");
@@ -37,14 +38,6 @@ function Home(config, fb) {
     }
     log.log(logMsg);
     response.response = hue.setLights(lights, state);
-    var fbLog = {
-      "time": Date.now(),
-      "type": "light",
-      "lights": lights || [],
-      "state": state || {},
-      "source": source || "--UNKNOWN--"
-    };
-    fbPush("logs/commands", fbLog);
     return response;
   };
 
@@ -140,14 +133,6 @@ function Home(config, fb) {
         playSound(cmd.sound);
       }
     }
-    var fbLog = {
-      "time": Date.now(),
-      "type": "command",
-      "command": command || "--UNKNOWN--",
-      "modifier": modifier || "--NONE--",
-      "source": source || "--UNKNOWN--"
-    };
-    fbPush("logs/commands", fbLog);
     log.debug(response);
     return response;
   };
@@ -212,10 +197,9 @@ function Home(config, fb) {
       fbObj = fb.child(path);
     }
     try {
-      var updateTime = Date.now();
-      fb.child("state/time").update({"last_updated": updateTime});
+      fb.child("state/time").update({"last_updated": moment().format("YYYY-MM-DDTHH:mm:ss.sss")});
       fbObj.push(value);
-      _self.state.time.last_updated = updateTime;
+      _self.state.time.last_updated = Date.now();
     } catch (ex) {
       log.error("[HOME] Unable to PUSH data to firebase.");
       log.error(" - " + ex.toString());
@@ -230,10 +214,9 @@ function Home(config, fb) {
       fbObj = fb.child(path);
     }
     try {
-      var updateTime = Date.now();
-      fb.child("state/time").update({"last_updated": updateTime});
+      fb.child("state/time").update({"last_updated": moment().format("YYYY-MM-DDTHH:mm:ss.sss")});
       fbObj.set(value);
-      _self.state.time.last_updated = updateTime;
+      _self.state.time.last_updated = Date.now();
     } catch (ex) {
       log.error("[HOME] Unable to SET data to firebase.");
       log.error(" - " + ex.toString());
@@ -350,11 +333,10 @@ function Home(config, fb) {
     harmony.on("activity", function(activity) {
       var activityName = "";
       try {
-        var activityName = activity;
+        activityName = activity;
         if (_self.harmonyConfig.activitiesByID) {
           activityName = _self.harmonyConfig.activitiesByID[activity];
         }
-        fbPush("logs/harmony", {"activity": activityName, "time": Date.now()});
         log.log("[HOME] Harmony activity changed: " + activityName);
       } catch (ex) {
         log.error("[HOME] Error determining Harmony activity.");

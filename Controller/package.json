@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "body-parser": "^1.6.5",
+    "castv2": "~0.1.4",
     "deep-diff": "^0.2.0",
     "express": "^4.8.5",
     "express-params": "0.0.3",
@@ -18,10 +19,10 @@
     "jade": "^1.5.0",
     "keypress": "^0.2.1",
     "method-override": "^2.1.3",
+    "moment": "^2.8.3",
     "multer": "^0.1.4",
     "node-xmpp": "^1.0.0-alpha2",
-    "onoff": "~0.3.2",
-    "castv2": "~0.1.4"
+    "onoff": "~0.3.2"
   },
   "devDependencies": {}
 }

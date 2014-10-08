@@ -1,7 +1,9 @@
 var Firebase = require("firebase");
 var log = require("./SystemLog");
+var moment = require("moment");
 
 function init(key, appName, exit) {
+  var timeFormat = "YYYY-MM-DDTHH:mm:ss.sss";
   var fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
   appName = appName.toLowerCase();
 
@@ -13,21 +15,22 @@ function init(key, appName, exit) {
     }
   });
 
+  var started_at = moment().format(timeFormat);
   var def = {
-    "started_at": Date.now(),
-    "heartbeat": Date.now(),
+    "started_at": started_at,
+    "heartbeat": started_at,
     "version": log.version,
     "online": true
   };
   fb.child("devices/" + appName).set(def);
   fb.child("devices/" + appName + "/online").onDisconnect().set(false);
-  fb.child("devices/" + appName + "/shutdown_at").onDisconnect().set(Date.now());
+  fb.child("devices/" + appName + "/shutdown_at").onDisconnect().set(Firebase.ServerValue.TIMESTAMP);
 
   fb.child(".info/connected").on("value", function(snapshot) {
     if (snapshot.val() === true) {
       log.log("[NETWORK] Connected.");
       var def = {
-        "heartbeat": Date.now(),
+        "heartbeat": moment().format(timeFormat),
         "online": true
       };
       fb.child("devices/" + appName).update(def);
@@ -37,7 +40,7 @@ function init(key, appName, exit) {
   });
 
   setInterval(function() {
-    fb.child("devices/" + appName + "/heartbeat").set(Date.now());
+    fb.child("devices/" + appName + "/heartbeat").set(moment().format(timeFormat));
   }, 60000);
 
   log.initFirebase(fb, appName);
