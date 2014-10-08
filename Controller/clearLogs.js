@@ -10,26 +10,34 @@ function init() {
     if(error) {
 
     } else {
-      cleanLogs("logs/app", 90);
-      cleanLogs("logs/door", 365);
-      cleanLogs("logs/system_state", 365);
+      cleanLogs("logs/app", 30);
+      cleanLogs("logs/door", 120);
+      cleanLogs("logs/system_state", 120);
+      cleanLogs("logs/commands", 7);
+      cleanLogs("logs/harmony", 30);
+      cleanLogs("logs/temperature/inside", 90);
     }
   });
 }
 
 function cleanLogs(path, maxAgeDays) {
   numRunning++;
+  var now = Date.now();
   console.log("Cleaning path", path);
   fb.child(path).once("value", function(snapshot) {
     var maxAgeMilli = 60 * 60 * 24 * maxAgeDays * 1000;
-    var now = Date.now();
+    var countTotal = 0;
+    var countRemoved = 0;
     snapshot.forEach(function(childSnapshot) {
+      countTotal++;
       var age = now - childSnapshot.val().date;
       if (age > maxAgeMilli) {
+        countRemoved++;
         console.log("Removed", path, childSnapshot.val());
         childSnapshot.ref().remove();
       }
     });
+    console.log("Cleaned", path, " checked ", countTotal, " removed ", countRemoved);
     numRunning--;
     exitWhenDone();
   });
