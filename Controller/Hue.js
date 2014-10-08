@@ -64,8 +64,12 @@ function Hue(interval, key, ip) {
   this.setLights = function(lights, command, callback) {
     var response = [];
     lights.forEach(function(elem) {
-      var path = ["lights", elem, "state"].join("/");
-      path = path.replace("[ID]", elem);
+      var path;
+      if (elem === 0) {
+        path = "groups/0/action";
+      } else {
+        path = ["lights", elem, "state"].join("/");
+      }
       if ((command === "UP") || (command === "DOWN")) {
         // get the current brightness
         var light;
