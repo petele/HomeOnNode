@@ -5,7 +5,8 @@
   "private": true,
   "dependencies": {
     "firebase": "^1.0.19",
-    "onoff": "~0.3.2"
+    "onoff": "~0.3.2",
+    "moment": "~2.8.3"
   },
   "devDependencies": {}
 }
