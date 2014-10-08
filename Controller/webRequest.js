@@ -7,7 +7,8 @@ function makeRequest(uri, body, callback) {
   var request;
   var options = {
     hostname: uri.host,
-    path: uri.path
+    path: uri.path,
+    headers: {}
   };
   if (uri.port) {
     options.port = uri.port;
@@ -16,17 +17,18 @@ function makeRequest(uri, body, callback) {
     options.method = uri.method;
   }
   if (body) {
-    options.headers = {
-      "Content-Type": "application/json",
-      "Content-Length": body.length
-    }
+    options.headers["Content-Type"] = "application/json";
+    options.headers["Content-Length"] = body.length;
+  }
+  if (uri.authorization) {
+    options.headers["Authorization"] = uri.authorization;
   }
 
   function handleResponse(response) {
     var result = "";
     response.setEncoding("utf8");
     response.on("data", function(chunk) {
-      result += chunk
+      result += chunk;
     });
     response.on("end", function() {
       log.debug("[WebRequest] Response: " + result);
