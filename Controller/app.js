@@ -93,6 +93,15 @@ function init() {
             }
           });
         });
+        setInterval(function() {
+          loadAndRunJS("cron15.js");
+        }, 15*60*1000);
+        setInterval(function() {
+          loadAndRunJS("cron60.js");
+        }, 60*60*1000);
+        setInterval(function() {
+          loadAndRunJS("cronDaily.js");
+        }, 24*60*60*1000);
       } catch (ex) {
         log.error("[APP] Error parsing local config.json " + ex.toString());
         exit("ConfigError", 1);
@@ -138,5 +147,30 @@ process.on('SIGINT', function() {
   exit("SIGINT", 0);
 });
 
+
+function loadAndRunJS(file, callback) {
+  log.log("[LoadAndRun] Trying to and run: " + file);
+  fs.readFile(file, function(err, data) {
+    if (err) {
+      log.error("[LoadAndRun] Unable to load file.");
+      if (callback) {
+        callback(err, file);
+      }
+    } else {
+      try {
+        eval(data.toString());
+        log.log("[LoadAndRun] Completed.");
+      } catch (exception) {
+        log.error("[LoadAndRun]" + JSON.stringify(exception));
+        if (callback) {
+          callback(exception, file);
+        }
+      }
+    }
+    if (callback) {
+      callback(null, file);
+    }
+  });
+}
 
 init();
