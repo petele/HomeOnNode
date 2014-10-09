@@ -9,6 +9,7 @@ check_exit_code() {
   else
     echo "Unknown exit code: ${1}"
     echo "${1}" >> exitcodes.txt
+    ./error.sh
   fi
 }
 
