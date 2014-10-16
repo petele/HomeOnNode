@@ -16,12 +16,25 @@ function Chromecast(ip) {
 
     try {
       client = new Client();
+      client.on("error", function(e) {
+        log.exception("[ChromeCast] Client error", e);
+      });
       client.connect(ip, function() {
 
         // create various namespace handlers
         connection = client.createChannel('sender-0', 'receiver-0', 'urn:x-cast:com.google.cast.tp.connection', 'JSON');
         heartbeat  = client.createChannel('sender-0', 'receiver-0', 'urn:x-cast:com.google.cast.tp.heartbeat', 'JSON');
         receiver   = client.createChannel('sender-0', 'receiver-0', 'urn:x-cast:com.google.cast.receiver', 'JSON');
+
+        connection.on("error", function(e) {
+          log.exception("[ChromeCast] Connection error", e);
+        });
+        heartbeat.on("error", function(e) {
+          log.exception("[ChromeCast] Heartbeat error", e);
+        });
+        receiver.on("error", function(e) {
+          log.exception("[ChromeCast] Receiver error", e);
+        });
 
         // establish virtual connection to the receiver
         connection.send({ type: "CONNECT" });
