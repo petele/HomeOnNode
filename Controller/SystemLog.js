@@ -1,5 +1,6 @@
 var fs = require("fs");
 var gitHead = require("./version");
+var moment = require("moment");
 
 
 var DEBUG = true;
@@ -23,15 +24,7 @@ function enableDebug(enabled) {
 }
 
 function getDateString() {
-  var now = new Date();
-  var result = now.getFullYear() + "-";
-  result += ("00" + (now.getMonth()+1).toString()).slice(-2) + "-";
-  result += ("00" + (now.getDate().toString())).slice(-2) + "T";
-  result += ("00" + (now.getHours().toString())).slice(-2) + ":";
-  result += ("00" + (now.getMinutes().toString())).slice(-2) + ":";
-  result += ("00" + (now.getSeconds().toString())).slice(-2) + ".";
-  result += ("000" + (now.getMilliseconds().toString())).slice(-3);
-  return result;
+  return moment().format("YYYY-MM-DDTHH:mm:ss.sss");
 }
 
 function build(level, message) {
@@ -62,6 +55,19 @@ function warn(message) {
 
 function error(message) {
   write(build("ERROR", message));
+}
+
+function exception(message, ex) {
+  var msg = build("EXCPT", message);
+  if (ex) {
+    if (typeof message === "object") {
+      ex = JSON.stringify(ex);
+    } else {
+      ex = ex.toString();
+    }
+    msg += "\n" + ex;
+  }
+  write(msg);
 }
 
 function debug(message) {
@@ -104,6 +110,7 @@ function appStop(receivedFrom) {
 
 exports.log = log;
 exports.error = error;
+exports.exception = exception;
 exports.debug = debug;
 exports.warn = warn;
 exports.appStart = appStart;
