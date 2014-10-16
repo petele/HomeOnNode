@@ -7,11 +7,14 @@ function init(key, appName, exit) {
   var fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
   appName = appName.toLowerCase();
 
-  fb.auth(key, function(error) {
-    if(error) {
+  fb.authWithCustomToken(key, function(error, authToken) {
+    if (error) {
       log.error("[FIREBASE] Auth failed. " + error.toString());
     } else {
       log.log("[FIREBASE] Auth success.");
+      if (authToken) {
+        log.debug("[FireBase] Auth Token: " + JSON.stringify(authToken));
+      }
     }
   });
 
