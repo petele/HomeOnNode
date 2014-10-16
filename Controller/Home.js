@@ -73,7 +73,7 @@ function Home(config, fb) {
               response.hue.push(hue.setLights(cmd.hue[i].lights, hue_cmd));
             } catch (ex) {
               response.hue.push(ex);
-              log.error("[HOME] Could not set Hue. " + ex.toString());
+              log.exception("[HOME] Could not set Hue. ", ex);
             }
           } else {
             var msg = "Invalid modifier (" + modifier + ") for Hue.";
@@ -91,7 +91,7 @@ function Home(config, fb) {
           try {
             curTemp = parseInt(curTemp, 10);
           } catch (ex) {
-            log.error("[HOME] Current AirConditioner[" + acID + "] Temp not an integer. " + curTemp);
+            log.exception("[HOME] Current AirConditioner[" + acID + "] Temp not an integer. " + curTemp, ex);
             curTemp = config.airconditioners.default_temperature;
           }
           var newTemp;
@@ -125,7 +125,7 @@ function Home(config, fb) {
             chromecast.startApp();
           }
         } catch (ex) {
-          log.error("[HOME] Count not set Harmony activity. " + ex.toString());
+          log.exception("[HOME] Count not set Harmony activity. ", ex);
           response.harmony = ex;
         }
       }
@@ -157,7 +157,7 @@ function Home(config, fb) {
     try {
       temperature = parseInt(temperature, 10);
     } catch (ex) {
-      log.error("[HOME] New AirConditioner temp not an integer: " + temperature);
+      log.exception("[HOME] New AirConditioner temp not an integer: " + temperature, ex);
       response.warning("Temperature was not an int, used default temp instead.");
       temperature = config.airconditioners.default_temperature;
     }
@@ -176,6 +176,7 @@ function Home(config, fb) {
         response.error = "Temperature out of range.";
       }
     } catch (ex) {
+      log.exception("[HOME] Error setting AirConditioner temperature: " + temperature, ex);
       response.error = ex;
     }
 
@@ -201,8 +202,7 @@ function Home(config, fb) {
       fbObj.push(value);
       _self.state.time.last_updated = Date.now();
     } catch (ex) {
-      log.error("[HOME] Unable to PUSH data to firebase.");
-      log.error(" - " + ex.toString());
+      log.exception("[HOME] Unable to PUSH data to firebase.", ex);
       log.error(" - FBPath: " + path);
       log.error(" - Value: " + JSON.stringify(value));
     }
@@ -218,8 +218,7 @@ function Home(config, fb) {
       fbObj.set(value);
       _self.state.time.last_updated = Date.now();
     } catch (ex) {
-      log.error("[HOME] Unable to SET data to firebase.");
-      log.error(" - " + ex.toString());
+      log.exception("[HOME] Unable to SET data to firebase.", ex);
       log.error(" - FBPath: " + path);
       log.error(" - Value: " + JSON.stringify(value));
     }
@@ -245,7 +244,7 @@ function Home(config, fb) {
       } catch (ex) {
         _self.set("GV_ERROR");
         var msg = "[HOME] Error checking GVoice messages on HOME state change.";
-        log.error(msg);
+        log.exception(msg, ex);
       }
     }
     _self.state.system_state = state;
@@ -339,7 +338,7 @@ function Home(config, fb) {
         }
         log.log("[HOME] Harmony activity changed: " + activityName);
       } catch (ex) {
-        log.error("[HOME] Error determining Harmony activity.");
+        log.exception("[HOME] Error determining Harmony activity.", ex);
         activityName = "ERROR";
       }
       _self.state.harmony.activity_id = activity;

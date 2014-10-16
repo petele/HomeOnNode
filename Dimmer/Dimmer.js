@@ -82,7 +82,7 @@ function Dimmer(config) {
           powerMate.setBrightness(0);
         }
       } catch (ex) {
-        log.error("[PowerMate] Error getting light state: " + ex.toString());
+        log.exception("[PowerMate] Error getting light state: ", ex);
       }
     });
   }
@@ -96,7 +96,7 @@ function Dimmer(config) {
     try {
       powerMate.setBrightness(ledBri);
     } catch (ex) {
-      log.warn("[PowerMate] Error setting PowerMate brightness: " + ex.toString());
+      log.exception("[PowerMate] Error setting PowerMate brightness: ", ex);
     }
     config.lights.forEach(function(l) {
       var uri = {

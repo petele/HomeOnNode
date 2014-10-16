@@ -103,7 +103,7 @@ function init() {
           loadAndRunJS("cronDaily.js");
         }, 24*60*60*1000);
       } catch (ex) {
-        log.error("[APP] Error parsing local config.json " + ex.toString());
+        log.exception("[APP] Error parsing local config.json ", ex);
         exit("ConfigError", 1);
       }
     }
@@ -111,8 +111,7 @@ function init() {
 
   fs.readFile("./keypad.json", {"encoding": "utf8"}, function(err, data) {
     if (err) {
-      log.error("[APP] Error reading local keypad.json.");
-      log.debug("[APP] Error was: " + String(err));
+      log.exception("[APP] Error reading local keypad.json.", err);
       log.warn("[APP]");
       log.warn("[APP] No keyboard functionality will be available for this session.");
       log.warn("[APP]");

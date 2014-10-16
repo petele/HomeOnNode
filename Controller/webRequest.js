@@ -36,7 +36,7 @@ function makeRequest(uri, body, callback) {
         try {
           callback(JSON.parse(result));
         } catch (ex) {
-          log.error("[WebRequest] Response Error: " + ex);
+          log.exception("[WebRequest] Response Error: ", ex);
           callback({"error": ex});
         }
       }
