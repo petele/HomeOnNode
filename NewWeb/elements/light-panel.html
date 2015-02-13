@@ -1,0 +1,99 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-dropdown/paper-dropdown.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/core-menu/core-menu.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/core-icons/av-icons.html">
+<polymer-element name="light-panel" attributes="devices modifiers">
+  <template>
+    <style type="text/css">
+      paper-button {
+        min-width: 100px;
+        min-height: 48px;
+        background-color: white;
+        text-transform: none;
+        margin: 6px;
+      }
+      paper-button[raised] {
+        background: #4285f4;
+        color: #fff;
+      }
+
+      @media screen and (min-width: 500px) {
+        paper-button {
+          min-width: 128px;
+        }
+      }
+      @media screen and (min-width: 900px) {
+        paper-button {
+          min-width: 148px;
+        }
+      }
+
+    </style>
+    <div layout start-justified wrap horizontal center>
+      <paper-icon-button on-tap="{{tapOn}}" icon="settings-power"></paper-icon-button>
+      <paper-dropdown-menu label="Default" flex>
+        <paper-dropdown class="dropdown">
+          <core-menu id="coreMenu" class="menu" valueattr="modifier" flex on-core-select="{{setModifier}}">
+            <template repeat="{{modifier in modifiers}}">
+              <paper-item modifier="{{modifier.command}}">
+                {{modifier.label}}
+              </paper-item>
+            </template>
+          </core-menu>
+        </paper-dropdown>
+      </paper-dropdown-menu>
+      <paper-icon-button on-tap="{{tapOff}}" icon="av:not-interested"></paper-icon-button>
+    </div>
+    <div layout start-justified wrap horizontal>
+      <template repeat="{{devices as device}}">
+        <template if="{{device.kind=='lights'}}">
+          <paper-button on-tap="{{tapButton}}" device="{{device}}" flex>
+            {{device.label}}
+          </paper-button>
+        </template>
+      </template>
+    </div>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      created: function() {
+        this.modified = undefined;
+        this.devices = [];
+        this.modifiers = [];
+      },
+      ready: function() {
+      },
+      tapOn: function(event, details, sender) {
+        this.$.coreMenu.selected = "Default";
+      },
+      tapOff: function(event, details, sender) {
+        this.$.coreMenu.selected = "Off";
+      },
+      setState: function(event, details, sender) {
+        var newState = sender.templateInstance.model.device.command;
+        console.log("setState", newState);
+        fb.child("commands").push({"command": newState});
+      },
+      setModifier: function(event, details, sender) {
+        if (details.isSelected === true) {
+          this.modifier = this.$.coreMenu.selected;
+          console.log("setModifier", this.modifier);
+        }
+      },
+      tapButton: function(event, details, sender) {
+        var cmd = {
+          "command": sender.templateInstance.model.device.command
+        };
+        if (this.modifier) {
+          cmd.modifier = this.modifier;
+        }
+        console.log("tapButton", cmd);
+        fb.child("commands").push(cmd);
+      }
+    });
+  </script>
+</polymer-element>

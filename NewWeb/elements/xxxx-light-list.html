@@ -1,0 +1,78 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="my-dropmenu.html">
+
+<polymer-element name="light-list" layout start-justified wrap horizontal>
+  <template>
+      <template repeat="{{devices as device}}">
+        <template if="{{device.kind=='state'}}">
+          <my-dropmenu device="{{device}}" state="{{state}}">{{device.label}}</my-dropmenu>
+        </template>
+      </template>
+      <template repeat="{{devices as device}}">
+        <template if="{{device.kind=='lights'}}">
+          <my-dropmenu device="{{device}}" modifiers="{{modifiers}}">{{device.label}}</my-dropmenu>
+        </template>
+      </template>
+      <template repeat="{{devices as device}}">
+        <template if="{{device.kind=='media'}}">
+          <my-dropmenu device="{{device}}" modifiers="{{simple_modifiers}}">{{device.label}}</my-dropmenu>
+        </template>
+      </template>
+      <template repeat="{{devices as device}}">
+        <template if="{{device.kind=='ac'}}">
+          <my-dropmenu device="{{device}}" modifiers="{{ac_modifiers}}">{{device.label}}</my-dropmenu>
+        </template>
+      </template>
+    </template>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      state: "NONE",
+      ac_modifiers: [
+        {"label": "On"},
+        {"label": "Off", "command": "Off"},
+        {"label": "Up", "command": "Up"},
+        {"label": "Down", "command": "Down"}
+      ],
+      simple_modifiers: [
+        {"label": "On"},
+        {"label": "Off", "command": "Off"}
+      ],
+      modifiers: [],
+      devices: [],
+      ready: function() {
+        var that = this;
+        fb.child("config/commands").on("value", function(snapshot) {
+          var val = snapshot.val();
+          var k = Object.keys(val);
+          for (var i = 0; i < k.length; i++) {
+            var device = {
+              "label": val[k[i]].label,
+              "command": k[i],
+              "kind": val[k[i]].kind
+            };
+            if (device.label !== undefined) {
+              that.devices.push(device);
+            }
+          }
+        });
+        fb.child("state/system_state").on("value", function(snapshot) {
+          that.state = snapshot.val();
+        });
+        fb.child("config/light_recipes").on("value", function(snapshot) {
+          var val = snapshot.val();
+          var k = Object.keys(val);
+          for (var i = 0; i < k.length; i++) {
+            var cmd = {
+              "label": k[i],
+              "command": k[i]
+            }
+            that.modifiers.push(cmd);
+          }
+        });
+      }
+    });
+
+
+  </script>
+</polymer-element>

@@ -1,0 +1,89 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+
+
+<polymer-element name="ac-panel" attributes="devices">
+  <template>
+    <style type="text/css">
+      .acTemp { 
+        width: 24px;
+        text-align: center;
+      }
+      .acTemp[disabled] {
+        color: #c9c9c9;
+        opacity: 0;
+      }
+      .row {
+        margin-bottom: 15px;
+      }
+      paper-toggle-button {
+        margin-right: 8px;
+      }
+    </style>
+
+    <div vertical layout>
+      <div class="row" horizontal layout center>
+        <span flex>Fast Cool</span>
+        <paper-icon-button on-tap="{{fastCool}}" icon="file-download"></paper-icon-button>
+      </div>
+      <template repeat="{{devices as device}}">
+        <div class="row" horizontal layout center>
+          <span flex>{{device.label}}</span>
+          <paper-toggle-button on-change="{{toggleAC}}" checked?="{{device.temp > 0}}"></paper-toggle-button>
+          <paper-icon-button on-tap="{{tempUp}}" disabled?="{{device.temp >= 75 || device.temp == 0}}" icon="expand-less"></paper-icon-button>
+          <div class="acTemp" disabled?="{{device.temp == 0}}">{{device.temp}}</div>
+          <paper-icon-button on-tap="{{tempDown}}" disabled?="{{device.temp <= 60 || device.temp == 0}}" icon="expand-more"></paper-icon-button>
+        </div>
+      </template>
+    </div>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      created: function() {
+        this.devices = [];
+      },
+      fastCool: function(event, details, sender) {
+        var cmd = {
+          "command": "FAST_COOL"
+        };
+        console.log("fastCool", cmd);
+        fb.child("commands").push(cmd);
+      },
+      toggleAC: function(event, details, sender) {
+        var device = sender.templateInstance.model.device;
+        var cmd = {
+          "command": device.command
+        }
+        if (device.temp == 0) {
+          device.temp = 72;
+        } else {
+          cmd.modifier = "Off";
+          device.temp = 0;
+        }
+        console.log("toggleAC", cmd);
+        fb.child("commands").push(cmd);
+      },
+      tempUp: function(event, details, sender) {
+        var newTemp = sender.templateInstance.model.device.temp + 1;
+        sender.templateInstance.model.device.temp = newTemp;
+        var cmd = {
+          "command": sender.templateInstance.model.device.command,
+          "modifier": "UP"
+        };
+        console.log("tempUp", cmd);
+        fb.child("commands").push(cmd);
+      },
+      tempDown: function(event, details, sender) {
+        var newTemp = sender.templateInstance.model.device.temp - 1;
+        sender.templateInstance.model.device.temp = newTemp;
+        var cmd = {
+          "command": sender.templateInstance.model.device.command,
+          "modifier": "DOWN"
+        };
+        console.log("tempDown", cmd);
+        fb.child("commands").push(cmd);
+      }
+    });
+  </script>
+</polymer-element>

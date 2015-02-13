@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+<head>
+  <title>Home</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <script src="bower_components/webcomponentsjs/webcomponents.js">
+  </script>
+
+  <link rel="import" href="bower_components/font-roboto/roboto.html">
+  <link rel="import" href="bower_components/core-header-panel/core-header-panel.html">
+  <link rel="import" href="bower_components/core-toolbar/core-toolbar.html">
+  <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
+  <link rel="import" href="bower_components/core-pages/core-pages.html">
+  <link rel="import" href="bower_components/core-icons/core-icons.html">
+  <link rel="import" href="elements/light-panel.html">
+  <link rel="import" href="elements/state-panel.html">
+  <link rel="import" href="elements/media-panel.html">
+  <link rel="import" href="elements/ac-panel.html">
+  <style>
+    html,body {
+      height: 100%;
+      margin: 0;
+      background-color: #E5E5E5;
+      font-family: 'RobotoDraft', sans-serif;
+    }
+    core-header-panel {
+      height: 100%;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch; 
+    }
+    core-toolbar {
+      background: #03a9f4;
+      color: white;
+    }
+    #tabs {
+      width: 100%;
+      margin: 0;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    text-transform: uppercase;
+    }
+    .container {
+      margin: 20px;
+      /*box-sizing: border-box;*/
+    }
+    core-pages {
+      width: 100%;
+      height: 100%;
+    }
+    #status {
+      width: 100%;
+    }
+    .statusDiv {
+      width: 50%;
+    }
+    #curTime {
+      font-size: 5em;
+      text-align: center;
+      width: 100%;
+    }
+    .text-right {
+      text-align: right;
+    }
+    core-toolbar {
+      margin-top: -12px;
+    }
+    light-panel {
+      margin-top: -15px;
+    }
+    @media screen and (min-width: 600px) {
+      #curTime { font-size: 6em;}
+      .statusDiv { font-size: 1.5em; }
+    }
+    @media screen and (min-width: 750px) {
+      #curTime { font-size: 7em;}
+      .statusDiv { font-size: 2.0em; }
+    }
+    @media screen and (min-width: 900px) {
+      #curTime { font-size: 9em;}
+      .statusDiv { font-size: 2.5em; }
+    }
+  </style>
+
+</head>
+
+<body unresolved fullbleed layout vertical>
+
+  <core-header-panel flex>
+
+    <core-toolbar>
+
+      <paper-tabs id="tabs" selected="status" self-end>
+        <paper-tab name="status">Status</paper-tab>
+        <paper-tab name="lights">Lights</paper-tab>
+        <paper-tab name="media">Media</paper-tab>
+        <paper-tab name="aircon">A/C</paper-tab>
+      </paper-tabs>
+    </core-toolbar>
+
+    <div class="container" fit>
+      <core-pages selected="status">
+        
+        <div name="status" id="status" wrap horizontal center-justified layout center>
+          <div relative style="width:100%;">
+            <div id="curTime"></div>
+            <div wrap horizontal center-justified layout center>
+              <div class="statusDiv">
+              </div>
+              <div class="statusDiv text-right">
+                <span id="tempIn"></span>&deg;
+              </div>
+              <div class="statusDiv"></div>
+              <div class="statusDiv text-right">
+                <span id="tempOutNow"></span>&deg; 
+                (<span id="tempOutFore"></span>&deg;)
+              </div>
+            </div>
+          </div>
+          <div>
+            <state-panel></state-panel>
+          </div>
+        </div>
+
+        <light-panel name="lights">
+        </light-panel>
+
+        <media-panel name="media">
+        </media-panel>
+
+        <ac-panel name="aircon">
+        </ac-panel>
+      </core-pages>
+      
+    </div>
+
+  </core-header-panel>
+  <script src="/scripts/moment-2.8.3.js"></script>
+  <script src="https://cdn.firebase.com/js/client/1.0.21/firebase.js"></script>
+  <script src="/scripts/fbKey.js"></script>
+  <script src="/scripts/main.js"></script>
+</body>
+</html>

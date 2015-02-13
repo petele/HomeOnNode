@@ -1,0 +1,57 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-dropdown/paper-dropdown.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/core-menu/core-menu.html">
+
+<polymer-element name="media-panel" attributes="devices activity">
+  <template>
+    <style type="text/css">
+      paper-button {
+        min-width: 100px;
+        min-height: 48px;
+        background-color: white;
+        text-transform: none;
+        margin: 6px;
+      }
+      paper-button[raised] {
+        background: #4285f4;
+        color: #fff;
+      }
+      @media screen and (min-width: 500px) {
+        paper-button {
+          min-width: 128px;
+        }
+      }
+      @media screen and (min-width: 900px) {
+        paper-button {
+          min-width: 148px;
+        }
+      }
+    </style>
+
+    <div layout start-justified wrap horizontal>
+      <template repeat="{{devices as device}}">
+        <template if="{{device.kind=='media'}}">
+          <paper-button raised?="{{activity==device.harmony}}" on-tap="{{tapButton}}" device="{{device}}" flex>
+            {{device.label}}
+          </paper-button>
+        </template>
+      </template>
+    </div>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      devices: [],
+      activity: "",
+      tapButton: function(event, details, sender) {
+        var cmd = {
+          "command": sender.templateInstance.model.device.command
+        };
+        console.log("tapButton", cmd);
+        //fb.child("commands").push(cmd);
+      }
+    });
+  </script>
+</polymer-element>

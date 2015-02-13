@@ -1,0 +1,38 @@
+application: petele-home-automation
+version: 20150213-1
+runtime: python27
+threadsafe: yes
+api_version: 1
+
+
+handlers:
+- url: /scripts
+  static_dir: scripts
+  secure: always
+
+- url: /images
+  static_dir: images
+  secure: always
+
+- url: /bower_components
+  static_dir: bower_components
+  secure: always
+
+- url: /elements
+  static_dir: elements
+  secure: always
+
+- url: /manifest.json
+  static_files: manifest.json
+  upload: manifest.json
+  expiration: "0s"
+  secure: always
+
+- url: /.*
+  static_files: index.html
+  upload: index.html
+  expiration: "0s"
+  login: admin
+  secure: always
+
+
