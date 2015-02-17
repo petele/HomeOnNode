@@ -6,38 +6,19 @@
 <link rel="import" href="../bower_components/core-menu/core-menu.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
-<polymer-element name="light-panel" attributes="devices modifiers">
+
+<polymer-element name="light-panel" attributes="devices modifiers lights">
+
   <template>
-    <style type="text/css">
-      paper-button {
-        min-width: 100px;
-        min-height: 48px;
-        background-color: white;
-        text-transform: none;
-        margin: 6px;
-      }
-      paper-button[raised] {
-        background: #4285f4;
-        color: #fff;
-      }
-
-      @media screen and (min-width: 500px) {
-        paper-button {
-          min-width: 128px;
-        }
-      }
-      @media screen and (min-width: 900px) {
-        paper-button {
-          min-width: 148px;
-        }
-      }
-
-    </style>
+    <link no-shim href="/styles/pbutton.css" rel="stylesheet">
     <div layout start-justified wrap horizontal center>
-      <paper-icon-button on-tap="{{tapOn}}" icon="settings-power"></paper-icon-button>
-      <paper-dropdown-menu label="Default" flex>
+      <!-- <paper-icon-button on-tap="{{tapOn}}" icon="settings-power"></paper-icon-button> -->
+      <paper-dropdown-menu flex>
         <paper-dropdown class="dropdown">
-          <core-menu id="coreMenu" class="menu" valueattr="modifier" flex on-core-select="{{setModifier}}">
+          <core-menu id="coreMenu" selected="TOGGLE" class="menu" valueattr="modifier" flex on-core-select="{{setModifier}}">
+            <paper-item modifier="TOGGLE">
+              Toggle
+            </paper-item>
             <template repeat="{{modifier in modifiers}}">
               <paper-item modifier="{{modifier.command}}">
                 {{modifier.label}}
@@ -46,12 +27,12 @@
           </core-menu>
         </paper-dropdown>
       </paper-dropdown-menu>
-      <paper-icon-button on-tap="{{tapOff}}" icon="av:not-interested"></paper-icon-button>
+      <!-- <paper-icon-button on-tap="{{tapOff}}" icon="av:not-interested"></paper-icon-button> -->
     </div>
     <div layout start-justified wrap horizontal>
       <template repeat="{{devices as device}}">
         <template if="{{device.kind=='lights'}}">
-          <paper-button on-tap="{{tapButton}}" device="{{device}}" flex>
+          <paper-button colored?="{{device.isOn==true}}" on-tap="{{tapButton}}" device="{{device}}" flex>
             {{device.label}}
           </paper-button>
         </template>
@@ -64,33 +45,90 @@
         this.modified = undefined;
         this.devices = [];
         this.modifiers = [];
+        this.lights = [];
+        this.lightsOn = [];
+        this.lightsOff = [];
+      },
+      devicesChanged: function(oldVal, newVal) {
+        this.updateLightStatus();
+      },
+      lightsChanged: function(oldVal, newVal) {
+        var newOn = [];
+        var newOff = [];
+        for (var i = 1; i < newVal.length; i++) {
+          var light = newVal[i];
+          if (light.state.on === true) {
+            newOn.push(i);
+          } else {
+            newOff.push(i);
+          }
+        }
+        this.lightsOn = newOn;
+        this.lightsOff = newOff;
+        this.updateLightStatus();
+      },
+      updateLightStatus: function() {
+        for (var i = 0; i < this.devices.length; i++) {
+          var device = this.devices[i];
+          if (device.hue) {
+            var isOn = true;
+            var hueSets = device.hue;
+            for (var j = 0; j < hueSets.length; j++) {
+              var hueSet = hueSets[j];
+              var lightsInSet = hueSet.lights;
+              for (var k = 0; k < lightsInSet.length; k++) {
+                if (this.lightsOn.indexOf(lightsInSet[k]) === -1) {
+                  isOn = false;
+                  break;
+                }
+              }
+              if (isOn === false) {
+                break;
+              }
+            }
+            device.isOn = isOn;
+          }
+        }
       },
       ready: function() {
       },
       tapOn: function(event, details, sender) {
+        window.lastEvent = Date.now();
         this.$.coreMenu.selected = "Default";
       },
       tapOff: function(event, details, sender) {
+        window.lastEvent = Date.now();
         this.$.coreMenu.selected = "Off";
-      },
-      setState: function(event, details, sender) {
-        var newState = sender.templateInstance.model.device.command;
-        console.log("setState", newState);
-        fb.child("commands").push({"command": newState});
       },
       setModifier: function(event, details, sender) {
         if (details.isSelected === true) {
+          window.lastEvent = Date.now();
           this.modifier = this.$.coreMenu.selected;
           console.log("setModifier", this.modifier);
         }
       },
       tapButton: function(event, details, sender) {
+        var device = sender.templateInstance.model.device;
         var cmd = {
-          "command": sender.templateInstance.model.device.command
+          "command": device.command
         };
-        if (this.modifier) {
+        if (this.modifier === "TOGGLE") {
+          if (device.isOn === true) {
+            device.isOn = false;
+            cmd.modifier = "Off";
+          } else {
+            device.isOn = true;
+            cmd.modifier = "Default";
+          }
+        } else if (this.modifier === "Off") {
+          cmd.modifier = "Off";
+          device.isOn = false;
+        } else {
+          device.isOn = true;
           cmd.modifier = this.modifier;
         }
+        
+        window.lastEvent = Date.now();
         console.log("tapButton", cmd);
         fb.child("commands").push(cmd);
       }

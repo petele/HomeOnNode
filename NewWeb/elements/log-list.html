@@ -1,0 +1,70 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-list/core-list.html">
+
+
+<polymer-element name="log-list" attributes="path items">
+
+  <template>
+    <style type="text/css">
+      .row {
+        min-height: 48px;
+        border-bottom: 1px solid #b6b6b6;
+      }
+      .label {
+        display: inline-block;
+        border-radius: 4px;
+        background-color: #9e9e9e;
+        text-transform: capitalize;
+        padding: 0.3em 0.6em;
+        font-size: 0.8em;
+      }
+
+      .ARMED {
+        background-color: #ffcdd2;
+        color: #000000;
+      }
+
+      .OPEN, .AWAY {
+        background-color: #f44336;
+        color: #ffffff;
+      }
+
+      .CLOSED, .HOME {
+        background-color: #2196f3;
+        color: #ffffff;
+      }
+
+      .SLEEP {
+        background-color: #bbdefb;
+        color: #000000;
+      }
+
+      @media screen and (min-width: 900px) {
+        div {
+          font-size: 1.4em;
+        }
+      }
+    </style>
+
+    <div vertical layout >
+      <template repeat="{{item in items}}">
+        <div class="row" horizontal layout center>
+          <span flex>{{item.date | toDateTime }}</span>
+          <span class="label {{item.state}}">{{item.state}}</span>
+        </div>
+      </template>
+    </div>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      created: function() {
+        this.items = [];
+      },
+      ready: function() {
+      },
+      toDateTime: function(value) {
+        return moment(value).format("M/D/YY, h:mm:ss a");
+      }
+    });
+  </script>
+</polymer-element>

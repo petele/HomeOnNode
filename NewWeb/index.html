@@ -18,10 +18,32 @@
   <link rel="import" href="elements/media-panel.html">
   <link rel="import" href="elements/ac-panel.html">
   <style>
+    .colorDarkPrimary {
+      background-color: #0288d1;
+      color: #ffffff;
+    }
+    .colorPrimary {
+      background-color: #03a9f4;
+      color: #ffffff;
+    }
+    .colorLightPrimary {
+      background-color: #b3e5fc;
+      color: #000000;
+    }
+    .colorAccent {
+      background-color: #ffeb3b;
+      color: white;
+    }
+    .colorSecondaryText {
+      color: #727272;
+    }
+    .colorDivider {
+      color: #b6b6b6;
+    }
     html,body {
       height: 100%;
       margin: 0;
-      background-color: #E5E5E5;
+      background-color: #f9f9f9;
       font-family: 'RobotoDraft', sans-serif;
     }
     core-header-panel {
@@ -40,7 +62,7 @@
       -moz-user-select: none;
       -ms-user-select: none;
       user-select: none;
-    text-transform: uppercase;
+      text-transform: uppercase;
     }
     .container {
       margin: 20px;
@@ -107,13 +129,15 @@
           <div relative style="width:100%;">
             <div id="curTime"></div>
             <div wrap horizontal center-justified layout center>
-              <div class="statusDiv">
+              <div class="statusDiv tl">
               </div>
-              <div class="statusDiv text-right">
+              <div class="statusDiv text-right tr">
+                
+              </div>
+              <div class="statusDiv bl colorSecondaryText">
                 <span id="tempIn"></span>&deg;
               </div>
-              <div class="statusDiv"></div>
-              <div class="statusDiv text-right">
+              <div class="statusDiv text-right br colorSecondaryText">
                 <span id="tempOutNow"></span>&deg; 
                 (<span id="tempOutFore"></span>&deg;)
               </div>

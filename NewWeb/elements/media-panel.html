@@ -7,34 +7,11 @@
 
 <polymer-element name="media-panel" attributes="devices activity">
   <template>
-    <style type="text/css">
-      paper-button {
-        min-width: 100px;
-        min-height: 48px;
-        background-color: white;
-        text-transform: none;
-        margin: 6px;
-      }
-      paper-button[raised] {
-        background: #4285f4;
-        color: #fff;
-      }
-      @media screen and (min-width: 500px) {
-        paper-button {
-          min-width: 128px;
-        }
-      }
-      @media screen and (min-width: 900px) {
-        paper-button {
-          min-width: 148px;
-        }
-      }
-    </style>
-
+    <link no-shim href="/styles/pbutton.css" rel="stylesheet">
     <div layout start-justified wrap horizontal>
       <template repeat="{{devices as device}}">
         <template if="{{device.kind=='media'}}">
-          <paper-button raised?="{{activity==device.harmony}}" on-tap="{{tapButton}}" device="{{device}}" flex>
+          <paper-button colored?="{{activity==device.harmony}}" on-tap="{{tapButton}}" device="{{device}}" flex>
             {{device.label}}
           </paper-button>
         </template>
@@ -49,8 +26,9 @@
         var cmd = {
           "command": sender.templateInstance.model.device.command
         };
+        window.lastEvent = Date.now();
         console.log("tapButton", cmd);
-        //fb.child("commands").push(cmd);
+        fb.child("commands").push(cmd);
       }
     });
   </script>

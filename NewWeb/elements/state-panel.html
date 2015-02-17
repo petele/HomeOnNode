@@ -7,33 +7,11 @@
 
 <polymer-element name="state-panel" attributes="state devices">
   <template>
-    <style type="text/css">
-      paper-button {
-        min-width: 100px;
-        min-height: 48px;
-        background-color: white;
-        text-transform: none;
-        margin: 4px;
-      }
-      paper-button[raised] {
-        background: #4285f4;
-        color: #fff;
-      }
-      @media screen and (min-width: 500px) {
-        paper-button {
-          /*min-width: 128px;*/
-        }
-      }
-      @media screen and (min-width: 900px) {
-        paper-button {
-          min-width: 148px;
-        }
-      }
-    </style>
+    <link no-shim href="/styles/pbutton.css" rel="stylesheet">
     <div layout start-justified wrap horizontal>
       <template repeat="{{devices as device}}">
         <template if="{{device.kind=='state'}}">
-          <paper-button raised?="{{state==device.command}}" on-tap="{{setState}}" device="{{device}}" flex>
+          <paper-button class="small" colored?="{{state==device.command}}" on-tap="{{setState}}" device="{{device}}" flex>
             {{device.label}}
           </paper-button>
         </template>
@@ -48,6 +26,7 @@
       setState: function(event, details, sender) {
         var newState = sender.templateInstance.model.device.command;
         console.log("setState", newState);
+        window.lastEvent = Date.now();
         fb.child("commands").push({"command": newState});
       }
     });

@@ -10,6 +10,10 @@ handlers:
   static_dir: scripts
   secure: always
 
+- url: /styles
+  static_dir: styles
+  secure: always
+
 - url: /images
   static_dir: images
   secure: always
@@ -25,6 +29,12 @@ handlers:
 - url: /manifest.json
   static_files: manifest.json
   upload: manifest.json
+  expiration: "0s"
+  secure: always
+
+- url: /log.html
+  static_files: log.html
+  upload: log.html
   expiration: "0s"
   secure: always
 

@@ -7,7 +7,7 @@
   <template>
     <style type="text/css">
       .acTemp { 
-        width: 24px;
+        min-width: 24px;
         text-align: center;
       }
       .acTemp[disabled] {
@@ -19,6 +19,18 @@
       }
       paper-toggle-button {
         margin-right: 8px;
+      }
+      paper-toggle-button::shadow [checked] .toggle {
+        background-color: #03A9F4;
+      }
+
+      paper-toggle-button::shadow [checked] .toggle-ink {
+        color: #81D4FA;
+      }
+      @media screen and (min-width: 900px) {
+        div {
+          font-size: 1.4em;
+        }
       }
     </style>
 
@@ -47,6 +59,7 @@
         var cmd = {
           "command": "FAST_COOL"
         };
+        window.lastEvent = Date.now();
         console.log("fastCool", cmd);
         fb.child("commands").push(cmd);
       },
@@ -61,6 +74,7 @@
           cmd.modifier = "Off";
           device.temp = 0;
         }
+        window.lastEvent = Date.now();
         console.log("toggleAC", cmd);
         fb.child("commands").push(cmd);
       },
@@ -71,6 +85,7 @@
           "command": sender.templateInstance.model.device.command,
           "modifier": "UP"
         };
+        window.lastEvent = Date.now();
         console.log("tempUp", cmd);
         fb.child("commands").push(cmd);
       },
@@ -81,6 +96,7 @@
           "command": sender.templateInstance.model.device.command,
           "modifier": "DOWN"
         };
+        window.lastEvent = Date.now();
         console.log("tempDown", cmd);
         fb.child("commands").push(cmd);
       }
