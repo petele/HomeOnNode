@@ -9,22 +9,32 @@ handlers:
 - url: /scripts
   static_dir: scripts
   secure: always
+  login: admin
 
 - url: /styles
   static_dir: styles
   secure: always
+  login: admin
 
 - url: /images
   static_dir: images
   secure: always
+  login: admin
 
 - url: /bower_components
   static_dir: bower_components
   secure: always
+  login: admin
 
 - url: /elements
   static_dir: elements
   secure: always
+  login: admin
+
+- url: /favicon.ico
+  static_files: /images/favicon.ico
+  upload: /images/favicon.ico
+  expiration: "90d"
 
 - url: /manifest.json
   static_files: manifest.json
@@ -32,11 +42,12 @@ handlers:
   expiration: "0s"
   secure: always
 
-- url: /log.html
+- url: /logs
   static_files: log.html
   upload: log.html
   expiration: "0s"
   secure: always
+  login: admin
 
 - url: /.*
   static_files: index.html
