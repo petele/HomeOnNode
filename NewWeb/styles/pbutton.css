@@ -4,11 +4,13 @@ paper-button {
   background-color: white;
   text-transform: none;
   margin: 6px;
+  border: 1px solid #e0e0e0;
 }
 paper-button[colored] {
   /*background: #4285f4;*/
   background-color: #03a9f4;
   color: #fff;
+  border: 1px solid #03a9f4;
 }
 
 @media screen and (min-width: 500px) {
