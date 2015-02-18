@@ -32,9 +32,9 @@ handlers:
   login: admin
 
 - url: /favicon.ico
-  static_files: /images/favicon.ico
-  upload: /images/favicon.ico
-  expiration: "90d"
+  static_files: favicon.ico
+  upload: favicon.ico
+
 
 - url: /manifest.json
   static_files: manifest.json
