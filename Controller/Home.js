@@ -14,6 +14,7 @@ var Harmony = require("./Harmony");
 var Hue = require("./Hue");
 var Door = require("./Door");
 var GoogleVoice = require("./GoogleVoice");
+var Dropcam = require("./Dropcam");
 
 function Home(config, fb) {
   this.state = {};
@@ -335,7 +336,7 @@ function Home(config, fb) {
 
   function initDropcam() {
     var dcConfig = Keys.keys.dropcam;
-    dropcam = Dropcam(dcConfig.user, dcConfig.password, dcConfig.uuid);
+    dropcam = new Dropcam(dcConfig.user, dcConfig.password, dcConfig.uuid);
     dropcam.on("error", function(err) {
       log.error("[HOME] Dropcam Error: " + JSON.stringify(err));
     });
