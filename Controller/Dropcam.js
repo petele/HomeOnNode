@@ -71,6 +71,9 @@ function Dropcam(username, password, uuid) {
       } else {
         self.emit("error", resp);
       }
+      if (callback) {
+        callback();
+      }
     });
   }
 
@@ -123,7 +126,7 @@ function Dropcam(username, password, uuid) {
         }
       } catch (ex) {
         log.error("[Dropcam] Unable to update camera state.");
-        console.log(camera);
+        console.log("ERR", ex, camera);
       }
     });
   }
@@ -133,7 +136,7 @@ function Dropcam(username, password, uuid) {
     getAuthToken(function() {
       updateCameraState();
     });
-    setInterval(updateCameraState, 1000*60*2);
+    setInterval(updateCameraState, 1000*15);
   }
 
   init();
