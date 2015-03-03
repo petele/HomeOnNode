@@ -235,9 +235,13 @@ function Home(config, fb) {
         setState("AWAY");
         _self.set("LIGHTSOFF");
       }, config.arming_delay);
-      dropcam.enableCamera(true);
+      if (dropcam) {
+        dropcam.enableCamera(true);
+      }
     } else if (state === "AWAY") {
-      dropcam.enableCamera(true);
+      if (dropcam) {
+        dropcam.enableCamera(true);
+      }
     } else if (state === "HOME") {
       // Check if we have any new GoogleVoice Messages
       try {
