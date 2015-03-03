@@ -1,4 +1,3 @@
-var os = require("os");
 var EventEmitter = require("events").EventEmitter;
 var util = require("util");
 var https = require("https");
@@ -6,6 +5,7 @@ var log = require("./SystemLog");
 
 function Dropcam(username, password, uuid) {
   var self = this;
+  var isStreaming;
   var authToken;
   var cameraSettings;
 
@@ -61,13 +61,15 @@ function Dropcam(username, password, uuid) {
     };
     makeRequest(uri, body, function(respCode, resp) {
       if (respCode === 200) {
-        authToken = "website_2=" + resp.items[0].session_token + ";";
-        log.debug("[Dropcam] AuthToken: " + authToken);
-        if (callback) {
-          callback(authToken);
+        if (resp.status === 0) {
+          authToken = "website_2=" + resp.items[0].session_token + ";";
+          log.debug("[Dropcam] AuthToken: " + authToken);
+          self.emit("ready");
+        } else {
+          self.emit("error", resp);
         }
       } else {
-        console.log("ERROR", body, respCode, resp);
+        self.emit("error", resp);
       }
     });
   }
@@ -77,7 +79,17 @@ function Dropcam(username, password, uuid) {
       method: "GET",
       path: "/api/v1/dropcams.get_properties?uuid=" + uuid
     };
-    makeRequest(uri, undefined, callback);
+    makeRequest(uri, undefined, function(respCode, resp) {
+      if ((respCode === 200) && (callback)) {
+        if (resp.status === 0) {
+          callback(null, resp.items[0]);
+        } else {
+          callback(resp, null);
+        }
+      } else if (callback) {
+        callback(resp, null);
+      }
+    });
   }
 
   this.enableCamera = function(enabled, callback) {
@@ -88,17 +100,32 @@ function Dropcam(username, password, uuid) {
       method: "POST",
       path: "/api/v1/dropcams.set_property",
     };
-    makeRequest(uri, body, callback);
+    log.debug("[Dropcam] Enabled: " + enabled.toString());
+    makeRequest(uri, body, function(respCode, resp) {
+      if ((respCode === 200) && (callback)) {
+        if (resp.status === 0) {
+          callback(null, resp.items[0]);
+        } else {
+          callback(resp, null);
+        }
+      } else if (callback) {
+        callback(resp, null);
+      }
+    });
   }
 
 
   function init() {
     log.init("[Dropcam] " + uuid);
-    getAuthToken(function() {
-      self.getCamera(function(camera) {
-        self.emit("ready");
+    getAuthToken();
+    setInterval(function() {
+      self.getCamera(function(err, camera) {
+        if (camera["streaming.enabled"] !== isStreaming) {
+          isStreaming = camera["streaming.enabled"];
+          self.emit("change", {"streaming": isStreaming});
+        }
       });
-    })
+    }, 1000*60*2);
   }
 
   init();

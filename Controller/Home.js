@@ -23,7 +23,7 @@ function Home(config, fb) {
   var _self = this;
 
   var armingTimer, awayTimer;
-  var hue, harmony, airConditioners, insideTemp, doors, chromecast, gv;
+  var hue, harmony, dropcam, airConditioners, insideTemp, doors, chromecast, gv;
 
   this.setLights = function(lights, state, source) {
     var response = {
@@ -235,6 +235,9 @@ function Home(config, fb) {
         setState("AWAY");
         _self.set("LIGHTSOFF");
       }, config.arming_delay);
+      dropcam.enableCamera(true);
+    } else if (state === "AWAY") {
+      dropcam.enableCamera(true);
     } else if (state === "HOME") {
       // Check if we have any new GoogleVoice Messages
       try {
@@ -323,6 +326,21 @@ function Home(config, fb) {
       airConditioners[id] = new AirConditioner(id, ip, irPort, cmds);
       _self.state.ac[id] = 0;
       fbSet("state/ac/" + id, 0);
+    });
+  }
+
+  function initDropcam() {
+    var dcConfig = Keys.keys.dropcam;
+    dropcam = Dropcam(dcConfig.user, dcConfig.password, dcConfig.uuid);
+    dropcam.on("error", function(err) {
+      log.error("[HOME] Dropcam Error: " + JSON.stringify(err));
+    });
+    dropcam.on("ready", function() {
+      log.log("[HOME] Dropcam Ready");
+    });
+    dropcam.on("change", function(state) {
+      self.state.dropcam = state;
+      fbSet("state/dropcam", state)
     });
   }
 
@@ -462,6 +480,7 @@ function Home(config, fb) {
     log.log("[HOME] Initalizing components.");
     setState("AWAY");
     initAC();
+    initDropcam();
     initChromecast();
     initGoogleVoice();
     initInsideTemp();
