@@ -114,18 +114,26 @@ function Dropcam(username, password, uuid) {
     });
   }
 
-
-  function init() {
-    log.init("[Dropcam] " + uuid);
-    getAuthToken();
-    setInterval(function() {
-      self.getCamera(function(err, camera) {
+  function updateCameraState() {
+    self.getCamera(function(err, camera) {
+      try {
         if (camera["streaming.enabled"] !== isStreaming) {
           isStreaming = camera["streaming.enabled"];
           self.emit("change", {"streaming": isStreaming});
         }
-      });
-    }, 1000*60*2);
+      } catch (ex) {
+        log.error("[Dropcam] Unable to update camera state.");
+        console.log(camera);
+      }
+    });
+  }
+
+  function init() {
+    log.init("[Dropcam] " + uuid);
+    getAuthToken(function() {
+      updateCameraState();
+    });
+    setInterval(updateCameraState, 1000*60*2);
   }
 
   init();
