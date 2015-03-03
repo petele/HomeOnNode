@@ -344,7 +344,7 @@ function Home(config, fb) {
       log.log("[HOME] Dropcam Ready");
     });
     dropcam.on("change", function(state) {
-      self.state.dropcam = state;
+      _self.state.dropcam = state;
       fbSet("state/dropcam", state)
     });
   }
