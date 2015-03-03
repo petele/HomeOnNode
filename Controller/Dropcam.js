@@ -103,7 +103,7 @@ function Dropcam(username, password, uuid) {
       method: "POST",
       path: "/api/v1/dropcams.set_property",
     };
-    log.debug("[Dropcam] Enabled: " + enabled.toString());
+    log.log("[Dropcam] Enabled: " + enabled.toString());
     makeRequest(uri, body, function(respCode, resp) {
       if ((respCode === 200) && (callback)) {
         if (resp.status === 0) {
@@ -125,8 +125,7 @@ function Dropcam(username, password, uuid) {
           self.emit("change", {"streaming": isStreaming});
         }
       } catch (ex) {
-        log.error("[Dropcam] Unable to update camera state.");
-        console.log("ERR", ex, camera);
+        log.error("[Dropcam] Unable to update camera state." + ex.toString());
       }
     });
   }
@@ -136,7 +135,7 @@ function Dropcam(username, password, uuid) {
     getAuthToken(function() {
       updateCameraState();
     });
-    setInterval(updateCameraState, 1000*15);
+    setInterval(updateCameraState, 1000*90);
   }
 
   init();
