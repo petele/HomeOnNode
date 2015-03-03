@@ -8,6 +8,7 @@ var elemTempIn = document.querySelector("#tempIn");
 var elemTempOutNow = document.querySelector("#tempOutNow");
 var elemTempOutFore = document.querySelector("#tempOutFore");
 var elemCurTime = document.querySelector('#curTime');
+var elemDropcam = document.querySelector("#ptDropcam");
 
 var elemLightPanel = document.querySelector('light-panel');
 var elemStatePanel = document.querySelector('state-panel');
@@ -28,6 +29,13 @@ function fbInit() {
   });
   fb.child("state/system_state").on("value", function(snapshot) {
     elemStatePanel.state = snapshot.val();
+  });
+  fb.child("state/dropcam/streaming").on("value", function(snapshot) {
+    if (snapshot.val() === true) {
+      elemDropcam.setAttribute("checked", true);
+    } else {
+      elemDropcam.removeAttribute("checked");
+    }
   });
   fb.child("state/hue/lights").on("value", function(snapshot) {
     elemLightPanel.lights = snapshot.val();

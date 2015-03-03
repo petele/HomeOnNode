@@ -12,6 +12,8 @@
   <link rel="import" href="bower_components/paper-tabs/paper-tabs.html">
   <link rel="import" href="bower_components/core-pages/core-pages.html">
   <link rel="import" href="bower_components/core-icons/core-icons.html">
+  <link rel="import" href="bower_components/paper-toggle-button/paper-toggle-button.html">
+  <link rel="import" href="bower_components/paper-button/paper-button.html">
   <link rel="import" href="elements/light-panel.html">
   <link rel="import" href="elements/state-panel.html">
   <link rel="import" href="elements/media-panel.html">
@@ -91,6 +93,14 @@
     light-panel {
       margin-top: -15px;
     }
+    #ptDropcam::shadow #toggleContainer[disabled] {
+      opacity: 0.7 !important;
+    }
+    .dropcamLink {
+      font-size: 0.65em;
+      color: #727272;
+      text-decoration: none;
+    }
     @media screen and (min-width: 600px) {
       #curTime { font-size: 6em;}
       .statusDiv { font-size: 1.5em; }
@@ -112,7 +122,6 @@
   <core-header-panel flex>
 
     <core-toolbar>
-
       <paper-tabs id="tabs" selected="status" self-end>
         <paper-tab name="status">Status</paper-tab>
         <paper-tab name="lights">Lights</paper-tab>
@@ -131,7 +140,6 @@
               <div class="statusDiv tl">
               </div>
               <div class="statusDiv text-right tr">
-
               </div>
               <div class="statusDiv bl colorSecondaryText">
                 <span id="tempIn"></span>&deg;
@@ -139,6 +147,11 @@
               <div class="statusDiv text-right br colorSecondaryText">
                 <span id="tempOutNow"></span>&deg;
                 (<span id="tempOutFore"></span>&deg;)
+              </div>
+              <div class="statusDiv"></div>
+              <div class="statusDiv text-right colorSecondaryText">
+                <a class="dropcamLink" target="_blank" href="https://www.dropcam.com/watch/c1fcd270197f4e7fb1f517d48166be3c">Dropcam</a>
+                <paper-toggle-button id="ptDropcam" disabled></paper-toggle-button>
               </div>
             </div>
           </div>
