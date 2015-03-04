@@ -1,19 +1,28 @@
 var EventEmitter = require("events").EventEmitter;
 var log = require("./SystemLog");
 var util = require("util");
+var noble = require("noble");
 
-function Presence(peopleToAdd) {
-  var self = this;
-  var STATE_PRESENT = "PRESENT";
+function Presence(people) {
   var STATE_AWAY = "AWAY";
-  var MAX_AWAY = 180;
-  var status, macAddr, numPresent;
+  var STATE_PRESENT = "PRESENT";
+  var MAX_AWAY = 240;
+  var RSSI_THRESHOLD = -90;
+  var self = this;
+  var nobleStarted = false;
+  var status, numPresent, intervalID;
 
-  this.getStatus = function() {
-    return status;
-  };
+  function emitChange(person) {
+    var data = {
+      "present": numPresent,
+      "state": person.state,
+      "person": person
+    };
+    self.emit("change", data);
+    log.log("[Presence] " + person.name + " is " + person.state);
+  }
 
-  function presenceCheckTick() {
+  function timerTick() {
     var keys = Object.keys(status);
     var keyLen = keys.length;
     for (var i = 0; i < keyLen; i++) {
@@ -21,54 +30,70 @@ function Presence(peopleToAdd) {
       var timeSinceLastSeen = (Date.now() - person.lastSeen) / 1000;
       if ((timeSinceLastSeen > MAX_AWAY) && (person.state === STATE_PRESENT)) {
         person.state = STATE_AWAY;
-        self.emit("change", person);
-        log.debug("[Presence] " + person.name + " is " + person.state);
         numPresent -= 1;
-        if (numPresent === 0) {
-          self.emit("none", {"numPresent": 0});
-          log.debug("[Presence] Everyone is gone.");
-        }
-      } else if ((timeSinceLastSeen < 30) && (person.state === STATE_AWAY)) {
-        person.state = STATE_PRESENT;
-        self.emit("change", person);
-        log.debug("[Presence] " + person.name + " is " + person.state);
-        numPresent += 1;
+        emitChange(person);
       }
     }
   }
 
-  this.createPeopleList = function(people) {
-    try {
-      var newStatus = {};
-      var newMacAddr = [];
-      for (var i = 0; i < people.length; i++) {
-        var user = {
-          "name": people[i].name,
-          "mac": people[i].mac,
-          "lastSeen": 0,
-          "state": STATE_AWAY
-        };
-        newStatus[people[i].mac] = user;
-        newMacAddr.push(people[i].mac);
+  function sawPerson(peripheral) {
+    //if (peripheral.rssi > RSSI_THRESHOLD) {
+      var uuid = peripheral.uuid;
+      var person = status[uuid];
+      //console.log("X", uuid, peripheral.advertisement.localName, person);
+      if (person) {
+        person.lastSeen = Date.now();
+        if (person.state === STATE_AWAY) {
+          person.state = STATE_PRESENT;
+          numPresent += 1;
+          emitChange(person);
+        }
       }
-      status = newStatus;
-      macAddr = newMacAddr;
-    } catch (ex) {
-      log.error("[Presence] Error creating people list: " + ex);
+    //}
+  }
+
+  function startNoble() {
+    noble.on("stateChange", function(state) {
+      log.log("[Presence] Noble State Change: " + state);
+      if (state === "poweredOn") {
+        noble.startScanning([], true);
+      } else {
+        noble.stopScanning();
+      }
+    });
+    noble.on("scanStart", function() {
+      log.log("[Presence] Noble Scanning Started.");
+      nobleStarted = true;
+    });
+    noble.on("scanStop", function() {
+      log.log("[Presence] Noble Scanning Stopped.");
+      nobleStarted = false;
+    });
+    noble.on("discover", sawPerson);
+  }
+
+  this.init = function(people) {
+    log.init("[Presence]");
+    if (intervalID) {
+      clearInterval(intervalID);
     }
+    status = {};
+    numPresent = 0;
+    for (var i = 0; i < people.length; i++) {
+      var person = {
+        "name": people[i].name,
+        "uuid": people[i].uuid,
+        "lastSeen": 0,
+        "state": STATE_AWAY
+      };
+      status[people[i].uuid] = person;
+    }
+    log.log("[Presence] Ready. (" + people.length + " users)");
+    intervalID = setInterval(timerTick, 2000);
   };
 
-  function init() {
-    log.init("[Presence]");
-    status = {};
-    macAddr = [];
-    numPresent = 0;
-    self.createPeopleList(peopleToAdd);
-
-    setInterval(presenceCheckTick, 5000);
-  }
-
-  init();
+  this.init(people);
+  startNoble();
 }
 
 util.inherits(Presence, EventEmitter);
