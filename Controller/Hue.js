@@ -24,6 +24,17 @@ function Hue(interval, key, ip) {
     webRequest.request(uri, body, callback);
   }
 
+  function diffPrefilter(path, key) {
+    if ((path[0] === "config") && (key === "UTC")) {
+      return true;
+    } else if ((path[0] === "config") && (key === "localtime")) {
+      return true;
+    } if ((path[0] === "config") && (key === "whitelist")) {
+      return true;
+    }
+    return false;
+  }
+
   function refresh() {
     hueRequest("GET", null, null, function(response) {
       if (response.error) {
@@ -34,8 +45,8 @@ function Hue(interval, key, ip) {
           _interval = 1 + Math.floor(_interval * 1.75);
         }
       } else {
-        var differences = diff(_self.state, response);
-        if (differences.length > 2) {
+        var differences = diff(_self.state, response, diffPrefilter);
+        if (differences) {
           _self.state = response;
           _self.emit("change", response);
           _interval = _baseInterval;
