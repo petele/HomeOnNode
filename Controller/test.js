@@ -12,14 +12,14 @@ var presence = new Presence(people);
 presence.on("change", function(data) {
   log.log("[TestHarness] " + data.present);
   if (data.present === 0) {
-    send("Off");
+    send("ALERT_OFF");
   } else {
-    send();
+    send("ALERT_ON");
   }
 });
 
 
-function send(modifier) {
+function send(cmd, modifier) {
   var uri = {
     "host": "192.168.1.202",
     "port": 3000,
@@ -27,13 +27,11 @@ function send(modifier) {
     "method": "POST"
   };
   var body = {
-    "command": "ALERT_TEST",
+    "command": cmd,
     "modifier": modifier
   };
   body = JSON.stringify(body);
-  log.http("REQ", body);
   webRequest.request(uri, body, function(resp) {
-    log.http("RESP", JSON.stringify(resp));
   });
 }
 
