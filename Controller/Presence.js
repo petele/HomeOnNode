@@ -3,11 +3,10 @@ var log = require("./SystemLog");
 var util = require("util");
 var noble = require("noble");
 
-function Presence(people) {
+function Presence(max_away, people) {
   var STATE_AWAY = "AWAY";
   var STATE_PRESENT = "PRESENT";
-  var MAX_AWAY = 240;
-  var RSSI_THRESHOLD = -90;
+  var MAX_AWAY = max_away;
   var self = this;
   var nobleStarted = false;
   var status, numPresent, intervalID;
@@ -37,19 +36,15 @@ function Presence(people) {
   }
 
   function sawPerson(peripheral) {
-    //if (peripheral.rssi > RSSI_THRESHOLD) {
-      var uuid = peripheral.uuid;
-      var person = status[uuid];
-      //console.log("X", uuid, peripheral.advertisement.localName, person);
-      if (person) {
-        person.lastSeen = Date.now();
-        if (person.state === STATE_AWAY) {
-          person.state = STATE_PRESENT;
-          numPresent += 1;
-          emitChange(person);
-        }
+    var person = status[peripheral.uuid];
+    if (person) {
+      person.lastSeen = Date.now();
+      if (person.state === STATE_AWAY) {
+        person.state = STATE_PRESENT;
+        numPresent += 1;
+        emitChange(person);
       }
-    //}
+    }
   }
 
   function startNoble() {
@@ -70,6 +65,9 @@ function Presence(people) {
       nobleStarted = false;
     });
     noble.on("discover", sawPerson);
+    if (nobleStarted === false) {
+      noble.startScanning([], true);
+    }
   }
 
   this.init = function(people) {
@@ -79,6 +77,7 @@ function Presence(people) {
     }
     status = {};
     numPresent = 0;
+    var peopleToTrack = 0;
     for (var i = 0; i < people.length; i++) {
       var person = {
         "name": people[i].name,
@@ -86,9 +85,12 @@ function Presence(people) {
         "lastSeen": 0,
         "state": STATE_AWAY
       };
-      status[people[i].uuid] = person;
+      if (people[i].track === true) {
+        peopleToTrack++;
+        status[people[i].uuid] = person;
+      }
     }
-    log.log("[Presence] Ready. (" + people.length + " users)");
+    log.log("[Presence] Ready. (" + peopleToTrack + " users)");
     intervalID = setInterval(timerTick, 2000);
   };
 

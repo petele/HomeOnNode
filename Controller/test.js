@@ -1,22 +1,56 @@
 var Presence = require("./Presence");
 var log = require("./SystemLog");
 var webRequest = require("./webRequest");
+var Firebase = require("firebase");
+var Keys = require("./Keys");
 
-var people = [
-      {"name": "Pete (Mac)", "uuid": "9660b3843c5648299827400de1251b06"},
-      {"name": "Pete (Linux)", "uuid": "c05391b2f3fc"}
-    ];
-var presence = new Presence(people);
+var presence;
+var fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
+fb.auth(Keys.keys.fb, function(error) {
+  if(error) {
 
-
-presence.on("change", function(data) {
-  log.log("[TestHarness] " + data.present);
-  if (data.present === 0) {
-    send("ALERT_OFF");
   } else {
-    send("ALERT_ON");
+
   }
 });
+fb.child("config/presence").once("value", function(snapshot) {
+  var away = snapshot.val().max_away;
+  presence = new Presence(away, peopleParser(snapshot.val().people));
+});
+fb.child("config/presence/people").on("value", function(snapshot) {
+  if (presence) {
+    var people = peopleParser(snapshot.val());
+    presence.init(people);
+  }
+});
+
+
+function peopleParser(people) {
+  var result = [];
+  var keys = Object.keys(people);
+  var keyLen = keys.length;
+  for (var i = 0; i < keyLen; i++) {
+    var person = people[keys[i]];
+    result.push(person);
+  }
+  return result;
+}
+
+// var people = [
+//       {"name": "Pete (Mac)", "uuid": "9660b3843c5648299827400de1251b06"},
+//       {"name": "Pete (Linux)", "uuid": "c05391b2f3fc"}
+//     ];
+// var presence = new Presence(500, people);
+
+
+// presence.on("change", function(data) {
+//   log.log("[TestHarness] " + data.present);
+//   if (data.present === 0) {
+//     send("ALERT_OFF");
+//   } else {
+//     send("ALERT_ON");
+//   }
+// });
 
 
 function send(cmd, modifier) {
