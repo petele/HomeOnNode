@@ -17,6 +17,14 @@ var once = false;
 fb.child("config/presence").once("value", function(snapshot) {
   var away = snapshot.val().max_away;
   presence = new Presence(away, peopleParser(snapshot.val().people));
+  presence.on("change", function(data) {
+    log.log("[TestHarness] " + data.present);
+    if (data.present === 0) {
+      send("ALERT_OFF");
+    } else {
+      send("ALERT_ON");
+    }
+  });
 });
 fb.child("config/presence/people").on("value", function(snapshot) {
   if (once === true) {
