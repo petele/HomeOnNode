@@ -13,14 +13,19 @@ fb.auth(Keys.keys.fb, function(error) {
 
   }
 });
+var once = false;
 fb.child("config/presence").once("value", function(snapshot) {
   var away = snapshot.val().max_away;
   presence = new Presence(away, peopleParser(snapshot.val().people));
 });
 fb.child("config/presence/people").on("value", function(snapshot) {
-  if (presence) {
-    var people = peopleParser(snapshot.val());
-    presence.init(people);
+  if (once === true) {
+    if (presence) {
+      var people = peopleParser(snapshot.val());
+      presence.init(people);
+    }
+  } else {
+    once = true;
   }
 });
 
