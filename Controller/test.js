@@ -18,6 +18,7 @@ fb.child("config/presence").once("value", function(snapshot) {
   var away = snapshot.val().max_away;
   presence = new Presence(away, peopleParser(snapshot.val().people));
   presence.on("change", function(data) {
+    fb.child("logs/presence").push(data.person);
     log.log("[TestHarness] " + data.present);
     if (data.present === 0) {
       send("ALERT_OFF");
@@ -37,7 +38,6 @@ fb.child("config/presence/people").on("value", function(snapshot) {
   }
 });
 
-
 function peopleParser(people) {
   var result = [];
   var keys = Object.keys(people);
@@ -48,23 +48,6 @@ function peopleParser(people) {
   }
   return result;
 }
-
-// var people = [
-//       {"name": "Pete (Mac)", "uuid": "9660b3843c5648299827400de1251b06"},
-//       {"name": "Pete (Linux)", "uuid": "c05391b2f3fc"}
-//     ];
-// var presence = new Presence(500, people);
-
-
-// presence.on("change", function(data) {
-//   log.log("[TestHarness] " + data.present);
-//   if (data.present === 0) {
-//     send("ALERT_OFF");
-//   } else {
-//     send("ALERT_ON");
-//   }
-// });
-
 
 function send(cmd, modifier) {
   var uri = {
@@ -91,10 +74,13 @@ function send(cmd, modifier) {
 // var keys = Keys.keys;
 // var Dropcam = require("./Dropcam");
 
+
 // var dropcam = new Dropcam(keys.dropcam.user, keys.dropcam.password, keys.dropcam.uuid);
 // dropcam.on("ready", function() {
 //   dropcam.enableCamera(true, function(a, b) {
 //     console.log("inside",a,b);
 //   });
 // });
-
+// dropcam.on("error", function(err) {
+//   console.log("DropCam Error", err);
+// });
