@@ -35,7 +35,7 @@
         color: #ffffff;
       }
 
-      .CLOSED, .HOME {
+      .CLOSED, .HOME, .PRESENT {
         background-color: #2196f3;
         color: #ffffff;
       }
@@ -50,8 +50,17 @@
     <ul vertical layout class="text-medium">
       <template repeat="{{item in items}}">
         <li horizontal layout center>
-          <span flex>{{item.date | toDateTime }}</span>
+          <template if="{{item.name}}">
+            <span flex two>{{item.name}}</span>
+          </template>
+          <template if="{{item.lastSeen}}">
+            <span flex>{{item.lastSeen | toDateTime }}</span>
+          </template>
+          <template if="{{item.date}}">
+            <span flex>{{item.date | toDateTime }}</span>
+          </template>
           <span class="label {{item.state}}">{{item.state}}</span>
+
         </li>
       </template>
     </ul>
