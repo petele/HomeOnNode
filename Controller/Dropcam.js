@@ -7,7 +7,6 @@ function Dropcam(username, password, uuid) {
   var self = this;
   var isStreaming;
   var authToken;
-  var cameraSettings;
 
   function makeRequest(options, body, callback) {
     var request;
@@ -19,7 +18,7 @@ function Dropcam(username, password, uuid) {
       options.headers["Cookie"] = authToken;
     }
     if (body) {
-      options.headers["Content-Type"] = "application/x-www-form-urlencoded"
+      options.headers["Content-Type"] = "application/x-www-form-urlencoded";
       options.headers["Content-Length"] = body.length;
     }
     function handleResponse(response) {
@@ -32,7 +31,13 @@ function Dropcam(username, password, uuid) {
         if (callback) {
           try {
             result = JSON.parse(result);
-            callback(response.statusCode, result);
+            if (result.status === 403) {
+              getAuthToken();
+              callback(403, result);
+            } else {
+              callback(response.statusCode, result);
+            }
+            
           } catch (ex) {
             callback(-1, ex);
           }
@@ -93,7 +98,7 @@ function Dropcam(username, password, uuid) {
         callback(resp, null);
       }
     });
-  }
+  };
 
   this.enableCamera = function(enabled, callback) {
     var body = "uuid=[[UUID]]&key=streaming.enabled&value=[[ENABLED]]";
@@ -115,7 +120,7 @@ function Dropcam(username, password, uuid) {
         callback(resp, null);
       }
     });
-  }
+  };
 
   function updateCameraState() {
     self.getCamera(function(err, camera) {
