@@ -250,7 +250,7 @@ function Home(config, fb) {
           _self.set("GV_NEW");
         }
       } catch (ex) {
-        _self.set("GV_ERROR");
+        _self.set("ERROR");
         var msg = "[HOME] Error checking GVoice messages on HOME state change.";
         log.exception(msg, ex);
       }
@@ -287,6 +287,7 @@ function Home(config, fb) {
       _self.state.temperature.inside = -1;
       fbSet("state/temperature/inside", error);
       log.error("[HOME] Error reading inside temperature: " + error);
+      _self.set("ERROR");
     });
     insideTemp.on("change", function(data) {
       var val = parseFloat(data.f).toFixed(2);
@@ -339,13 +340,14 @@ function Home(config, fb) {
     dropcam = new Dropcam(dcConfig.user, dcConfig.password, dcConfig.uuid);
     dropcam.on("error", function(err) {
       log.error("[HOME] Dropcam Error: " + JSON.stringify(err));
+      _self.set("ERROR");
     });
     dropcam.on("ready", function() {
       log.log("[HOME] Dropcam Ready");
     });
     dropcam.on("change", function(state) {
       _self.state.dropcam = state;
-      fbSet("state/dropcam", state)
+      fbSet("state/dropcam", state);
     });
   }
 
@@ -385,6 +387,7 @@ function Home(config, fb) {
     });
     harmony.on("error", function(err) {
       log.error("[HOME] Harmony Error: " + JSON.stringify(err));
+      _self.set("ERROR");
     });
     harmony.on("ready", function() {
       harmony.getConfig();
@@ -407,6 +410,7 @@ function Home(config, fb) {
       _self.state.hue = error;
       fbSet("state/hue", error);
       log.error("[HOME] Error reading Hue state: " + JSON.stringify(err));
+      _self.set("ERROR");
     });
   }
 
@@ -458,7 +462,7 @@ function Home(config, fb) {
     });
     gv.on("error", function(e) {
       if (_self.state.system_state === "HOME") {
-        _self.set("GV_ERROR");
+        _self.set("ERROR");
       }
       log.error("[GOOGLEVOICE] Error: " + JSON.stringify(e));
     });
