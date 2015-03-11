@@ -1,0 +1,168 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-drawer-panel/core-drawer-panel.html">
+<link rel="import" href="../bower_components/core-header-panel/core-header-panel.html">
+<link rel="import" href="../bower_components/core-toolbar/core-toolbar.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/core-pages/core-pages.html">
+
+<link rel="import" href="nav-drawer.html">
+<link rel="import" href="light-panel.html">
+<link rel="import" href="state-panel.html">
+<link rel="import" href="media-panel.html">
+<link rel="import" href="ac-panel.html">
+
+<polymer-element name="primary-panel">
+  <template>
+    <link rel="stylesheet" type="text/css" href="/styles/main.css">
+    <link no-shim href="/styles/pbutton.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/styles/toolbar.css">
+    <style>
+      [drawer] {
+        background-color: #efefef;
+      }
+      paper-tabs {
+        width: 100%;
+      }
+      core-pages {
+        margin: 20px;
+      }
+      paper-toggle-button::shadow #toggleContainer[disabled] {
+        opacity: 0.7 !important;
+      }
+    </style>
+    
+    <core-drawer-panel id="drawer" forceNarrow="true">
+      <core-header-panel drawer>
+        <nav-drawer></nav-drawer>
+      </core-header-panel>
+
+      <core-header-panel main flex>
+
+        <core-toolbar class="no-select text-upper">
+          <paper-icon-button core-drawer-toggle icon="menu"></paper-icon-button>
+          <paper-tabs id="tabs" selected="{{selectedTab}}" self-end>
+            <paper-tab name="status">Status</paper-tab>
+            <paper-tab name="lights">Lights</paper-tab>
+            <paper-tab name="media">Media</paper-tab>
+            <paper-tab name="aircon">A/C</paper-tab>
+          </paper-tabs>
+        </core-toolbar>
+
+        <div class="container" fit>
+          <core-pages selected="{{selectedTab}}" on-core-select="{{tabChanged}}" fit>
+
+            <div name="status" horizontal layout center>
+              <div layout vertical flex>
+                <div layout horizontal center-justified class="text-extra-large">
+                  {{curTime}}
+                </div>
+                <div layout horizontal justified class="text-large colorSecondaryText">
+                  <div>
+                    {{insideTemp}}&deg;
+                  </div>
+                  <div>
+                    {{outsideTemp}}&deg; ({{forecastTemp}}&deg;)
+                  </div>
+                </div>
+                <div layout horizontal justified class="text-large colorSecondaryText">
+                  <div></div>
+                  <div>
+                    Dropcam
+                    <paper-toggle-button checked?="{{dropcamStreaming}}" disabled></paper-toggle-button>
+                  </div>
+                </div>
+                <div layout horizontal center-justified>
+                  <paper-button on-tap="{{setState}}" state="AWAY" colored?="{{state=='AWAY'}}" pushed?="{{pushedState=='AWAY'}}">
+                    Away
+                  </paper-button>
+                  <paper-button on-tap="{{setState}}" state="HOME" colored?="{{state=='HOME'}}" pushed?="{{pushedState=='HOME'}}">
+                    Home
+                  </paper-button>
+                  <paper-button on-tap="{{setState}}" state="SLEEP" colored?="{{state=='SLEEP'}}" pushed?="{{pushedState=='SLEEP'}}">
+                    Sleep
+                  </paper-button>
+                </div>
+              </div>
+            </div>
+
+            <light-panel name="lights">
+            </light-panel>
+
+            <media-panel name="media">
+            </media-panel>
+
+            <ac-panel name="aircon">
+            </ac-panel>
+          </core-pages>
+
+        </div>
+
+      </core-header-panel>
+    </core-drawer-panel>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      created: function() {
+        this.selectedTab = "status";
+        this.pages = document.querySelector("core-animated-pages");
+        this.curTime = "";
+        this.insideTemp = "";
+        this.outsideTemp = "";
+        this.forecastTemp = "";
+        this.dropcamStreaming = false;
+        this.state = "AWAY";
+        this.pushedState = "";
+
+        var self = this;
+        fb.child("state/temperature").on("value", function(snapshot) {
+          var val = snapshot.val();
+          self.insideTemp = Math.round(val.inside);
+          self.outsideTemp = Math.round(val.outside);
+        });
+        fb.child("state/dropcam/streaming").on("value", function(snapshot) {
+          self.dropcamStreaming = snapshot.val();
+        });
+        fb.child("state/system_state").on("value", function(snapshot) {
+          self.state = snapshot.val();
+          if (self.state === "ARMED") {
+            self.pushedState = "AWAY";
+          } else {
+            self.pushedState = "";
+          }
+        });
+        var weatherRef = new Firebase('https://publicdata-weather.firebaseio.com/newyork');
+        weatherRef.child('daily/data/0').on('value', function(snapshot) {
+          self.forecastTemp = Math.floor(snapshot.val().temperatureMax);
+        });
+        this.curTime = moment().format("h:mm a");
+        setInterval(function() {
+          self.curTime = moment().format("h:mm a");
+          var diff = (Date.now() - window.lastEvent) / 1000;
+          if ((diff > 90) && (self.selectedTab !== "status")) {
+            self.selectedTab = "status";
+            window.lastEvent = Date.now();
+          }
+          if ((diff > 180) && (self.pages.selected !== "primary")) {
+            self.pages.selected = "primary";
+            window.lastEvent = Date.now();
+          }
+        }, 1000);
+      },
+      setState: function(event, details, sender) {
+        var newState = sender.getAttribute("state");
+        this.state = "";
+        this.pushedState = newState;
+        fb.child("commands").push({"command": newState});
+        window.lastEvent = Date.now();
+        var self = this;
+        setTimeout(function() {
+          self.pushedState = "";
+        }, 1000*100);
+      },
+      tabChanged: function(a, b, c) {
+        window.lastEvent = Date.now();
+      }
+    });
+  </script>
+</polymer-element>

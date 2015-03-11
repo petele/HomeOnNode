@@ -13,6 +13,12 @@ paper-button[colored] {
   border: 1px solid #03a9f4;
 }
 
+paper-button[pushed] {
+  background-color: #0288d1 !important;
+  color: #fff;
+  border: 1px solid #0288d1 !important;
+}
+
 @media screen and (min-width: 500px) {
   paper-button:not(.small) {
     min-width: 128px;

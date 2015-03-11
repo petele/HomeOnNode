@@ -7,13 +7,13 @@
     "font-roboto": "Polymer/font-roboto#^0.5",
     "paper-button": "Polymer/paper-button#^0.5"
   },
-  "version": "0.5.4",
+  "version": "0.5.5",
   "homepage": "https://github.com/Polymer/paper-toast",
-  "_release": "0.5.4",
+  "_release": "0.5.5",
   "_resolution": {
     "type": "version",
-    "tag": "0.5.4",
-    "commit": "395ca33753a6e4d993a407393f67a3557ec598d9"
+    "tag": "0.5.5",
+    "commit": "9b84763ac5dcfeb267c8a4f1ea8d1ede61653e6a"
   },
   "_source": "git://github.com/Polymer/paper-toast.git",
   "_target": "^0.5",

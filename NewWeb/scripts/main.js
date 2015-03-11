@@ -9,11 +9,13 @@ var elemTempOutNow = document.querySelector("#tempOutNow");
 var elemTempOutFore = document.querySelector("#tempOutFore");
 var elemCurTime = document.querySelector('#curTime');
 var elemDropcam = document.querySelector("#ptDropcam");
+var elemMenu = document.querySelector("#pibMenu");
 
 var elemLightPanel = document.querySelector('light-panel');
 var elemStatePanel = document.querySelector('state-panel');
 var elemACPanel = document.querySelector('ac-panel');
 var elemMediaPanel = document.querySelector('media-panel');
+var elemDrawer = document.querySelector('core-drawer-panel');
 
 var devices = [];
 var modifiers = [];
@@ -113,6 +115,10 @@ function init() {
   fbInit();
   timerTick();
   setInterval(timerTick, 1000);
+  elemMenu.addEventListener('click', function() {
+    console.log("CLICK")
+    elemDrawer.togglePanel();
+  });
   elemTabs.addEventListener('core-select', function() {
     window.lastEvent = Date.now();
     elemPages.selected = elemTabs.selected;

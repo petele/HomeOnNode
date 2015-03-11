@@ -6,13 +6,13 @@
   "devDependencies": {
     "web-component-tester": "Polymer/web-component-tester#^1.1.4"
   },
-  "version": "0.5.4",
+  "version": "0.5.5",
   "homepage": "https://github.com/Polymer/core-input",
-  "_release": "0.5.4",
+  "_release": "0.5.5",
   "_resolution": {
     "type": "version",
-    "tag": "0.5.4",
-    "commit": "655564c7c5f777147751307cd605a16beabfdae7"
+    "tag": "0.5.5",
+    "commit": "65f4107fa8bd6ce6ce96ef11e4a3e9942aefaa53"
   },
   "_source": "git://github.com/Polymer/core-input.git",
   "_target": "^0.5",

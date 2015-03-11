@@ -31,11 +31,9 @@
     </div>
     <div layout start-justified wrap horizontal>
       <template repeat="{{devices as device}}">
-        <template if="{{device.kind=='lights'}}">
-          <paper-button colored?="{{device.isOn==true}}" on-tap="{{tapButton}}" device="{{device}}" flex>
-            {{device.label}}
-          </paper-button>
-        </template>
+        <paper-button colored?="{{device.isOn==true}}" on-tap="{{tapButton}}" device="{{device}}" flex>
+          {{device.label}}
+        </paper-button>
       </template>
     </div>
   </template>
@@ -48,6 +46,23 @@
         this.lights = [];
         this.lightsOn = [];
         this.lightsOff = [];
+        var self = this;
+        fb.child("config/light_recipes").on("value", function(snapshot) {
+          var newModifiers = [];
+          var val = snapshot.val();
+          var k = Object.keys(val);
+          for (var i = 0; i < k.length; i++) {
+            var cmd = {
+              "label": k[i],
+              "command": k[i]
+            };
+            newModifiers.push(cmd);
+          }
+          self.modifiers = newModifiers;
+        });
+        fb.child("config/commands").on("value", function(snapshot) {
+          self.devices = window.getCommands(snapshot.val(), "lights");
+        });
       },
       devicesChanged: function(oldVal, newVal) {
         this.updateLightStatus();

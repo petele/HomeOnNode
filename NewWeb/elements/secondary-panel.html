@@ -1,0 +1,21 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+
+<polymer-element name="secondary-panel" attributes="header">
+  <template>
+    <link rel="stylesheet" type="text/css" href="/styles/toolbar.css">
+    <core-toolbar>
+      <paper-icon-button core-drawer-toggle on-tap="{{tapBack}}" icon="arrow-back"></paper-icon-button>
+      <div>{{header}}</div>
+    </core-toolbar>
+    <content></content>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      tapBack: function() {
+        var cap = document.querySelector("core-animated-pages");
+        cap.selected = "0";
+      }
+    });
+  </script>
+</polymer-element>

@@ -2,13 +2,19 @@
 <link rel="import" href="../bower_components/core-list/core-list.html">
 
 
-<polymer-element name="log-list" attributes="path items">
+<polymer-element name="log-list" attributes="path">
 
   <template>
+    <link rel="stylesheet" type="text/css" href="/styles/main.css">
     <style type="text/css">
-      .row {
-        min-height: 48px;
+      ul {
+        padding-left: 0;
+        list-style-type: none;
+      }
+      li {
         border-bottom: 1px solid #b6b6b6;
+        min-height: 48px;
+        padding: 0 16px;
       }
       .label {
         display: inline-block;
@@ -39,21 +45,16 @@
         color: #000000;
       }
 
-      @media screen and (min-width: 900px) {
-        div {
-          font-size: 1.4em;
-        }
-      }
     </style>
 
-    <div vertical layout >
+    <ul vertical layout class="text-medium">
       <template repeat="{{item in items}}">
-        <div class="row" horizontal layout center>
+        <li horizontal layout center>
           <span flex>{{item.date | toDateTime }}</span>
           <span class="label {{item.state}}">{{item.state}}</span>
-        </div>
+        </li>
       </template>
-    </div>
+    </ul>
   </template>
   <script type="text/javascript">
     Polymer({
@@ -61,6 +62,10 @@
         this.items = [];
       },
       ready: function() {
+        var self = this;
+        fb.child(this.path).endAt().limit(125).on("child_added", function(snapshot) {
+          self.items.unshift(snapshot.val());
+        });
       },
       toDateTime: function(value) {
         return moment(value).format("M/D/YY, h:mm:ss a");

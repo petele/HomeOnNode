@@ -5,55 +5,61 @@
 
 <polymer-element name="ac-panel" attributes="devices">
   <template>
+    <link rel="stylesheet" type="text/css" href="/styles/main.css">
     <style type="text/css">
       .acTemp {
-        width: 1.1em;
+        min-width: 1.1em;
         text-align: center;
       }
       .acTemp[disabled] {
         color: #c9c9c9;
         opacity: 0;
       }
-      .row {
-        margin-bottom: 15px;
-      }
-      paper-toggle-button {
-        margin-right: 8px;
-      }
       paper-toggle-button::shadow [checked] .toggle {
         background-color: #03A9F4;
       }
-
       paper-toggle-button::shadow [checked] .toggle-ink {
         color: #81D4FA;
       }
-      @media screen and (min-width: 900px) {
-        div {
-          font-size: 1.4em;
-        }
+      li {
+        min-height: 40px;
+      }
+      ul {
+        padding-left: 0;
+        list-style-type: none;
       }
     </style>
-
-    <div vertical layout>
-      <div class="row" horizontal layout center>
+    <ul vertical layout class="text-large">
+      <li horizontal layout center>
         <span flex>Fast Cool</span>
-        <paper-icon-button on-tap="{{fastCool}}" icon="file-download"></paper-icon-button>
-      </div>
+        <paper-toggle-button on-change="{{fastCool}}" checked?="{{fastCool}}"></paper-toggle-button>
+      </li>
       <template repeat="{{devices as device}}">
-        <div class="row" horizontal layout center>
+        <li horizontal layout center>
           <span flex>{{device.label}}</span>
           <paper-toggle-button on-change="{{toggleAC}}" checked?="{{device.temp > 0}}"></paper-toggle-button>
-          <paper-icon-button on-tap="{{tempUp}}" disabled?="{{device.temp >= 75 || device.temp == 0}}" icon="expand-less"></paper-icon-button>
-          <div class="acTemp" disabled?="{{device.temp == 0}}">{{device.temp}}</div>
           <paper-icon-button on-tap="{{tempDown}}" disabled?="{{device.temp <= 60 || device.temp == 0}}" icon="expand-more"></paper-icon-button>
-        </div>
+          <div class="acTemp" disabled?="{{device.temp == 0}}">{{device.temp}}</div>
+          <paper-icon-button on-tap="{{tempUp}}" disabled?="{{device.temp >= 75 || device.temp == 0}}" icon="expand-less"></paper-icon-button>
+        </li>
       </template>
-    </div>
+    </ul>
   </template>
   <script type="text/javascript">
     Polymer({
       created: function() {
         this.devices = [];
+        this.fastCool = false;
+        var self = this;
+        fb.child("state/ac").on("value", function(snapshot) {
+          var val = snapshot.val();
+          var devices = [
+            {"label": "Living Room", "command": "LR_AC", "id": "LR", "temp": val.LR},
+            {"label": "Kitchen", "command": "KI_AC", "id": "KI", "temp": val.KI},
+            {"label": "Bed Room", "command": "BR_AC", "id": "BR", "temp": val.BR}
+          ];
+          self.devices = devices;
+        });
       },
       fastCool: function(event, details, sender) {
         var cmd = {
