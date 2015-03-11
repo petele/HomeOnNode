@@ -13,57 +13,17 @@ fb.auth(Keys.keys.fb, function(error) {
 
   }
 });
-var once = false;
 fb.child("config/presence").once("value", function(snapshot) {
   var away = snapshot.val().max_away;
-  presence = new Presence(away, peopleParser(snapshot.val().people));
+  presence = new Presence(away);
   presence.on("change", function(data) {
     fb.child("logs/presence").push(data.person);
-    log.log("[TestHarness] " + data.present);
-    if (data.present === 0) {
-      send("ALERT_OFF");
-    } else {
-      send("ALERT_ON");
-    }
+  });
+  fb.child("config/presence/people").on("value", function(snapshot) {
+    presence.addPeople(snapshot.val());
   });
 });
-fb.child("config/presence/people").on("value", function(snapshot) {
-  if (once === true) {
-    if (presence) {
-      var people = peopleParser(snapshot.val());
-      presence.init(people);
-    }
-  } else {
-    once = true;
-  }
-});
 
-function peopleParser(people) {
-  var result = [];
-  var keys = Object.keys(people);
-  var keyLen = keys.length;
-  for (var i = 0; i < keyLen; i++) {
-    var person = people[keys[i]];
-    result.push(person);
-  }
-  return result;
-}
-
-function send(cmd, modifier) {
-  var uri = {
-    "host": "192.168.1.202",
-    "port": 3000,
-    "path": "/state",
-    "method": "POST"
-  };
-  var body = {
-    "command": cmd,
-    "modifier": modifier
-  };
-  body = JSON.stringify(body);
-  webRequest.request(uri, body, function(resp) {
-  });
-}
 
 
 // ----

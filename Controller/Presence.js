@@ -3,7 +3,7 @@ var log = require("./SystemLog");
 var util = require("util");
 var noble = require("noble");
 
-function Presence(max_away, people) {
+function Presence(max_away) {
   var STATE_AWAY = "AWAY";
   var STATE_PRESENT = "PRESENT";
   var MAX_AWAY = max_away;
@@ -70,32 +70,47 @@ function Presence(max_away, people) {
     }
   }
 
-  this.init = function(people) {
-    log.init("[Presence]");
+  this.addPeople = function(people) {
     if (intervalID) {
       clearInterval(intervalID);
     }
     status = {};
     numPresent = 0;
-    var peopleToTrack = 0;
-    for (var i = 0; i < people.length; i++) {
-      var person = {
-        "name": people[i].name,
-        "uuid": people[i].uuid,
-        "lastSeen": 0,
-        "state": STATE_AWAY
-      };
-      if (people[i].track === true) {
-        peopleToTrack++;
-        status[people[i].uuid] = person;
+    if (util.isArray(people) === false) {
+      var keys = Object.keys(people);
+      var keyLen = keys.length;
+      for (var i = 0; i < keyLen; i++) {
+        addPerson(people[keys[i]]);
+      }
+    } else {
+      for (var i = 0; i < people.length; i++) {
+        addPerson(people[i]);
       }
     }
-    log.log("[Presence] Ready. (" + peopleToTrack + " users)");
+    log.log("[Presence] Added " + Object.keys(status).length + " people.");
     intervalID = setInterval(timerTick, 2000);
+  }
+
+  function addPerson(person) {
+    if (person.track === true) {
+      var p = {
+        "name": person.name,
+        "uuid": person.uuid,
+        "lastSeen": 0,
+        "state": STATE_AWAY
+      }
+      status[person.uuid] = p;
+    }
+  }
+
+  function init() {
+    log.init("[Presence]");
+    numPresent = 0;
+    status = {};
+    startNoble();
   };
 
-  this.init(people);
-  startNoble();
+  init();
 }
 
 util.inherits(Presence, EventEmitter);
