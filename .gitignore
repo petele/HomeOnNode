@@ -10,4 +10,4 @@ node_modules
 */**/keys.js
 */logs/*
 
-/NewWeb/scripts/fbKey.js
+/Web/scripts/fbKey.js
