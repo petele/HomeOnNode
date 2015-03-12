@@ -12,7 +12,7 @@
   <link rel="import" href="elements/primary-panel.html">
   <link rel="import" href="elements/secondary-panel.html">
   <link rel="import" href="elements/log-list.html">
-  
+  <link rel="import" href="elements/config-panel.html">
   <link rel="stylesheet" type="text/css" href="styles/main.css">
 </head>
 
@@ -23,7 +23,7 @@
       <primary-panel></primary-panel>
     </section>
     <secondary-panel name="devices" header="Devices">
-      
+
     </secondary-panel>
     <secondary-panel name="doorLogs" header="Door Logs">
       <log-list path="logs/door"></log-list>
@@ -35,20 +35,17 @@
       <log-list path="logs/presence"></log-list>
     </secondary-panel>
     <secondary-panel name="settings" header="Settings">
-      
+      <config-panel></config-panel>
     </secondary-panel>
-
-
-    
 
   </core-animated-pages>
 
   <paper-toast id="toast"></paper-toast>
 
-  
+
   <script src="bower_components/moment/moment.js"></script>
   <script src="bower_components/firebase/firebase.js"></script>
   <script src="/scripts/fbKey.js"></script>
-  <script src="/scripts/new.js"></script>
+  <script src="/scripts/main.js"></script>
 </body>
 </html>
