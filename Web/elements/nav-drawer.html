@@ -5,6 +5,7 @@
 <link rel="import" href="../bower_components/core-icons/social-icons.html">
 <link rel="import" href="../bower_components/core-icons/image-icons.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/core-ajax/core-ajax.html">
 
 
 <polymer-element name="nav-drawer">
@@ -33,7 +34,7 @@
         border-radius: 0;
         text-transform: none;
       }
-      paper-button a, 
+      paper-button a,
       paper-button span {
         margin-right: auto;
         vertical-align: middle;
@@ -117,28 +118,35 @@
         </ul>
       </div>
       <div id="status">
-        <div><span>Version:</span> {{version}}</div>
+        <div><span>Version:</span> {{version}} ({{ghVersion}})</span></div>
         <div><span>Started:</span> {{startedAt}}</div>
         <div><span>Last Updated:</span> {{lastUpdatedAt}}</div>
       </div>
 
     </div>
-    
 
 
 
+    <core-ajax auto
+      url="https://api.github.com/repos/petele/HomeOnNode/commits"
+      handleAs="json"
+      on-core-response="{{handleResponse}}">
+    </core-ajax>
   </template>
   <script type="text/javascript">
-    // Current Commit: https://api.github.com/repos/petele/HomeOnNode/commits
-    // [0].sha
     Polymer({
       created: function() {
         this.version = "";
+        this.ghVersion = "";
         this.startedAt = "";
         this.lastUpdatedAt = "";
       },
       formatDate: function(dt) {
-        return moment(dt).format("M/D/YY, h:mm:ss a");
+        if (dt) {
+          return moment(dt).format("M/D/YY, h:mm:ss a");
+        } else {
+          return "";
+        }
       },
       ready: function() {
         var self = this;
@@ -161,7 +169,10 @@
           var primaryPanel = document.querySelector("primary-panel");
           primaryPanel.$.drawer.closeDrawer();
         }, 500);
-        window.lastEvent = Date.now();      
+        window.lastEvent = Date.now();
+      },
+      handleResponse: function(event, details, sender) {
+        this.ghVersion = details.response[0].sha.substring(0, 7);
       }
     });
   </script>
