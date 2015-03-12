@@ -37,7 +37,7 @@ function Dropcam(username, password, uuid) {
             } else {
               callback(response.statusCode, result);
             }
-            
+
           } catch (ex) {
             callback(-1, ex);
           }
@@ -119,6 +119,7 @@ function Dropcam(username, password, uuid) {
       } else if (callback) {
         callback(resp, null);
       }
+      updateCameraState();
     });
   };
 
