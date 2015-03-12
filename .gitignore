@@ -9,5 +9,5 @@ node_modules
 
 */**/keys.js
 */logs/*
-
+/Web/bower_components
 /Web/scripts/fbKey.js
