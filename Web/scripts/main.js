@@ -4,7 +4,7 @@ window.lastEvent = Date.now();
 var pToast = document.querySelector("paper-toast");
 
 var fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
-fb.auth(fbKey, function(error) {
+fb.authWithCustomToken(fbKey, function(error) {
   if(error) {
     console.error("[FIREBASE] Auth failed. " + error.toString());
     showToast("Firebase authentication failure.");

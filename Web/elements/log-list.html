@@ -75,7 +75,7 @@
       },
       ready: function() {
         var self = this;
-        fb.child(this.path).endAt().limit(125).on("child_added", function(snapshot) {
+        fb.child(this.path).limitToLast(125).on("child_added", function(snapshot) {
           self.items.unshift(snapshot.val());
         });
       },
