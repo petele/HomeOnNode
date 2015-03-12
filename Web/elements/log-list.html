@@ -79,7 +79,11 @@
         });
       },
       toDateTime: function(value) {
-        return moment(value).format("M/D/YY, h:mm:ss a");
+        if (value) {
+          return moment(value).format("M/D/YY, h:mm:ss a");
+        } else {
+          return "";
+        }
       }
     });
   </script>
