@@ -126,8 +126,21 @@ function Home(config, fb) {
             chromecast.startApp();
           }
         } catch (ex) {
-          log.exception("[HOME] Count not set Harmony activity. ", ex);
+          log.exception("[HOME] Could not set Harmony activity. ", ex);
           response.harmony = ex;
+        }
+      }
+      if (cmd.dropcam) {
+        try {
+          if (dropcam) {
+            if ((modifier === "Off") || (cmd.dropcam === false)) {
+              dropcam.enableCamera(false);
+            } else {
+              dropcam.enableCamera(true);
+            }
+          }
+        } catch (ex) {
+          log.exception("[HOME] Could not enable/disable the Dropcam.", ex);
         }
       }
       if (cmd.sound) {
@@ -236,13 +249,6 @@ function Home(config, fb) {
         setState("AWAY");
         _self.set("LIGHTSOFF");
       }, config.arming_delay);
-      if (dropcam) {
-        dropcam.enableCamera(true);
-      }
-    } else if (state === "AWAY") {
-      if (dropcam) {
-        dropcam.enableCamera(true);
-      }
     } else if (state === "HOME") {
       // Check if we have any new GoogleVoice Messages
       try {

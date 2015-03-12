@@ -68,7 +68,7 @@
                   <div></div>
                   <div>
                     Dropcam
-                    <paper-toggle-button checked?="{{dropcamStreaming}}" disabled></paper-toggle-button>
+                    <paper-toggle-button checked?="{{dropcamStreaming}}" on-change="{{toggleDropcam}}"></paper-toggle-button>
                   </div>
                 </div>
                 <div layout horizontal center-justified>
@@ -161,6 +161,13 @@
       },
       tabChanged: function(a, b, c) {
         window.lastEvent = Date.now();
+      },
+      toggleDropcam: function(event, details, sender) {
+        if (sender.checked === true) {
+          fb.child("commands").push({"command": "DROPCAM"});
+        } else {
+          fb.child("commands").push({"command": "DROPCAM", "modifier": "Off"});
+        }
       }
     });
   </script>
