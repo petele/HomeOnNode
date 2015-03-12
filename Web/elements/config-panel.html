@@ -1,0 +1,50 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+
+<polymer-element name="config-panel">
+  <template>
+    <style type="text/css">
+      ul {
+        padding-left: 0;
+        list-style-type: none;
+        margin-top: 0;
+      }
+      li {
+        border-bottom: 1px solid #b6b6b6;
+        min-height: 48px;
+        padding: 0 16px;
+      }
+    </style>
+    <h2>Presence</h2>
+    <ul vertical layout>
+      <template repeat="{{p in presence}}">
+        <li horizontal layout center>
+          <span flex>{{p.name}}</span>
+          <span flex>{{p.uuid}}</span>
+          <paper-toggle-button on-change="{{togglePresence}}" checked?="{{p.track === true}}"></paper-toggle-button>
+        </li>
+      </template>
+    </ul>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      created: function() {
+        this.presence = [];
+        var self = this;
+        fb.child("config/presence/people").on("value", function(snapshot) {
+          self.presence = [];
+          snapshot.forEach(function(itemObj) {
+            var item = itemObj.val();
+            item.key = itemObj.key();
+            self.presence.push(item);
+          });
+        });
+      },
+      togglePresence: function(event, details, sender) {
+        var pres = sender.templateInstance.model.p;
+        var path = "config/presence/people/" + pres.key + "/track"
+        fb.child(path).set(!pres.track);
+      }
+    });
+  </script>
+</polymer-element>
