@@ -54,6 +54,7 @@
           var newModifiers = [];
           var val = snapshot.val();
           var k = Object.keys(val);
+          // TODO: clean this up to use the forEach
           for (var i = 0; i < k.length; i++) {
             var cmd = {
               "label": k[i],
