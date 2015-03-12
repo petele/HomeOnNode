@@ -3,7 +3,7 @@ paper-button {
   min-height: 48px;
   background-color: white;
   text-transform: none;
-  margin: 6px;
+  margin: 8px;
   border: 1px solid #e0e0e0;
 }
 paper-button[colored] {
@@ -29,7 +29,6 @@ paper-button[pushed] {
     min-width: 150px;
     min-height: 84px;
     font-size: 1.2em;
-    margin: 8px;
   }
 }
 
@@ -43,6 +42,5 @@ paper-button[pushed] {
   }
   paper-button:not(.small) {
     min-width: 228px;
-    margin: 10px;
   }
 }
