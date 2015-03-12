@@ -59,7 +59,9 @@
           <template if="{{item.date}}">
             <span flex>{{item.date | toDateTime }}</span>
           </template>
-          <span class="label {{item.state}}">{{item.state}}</span>
+          <span flex horizontal end-justified layout>
+            <span class="label {{item.state}}">{{item.state}}</span>
+          </span>
 
         </li>
       </template>
