@@ -1,0 +1,121 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-action-dialog.html">
+<link rel="import" href="../bower_components/core-icons/core-icons.html">
+
+<polymer-element name="device-panel">
+  <template>
+    <style type="text/css">
+      .box {
+        border: 1px solid #cccccc;
+        display: inline-block;
+        margin: 16px;
+        padding: 8px;
+      }
+      .container {
+        margin: 16px;
+      }
+      .offline {
+        color: green;
+      }
+      .online {
+        color: red;
+      }
+      html /deep/ [autofocus] {
+        color: red;
+        font-weight: bold;
+      }
+      paper-action-dialog::shadow paper-button[autofocus] {
+        color: #03a9f4;
+        font-weight: bold;
+      }
+    </style>
+    <div class="container">
+      <template repeat="{{d in devices}}">
+        <div class="box">
+          <div>{{d.key}}</div>
+          <div><core-icon icon="polymer" class="{{d.online === true ? 'offline' : 'online'}}"></core-icon></div>
+          <div><b>started</b> {{d.started_at | toDateTime}}</div>
+          <div><b>version</b> {{d.version}}</div>
+          <div><b>shutdown</b> {{d.shutdown_at | toDateTime}}</div>
+          <div><b>heartbeat</b> {{d.heartbeat | toDateTime}}</div>
+          <div><b>fbLog</b> <paper-toggle-button on-change="{{toggleFBLog}}" checked?="{{p.logToFirebase === true}}"></paper-toggle-button></div>
+          <div><b>debLog</b><paper-toggle-button on-change="{{toggleDBLog}}" checked?="{{p.debugLog === true}}"></paper-toggle-button></div>
+          <div>
+            <paper-button on-tap="{{tapRestart}}">Restart</paper-button>
+            <paper-button on-tap="{{tapShutdown}}">Shutdown</paper-button>
+          </div>
+        </div>
+      </template>
+    </div>
+    <paper-action-dialog on-core-overlay-close-completed="{{dialogClosed}}" on-core-overlay-open-completed="{{dialogOpened}}" id="dialog" backdrop heading="Are you sure?">
+      <p>Are you sure you wish to {{action}} {{deviceToAction.key}}?</p>
+      <paper-button dismissive autofocus>No</paper-button>
+      <paper-button on-tap="{{tapConfirm}}" affirmative>Yes</paper-button>
+    </paper-action-dialog>
+  </template>
+  <script type="text/javascript">
+    Polymer({
+      created: function() {
+        this.devices = [];
+        this.action = null;
+        this.deviceToAction = null;
+        var self = this;
+        fb.child("devices").on("value", function(snapshot) {
+          self.devices = [];
+          snapshot.forEach(function(itemObj) {
+            var item = itemObj.val();
+            item.key = itemObj.key();
+            self.devices.push(item);
+          });
+        });
+      },
+      toggleFBLog: function(event, details, sender) {
+        var model = sender.templateInstance.model.d;
+        var path = "devices/" + model.key + "/logToFirebase"; 
+        fb.child(path).set(sender.checked);
+      },
+      toggleDBLog: function(event, details, sender) {
+        var model = sender.templateInstance.model.d;
+        var path = "devices/" + model.key + "/debugLog"; 
+        fb.child(path).set(sender.checked);
+      },
+      tapRestart: function(event, details, sender) {
+        var model = sender.templateInstance.model.d;
+        this.deviceToAction = model;
+        this.action = "restart";
+        this.$.dialog.open();
+      },
+      tapShutdown: function(event, details, sender) {
+        var model = sender.templateInstance.model.d;
+        this.deviceToAction = model;
+        this.action = "shutdown";
+        this.$.dialog.open();
+      },
+      tapConfirm: function(event, details, sender) {
+        var path = "devices/" + this.deviceToAction.key + "/"+ this.action;
+        fb.child(path).set(true);
+      },
+      dialogOpened: function(event, details, sender) {
+        setTimeout(function() {
+          if (sender.opened === true) {
+            sender.close();
+          }
+        }, 30000);
+      },
+      dialogClosed: function(event, details, sender) {
+        this.deviceToAction = null;
+        this.action = null;
+      },
+      toDateTime: function(value) {
+        if (value) {
+          return moment(value).format("M/D/YY, h:mm:ss a");
+        } else {
+          return "";
+        }
+      }
+    });
+  </script>
+</polymer-element>
