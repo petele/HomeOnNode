@@ -7,12 +7,11 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/core-icons/av-icons.html">
 
-<polymer-element name="light-panel" attributes="devices modifiers lights">
+<polymer-element name="light-panel">
 
   <template>
     <link no-shim href="/styles/pbutton.css" rel="stylesheet">
     <div layout start-justified wrap horizontal center>
-      <!-- <paper-icon-button on-tap="{{tapOn}}" icon="settings-power"></paper-icon-button> -->
       <paper-dropdown-menu flex>
         <paper-dropdown class="dropdown">
           <core-menu id="coreMenu" selected="TOGGLE" class="menu" valueattr="modifier" flex on-core-select="{{setModifier}}">
@@ -27,7 +26,6 @@
           </core-menu>
         </paper-dropdown>
       </paper-dropdown-menu>
-      <!-- <paper-icon-button on-tap="{{tapOff}}" icon="av:not-interested"></paper-icon-button> -->
     </div>
     <div layout start-justified wrap horizontal>
       <template repeat="{{devices as device}}">
@@ -63,11 +61,11 @@
         fb.child("config/commands").on("value", function(snapshot) {
           self.devices = window.getCommands(snapshot.val(), "lights");
         });
+        fb.child("state/hue/lights").on("value", function(snapshot) {
+          self.lightStateChanged(snapshot.val());
+        });
       },
-      devicesChanged: function(oldVal, newVal) {
-        this.updateLightStatus();
-      },
-      lightsChanged: function(oldVal, newVal) {
+      lightStateChanged: function(newVal) {
         var newOn = [];
         var newOff = [];
         for (var i = 1; i < newVal.length; i++) {
@@ -142,7 +140,7 @@
           device.isOn = true;
           cmd.modifier = this.modifier;
         }
-        
+
         window.lastEvent = Date.now();
         console.log("tapButton", cmd);
         fb.child("commands").push(cmd);

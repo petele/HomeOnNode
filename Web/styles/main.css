@@ -1,6 +1,10 @@
 html,body {
   font-family: 'RobotoDraft', 'Roboto', sans-serif;
   background-color: #efefef;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .colorDarkPrimary {
