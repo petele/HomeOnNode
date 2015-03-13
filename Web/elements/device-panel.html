@@ -8,7 +8,7 @@
 
 <polymer-element name="device-panel">
   <template>
-    
+
     <style type="text/css">
       .box {
         display: inline-block;
@@ -106,7 +106,7 @@
         this.action = null;
         this.deviceToAction = null;
         var self = this;
-        fb.child("devices").once("value", function(snapshot) {
+        fb.child("devices").on("value", function(snapshot) {
           self.devices = [];
           snapshot.forEach(function(itemObj) {
             var item = itemObj.val();
