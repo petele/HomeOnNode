@@ -8,43 +8,80 @@
 
 <polymer-element name="device-panel">
   <template>
+    
     <style type="text/css">
       .box {
-        border: 1px solid #cccccc;
         display: inline-block;
-        margin: 16px;
+        margin: 8px;
         padding: 8px;
+        min-width: 320px;
+        max-width: 500px;
+        background-color: white;
+        border: 1px solid #e0e0e0;
       }
       .container {
-        margin: 16px;
+        margin: 8px;
       }
       .offline {
-        color: green;
+        color: #B71C1C;
       }
       .online {
-        color: red;
+        color: #1B5E20;
       }
-      html /deep/ [autofocus] {
-        color: red;
-        font-weight: bold;
+      .secondary {
+        color: #727272;
       }
-      paper-action-dialog::shadow paper-button[autofocus] {
-        color: #03a9f4;
-        font-weight: bold;
+      .text-right {
+        text-align: right;
+      }
+      .box > div {
+        margin-bottom: 8px;
       }
     </style>
-    <div class="container">
+    <div class="container" layout start-justified wrap horizontal center>
       <template repeat="{{d in devices}}">
-        <div class="box">
-          <div>{{d.key}}</div>
-          <div><core-icon icon="image:brightness-1" class="{{d.online === true ? 'offline' : 'online'}}"></core-icon></div>
-          <div><b>started</b> {{d.started_at | toDateTime}}</div>
-          <div><b>version</b> {{d.version}}</div>
-          <div><b>shutdown</b> {{d.shutdown_at | toDateTime}}</div>
-          <div><b>heartbeat</b> {{d.heartbeat | toDateTime}}</div>
-          <div><b>fbLog</b> <paper-toggle-button on-change="{{toggleFBLog}}" checked?="{{p.logToFirebase === true}}"></paper-toggle-button></div>
-          <div><b>debLog</b><paper-toggle-button on-change="{{toggleDBLog}}" checked?="{{p.debugLog === true}}"></paper-toggle-button></div>
-          <div>
+        <div class="box" flex>
+          <div horizontal layout>
+            <div flex><b>{{d.key}}</b></div>
+            <div>
+              <core-icon icon="image:brightness-1" class="{{d.online === true ? 'online' : 'offline'}}"></core-icon>
+            </div>
+          </div>
+          <div horizontal layout>
+            <div flex>Last Updated</div>
+            <div flex two class="text-right {{isOld(d.heartbeat) === true ? 'offline' : ''}}">
+              {{d.heartbeat | toDateTime}}
+            </div>
+          </div>
+          <template if="{{d.started_at}}">
+            <div horizontal layout>
+              <div flex>Started</div>
+              <div flex two class="text-right">{{d.started_at | toDateTime}}</div>
+            </div>
+          </template>
+          <template if="{{d.shutdown_at}}">
+            <div horizontal layout>
+              <div flex>Shutdown</div>
+              <div flex two class="text-right">{{d.shutdown_at | toDateTime}}</div>
+            </div>
+          </template>
+          <div horizontal layout>
+            <div flex>Version</div>
+            <div flex two class="text-right">{{d.version}}</div>
+          </div>
+          <div horizontal layout>
+            <div flex>Log to Firebase</div>
+            <div flex class="text-right">
+              <paper-toggle-button on-change="{{toggleFBLog}}" checked?="{{p.logToFirebase === true}}"></paper-toggle-button>
+            </div>
+          </div>
+          <div horizontal layout>
+            <div flex>Debug Log</div>
+            <div flex class="text-right">
+              <paper-toggle-button on-change="{{toggleDBLog}}" checked?="{{p.debugLog === true}}"></paper-toggle-button>
+            </div>
+          </div>
+          <div horizontal center-justified layout>
             <paper-button on-tap="{{tapRestart}}">Restart</paper-button>
             <paper-button on-tap="{{tapShutdown}}">Shutdown</paper-button>
           </div>
@@ -52,9 +89,14 @@
       </template>
     </div>
     <paper-action-dialog on-core-overlay-close-completed="{{dialogClosed}}" on-core-overlay-open-completed="{{dialogOpened}}" id="dialog" backdrop heading="Are you sure?">
+      <style type="text/css">
+        paper-button[autofocus] {
+          color: #03a9f4;
+        }
+      </style>
       <p>Are you sure you wish to {{action}} {{deviceToAction.key}}?</p>
-      <paper-button dismissive autofocus>No</paper-button>
-      <paper-button on-tap="{{tapConfirm}}" affirmative>Yes</paper-button>
+      <paper-button dismissive autofocus>Cancel</paper-button>
+      <paper-button on-tap="{{tapConfirm}}" affirmative>{{action}}</paper-button>
     </paper-action-dialog>
   </template>
   <script type="text/javascript">
@@ -64,7 +106,7 @@
         this.action = null;
         this.deviceToAction = null;
         var self = this;
-        fb.child("devices").on("value", function(snapshot) {
+        fb.child("devices").once("value", function(snapshot) {
           self.devices = [];
           snapshot.forEach(function(itemObj) {
             var item = itemObj.val();
@@ -123,6 +165,15 @@
         } else {
           return "";
         }
+      },
+      isOld: function(value) {
+        if (value) {
+          var diff = (moment() - moment(value)) / 1000;
+          if (diff > 120) {
+            return true;
+          }
+        }
+        return false;
       }
     });
   </script>
