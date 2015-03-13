@@ -15,6 +15,7 @@ var Hue = require("./Hue");
 var Door = require("./Door");
 var GoogleVoice = require("./GoogleVoice");
 var Dropcam = require("./Dropcam");
+var Presence = require("./Presence");
 
 function Home(config, fb) {
   this.state = {};
@@ -24,7 +25,7 @@ function Home(config, fb) {
   var _self = this;
 
   var armingTimer, awayTimer;
-  var hue, harmony, dropcam, airConditioners, insideTemp, doors, chromecast, gv;
+  var hue, harmony, dropcam, presence, airConditioners, insideTemp, doors, chromecast, gv;
 
   this.setLights = function(lights, state, source) {
     var response = {
@@ -217,8 +218,8 @@ function Home(config, fb) {
       _self.state.time.last_updated = Date.now();
     } catch (ex) {
       log.exception("[HOME] Unable to PUSH data to firebase.", ex);
-      log.error(" - FBPath: " + path);
-      log.error(" - Value: " + JSON.stringify(value));
+      log.log(" - FBPath: " + path);
+      log.log(" - Value: " + JSON.stringify(value));
     }
   }
 
@@ -233,8 +234,8 @@ function Home(config, fb) {
       _self.state.time.last_updated = Date.now();
     } catch (ex) {
       log.exception("[HOME] Unable to SET data to firebase.", ex);
-      log.error(" - FBPath: " + path);
-      log.error(" - Value: " + JSON.stringify(value));
+      log.log(" - FBPath: " + path);
+      log.log(" - Value: " + JSON.stringify(value));
     }
   }
 
@@ -355,6 +356,26 @@ function Home(config, fb) {
       _self.state.dropcam = state;
       fbSet("state/dropcam", state);
     });
+  }
+
+  function initPresence() {
+    presence = new Presence(config.presence.max_away);
+    presence.on("error", function(err) {
+      log.error("[HOME] Presence Error: " + JSON.stringify(err));
+      _self.set("ERROR");
+    });
+    presence.on("change", function(data) {
+      fbPush("logs/presence", data.person);
+      if ((data.present >= 1) && (config.presence.disable_cam === true) &&
+          (_self.state.dropcam === true)) {
+            dropcam.enableCamera(false);
+            log.log("[HOME] DropCam disabled by Presence detection.");
+      }
+    });
+    fb.on("config/presence/people").on("value", function(snapshot) {
+      presence.addPeople(snapshot.val());
+    });
+
   }
 
   function initHarmony() {
@@ -503,6 +524,7 @@ function Home(config, fb) {
     initDoor();
     initHarmony();
     initHue();
+    initPresence();
     _self.emit("ready");
     fbPush("logs/app", {"date": Date.now(), "module": "HOME", "state": "READY"});
     _self.state.version = log.version;

@@ -51,9 +51,12 @@ function Presence(max_away) {
     noble.on("stateChange", function(state) {
       log.log("[Presence] Noble State Change: " + state);
       if (state === "poweredOn") {
+        self.emit("scanning", true);
         noble.startScanning([], true);
       } else {
         noble.stopScanning();
+        self.emit("scanning", false);
+        self.emit("error", {"adapterState": state});
       }
     });
     noble.on("scanStart", function() {
