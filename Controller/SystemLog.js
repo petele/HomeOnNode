@@ -5,13 +5,14 @@ var moment = require("moment");
 
 var DEBUG = true;
 var TO_FIREBASE = false;
-var fb;
+var fb, fbErrors;
 
 var file = "./logs/rpi-system.log";
 
 function initFirebase(fbRoot, appName) {
   appName = appName || "default";
   fb = fbRoot.child("logs/" + appName);
+  fbErrors = fbRoot.child("logs/errors");
   TO_FIREBASE = false;
 }
 
@@ -55,6 +56,7 @@ function warn(message) {
 
 function error(message) {
   write(build("ERROR", message));
+  fbErrors.push({"date": Date.now(), "message": message});
 }
 
 function exception(message, ex) {
@@ -68,6 +70,7 @@ function exception(message, ex) {
     msg += "\n" + ex;
   }
   write(msg);
+  fbErrors.push({"date": Date.now(), "message": message, "exception": ex});
 }
 
 function debug(message) {
