@@ -52,16 +52,13 @@
         var self = this;
         fb.child("config/light_recipes").on("value", function(snapshot) {
           var newModifiers = [];
-          var val = snapshot.val();
-          var k = Object.keys(val);
-          // TODO: clean this up to use the forEach
-          for (var i = 0; i < k.length; i++) {
+          snapshot.forEach(function(snap) {
             var cmd = {
-              "label": k[i],
-              "command": k[i]
+              "label": snap.key(),
+              "command": snap.key()
             };
             newModifiers.push(cmd);
-          }
+          });
           self.modifiers = newModifiers;
         });
         fb.child("config/commands").on("value", function(snapshot) {

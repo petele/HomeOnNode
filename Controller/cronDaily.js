@@ -3,9 +3,9 @@ var cronJob = function() {
 
   cleanLogs("logs/app", 30);
   cleanLogs("logs/door", 120);
+  cleanLogs("logs/door-closet", 30);
+  cleanLogs("logs/presence", 365);
   cleanLogs("logs/system_state", 120);
-  cleanLogs("logs/commands", 7);
-  cleanLogs("logs/harmony", 7);
   cleanLogs("logs/temperature/inside", 365);
 };
 
