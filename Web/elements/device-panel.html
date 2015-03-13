@@ -4,6 +4,7 @@
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-action-dialog.html">
 <link rel="import" href="../bower_components/core-icons/core-icons.html">
+<link rel="import" href="../bower_components/core-icons/image-icons.html">
 
 <polymer-element name="device-panel">
   <template>
@@ -36,7 +37,7 @@
       <template repeat="{{d in devices}}">
         <div class="box">
           <div>{{d.key}}</div>
-          <div><core-icon icon="polymer" class="{{d.online === true ? 'offline' : 'online'}}"></core-icon></div>
+          <div><core-icon icon="image:brightness-1" class="{{d.online === true ? 'offline' : 'online'}}"></core-icon></div>
           <div><b>started</b> {{d.started_at | toDateTime}}</div>
           <div><b>version</b> {{d.version}}</div>
           <div><b>shutdown</b> {{d.shutdown_at | toDateTime}}</div>
@@ -74,29 +75,34 @@
       },
       toggleFBLog: function(event, details, sender) {
         var model = sender.templateInstance.model.d;
-        var path = "devices/" + model.key + "/logToFirebase"; 
+        var path = "devices/" + model.key + "/logToFirebase";
         fb.child(path).set(sender.checked);
+        window.lastEvent = Date.now();
       },
       toggleDBLog: function(event, details, sender) {
         var model = sender.templateInstance.model.d;
-        var path = "devices/" + model.key + "/debugLog"; 
+        var path = "devices/" + model.key + "/debugLog";
         fb.child(path).set(sender.checked);
+        window.lastEvent = Date.now();
       },
       tapRestart: function(event, details, sender) {
         var model = sender.templateInstance.model.d;
         this.deviceToAction = model;
         this.action = "restart";
         this.$.dialog.open();
+        window.lastEvent = Date.now();
       },
       tapShutdown: function(event, details, sender) {
         var model = sender.templateInstance.model.d;
         this.deviceToAction = model;
         this.action = "shutdown";
         this.$.dialog.open();
+        window.lastEvent = Date.now();
       },
       tapConfirm: function(event, details, sender) {
         var path = "devices/" + this.deviceToAction.key + "/"+ this.action;
         fb.child(path).set(true);
+        window.lastEvent = Date.now();
       },
       dialogOpened: function(event, details, sender) {
         setTimeout(function() {
@@ -104,10 +110,12 @@
             sender.close();
           }
         }, 30000);
+        window.lastEvent = Date.now();
       },
       dialogClosed: function(event, details, sender) {
         this.deviceToAction = null;
         this.action = null;
+        window.lastEvent = Date.now();
       },
       toDateTime: function(value) {
         if (value) {

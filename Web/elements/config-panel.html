@@ -44,6 +44,7 @@
         var pres = sender.templateInstance.model.p;
         var path = "config/presence/people/" + pres.key + "/track"
         fb.child(path).set(!pres.track);
+        window.lastEvent = Date.now();
       }
     });
   </script>
