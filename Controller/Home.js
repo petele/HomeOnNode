@@ -344,6 +344,9 @@ function Home(config, fb) {
 
   function initDropcam() {
     var dcConfig = Keys.keys.dropcam;
+    _self.state.dropcam = {
+      "streaming": false
+    };
     dropcam = new Dropcam(dcConfig.user, dcConfig.password, dcConfig.uuid);
     dropcam.on("error", function(err) {
       log.error("[HOME] Dropcam Error: " + JSON.stringify(err));
