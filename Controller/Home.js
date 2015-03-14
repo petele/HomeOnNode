@@ -366,8 +366,11 @@ function Home(config, fb) {
     });
     presence.on("change", function(data) {
       fbPush("logs/presence", data.person);
+      //log.log("[HOME] data.present: " + data.present);
+      //log.log("[HOME] config.presence.disable_cam: " + config.presence.disable_cam);
+      //log.log("[HOME] _self.state.dropcam: ")
       if ((data.present >= 1) && (config.presence.disable_cam === true) &&
-          (_self.state.dropcam === true)) {
+          (_self.state.dropcam.streaming === true)) {
             dropcam.enableCamera(false);
             log.log("[HOME] DropCam disabled by Presence detection.");
       }
@@ -375,7 +378,6 @@ function Home(config, fb) {
     fb.child("config/presence/people").on("value", function(snapshot) {
       presence.addPeople(snapshot.val());
     });
-
   }
 
   function initHarmony() {
