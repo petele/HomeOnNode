@@ -372,7 +372,7 @@ function Home(config, fb) {
             log.log("[HOME] DropCam disabled by Presence detection.");
       }
     });
-    fb.on("config/presence/people").on("value", function(snapshot) {
+    fb.child("config/presence/people").on("value", function(snapshot) {
       presence.addPeople(snapshot.val());
     });
 

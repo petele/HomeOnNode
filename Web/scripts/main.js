@@ -40,7 +40,7 @@ window.showErrorToast = function(message) {
   pErrorToast.text = message;
   pErrorToast.show();
   if (navigator.vibrate) {
-    navigator.vibrate([100,30,100,30,100,200,200,30,200,30,200,200,100,30,100,30,100]);
+    navigator.vibrate([300, 100, 300]);
   }
 };
 
