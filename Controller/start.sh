@@ -35,7 +35,7 @@ echo Updating any node modules...
 npm install
 
 echo Exporting pin 23 and pulling up
-# gpio-admin export 23 pullup
+gpio-admin export 23 pullup
 
 echo Starting app...
 node app.js
