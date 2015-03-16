@@ -1,7 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/core-icons/core-icons.html">
 
-<polymer-element name="error-list">
+<polymer-element name="error-list" attributes="deviceFilter typeFilter">
 
   <template>
     <link rel="stylesheet" type="text/css" href="/styles/main.css">
@@ -30,22 +30,33 @@
       .yellow {
         color: #FFC107;
       }
+      li {
+        font-size: 0.8em;
+      }
     </style>
 
     <ul vertical layout class="text-medium">
       <template repeat="{{item in items}}">
-        <li horizontal layout center on-tap="{{onTap}}">
-          <span flex>
-            <template if="{{item.exception}}">
-              <core-icon class="red" icon="error"></core-icon>
-            </template>
-            <template if="{{!item.exception}}">
-              <core-icon class="yellow" icon="warning"></core-icon>
-            </template>
-            {{item.date | toDateTime }}
-          </span>
-          <span flex three>{{item.message}}</span>
-        </li>
+        <template if="{{item.device===deviceFilter || deviceFilter==='*'}}">
+          <template if="{{item.msgType===typeFilter || typeFilter==='*'}}">
+            <li horizontal layout center on-tap="{{onTap}}">
+              <span flex>
+                <template if="{{item.msgType==='exception'}}">
+                  <core-icon class="red" icon="error"></core-icon>
+                </template>
+                <template if="{{item.msgType==='error'}}">
+                  <core-icon class="yellow" icon="warning"></core-icon>
+                </template>
+                <template if="{{item.msgType==='shutdown'}}">
+                  <core-icon class="yellow" icon="exit-to-app"></core-icon>
+                </template>
+                {{item.date | toDateTime }}
+              </span>
+              <span flex>{{item.device}}</span>
+              <span flex three>{{item.message}}</span>
+            </li>
+          </template>
+        </template>
       </template>
     </ul>
   </template>

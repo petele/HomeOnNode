@@ -5,14 +5,16 @@ var moment = require("moment");
 
 var DEBUG = true;
 var TO_FIREBASE = false;
-var fb, fbErrors;
+var appName, fb, fbErrors;
 
 var file = "./logs/rpi-system.log";
 
-function initFirebase(fbRoot, appName) {
-  appName = appName || "default";
-  fb = fbRoot.child("logs/" + appName);
-  fbErrors = fbRoot.child("logs/errors");
+function initFirebase(fbRoot, deviceName) {
+  appName = deviceName || "default";
+  if (fbRoot) {
+    fb = fbRoot.child("logs/" + appName);
+    fbErrors = fbRoot.child("logs/errors");
+  }
   TO_FIREBASE = false;
 }
 
@@ -56,7 +58,15 @@ function warn(message) {
 
 function error(message) {
   write(build("ERROR", message));
-  fbErrors.push({"date": Date.now(), "message": message});
+  if (fbErrors) {
+    var err = {
+      "device": appName,
+      "msgType": "error",
+      "date": Date.now(),
+      "message": message
+    };
+    fbErrors.push(err);
+  }
 }
 
 function exception(message, ex) {
@@ -69,8 +79,17 @@ function exception(message, ex) {
     }
     msg += "\n" + ex;
   }
-  write(msg);
-  fbErrors.push({"date": Date.now(), "message": message, "exception": ex});
+  if (fbErrors) {
+    write(msg);
+    var err = {
+      "device": appName,
+      "msgType": "exception",
+      "date": Date.now(),
+      "message": message,
+      "exception": ex
+    };
+    fbErrors.push(err);
+  }
 }
 
 function debug(message) {
@@ -109,6 +128,15 @@ function appStop(receivedFrom) {
   }
   msg += build("STOP", "");
   write(msg);
+  if (fbErrors) {
+    var note = {
+      "device": appName,
+      "msgType": "shutdown",
+      "date": Date.now(),
+      "message": "Shutdown initiated by " + receivedFrom
+    };
+    fbErrors.push(note);
+  }
 }
 
 exports.log = log;

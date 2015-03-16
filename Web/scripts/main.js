@@ -23,9 +23,10 @@ fb.authWithCustomToken(fbKey, function(error) {
         ignoreError = false;
       } else {
         var err = snapshot.val();
-        window.showErrorToast(err.message);
+        if (err.device === "controller") {
+          window.showErrorToast(err.message);
+        }
       }
-
     });
   }
 });
@@ -40,7 +41,7 @@ window.showErrorToast = function(message) {
   pErrorToast.text = message;
   pErrorToast.show();
   if (navigator.vibrate) {
-    navigator.vibrate([300, 100, 300]);
+    navigator.vibrate([300, 100, 100]);
   }
 };
 

@@ -13,6 +13,7 @@ function init() {
       cleanLogs("logs/app", 30);
       cleanLogs("logs/door", 120);
       cleanLogs("logs/door-closet", 30);
+      cleanLogs("logs/door", 7);
       cleanLogs("logs/presence", 365);
       cleanLogs("logs/system_state", 120);
       cleanLogs("logs/temperature/inside", 90);

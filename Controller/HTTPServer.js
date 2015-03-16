@@ -46,11 +46,16 @@ function HTTPServer(config, home, fb) {
     next();
   });
 
+  exp.get("/favicon.ico", function(req, res) {
+    res.sendFile(path.join(__dirname, "/favicon.ico"));
+  });
+
   exp.use("/web/", express.static(path.join(__dirname, 'web')));
 
   exp.get("/logs/", function(req, res) {
     res.sendFile(path.join(__dirname, "/logs/rpi-system.log"));
   });
+
   exp.use("/logs/", express.static(path.join(__dirname, "logs")));
 
   exp.post("/shutdown", function(req, res) {
@@ -68,7 +73,7 @@ function HTTPServer(config, home, fb) {
       }, timeout);
     } else {
       res.send({"shutdown": false});
-      log.error("Shutdown attempted, but not confirmed.");
+      log.error("[HTTP] System shutdown attempted, but not confirmed.");
     }
   });
 
@@ -81,7 +86,7 @@ function HTTPServer(config, home, fb) {
     if (result === undefined) {
       res.status(404);
       res.send({error: "Not found"});
-      log.error(req.path + " [" + req.ip + "]");
+      log.error("[HTTP] Requested state object not found: " + req.path + " [" + req.ip + "]");
     } else {
       res.send(result);
     }
@@ -113,14 +118,16 @@ function HTTPServer(config, home, fb) {
   exp.use(function(req, res){
     res.status(404);
     res.send({ error: "Requested URL not found." });
-    log.error(req.path + " [" + req.ip + "]");
+    log.error("[HTTP] File not found: " + req.path + " [" + req.ip + "]");
   });
 
   exp.use(function(err, req, res, next) {
     fb.child("logs/app").push({"date": Date.now(), "module": "EXPRESS", "state": "ERROR", "err": err});
     res.status(err.status || 500);
     res.send({ error: err.message });
-    log.error(req.path + " [" + req.ip + "] " + err.message);
+    var msg = "[HTTP] Server Error (" + err.status + ") for: ";
+    msg += req.path + " [" + req.ip + "]";
+    log.exception(msg, err);
   });
 
   server = exp.listen(exp.get('port'), function() {
