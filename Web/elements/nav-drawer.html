@@ -171,6 +171,14 @@
         var cap = document.querySelector("core-animated-pages");
         cap.selected = page;
 
+        var h = {
+          "panel": page,
+          "tab": this.selectedTab
+        };
+        console.log("Push State", h);
+
+        history.pushState(h, null, "/" + page);
+
         setTimeout(function() {
           var primaryPanel = document.querySelector("primary-panel");
           primaryPanel.$.drawer.closeDrawer();

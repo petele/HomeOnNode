@@ -1,5 +1,7 @@
 window.lastEvent = Date.now();
 
+var primaryPanel = document.querySelector("primary-panel");
+var pages = document.querySelector("core-animated-pages");
 var pToast = document.querySelector("paper-toast");
 var pErrorToast = document.querySelector("error-toast");
 var ignoreError = true;
@@ -69,3 +71,23 @@ window.getCommands = function(commands, filter) {
   }
   return result;
 };
+
+window.addEventListener("popstate", function(e) {
+  var state = e.state;
+  console.log(state);
+  if (state) {
+    if (state.panel === "primary") {
+      pages.selected = "primary";
+      primaryPanel.selectedTab = state.tab;
+    } else {
+      pages.selected = state.panel;
+    }
+  } else {
+    pages.selected = "primary";
+    primaryPanel.selectedTab = "status";
+  }
+});
+
+window.addEventListener("load", function(e) {
+  console.log("Load", window.location.pathname.substring(1));
+});

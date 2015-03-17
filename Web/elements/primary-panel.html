@@ -40,7 +40,7 @@
 
         <core-toolbar class="no-select text-upper">
           <paper-icon-button core-drawer-toggle icon="menu"></paper-icon-button>
-          <paper-tabs id="tabs" selected="{{selectedTab}}" self-end>
+          <paper-tabs id="tabs" selected="{{selectedTab}}" on-core-activate="{{tabChanged}}" self-end>
             <paper-tab name="status">Status</paper-tab>
             <paper-tab name="lights">Lights</paper-tab>
             <paper-tab name="media">Media</paper-tab>
@@ -49,7 +49,7 @@
         </core-toolbar>
 
         <div class="container" fit>
-          <core-pages selected="{{selectedTab}}" on-core-select="{{tabChanged}}" fit>
+          <core-pages selected="{{selectedTab}}" fit>
 
             <div name="status" horizontal layout center>
               <div layout vertical flex>
@@ -139,10 +139,14 @@
           self.curTime = moment().format("h:mm a");
           var diff = (Date.now() - window.lastEvent) / 1000;
           if ((diff > 90) && (self.selectedTab !== "status")) {
+            var h = {"panel": "primary", "tab": "status"};
+            history.pushState(h, null, "/status");
             self.selectedTab = "status";
             window.lastEvent = Date.now();
           }
           if ((diff > 180) && (self.pages.selected !== "primary")) {
+            var h = {"panel": "primary", "tab": self.selectedTab};
+            history.pushState(h, null, "/" + self.selectedTab);
             self.pages.selected = "primary";
             window.lastEvent = Date.now();
           }
@@ -159,8 +163,11 @@
           self.pushedState = "";
         }, 1000*100);
       },
-      tabChanged: function(a, b, c) {
+      tabChanged: function(event, details, sender) {
         window.lastEvent = Date.now();
+        var h = {"panel": "primary", "tab": this.selectedTab};
+        console.log("Push State", h);
+        history.pushState(h, null, "/" + this.selectedTab);
       },
       toggleDropcam: function(event, details, sender) {
         if (sender.checked === true) {

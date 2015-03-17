@@ -52,8 +52,8 @@
                 </template>
                 {{item.date | toDateTime }}
               </span>
-              <span flex>{{item.device}}</span>
-              <span flex three>{{item.message}}</span>
+              <!-- <span flex>{{item.device}}</span> -->
+              <span flex three>{{item.message | trimMessage }}</span>
             </li>
           </template>
         </template>
@@ -77,6 +77,12 @@
         } else {
           return "";
         }
+      },
+      trimMessage: function(value) {
+        if ((value) && (value.length > 512)) {
+          return value.substring(0, 511) + "...";
+        }
+        return value;
       },
       onTap: function(event, details, sender) {
         //console.log("TAP");
