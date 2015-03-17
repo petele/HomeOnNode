@@ -1,5 +1,5 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/core-icons/core-icons.html">
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/core-icons/core-icons.html">
 
 <polymer-element name="error-list" attributes="deviceFilter typeFilter">
 
@@ -33,22 +33,31 @@
       li {
         font-size: 0.8em;
       }
+      a {
+        text-decoration: none;
+      }
     </style>
 
     <ul vertical layout class="text-medium">
       <template repeat="{{item in items}}">
         <template if="{{item.device===deviceFilter || deviceFilter==='*'}}">
           <template if="{{item.msgType===typeFilter || typeFilter==='*'}}">
-            <li horizontal layout center on-tap="{{onTap}}">
+            <li horizontal layout center >
               <span flex>
                 <template if="{{item.msgType==='exception'}}">
-                  <core-icon class="red" icon="error"></core-icon>
+                  <a href="https://boiling-torch-4633.firebaseio.com/logs/errors/{{item.key}}" target="_blank">
+                    <core-icon class="red" icon="error"></core-icon>
+                  </a>
                 </template>
                 <template if="{{item.msgType==='error'}}">
-                  <core-icon class="yellow" icon="warning"></core-icon>
+                  <a href="https://boiling-torch-4633.firebaseio.com/logs/errors/{{item.key}}" target="_blank">
+                    <core-icon class="yellow" icon="warning"></core-icon>
+                  </a>
                 </template>
                 <template if="{{item.msgType==='shutdown'}}">
-                  <core-icon class="yellow" icon="exit-to-app"></core-icon>
+                  <a href="https://boiling-torch-4633.firebaseio.com/logs/errors/{{item.key}}" target="_blank">
+                    <core-icon class="yellow" icon="exit-to-app"></core-icon>
+                  </a>
                 </template>
                 {{item.date | toDateTime }}
               </span>
@@ -68,7 +77,9 @@
       ready: function() {
         var self = this;
         fb.child("logs/errors").limitToLast(50).on("child_added", function(snapshot) {
-          self.items.unshift(snapshot.val());
+          var item = snapshot.val();
+          item.key = snapshot.key();
+          self.items.unshift(item);
         });
       },
       toDateTime: function(value) {
@@ -79,13 +90,14 @@
         }
       },
       trimMessage: function(value) {
-        if ((value) && (value.length > 512)) {
-          return value.substring(0, 511) + "...";
+        if ((value) && (value.length > 256)) {
+          return value.substring(0, 255) + "...";
         }
         return value;
       },
       onTap: function(event, details, sender) {
-        //console.log("TAP");
+        var item = sender.templateInstance.model.item;
+        console.log("TAP", item.key, item);
       }
     });
   </script>

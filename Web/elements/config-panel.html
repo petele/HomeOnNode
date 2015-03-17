@@ -1,5 +1,5 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/paper-toggle-button/paper-toggle-button.html">
 
 <polymer-element name="config-panel">
   <template>
@@ -14,7 +14,20 @@
         min-height: 48px;
         padding: 0 16px;
       }
+      h2 {
+        padding-left: 16px;
+      }
+      .box {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
     </style>
+
+    <h2>Settings</h2>
+    <div class="box">
+      <a href="https://boiling-torch-4633.firebaseio.com/config" target="_blank">Firebase</a>
+    </div>
+    
     <h2>Presence</h2>
     <ul vertical layout>
       <template repeat="{{p in presence}}">
@@ -25,6 +38,7 @@
         </li>
       </template>
     </ul>
+
   </template>
   <script type="text/javascript">
     Polymer({
