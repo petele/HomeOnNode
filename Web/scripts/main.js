@@ -74,7 +74,7 @@ window.getCommands = function(commands, filter) {
 
 window.addEventListener("popstate", function(e) {
   var state = e.state;
-  console.log(state);
+  console.log("Pop State", state);
   if (state) {
     if (state.panel === "primary") {
       pages.selected = "primary";
@@ -86,8 +86,15 @@ window.addEventListener("popstate", function(e) {
     pages.selected = "primary";
     primaryPanel.selectedTab = "status";
   }
+  window.lastEvent = Date.now();
 });
 
 window.addEventListener("load", function(e) {
-  console.log("Load", window.location.pathname.substring(1));
+  var h = {"panel": "primary", "tab": "status", "path": "/status"};
+  history.replaceState(h, null, "/status");
+  if (window.location.pathname === "/") {
+
+  } else {
+    
+  }
 });

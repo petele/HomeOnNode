@@ -1,5 +1,5 @@
-<link rel="import" href="../bower_components/polymer/polymer.html">
-<link rel="import" href="../bower_components/core-list/core-list.html">
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/core-list/core-list.html">
 
 
 <polymer-element name="log-list" attributes="path">
@@ -61,7 +61,9 @@
             <span flex>{{item.date | toDateTime }}</span>
           </template>
           <span flex horizontal end-justified layout>
-            <span class="label {{item.state}}">{{item.state}}</span>
+            <a href="https://boiling-torch-4633.firebaseio.com/{{path}}/{{item.key}}" target="_blank">
+              <span class="label {{item.state}}">{{item.state}}</span>
+            </a>
           </span>
 
         </li>
@@ -76,7 +78,9 @@
       ready: function() {
         var self = this;
         fb.child(this.path).limitToLast(125).on("child_added", function(snapshot) {
-          self.items.unshift(snapshot.val());
+          var item = snapshot.val();
+          item.key = snapshot.key();
+          self.items.unshift(item);
         });
       },
       toDateTime: function(value) {
