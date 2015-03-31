@@ -15,6 +15,11 @@
         color: #c9c9c9;
         opacity: 0;
       }
+      .fastCool {
+        background-color: white;
+        border-radius: 50%;
+        border: 1px solid #e0e0e0;
+      }
       paper-toggle-button::shadow [checked] .toggle {
         background-color: #03A9F4;
       }
@@ -22,25 +27,27 @@
         color: #81D4FA;
       }
       paper-icon-button.lm {
-        margin-left: 16px;
-        margin-right: 8px;
+        margin-left: 20px;
+        margin-right: 12px;
       }
       paper-icon-button.rm {
-        margin-left: 8px;
+        margin-left: 12px;
         margin-right: 0px;
       }
       li {
         min-height: 40px;
+        margin-bottom: 1vw;
       }
       ul {
         padding-left: 0;
+        margin-top: 0;
         list-style-type: none;
       }
     </style>
     <ul vertical layout class="text-large">
       <li horizontal layout center>
         <span flex>Fast Cool</span>
-        <paper-toggle-button on-change="{{fastCool}}" checked?="{{fastCool}}"></paper-toggle-button>
+        <paper-icon-button class="rm fastCool" on-tap="{{fastCool}}" src="/images/snowflake.png"></paper-icon-button>
       </li>
       <template repeat="{{devices as device}}">
         <li horizontal layout center>
@@ -57,7 +64,6 @@
     Polymer({
       created: function() {
         this.devices = [];
-        this.fastCool = false;
         var self = this;
         fb.child("state/ac").on("value", function(snapshot) {
           var val = snapshot.val();
