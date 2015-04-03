@@ -98,3 +98,10 @@ window.addEventListener("load", function(e) {
     
   }
 });
+
+
+//var cacheBustedUrl = 'index.html?cache-bust=' + Date.now();
+//document.querySelector('#reload').href = cacheBustedUrl;
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw-offline.js');
+}

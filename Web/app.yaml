@@ -19,7 +19,6 @@ handlers:
 - url: /images
   static_dir: images
   secure: always
-  login: admin
 
 - url: /bower_components
   static_dir: bower_components
@@ -35,6 +34,17 @@ handlers:
   static_files: favicon.ico
   upload: favicon.ico
 
+- url: /sw-offline.js
+  static_files: sw-offline.js
+  upload: sw-offline.js
+  expiration: "0s"
+  secure: always
+
+- url: /offline.html
+  static_files: 404.html
+  upload: 404.html
+  expiration: "0s"
+  secure: always
 
 - url: /manifest.json
   static_files: manifest.json
