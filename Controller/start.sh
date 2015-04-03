@@ -1,18 +1,5 @@
 #!/bin/sh
 
-check_exit_code() {
-  if [ "${1}" -eq "0" ]; then
-    echo "Normal exit."
-  elif [ "${1}" -eq "10" ]; then
-    echo "Reboot requested."
-    sudo reboot
-  else
-    echo "Unknown exit code: ${1}"
-    echo "${1}" >> exitcodes.txt
-    ./error.sh
-  fi
-}
-
 echo Setting Up Thermometer...
 sudo modprobe w1-gpio
 sudo modprobe w1-therm
@@ -38,10 +25,8 @@ echo Exporting pin 23 and pulling up
 gpio-admin export 23 pullup
 
 echo Starting app...
-node app.js
+OUTPUT=$(node app.js 2>&1 >/dev/tty)
+echo "${OUTPUT}"
+echo "${OUTPUT}" > last_failure.txt
 
-# node temp.js
-
-check_exit_code $?
-
-
+# check last_failure and upload to Firebase
