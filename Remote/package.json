@@ -1,0 +1,13 @@
+{
+  "name": "Remote",
+  "description": "hello world test app",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "keypress": "^0.2.1",
+    "firebase": "^1.0.19",
+    "moment": "^2.8.3",
+    "node-powermate": "0.0.2"
+  },
+  "devDependencies": {}
+}

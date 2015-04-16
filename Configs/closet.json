@@ -1,0 +1,11 @@
+{
+  "ip": "192.168.1.202",
+  "port": 3000,
+  "id": "closet",
+  "door": {
+    "enabled": true,
+    "pin": 23,
+    "onOpen": {"command": "CLOSET"},
+    "onClose": {"command": "CLOSET", "modifier": "Off"}
+  }
+}
