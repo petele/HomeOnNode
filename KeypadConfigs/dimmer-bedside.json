@@ -1,6 +1,6 @@
 {
   "id": "bedside",
-  "lights": [13,11,15],
+  "lights": [16,11,15],
   "refreshInterval": 800,
   "interval": 200,
   "hueIP": "192.168.1.210"
