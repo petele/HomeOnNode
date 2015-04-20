@@ -2,7 +2,7 @@ var log = require("./SystemLog");
 var keypress = require("keypress");
 
 function listen(keys, modifiers, callback) {
-  log.log("listening");
+  log.init("[KeyPad]");
   var modifier;
   keypress(process.stdin);
 

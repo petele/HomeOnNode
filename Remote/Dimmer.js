@@ -1,7 +1,7 @@
 var log = require("../Controller/SystemLog");
 var webRequest = require("../Controller/webRequest");
 var Keys = require("../Controller/Keys");
-var PowerMate = require('node-powermate');
+
 
 
 function Dimmer(config) {
@@ -16,14 +16,21 @@ function Dimmer(config) {
   var self = this;
 
   function init() {
+    log.init("[Dimmer]");
     delta = 0;
-    powerMate = new PowerMate();
-    setInterval(getLightState, config.refreshInterval);
-    setInterval(updateLightState, config.interval);
-    powerMate.on("buttonDown", handleButDown);
-    powerMate.on("buttonUp", handleButUp);
-    powerMate.on("wheelTurn", handleWheelTurn);
-    powerMate.on("error", handlePowermateError);
+    try {
+      var PowerMate = require('node-powermate');
+      powerMate = new PowerMate();
+      setInterval(getLightState, config.refreshInterval);
+      setInterval(updateLightState, config.interval);
+      powerMate.on("buttonDown", handleButDown);
+      powerMate.on("buttonUp", handleButUp);
+      powerMate.on("wheelTurn", handleWheelTurn);
+      powerMate.on("error", handlePowermateError);
+      log.log("[Dimmer] Started.");
+    } catch (ex) {
+      log.error("[Dimmer] Unable to start: " + ex.toString());
+    }
   }
 
   function handleButDown() {
