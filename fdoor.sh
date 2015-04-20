@@ -1,8 +1,3 @@
-cp ./Configs/frontdoor.json ./Remote/config.json
-
-cd Remote
-
-
 echo Getting latest keyboard commands...
 rm ./Remote/config.json
 cp ./Configs/frontdoor.json ./Remote/config.json
