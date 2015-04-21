@@ -6,7 +6,7 @@ var webRequest = require("../Controller/webRequest");
 
 var Door = require("../Controller/Door");
 var Keypad = require("../Controller/Keypad");
-var Dimmer = require("./Dimmer");
+//var Dimmer = require("./Dimmer");
 
 var fb, config, keypad, door, dimmer;
 
@@ -56,9 +56,9 @@ fs.readFile("config.json", {"encoding": "utf8"}, function(err, data) {
       });
     }
 
-    if ((config.dimmer) && (config.dimmer.enabled === true)) {
-      dimmer = new Dimmer(config.dimmer);
-    }
+    // if ((config.dimmer) && (config.dimmer.enabled === true)) {
+    //   dimmer = new Dimmer(config.dimmer);
+    // }
 
     if ((config.keypad) && (config.keypad.enabled === true)) {
       Keypad.listen(config.keypad.keys, config.keypad.modifiers, function(data) {
