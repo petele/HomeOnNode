@@ -1,6 +1,8 @@
-var log = require("../Controller/SystemLog");
-var webRequest = require("../Controller/webRequest");
-var Keys = require("../Controller/Keys");
+'use strict';
+
+var log = require('../Controller/SystemLog');
+var webRequest = require('../Controller/webRequest');
+var Keys = require('../Controller/Keys');
 
 
 
@@ -16,33 +18,33 @@ function Dimmer(config) {
   var self = this;
 
   function init() {
-    log.init("[Dimmer]");
+    log.init('[Dimmer]');
     delta = 0;
     try {
       var PowerMate = require('node-powermate');
       powerMate = new PowerMate();
       setInterval(getLightState, config.refreshInterval);
       setInterval(updateLightState, config.interval);
-      powerMate.on("buttonDown", handleButDown);
-      powerMate.on("buttonUp", handleButUp);
-      powerMate.on("wheelTurn", handleWheelTurn);
-      powerMate.on("error", handlePowermateError);
-      log.log("[Dimmer] Started.");
+      powerMate.on('buttonDown', handleButDown);
+      powerMate.on('buttonUp', handleButUp);
+      powerMate.on('wheelTurn', handleWheelTurn);
+      powerMate.on('error', handlePowermateError);
+      log.log('[Dimmer] Started.');
     } catch (ex) {
-      log.error("[Dimmer] Unable to start: " + ex.toString());
+      log.error('[Dimmer] Unable to start: ' + ex.toString());
     }
   }
 
   function handleButDown() {
     self.butPressed = true;
     self.lightCurrent.on = !self.lightCurrent.on;
-    setLights({"on": self.lightCurrent.on});
-    log.debug("[PowerMate] Button Down");
+    setLights({'on': self.lightCurrent.on});
+    log.debug('[PowerMate] Button Down');
   }
 
   function handleButUp() {
     self.butPressed = false;
-    log.debug("[PowerMate] Button Up");
+    log.debug('[PowerMate] Button Up');
   }
 
   function handleWheelTurn(d) {
@@ -51,13 +53,13 @@ function Dimmer(config) {
     } else if ((self.lightCurrent.on === false) && (d > 0)) {
       self.lightCurrent.bri = d;
       self.lightCurrent.on = true;
-      setLights({"on": true, "bri": d});
+      setLights({'on': true, 'bri': d});
     }
-    log.debug("[PowerMate] Wheel Turn - Delta: " + d.toString());
+    log.debug('[PowerMate] Wheel Turn - Delta: ' + d.toString());
   }
 
   function handlePowermateError(err) {
-    log.error("[PowerMate] Error: " + err.toString());
+    log.error('[PowerMate] Error: ' + err.toString());
   }
 
   function updateLightState() {
@@ -70,14 +72,14 @@ function Dimmer(config) {
       }
       delta = 0;
       self.lightCurrent.bri = newBri;
-      setLights({"bri": self.lightCurrent.bri});
+      setLights({'bri': self.lightCurrent.bri});
     }
   }
 
   function getLightState() {
     var uri = {
-      "host": config.hueIP,
-      "path": "/api/" + Keys.keys.hue + "/lights/" + config.lights[0]
+      'host': config.hueIP,
+      'path': '/api/' + Keys.keys.hue + '/lights/' + config.lights[0]
     };
     webRequest.request(uri, null, function(resp) {
       try {
@@ -89,13 +91,13 @@ function Dimmer(config) {
           powerMate.setBrightness(0);
         }
       } catch (ex) {
-        log.exception("[PowerMate] Error getting light state: ", ex);
+        log.exception('[PowerMate] Error getting light state: ', ex);
       }
     });
   }
 
   function setLights(state) {
-    log.log("[PowerMate] " + self.lightCurrent.on  + " " + self.lightCurrent.bri);
+    log.log('[PowerMate] ' + self.lightCurrent.on  + ' ' + self.lightCurrent.bri);
     var ledBri = 0;
     if (self.lightCurrent.on === true) {
       ledBri = self.lightCurrent.bri;
@@ -103,17 +105,17 @@ function Dimmer(config) {
     try {
       powerMate.setBrightness(ledBri);
     } catch (ex) {
-      log.exception("[PowerMate] Error setting PowerMate brightness: ", ex);
+      log.exception('[PowerMate] Error setting PowerMate brightness: ', ex);
     }
     config.lights.forEach(function(l) {
       var uri = {
-        "host": config.hueIP,
-        "path": "/api/" + Keys.keys.hue + "/lights/" + l.toString() + "/state",
-        "method": "PUT"
+        'host': config.hueIP,
+        'path': '/api/' + Keys.keys.hue + '/lights/' + l.toString() + '/state',
+        'method': 'PUT'
       };
       var body = JSON.stringify(state);
       webRequest.request(uri, body, function(resp) {
-        log.debug("[PowerMate] Response" + JSON.stringify(resp));
+        log.debug('[PowerMate] Response' + JSON.stringify(resp));
       });
     });
   }
