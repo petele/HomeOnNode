@@ -72,7 +72,11 @@ function init() {
       try {
         var keyConfig = JSON.parse(data);
         Keypad.listen(keyConfig.keys, keyConfig.modifiers, function(cmd) {
-          home.set(cmd.command, cmd.modifier);
+          if (cmd.exit === true) {
+            exit(cmd.reason, cmd.code);
+          } else {
+            home.set(cmd.command, cmd.modifier);
+          }
         });
       } catch (ex) {
         log.exception('[APP] Error starting keypad listener', ex);
