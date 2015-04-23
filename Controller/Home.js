@@ -8,7 +8,6 @@ var Keys = require("./Keys");
 var fs = require("fs");
 var moment = require("moment");
 
-var Chromecast = require("./Chromecast");
 var InsideTemperature = require("./InsideTemperature");
 var Firebase = require("firebase");
 var AirConditioner = require("./AirConditioner");
@@ -300,10 +299,6 @@ function Home(config, fb) {
     }, 1);
   }
 
-  function initChromecast() {
-    chromecast = new Chromecast(config.chromecast.ip);
-  }
-
   function initInsideTemp() {
     insideTemp = new InsideTemperature(config.temperature.inside.interval);
     if (_self.state.temperature === undefined) {
@@ -541,7 +536,6 @@ function Home(config, fb) {
     setState("AWAY");
     initAC();
     initDropcam();
-    initChromecast();
     initGoogleVoice();
     initInsideTemp();
     initOutsideTemp();
