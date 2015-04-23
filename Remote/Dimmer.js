@@ -120,6 +120,15 @@ function Dimmer(config) {
     });
   }
 
+  this.close = function() {
+    log.log('[PowerMate] Closing.');
+    if (powerMate) {
+      powerMate.close(function(obj) {
+        log.log('[PowerMate] Close completed.');
+      });
+    }
+  };
+
   init();
 }
 

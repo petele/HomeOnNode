@@ -78,6 +78,9 @@ function exit(sender, exitCode) {
   exitCode = exitCode || 0;
   log.log('[APP] Starting shutdown process');
   log.log('[APP] Will exit with error code: ' + String(exitCode));
+  if (dimmer) {
+    dimmer.close();
+  }
   setTimeout(function() {
     log.appStop(sender);
     process.exit(exitCode);
