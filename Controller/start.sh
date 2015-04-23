@@ -16,7 +16,7 @@ sed "s/\[HEAD\]/$last_commit/g" version.js > v.js && mv v.js version.js
 
 echo Getting latest keyboard commands...
 rm ./keypad.json
-cp ../KeypadConfigs/primary.json ./keypad.json
+cp ../Configs/primary.json ./keypad.json
 
 echo Updating any node modules...
 npm install
