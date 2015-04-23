@@ -5,7 +5,7 @@ var log = require('./SystemLog');
 var moment = require('moment');
 
 function init(key, appName, exit) {
-  var timeFormat = 'YYYY-MM-DDTHH:mm:ss.ssss';
+  var timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
   var fb = new Firebase('https://boiling-torch-4633.firebaseio.com/');
   appName = appName.toLowerCase();
 

@@ -29,7 +29,7 @@ function enableDebug(enabled) {
 }
 
 function getDateString() {
-  return moment().format('YYYY-MM-DDTHH:mm:ss.sss');
+  return moment().format('YYYY-MM-DDTHH:mm:ss.SSS');
 }
 
 function build(level, message) {
