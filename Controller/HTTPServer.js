@@ -99,8 +99,7 @@ function HTTPServer(config, home, fb) {
     log.debug('[POST] ' + JSON.stringify(body));
     var result;
     if (body.door) {
-      result = { 'error': 'Not Yet Implemented.' };
-      log.log('[HTTP] Unhandled door command: ' + body.door + ' ' + body.state);
+      result = home.doorChange(body.door, body.state);
     } else if (body.command) {
       result = home.set(body.command, body.modifier, '[HTTP ' + req.ip + ']');
     }

@@ -1,17 +1,18 @@
+'use strict';
+
 var noble = require('noble');
 var ansi = require('ansi'), cursor = ansi(process.stdout);
 
 var devices = [];
 
-var numLines = process.stdout.rows;
 function lf () { return '\n'; }
-var pad = "                                             ";
+var pad = '                                             ';
 
-cursor.write(Array.apply(null, Array(process.stdout.getWindowSize()[1])).map(lf).join(''))
+cursor.write(Array.apply(null, new Array(process.stdout.getWindowSize()[1])).map(lf).join(''))
   .eraseData(2)
-  .goto(1, 1)
-console.log("UUID                              Name                RSSI TXPr");
-console.log("--------------------------------- ------------------- ---- ----");
+  .goto(1, 1);
+console.log('UUID                              Name                RSSI TXPr');
+console.log('--------------------------------- ------------------- ---- ----');
 
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
@@ -29,11 +30,11 @@ noble.on('discover', function(peripheral) {
   }
   var uuid = (pad + peripheral.uuid).slice(-32);
   var localName = peripheral.advertisement.localName;
-  if (localName === undefined) { localName = ""; }
+  if (localName === undefined) { localName = ''; }
   localName = (pad + localName).slice(-20);
   var rssi = (pad + peripheral.rssi).slice(-4);
   var txPower = peripheral.advertisement.txPowerLevel;
-  if (txPower === undefined) { txPower = "0000"; }
+  if (txPower === undefined) { txPower = '0000'; }
   txPower = (pad + txPower).slice(-4);
   cursor.goto(1, index+3);
   console.log(uuid, localName, rssi, txPower);

@@ -20,10 +20,10 @@ function init(key, appName, exit) {
     }
   });
 
-  var started_at = moment().format(timeFormat);
+  var startedAt = moment().format(timeFormat);
   var def = {
-    'started_at': started_at,
-    'heartbeat': started_at,
+    'started_at': startedAt,
+    'heartbeat': startedAt,
     'version': log.version,
     'online': true,
     'shutdown_at': null
@@ -35,13 +35,13 @@ function init(key, appName, exit) {
       log.log('[NETWORK] Connected.');
       var def = {
         'heartbeat': moment().format(timeFormat),
-        'online': true
+        'online': true,
+        'shutdown_at': null
       };
       fb.child('devices/' + appName).update(def);
-      fb.child('devices/' + appName + 'shutdown_at').remove();
       fb.child('devices/' + appName + '/online').onDisconnect().set(false);
       fb.child('devices/' + appName + '/shutdown_at').onDisconnect().set(Firebase.ServerValue.TIMESTAMP);
-      fb.child('devices/' + appName + '/started').onDisconnect().remove();
+      fb.child('devices/' + appName + '/started_at').onDisconnect().remove();
     } else {
       log.warn('[NETWORK] Disconnected.');
     }

@@ -1,3 +1,5 @@
+'use strict';
+
 var EventEmitter = require("events").EventEmitter;
 var util = require("util");
 var exec = require("child_process").exec;
@@ -197,6 +199,23 @@ function Home(config, fb) {
 
     return response;
   };
+
+  this.doorChange = function(doorName, doorState) {
+    var response = {
+      'label': doorName,
+      'state': doorState,
+      'date': Date.now()
+    };
+    if ((_self.state.system_state === 'AWAY') && (doorState === 'OPEN')) {
+      _self.set('HOME');
+    }
+    _self.state.doors[doorName] = doorState;
+    fbSet('state/doors/' + doorName, state);
+    fbPush('logs/door', response);
+    log.log("[DOOR] " + doorName + " " + doorState);
+    
+    return response;
+  }
 
   this.shutdown = function() {
     fbPush("logs/app", {"date": Date.now(), "module": "HOME", "state": "SHUTDOWN"});

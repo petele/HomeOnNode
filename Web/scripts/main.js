@@ -1,31 +1,35 @@
+/* jshint browser: true */
+/* global Firebase, fbKey */
+'use strict';
+
 window.lastEvent = Date.now();
 
-var primaryPanel = document.querySelector("primary-panel");
-var pages = document.querySelector("core-animated-pages");
-var pToast = document.querySelector("paper-toast");
-var pErrorToast = document.querySelector("error-toast");
+var primaryPanel = document.querySelector('primary-panel');
+var pages = document.querySelector('core-animated-pages');
+var pToast = document.querySelector('paper-toast');
+var pErrorToast = document.querySelector('error-toast');
 var ignoreError = true;
 
-var fb = new Firebase("https://boiling-torch-4633.firebaseio.com/");
+var fb = new Firebase('https://boiling-torch-4633.firebaseio.com/');
 fb.authWithCustomToken(fbKey, function(error) {
   if(error) {
-    console.error("[FIREBASE] Auth failed. " + error.toString());
-    window.showErrorToast("Firebase authentication failure.");
+    console.error('[FIREBASE] Auth failed. ' + error.toString());
+    window.showErrorToast('Firebase authentication failure.');
   } else {
-    console.log("[FIREBASE] Auth success.");
-    fb.child(".info/connected").on("value", function(snapshot) {
+    console.log('[FIREBASE] Auth success.');
+    fb.child('.info/connected').on('value', function(snapshot) {
       if (snapshot.val() === true) {
-        window.showToast("Firebase connected.");
+        window.showToast('Firebase connected.');
       } else {
-        window.showErrorToast("Network disconnected.");
+        window.showErrorToast('Network disconnected.');
       }
     });
-    fb.child("logs/errors").limitToLast(1).on("child_added", function(snapshot) {
+    fb.child('logs/errors').limitToLast(1).on('child_added', function(snapshot) {
       if (ignoreError === true) {
         ignoreError = false;
       } else {
         var err = snapshot.val();
-        if (err.device === "controller") {
+        if (err.device === 'controller') {
           window.showErrorToast(err.message);
         }
       }
@@ -38,7 +42,7 @@ window.showErrorToast = function(message) {
     pToast.dismiss();
   }
   if (message.length > 60) {
-    message = message.substring(0, 59) + "...";
+    message = message.substring(0, 59) + '...';
   }
   pErrorToast.text = message;
   pErrorToast.show();
@@ -72,27 +76,27 @@ window.getCommands = function(commands, filter) {
   return result;
 };
 
-window.addEventListener("popstate", function(e) {
+window.addEventListener('popstate', function(e) {
   var state = e.state;
-  console.log("Pop State", state);
+  console.log('Pop State', state);
   if (state) {
-    if (state.panel === "primary") {
-      pages.selected = "primary";
+    if (state.panel === 'primary') {
+      pages.selected = 'primary';
       primaryPanel.selectedTab = state.tab;
     } else {
       pages.selected = state.panel;
     }
   } else {
-    pages.selected = "primary";
-    primaryPanel.selectedTab = "status";
+    pages.selected = 'primary';
+    primaryPanel.selectedTab = 'status';
   }
   window.lastEvent = Date.now();
 });
 
-window.addEventListener("load", function(e) {
-  var h = {"panel": "primary", "tab": "status", "path": "/status"};
-  history.replaceState(h, null, "/status");
-  if (window.location.pathname === "/") {
+window.addEventListener('load', function(e) {
+  var h = {'panel': 'primary', 'tab': 'status', 'path': '/status'};
+  history.replaceState(h, null, '/status');
+  if (window.location.pathname === '/') {
 
   } else {
     
