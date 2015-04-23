@@ -4,11 +4,10 @@ var log = require('../Controller/SystemLog');
 var webRequest = require('../Controller/webRequest');
 var Keys = require('../Controller/Keys');
 
-
-
 function Dimmer(config) {
   var powerMate;
   var delta;
+  var intervalGet, intervalSet;
 
   this.butPressed = false;
   this.lightCurrent = {
@@ -23,8 +22,8 @@ function Dimmer(config) {
     try {
       var PowerMate = require('node-powermate');
       powerMate = new PowerMate();
-      setInterval(getLightState, config.refreshInterval);
-      setInterval(updateLightState, config.interval);
+      intervalGet = setInterval(getLightState, config.refreshInterval);
+      intervalSet = setInterval(updateLightState, config.interval);
       powerMate.on('buttonDown', handleButDown);
       powerMate.on('buttonUp', handleButUp);
       powerMate.on('wheelTurn', handleWheelTurn);
@@ -122,6 +121,14 @@ function Dimmer(config) {
 
   this.close = function() {
     log.log('[PowerMate] Closing.');
+    if (intervalGet) {
+      clearInterval(intervalGet);
+      intervalGet = null;
+    }
+    if (intervalSet) {
+      clearInterval(intervalSet);
+      intervalSet = null;
+    }
     if (powerMate) {
       powerMate.close(function(obj) {
         log.log('[PowerMate] Close completed.');
