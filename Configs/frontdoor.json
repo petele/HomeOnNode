@@ -6,7 +6,7 @@
     "enabled": true,
     "pin": 23,
     "onOpen": {"door": "FRONT", "state": "OPEN"},
-    "onClose": {"door": "FRONT", "state": "CLOSE"}
+    "onClose": {"door": "FRONT", "state": "CLOSED"}
   },
   "keypad": {
     "enabled": true,
