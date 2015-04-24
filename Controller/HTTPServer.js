@@ -99,7 +99,7 @@ function HTTPServer(config, home, fb) {
     log.debug('[POST] ' + JSON.stringify(body));
     var result;
     if (body.door) {
-      result = home.doorChange(body.door, body.state);
+      result = home.doorChange(body.door, body.state, '[HTTP ' + req.ip + ']');
     } else if (body.command) {
       result = home.set(body.command, body.modifier, '[HTTP ' + req.ip + ']');
     }

@@ -199,17 +199,20 @@ function Home(config, fb) {
     return response;
   };
 
-  this.doorChange = function(doorName, doorState) {
+  this.doorChange = function(doorName, doorState, source) {
     var response = {
       'label': doorName,
-      'state': doorState,
-      'date': Date.now()
+      'doorState': doorState,
+      'date': Date.now(),
+      'source': source,
+      'homeState': _self.state.system_state
     };
     if ((_self.state.system_state === 'AWAY') && (doorState === 'OPEN')) {
       _self.set('HOME');
+      response.homeState = '*HOME*';
     }
     _self.state.doors[doorName] = doorState;
-    fbSet('state/doors/' + doorName, state);
+    fbSet('state/doors/' + doorName, doorState);
     fbPush('logs/door', response);
     log.log("[DOOR] " + doorName + " " + doorState);
     
