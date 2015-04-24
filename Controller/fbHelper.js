@@ -3,6 +3,7 @@
 var Firebase = require('firebase');
 var log = require('./SystemLog');
 var moment = require('moment');
+var exec = require('child_process').exec;
 
 function init(key, appName, exit) {
   var timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
@@ -56,7 +57,11 @@ function init(key, appName, exit) {
   fb.child('devices/' + appName + '/restart').on('value', function(snapshot) {
     if (snapshot.val() === true) {
       snapshot.ref().remove();
-      exit('fbRestart', 10);
+      var cmd = 'sudo reboot';
+      exec(cmd, function(error, stdout, stderr) {
+        
+      });
+      //exit('fbRestart', 10);
     }
   });
 
