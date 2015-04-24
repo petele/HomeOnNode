@@ -202,7 +202,7 @@ function Home(config, fb) {
   this.doorChange = function(doorName, doorState, source) {
     var response = {
       'label': doorName,
-      'doorState': doorState,
+      'state': doorState,
       'date': Date.now(),
       'source': source,
       'homeState': _self.state.system_state
