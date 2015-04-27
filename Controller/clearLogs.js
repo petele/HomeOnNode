@@ -19,6 +19,12 @@ function init() {
       cleanLogs('logs/presence', 365);
       cleanLogs('logs/system_state', 120);
       cleanLogs('logs/temperature/inside', 90);
+      numRunning++;
+      fb.child('logs/errors').remove(function() {
+        console.log('Cleaned ERRORS');
+        numRunning--;
+        exitWhenDone();
+      });
     }
   });
 }

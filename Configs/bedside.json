@@ -5,7 +5,7 @@
   "dimmer": {
     "enabled": true,
     "lights": [16,11,15],
-    "refreshInterval": 800,
+    "refreshInterval": 2000,
     "interval": 200,
     "hueIP": "192.168.1.210"
   },
