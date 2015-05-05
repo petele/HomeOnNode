@@ -42,7 +42,7 @@ function init(key, appName, exit) {
       fb.child('devices/' + appName).update(def);
       fb.child('devices/' + appName + '/online').onDisconnect().set(false);
       fb.child('devices/' + appName + '/shutdown_at').onDisconnect().set(Firebase.ServerValue.TIMESTAMP);
-      fb.child('devices/' + appName + '/started_at').onDisconnect().remove();
+      //fb.child('devices/' + appName + '/started_at').onDisconnect().remove();
     } else {
       log.warn('[NETWORK] Disconnected.');
     }
