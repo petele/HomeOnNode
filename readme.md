@@ -5,7 +5,6 @@ TODO
 [ ] Add Phone support for front door
 [ ] Change fbHelper to fire an event when it's time to exit
 
-
 Serial node stuff
 https://github.com/voodootikigod/node-serialport
 
