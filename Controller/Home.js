@@ -487,7 +487,7 @@ function Home(config, fb) {
   }
 
   function initSMS() {
-    fb.child("state/sms").on("value", function(snapshot) {
+    fb.child('state/sms').on('value', function(snapshot) {
       if (snapshot.val() === true) {
         if (_self.state.system_state === 'HOME') {
           _self.set('NEW_SMS');
