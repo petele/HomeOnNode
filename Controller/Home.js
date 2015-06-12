@@ -486,6 +486,18 @@ function Home(config, fb) {
     });
   }
 
+  function initSMS() {
+    fb.child("state/sms").on("value", function(snapshot) {
+      if (snapshot.val() === true) {
+        if (_self.state.system_state === 'HOME') {
+          _self.set('NEW_SMS');
+        }
+        log.log('[NEW_SMS]');
+        snapshot.ref().set(false);
+      }
+    });
+  }
+
   function initGoogleVoice() {
     gv = new GoogleVoice(config.gvoice.interval);
     gv.on('zero', function(count) {
@@ -539,7 +551,8 @@ function Home(config, fb) {
     setState('AWAY');
     initAC();
     initDropcam();
-    initGoogleVoice();
+    initSMS();
+    //initGoogleVoice();
     initInsideTemp();
     initOutsideTemp();
     initDoor();
