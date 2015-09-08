@@ -6,7 +6,7 @@ var Keys = require('./Keys').keys;
 
 function Dimmer(config) {
   var powerMate;
-  var delta;
+  var delta = 0;
   var updateInterval;
 
   function init() {
@@ -56,7 +56,7 @@ function Dimmer(config) {
 
   function updateBrightness() {
     if (delta !== 0) {
-      setLights({inc_bri: delta});
+      setLights({"inc_bri": delta});
       delta = 0;
     }
   }
@@ -87,11 +87,16 @@ function Dimmer(config) {
 
   this.close = function() {
     log.log('[POWERMATE] Closing.');
+    if (updateInterval) {
+      clearInterval(updateInterval);
+      updateInterval = null;
+    }
     if (powerMate) {
       powerMate.close(function(obj) {
         log.log('[POWERMATE] Closed.');
       });
     }
+
   };
 
   init();

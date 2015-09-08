@@ -62,6 +62,7 @@ function makeRequest(uri, body, callback) {
   });
   if (body) {
     request.write(body);
+    log.debug('[WebRequest] Body: ' + body);
   }
   request.end();
 }
