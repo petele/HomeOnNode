@@ -6,6 +6,8 @@ var Keys = require('./Keys').keys;
 
 function Dimmer(config) {
   var powerMate;
+  var delta;
+  var updateInterval;
 
   function init() {
     log.init('[DIMMER]');
@@ -16,6 +18,7 @@ function Dimmer(config) {
       powerMate.on('buttonUp', handleButUp);
       powerMate.on('wheelTurn', handleWheelTurn);
       powerMate.on('error', handlePowermateError);
+      updateInterval = setInterval(updateBrightness, 250);
       log.log('[DIMMER] Ready.');
     } catch (ex) {
       log.exception('[DIMMER] Initialization error', ex);
@@ -51,9 +54,16 @@ function Dimmer(config) {
     log.debug('[POWERMATE] Button Up');
   }
 
+  function updateBrightness() {
+    if (delta !== 0) {
+      setLights({inc_bri: delta});
+      delta = 0;
+    }
+  }
+
   function handleWheelTurn(d) {
     log.debug('[POWERMATE] Wheel Turn - Delta: ' + d.toString());
-    setLights({'inc_bri': d});
+    delta += (d * 2);
   }
 
   function handlePowermateError(err) {

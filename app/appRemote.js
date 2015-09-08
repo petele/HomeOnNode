@@ -16,7 +16,7 @@ var config;
 var door;
 var dimmer;
 
-log.appStart('Remote');
+log.appStart('Remote', true);
 
 function sendCommand(command, path) {
   path = path || '/execute';
