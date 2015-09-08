@@ -18,7 +18,7 @@ function Dimmer(config) {
       powerMate.on('error', handlePowermateError);
       log.log('[DIMMER] Ready.');
     } catch (ex) {
-      log.error('[DIMMER] Initialization error', ex);
+      log.exception('[DIMMER] Initialization error', ex);
     }
   }
 
