@@ -3,63 +3,66 @@
 var fs = require('fs');
 var log = require('./SystemLog');
 var Home = require('./Home');
-var Keys = require('./Keys');
+var Keys = require('./Keys').keys;
 var HTTPServer = require('./HTTPServer');
-var fbHelper = require('./fbHelper');
+var fbHelper = require('./FBHelper');
 var Keypad = require('./Keypad');
 
-var config, fb, home, httpServer;
+var config;
+var fb;
+var home;
+var httpServer;
 
-log.appStart('HomeOnNode');
+var APP_NAME = 'HomeOnNode';
+
+log.appStart(APP_NAME, false);
 
 function init() {
-  fb = fbHelper.init(Keys.keys.fb, 'controller', exit);
+  fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
   log.log('[APP] Reading local config file.');
 
   fs.readFile('./config.json', {'encoding': 'utf8'}, function(err, data) {
     if (err) {
-      log.error('[APP] Error reading local config.json');
-      log.debug('[APP] Error was: ' + String(err));
+      log.exception('[APP] Error reading local config.json', err);
       exit('ConfigError', 1);
     } else {
       try {
         config = JSON.parse(data);
+        if (config.logToFirebase === true) {
+          log.setFirebase(fb);
+        }
+      } catch (ex) {
+        log.exception('[APP] Error parsing local config.json ', ex);
+        exit('ConfigError', 1);
+      }
+      try {
         home = new Home(config, fb);
         home.on('ready', function() {
           httpServer = new HTTPServer(config, home, fb);
           fb.child('commands').on('child_added', function(snapshot) {
             try {
               var cmd = snapshot.val();
-              home.set(cmd.command, cmd.modifier, 'FB');
+              home.executeCommand(cmd.command, cmd.modifier, 'FB');
               snapshot.ref().remove();
             } catch (ex) {
               log.error('Unable to execute FireBase Command: ' + JSON.stringify(cmd));
             }
           });
-          fb.child('.info/connected').on('value', function(snapshot) {
-            if (snapshot.val() === true) {
-              log.log('[NETWORK] Connected.');
-              home.set('NETWORK_OK', undefined, 'FB-APP');
-            } else {
-              log.error('[NETWORK] Disconnected');
-              home.set('NETWORK_ERROR', undefined, 'FB-APP');
-            }
-          });
         });
-        setInterval(function() {
-          loadAndRunJS('cron15.js');
-        }, 15*60*1000);
-        setInterval(function() {
-          loadAndRunJS('cron60.js');
-        }, 60*60*1000);
-        setInterval(function() {
-          loadAndRunJS('cronDaily.js');
-        }, 24*60*60*1000);
       } catch (ex) {
-        log.exception('[APP] Error parsing local config.json ', ex);
-        exit('ConfigError', 1);
+        log.exception('[APP] Error initializing home modules ', ex);
+        exit('HomeInitError', 1);
       }
+      setInterval(function() {
+        loadAndRunJS('cron15.js');
+      }, 15 * 60 * 1000);
+      setInterval(function() {
+        loadAndRunJS('cron60.js');
+      }, 60 * 60 * 1000);
+      setInterval(function() {
+        loadAndRunJS('cronDaily.js');
+      }, 24 * 60 * 60 * 1000);
     }
   });
 
@@ -75,7 +78,7 @@ function init() {
           if (cmd.exit === true) {
             exit(cmd.reason, cmd.code);
           } else {
-            home.set(cmd.command, cmd.modifier);
+            home.executeCommand(cmd.command, cmd.modifier, 'KEYPAD');
           }
         });
       } catch (ex) {
@@ -84,9 +87,7 @@ function init() {
       }
     }
     if (hasKeypad === false) {
-      log.warn('[APP]');
-      log.warn('[APP] No keyboard functionality will be available for this session.');
-      log.warn('[APP]');
+      log.warn('[APP] No keyboard functionality available.');
     }
   });
 }
@@ -115,12 +116,11 @@ process.on('SIGINT', function() {
   exit('SIGINT', 0);
 });
 
-
 function loadAndRunJS(file, callback) {
   log.log('[LoadAndRun] Trying to and run: ' + file);
   fs.readFile(file, function(err, data) {
     if (err) {
-      log.error('[LoadAndRun] Unable to load file.');
+      log.exception('[LoadAndRun] Unable to load file.', err);
       if (callback) {
         callback(err, file);
       }
@@ -129,7 +129,7 @@ function loadAndRunJS(file, callback) {
         eval(data.toString());  // jshint ignore:line
         log.log('[LoadAndRun] Completed.');
       } catch (exception) {
-        log.error('[LoadAndRun]' + JSON.stringify(exception));
+        log.exception('[LoadAndRun] Exception caught on eval.', exception);
         if (callback) {
           callback(exception, file);
         }

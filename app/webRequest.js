@@ -4,7 +4,6 @@ var http = require('http');
 var https = require('https');
 var log = require('./SystemLog');
 
-
 function makeRequest(uri, body, callback) {
   var request;
   var options = {
@@ -66,6 +65,5 @@ function makeRequest(uri, body, callback) {
   }
   request.end();
 }
-
 
 exports.request = makeRequest;

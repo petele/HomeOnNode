@@ -1,11 +1,9 @@
 {
-  "appName": "master",
-  "controller": {
-    "ip": "192.168.1.202",
-    "port": 3000
-  },
+  "ip": "192.168.1.202",
+  "port": 3000,
+  "id": "primary",
   "keys": {
-    "0": "AWAY",
+    "0": "ARMED",
     "1": "FRONT_HALL",
     "2": "LIVING_ROOM",
     "3": "IKEA_LAMP",
@@ -16,7 +14,8 @@
     "8": "LR_AC",
     "9": "BR_AC",
     "DOT": "MORNING",
-    "ENTER": "HOME"
+    "ENTER": "HOME",
+    "k": "KI_AC"
   },
   "modifiers": {
     "TAB": "OFF",

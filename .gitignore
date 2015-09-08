@@ -13,3 +13,7 @@ node_modules
 /Web/scripts/fbKey.js
 
 /Controller/config.json
+
+/scratch/
+
+/app/test.js

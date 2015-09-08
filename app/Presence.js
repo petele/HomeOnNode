@@ -3,9 +3,10 @@
 var EventEmitter = require('events').EventEmitter;
 var log = require('./SystemLog');
 var util = require('util');
-var noble = require('noble');
+var noble;
 
 function Presence(maxAway) {
+
   var STATE_AWAY = 'AWAY';
   var STATE_PRESENT = 'PRESENT';
   var MAX_AWAY = maxAway;
@@ -109,10 +110,18 @@ function Presence(maxAway) {
   }
 
   function init() {
-    log.init('[Presence]');
-    numPresent = 0;
-    status = {};
-    startNoble();
+    log.init('[PRESENCE]');
+    try {
+      noble = require('noble');
+      numPresent = 0;
+      status = {};
+      startNoble();
+    } catch (ex) {
+      log.exception('[PRESENCE] Presence initialization error.', ex);
+      setTimeout(function() {
+        self.emit('error');
+      }, 100);
+    }
   }
 
   init();

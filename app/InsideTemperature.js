@@ -4,7 +4,7 @@ var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var fs = require('fs');
 var path = require('path');
-
+var log = require('./SystemLog');
 
 function InsideTemperature(interval) {
   this.temperature = -1;
@@ -47,20 +47,18 @@ var findFile = function(callback) {
   });
 };
 
-
 var readData = function(file, callback) {
-
   fs.readFile(file, {'encoding': 'utf8'}, function(err, data) {
     if (err) {
       callback({'error': err});
     } else {
       var lines = data.split('\n');
-      if (lines[0].indexOf('YES', lines[0].length - 3) === -1){
+      if (lines[0].indexOf('YES', lines[0].length - 3) === -1) {
         callback({'error': 'YES not found.'});
       }
       var equalsPos = lines[1].indexOf('t=');
       if (equalsPos !== -1) {
-        var tempString = lines[1].substring(equalsPos+2);
+        var tempString = lines[1].substring(equalsPos + 2);
         var tempC = parseFloat(tempString) / 1000.0;
         var tempF = tempC * 9.0 / 5.0 + 32.0;
         callback({'f': tempF.toFixed(2), 'c': tempC.toFixed(2)});
@@ -75,8 +73,8 @@ var readData = function(file, callback) {
 var update = function(self) {
   readData(self.file, function(response) {
     if (response.error) {
+      log.exception('[INSIDE_TEMP]', response.error);
       if (self.interval === self.baseInterval) {
-        self.emit('error', response);
         self.interval = 150;
       } else if (self.interval < (self.baseInterval * 3)) {
         self.interval = 1 + Math.floor(self.interval * 1.5);
@@ -93,6 +91,5 @@ var update = function(self) {
     }, self.interval);
   });
 };
-
 
 module.exports = InsideTemperature;

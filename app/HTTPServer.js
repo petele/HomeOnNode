@@ -5,7 +5,6 @@ var path = require('path');
 var log = require('./SystemLog');
 var methodOverride = require('method-override');
 var bodyParser = require('body-parser');
-var multer = require('multer');
 
 function HTTPServer(config, home, fb) {
 
@@ -22,15 +21,12 @@ function HTTPServer(config, home, fb) {
 
   var exp = express();
 
-  fb.child('logs/app').push({'date': Date.now(), 'module': 'EXPRESS', 'state': 'STARTING'});
-
   log.init('[HTTPServer]');
-
-  exp.set('port', config['http-port']);
+  var port = config.httpServerPort || 3000;
+  exp.set('port', port);
   exp.use(methodOverride());
   exp.use(bodyParser.json());
-  exp.use(bodyParser.urlencoded({ extended: true }));
-  exp.use(multer());
+  exp.use(bodyParser.urlencoded({extended: true}));
   exp.use(bodyParser.text());
 
   exp.use(function(req, res, next) {
@@ -80,65 +76,53 @@ function HTTPServer(config, home, fb) {
     res.send(home.state);
   });
 
-  exp.get('/state/:obj', function(req, res) {
-    var result = home.state[req.params.obj];
-    if (result === undefined) {
-      res.status(404);
-      res.send({error: 'Not found'});
-      log.error('[HTTP] Requested state object not found: ' + req.path + ' [' + req.ip + ']');
-    } else {
-      res.send(result);
-    }
-  });
-
-  exp.post('/state', function(req, res) {
+  exp.post('/execute', function(req, res) {
     var body = req.body;
     if (typeof body === 'string') {
       body = JSON.parse(body);
     }
-    log.debug('[POST] ' + JSON.stringify(body));
-    var result;
-    if (body.door) {
-      result = home.doorChange(body.door, body.state, '[HTTP ' + req.ip + ']');
-    } else if (body.command) {
-      result = home.set(body.command, body.modifier, '[HTTP ' + req.ip + ']');
-    }
+    var sender = '[HTTP ' + req.ip + ']';
+    var result = home.executeCommand(body.command, body.modifier, sender);
     res.send(result);
   });
 
-  exp.post('/lights', function(req, res) {
+  exp.post('/door', function(req, res) {
     var body = req.body;
     if (typeof body === 'string') {
       body = JSON.parse(body);
     }
-    log.debug('[POST] ' + JSON.stringify(body));
-    var result = home.setLights(body.lights, body.state, '[HTTP ' + req.ip + ']');
+    var sender = '[HTTP ' + req.ip + ']';
+    var result = home.entryDoor(body.doorName, body.doorState, sender);
     res.send(result);
   });
-  exp.get('/lights', function(req, res) {
-    res.send(home.state.hue.lights);
+
+  exp.post('/temperature', function(req, res) {
+    var body = req.body;
+    if (typeof body === 'string') {
+      body = JSON.parse(body);
+    }
+    var sender = '[HTTP ' + req.ip + ']';
+    var result = home.setTemperature(body.room, body.temperature, sender);
+    res.send(result);
   });
 
-  exp.use(function(req, res){
+  exp.use(function(req, res) {
     res.status(404);
-    res.send({ error: 'Requested URL not found.' });
+    res.send({error: 'Requested URL not found.'});
     log.error('[HTTP] File not found: ' + req.path + ' [' + req.ip + ']');
   });
 
   exp.use(function(err, req, res, next) {
-    fb.child('logs/app').push({'date': Date.now(), 'module': 'EXPRESS', 'state': 'ERROR', 'err': err});
     res.status(err.status || 500);
-    res.send({ error: err.message });
+    res.send({error: err.message});
     var msg = '[HTTP] Server Error (' + err.status + ') for: ';
     msg += req.path + ' [' + req.ip + ']';
     log.exception(msg, err);
   });
 
   server = exp.listen(exp.get('port'), function() {
-    fb.child('logs/app').push({'date': Date.now(), 'module': 'EXPRESS', 'state': 'READY'});
     log.log('Express server started on port ' + exp.get('port'));
   });
 }
-
 
 module.exports = HTTPServer;

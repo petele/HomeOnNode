@@ -9,7 +9,7 @@ function listen(keys, modifiers, callback) {
   keypress(process.stdin);
 
   // listen for the 'keypress' event
-  process.stdin.on('keypress', function (ch, key) {
+  process.stdin.on('keypress', function(ch, key) {
     if ((key && key.ctrl && key.name === 'c') || (ch === 'q')) {
       callback({'exit': true, 'reason': 'SIGINT', 'code': 0});
     }
@@ -33,21 +33,25 @@ function listen(keys, modifiers, callback) {
     } else if (ch === ']') {
       ch = 'SQCLOSE';
     }
-    ch = ch.toString();
-    var m = modifiers[ch];
-    var k = keys[ch];
-    if (m) {
-      modifier = m;
-      setTimeout(function() {
+    try {
+      ch = ch.toString();
+      var m = modifiers[ch];
+      var k = keys[ch];
+      if (m) {
+        modifier = m;
+        setTimeout(function() {
+          modifier = undefined;
+        }, 5000);
+      } else if (k) {
+        var body = {
+          'command': k,
+          'modifier': modifier
+        };
+        callback(body);
         modifier = undefined;
-      }, 5000);
-    } else if (k) {
-      var body = {
-        'command': k,
-        'modifier': modifier
-      };
-      callback(body);
-      modifier = undefined;
+      }
+    } catch (ex) {
+      log.exception('[KEYPAD]', ex);
     }
   });
 

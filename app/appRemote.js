@@ -1,24 +1,29 @@
 'use strict';
 
 var fs = require('fs');
-var log = require('../Controller/SystemLog');
-var fbHelper = require('../Controller/fbHelper');
-var Keys = require('../Controller/Keys');
-var webRequest = require('../Controller/webRequest');
+var log = require('./SystemLog');
+var fbHelper = require('./FBHelper');
+var Keys = require('./Keys').keys;
+var webRequest = require('./webRequest');
 
-var Door = require('../Controller/Door');
-var Keypad = require('../Controller/Keypad');
+var Door = require('./Door');
+var Keypad = require('./Keypad');
 var Dimmer = require('./Dimmer');
 
-var fb, config, door, dimmer;
+var APP_NAME;
+var fb;
+var config;
+var door;
+var dimmer;
 
 log.appStart('Remote');
 
-function sendCommand(command) {
+function sendCommand(command, path) {
+  path = path || '/execute';
   var uri = {
-    'host': config.ip,
-    'port': config.port,
-    'path': '/state',
+    'host': config.controller.ip,
+    'port': config.controller.port,
+    'path': path,
     'method': 'POST'
   };
   if (typeof command === 'object') {
@@ -30,31 +35,31 @@ function sendCommand(command) {
       log.http('RESP', JSON.stringify(resp));
     });
   } catch (ex) {
-    log.error('[sendCommand] ' + ex.toString());
+    log.exception('[sendCommand] Failed', ex);
   }
 }
 
-
-fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
+fs.readFile('remote.json', {'encoding': 'utf8'}, function(err, data) {
   if (err) {
-    log.error('Unable to open config file.');
+    log.exception('Unable to open config file.', err);
   } else {
     config = JSON.parse(data);
-    fb = fbHelper.init(Keys.keys.fb, 'remote-' + config.id, exit);
+    APP_NAME = config.appName;
+    fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
     // Check door state and start monitoring door
     if ((config.door) && (config.door.enabled === true)) {
       door = new Door(config.id, config.door.pin);
       door.on('no-gpio', function(e) {
-        log.error('[DOOR] No GPIO for door ' + config.id + ' ' + e.toString());
+        log.exception('[DOOR] No GPIO for door ' + config.id, e);
       });
       door.on('change', function(data) {
         log.log('[DOOR] ' + config.id + ' ' + data);
-        if (data === 'OPEN') {
-          sendCommand(config.door.onOpen);
-        } else {
-          sendCommand(config.door.onClose);
-        }
+        var d = {
+          doorName: config.id,
+          doorState: data
+        };
+        sendCommand(d, '/door');
       });
     }
 
