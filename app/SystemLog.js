@@ -40,16 +40,29 @@ function writeLog(logger, level, message, error) {
     _fb.child('logs/' + _appName).push(fb);
   }
   var levelColor = colors.reset;
+  var wholeLine = false;
   if (level === 'ERROR' || level === 'EXCPT' || level === 'STOP') {
     levelColor = colors.red;
+    wholeLine = true;
   } else if (level === 'WARN') {
     levelColor = colors.yellow;
+    wholeLine = true;
   } else if (level === 'INFO') {
     levelColor = colors.blue;
   } else if (level === 'INIT' || level === 'START') {
     levelColor = colors.green;
+    wholeLine = true;
+  } else if (level === 'TODO') {
+    levelColor = colors.cyan;
+    wholeLine = true;
   }
-  logger(dtPretty, ' | ', levelColor(l), ' | ', m);
+  var line = dtPretty + ' | ' + levelColor(l) + ' | ';
+  if (wholeLine === true) {
+    line += levelColor(m);
+  } else {
+    line += m;
+  }
+  logger(line);
   var strLog = dtPretty + ' | ' + l + ' | ' + m;
   if (error) {
     console.dir(error);
@@ -78,6 +91,10 @@ function debug(message) {
   if (DEBUG) {
     writeLog(console.log, 'DEBUG', message);
   }
+}
+
+function todo(message) {
+  writeLog(console.log, 'TODO', message);
 }
 
 function init(message) {
@@ -115,6 +132,7 @@ exports.appStart = appStart;
 exports.appStop = appStop;
 exports.init = init;
 exports.http = http;
+exports.todo = todo;
 exports.level = http;
 exports.version = gitHead.head;
 exports.setDebug = setDebug;
