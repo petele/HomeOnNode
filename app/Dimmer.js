@@ -19,7 +19,14 @@ function Dimmer(config) {
       powerMate.on('wheelTurn', handleWheelTurn);
       powerMate.on('error', handlePowermateError);
       updateInterval = setInterval(updateBrightness, 500);
-      powerMate.setBrightness(0);
+      setTimeout(function() {
+        try {
+          powerMate.setBrightness(0);
+          log.debug('[POWERMATE] Brightness set to 0');
+        } catch (ex) {
+          log.exception('[POWERMATE] Unable to set PowerMate brightness to 0', ex);
+        }
+      }, 1250);
       log.log('[DIMMER] Ready.');
     } catch (ex) {
       log.exception('[DIMMER] Initialization error', ex);
@@ -56,9 +63,13 @@ function Dimmer(config) {
   }
 
   function updateBrightness() {
-    if (delta !== 0) {
-      setLights({bri_inc: delta});
-      delta = 0;
+    try {
+      if (delta !== 0) {
+        setLights({bri_inc: delta});
+        delta = 0;
+      }
+    } catch (ex) {
+      log.exception('[POWERMATE] Unable to update brightness.', ex);
     }
   }
 
