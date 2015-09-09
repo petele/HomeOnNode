@@ -12,6 +12,7 @@
         }
       ],
       "kind": "lights",
+      "label": "All lights",
       "visible": false
     },
     "ARMED": {
@@ -44,7 +45,8 @@
           ]
         }
       ],
-      "kind": "lights"
+      "kind": "lights",
+      "label": "Bathroom"
     },
     "BEDROOM": {
       "description": "Bedroom",
@@ -57,7 +59,8 @@
           ]
         }
       ],
-      "kind": "lights"
+      "kind": "lights",
+      "label": "Bedroom"
     },
     "BED_SIDE": {
       "description": "Bedside",
@@ -76,7 +79,21 @@
           ]
         }
       ],
-      "kind": "lights"
+      "kind": "lights",
+      "label": "Bedside"
+    },
+    "BLOOM": {
+      "description": "Hue Bloom light",
+      "hue": [
+        {
+          "command": "ColorCycle",
+          "lights": [
+            17
+          ]
+        }
+      ],
+      "kind": "lights",
+      "label": "Bloom"
     },
     "BR_AC": {
       "description": "Bedroom AC",
@@ -99,7 +116,8 @@
           ]
         }
       ],
-      "kind": "lights"
+      "kind": "lights",
+      "label": "Closet"
     },
     "DO_NOT_DISTURB": {
       "description": "Do Not Disturb",
@@ -151,7 +169,8 @@
           ]
         }
       ],
-      "kind": "lights"
+      "kind": "lights",
+      "label": "Front Hall"
     },
     "HOME": {
       "description": "Home",
@@ -170,7 +189,8 @@
           ]
         }
       ],
-      "kind": "lights"
+      "kind": "lights",
+      "label": "Ikea"
     },
     "KITCHEN": {
       "description": "Kitchen",
@@ -182,7 +202,8 @@
           ]
         }
       ],
-      "kind": "lights"
+      "kind": "lights",
+      "label": "Kitchen"
     },
     "KI_AC": {
       "description": "Kitchen AC",
@@ -219,7 +240,8 @@
           ]
         }
       ],
-      "kind": "lights"
+      "kind": "lights",
+      "label": "Living Room"
     },
     "LR_AC": {
       "description": "Living Room AC",
@@ -231,6 +253,33 @@
         }
       ],
       "kind": "iTachHVAC"
+    },
+    "MEDIA_APPLE": {
+      "harmony": "AppleTV",
+      "kind": "media",
+      "label": "AppleTV"
+    },
+    "MEDIA_FIRE": {
+      "harmony": "Fire TV",
+      "kind": "media",
+      "label": "FireTV"
+    },
+    "MEDIA_FM": {
+      "billboard": true,
+      "harmony": "FM",
+      "kind": "media",
+      "label": "FM Radio"
+    },
+    "MEDIA_MOLLY": {
+      "harmony": "Molly",
+      "kind": "media",
+      "label": "Molly"
+    },
+    "MEDIA_OFF": {
+      "description": "Turn off amp & TV",
+      "harmony": "PowerOff",
+      "kind": "media",
+      "label": "Amp Off"
     },
     "MORNING": {
       "description": "Morning",
@@ -451,7 +500,7 @@
           ]
         },
         {
-          "command": "Off",
+          "command": "OFF",
           "lights": [
             1,
             2,
@@ -487,7 +536,8 @@
           "temperature": 0
         }
       ],
-      "kind": "state",
+      "kind": "lights",
+      "label": "Sleep",
       "sound": "sounds/sleep.mp3"
     }
   },
@@ -496,6 +546,7 @@
     "dropcam": true,
     "harmony": true,
     "hue": true,
+    "insideTemp": false,
     "nest": true,
     "presence": false
   },
@@ -633,7 +684,7 @@
         0.322
       ]
     },
-    "Off": {
+    "OFF": {
       "on": false
     },
     "Reading": {
