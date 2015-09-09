@@ -10,9 +10,9 @@ function Dropcam(username, password) {
   var self = this;
   var authToken;
   this.cameras = [];
-  this.refreshInterval = 1;
   this.defaultRefreshInterval = 20000;
-
+  this.refreshInterval = this.defaultRefreshInterval;
+  
   function makeRequest(options, body, callback) {
     var request;
     options.hostname = 'www.dropcam.com';
@@ -181,6 +181,7 @@ function Dropcam(username, password) {
           }
           self.refreshInterval = self.defaultRefreshInterval;
         }
+        monitorDropcams();
       });
     }, self.refreshInterval);
   }
