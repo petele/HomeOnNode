@@ -122,7 +122,7 @@ function Home(config, fb) {
           enabled = false;
         }
         try {
-          dropcam.enableCamera(enabled);
+          dropcam.enableCameras(enabled);
           result.dropcam = enabled;
         } catch (ex) {
           log.exception('[HOME] Dropcam change failed', ex);
