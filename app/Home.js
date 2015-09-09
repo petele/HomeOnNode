@@ -69,7 +69,7 @@ function Home(config, fb) {
 
   this.executeCommand = function(commandName, modifier, source) {
     var result = {};
-    var msg = '[HOME] Command received: ' + commandName + '[' + modifier + ']';
+    var msg = '[HOME] Command received: ' + commandName + ' [' + modifier + ']';
     msg += ' from ' + source;
     log.log(msg);
     var command = getCommandByName(commandName);
@@ -514,19 +514,27 @@ function Home(config, fb) {
   //Updated
   function initHue() {
     hue = new Hue(Keys.hueBridge.key);
-    hue.on('change', function(lights) {
-      _self.state.hue = lights;
-      fbSet('state/hue', lights);
+    hue.on('change', function(lights, groups) {
+      _self.state.hue.lights = lights;
+      fbSet('state/hue/lights', lights);
+      _self.state.hue.groups = groups;
+      fbSet('state/hue/groups', groups);
     });
-    hue.on('ready', function(lights) {
-      _self.state.hue = lights;
-      fbSet('state/hue', lights);
+    hue.on('ready', function() {
+      _self.state.hue = {
+        lights: false,
+        groups: false
+      };
       hueIsReady = true;
     });
     hue.on('error', function() {
       log.error('[HOME] Hue error occured, will reattempt in 90 seconds.');
       hueIsReady = false;
       hue = null;
+      _self.state.hue.lights = false;
+      fbSet('state/hue/lights', false);
+      _self.state.hue.groups = false;
+      fbSet('state/hue/groups', false);
       setTimeout(function() {
         initHue();
       }, 90000);
@@ -548,6 +556,8 @@ function Home(config, fb) {
 
   function init() {
     log.init('[HOME] Initializing home.');
+    fbSet('state', 'STARTING');
+    _self.state.systemState = 'STARTING';
     var now = Date.now();
     var now_ = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
     _self.state = {
@@ -568,8 +578,25 @@ function Home(config, fb) {
       log.log('[HOME] Config file updated.');
       fs.writeFile('config.json', JSON.stringify(config, null, 2));
     });
-    fbSet('state', _self.state);
-    setState('AWAY');
+    fb.child('state/systemState').once('value', function(snapshot) {
+      var newState;
+      try {
+        newState = snapshot.val();
+      } catch (ex) {
+        log.exception('[HOME] Unable to read state.', ex);
+        newState = null;
+      }
+      if (newState === 'HOME' || newState === 'AWAY') {
+        log.log('[HOME] Set state based on previous setting: ' + newState);
+        _self.state.systemState = newState;
+      } else {
+        log.log('[HOME] Previous state unavailable: ' + newState);
+        setState('AWAY');
+      }
+    }, function(err) {
+      log.exception('[HOME] Unable to retreive previous state.', err);
+      setState('AWAY');
+    });
     if (config.features.insideTemp === true) {
       initInsideTemp();
     }
@@ -588,6 +615,8 @@ function Home(config, fb) {
     if (config.features.harmony === true) {
       initHarmony();
     }
+    // TODO finish setting up presence!
+    log.todo('[HOME] Set up presence!');
     if (config.features.presence === true) {
       initPresence();
     }

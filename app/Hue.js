@@ -10,7 +10,8 @@ function Hue(key, ip) {
   var bridgeKey = key;
   var bridgeIP = ip;
   var hueBridge;
-  var lightState;
+  this.hueLights = null;
+  this.hueGroups = null;
   this.refreshInterval = 1;
   this.defaultRefreshInterval = 20000;
   var self = this;
@@ -28,7 +29,7 @@ function Hue(key, ip) {
           } else {
             result = hueBridge.setLightState(light, cmd);
           }
-          log.debug(msg);
+          log.log(msg);
         } catch (ex) {
           log.exception(msg, ex);
           self.emit('error');
@@ -39,6 +40,71 @@ function Hue(key, ip) {
           log.error(msg);
         }
       });
+    }
+  };
+
+  this.getGroups = function(callback) {
+    if (hueBridge) {
+      try {
+        hueBridge.groups(callback);
+      } catch (ex) {
+        log.exception('[HUE] Unable to get groups.', ex);
+        if (callback) {
+          callback(ex, null);
+        }
+      }
+    }
+  };
+
+  this.getGroup = function(id, callback) {
+    if (hueBridge) {
+      try {
+        hueBridge.getGroup(id, callback);
+      } catch (ex) {
+        log.exception('[HUE] Unable to get group id:' + id, ex);
+        if (callback) {
+          callback(ex, null);
+        }
+      }
+    }
+  };
+
+  this.createGroup = function(label, lights, callback) {
+    if (hueBridge) {
+      try {
+        hueBridge.createGroup(label, lights, callback);
+      } catch (ex) {
+        log.exception('[HUE] Unable to create group', ex);
+        if (callback) {
+          callback(ex, null);
+        }
+      }
+    }
+  };
+
+  this.updateGroup = function(id, label, lights, callback) {
+    if (hueBridge) {
+      try {
+        hueBridge.updateGroup(id, label, lights, callback);
+      } catch (ex) {
+        log.exception('[HUE] Unable to update group', ex);
+        if (callback) {
+          callback(ex, null);
+        }
+      }
+    }
+  };
+
+  this.deleteGroup = function(id, callback) {
+    if (hueBridge) {
+      try {
+        hueBridge.deleteGroup(id, callback);
+      } catch (ex) {
+        log.exception('[HUE] Unable to delete group', ex);
+        if (callback) {
+          callback(ex, null);
+        }
+      }
     }
   };
 
@@ -54,11 +120,12 @@ function Hue(key, ip) {
             self.emit('error');
           }
         } else {
-          var lights = hueState.lights;
-          var differences = diff(self.lightState, lights);
-          if (differences) {
-            lightState = lights;
-            self.emit('change', lights);
+          var diffLights = diff(self.hueLights, hueState.lights);
+          var diffGroups = diff(self.hueGroups, hueState.groups);
+          if (diffLights || diffGroups) {
+            self.hueLights = hueState.lights;
+            self.hueGroups = hueState.groups;
+            self.emit('change', hueState.lights, hueState.groups);
           }
           self.refreshInterval = self.defaultRefreshInterval;
         }
@@ -86,16 +153,9 @@ function Hue(key, ip) {
     } else {
       log.init('[HUE]');
       hueBridge = hueApi.HueApi(bridgeIP, bridgeKey);
-      hueBridge.lights(function(err, lights) {
-        if (err) {
-          log.exception('[HUE] Error getting initial light state.', err);
-        } else {
-          lightState = lights;
-          log.log('[HUE] Ready.');
-          self.emit('ready', lights);
-          monitorHue();
-        }
-      });
+      log.log('[HUE] Ready.');
+      self.emit('ready');
+      monitorHue();
     }
   }
 
