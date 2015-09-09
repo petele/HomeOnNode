@@ -93,7 +93,7 @@ function Dropcam(username, password) {
     makeRequest(uri, null, function(respCode, resp) {
       if ((respCode === 200) && (callback)) {
         if (resp.status === 0) {
-          log.log('[DROPCAM] Found ' + resp.items.length + ' Dropcams');
+          log.debug('[DROPCAM] Found ' + resp.items.length + ' Dropcams');
           callback(null, resp.items);
         } else {
           log.exception('[DROPCAM.getCameras]', resp);
