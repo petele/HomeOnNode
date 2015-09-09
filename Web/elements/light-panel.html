@@ -23,6 +23,12 @@
             <paper-item modifier="TOGGLE">
               Toggle
             </paper-item>
+            <paper-item modifier="ON">
+              On
+            </paper-item>
+            <paper-item modifier="OFF">
+              Off
+            </paper-item>
             <template repeat="{{modifier in modifiers}}">
               <paper-item modifier="{{modifier.command}}">
                 {{modifier.label}}
@@ -134,11 +140,14 @@
             cmd.modifier = "OFF";
           } else {
             device.isOn = true;
-            cmd.modifier = "Default";
+            cmd.modifier = null;
           }
         } else if (this.modifier === "OFF") {
           cmd.modifier = "OFF";
           device.isOn = false;
+        } else if (this.modifier === 'ON') {
+          cmd.modifier = 'ON';
+          device.isOn = true;
         } else {
           device.isOn = true;
           cmd.modifier = this.modifier;

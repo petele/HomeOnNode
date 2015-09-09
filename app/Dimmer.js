@@ -1,16 +1,20 @@
 'use strict';
 
+// TODO: Add HueAPI
 var log = require('./SystemLog');
+// var hueApi = require('node-hue-api');
 var webRequest = require('./webRequest');
 var Keys = require('./Keys').keys;
 
 function Dimmer(config) {
   var powerMate;
+  // var hueBridge;
   var delta = 0;
   var updateInterval;
 
   function init() {
     log.init('[DIMMER]');
+    log.todo('[DIMMER] add use of Hue API');
     try {
       var PowerMate = require('node-powermate');
       powerMate = new PowerMate();

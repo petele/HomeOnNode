@@ -40,22 +40,28 @@ function Home(config, fb) {
     if (result) {
       return result;
     } else {
-      log.warn('[HOME] Unable to find command: ' + commandName);
+      log.error('[HOME] Unable to find command: ' + commandName);
       return {};
     }
   }
 
   function getLightSceneByName(sceneName) {
     var result;
-    var defaultScene = {
-      bri: 254,
-      ct: 369,
-      on: true
-    };
+    var defaultScene = {bri: 254, ct: 369, on: true};
     try {
-      result = config.lightScenes[sceneName] || defaultScene;
+      if (sceneName.toUpperCase() === 'OFF') {
+        result = {on: false};
+      } else if (sceneName.toUpperCase() === 'ON') {
+        result = {on: true};
+      } else {
+        result = config.lightScenes[sceneName];
+      }
+      if (result === undefined || result === null) {
+        log.error('[HOME] Unable to find light scene: ' + sceneName);
+        result = defaultScene;
+      }
     } catch (ex) {
-      log.exception('[HOME] Unable to find light scene: ' + sceneName);
+      log.exception('[HOME] Error getting light scene:' + sceneName, ex);
       result = defaultScene;
     }
     return result;
