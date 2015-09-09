@@ -23,7 +23,7 @@
         this.activity = "";
         this.pushedActivity = "";
         var self = this;
-        fb.child("state/harmony/activity_name").on("value", function(snapshot) {
+        fb.child("state/harmony/label").on("value", function(snapshot) {
           self.activity = snapshot.val();
           self.pushedActivity = "";
         });

@@ -65,7 +65,10 @@
                   </div>
                 </div>
                 <div layout horizontal justified class="text-large colorSecondaryText">
-                  <div></div>
+                  <div>
+                    Do not disturb
+                    <paper-toggle-button checked?="{{doNotDisturb}}" on-change="{{toggleDND}}"></paper-toggle-button>
+                  </div>
                   <div>
                     Dropcam
                     <paper-toggle-button checked?="{{dropcamStreaming}}" on-change="{{toggleDropcam}}"></paper-toggle-button>
@@ -77,9 +80,6 @@
                   </paper-button>
                   <paper-button on-tap="{{setState}}" state="HOME" colored?="{{state=='HOME'}}" pushed?="{{pushedState=='HOME'}}">
                     Home
-                  </paper-button>
-                  <paper-button on-tap="{{setState}}" state="SLEEP" colored?="{{state=='SLEEP'}}" pushed?="{{pushedState=='SLEEP'}}">
-                    Sleep
                   </paper-button>
                 </div>
               </div>
@@ -105,6 +105,7 @@
       created: function() {
         this.selectedTab = "status";
         this.pages = document.querySelector("core-animated-pages");
+        this.doNotDisturb = false;
         this.curTime = "";
         this.insideTemp = "";
         this.outsideTemp = "";
@@ -122,13 +123,16 @@
         fb.child("state/dropcam/streaming").on("value", function(snapshot) {
           self.dropcamStreaming = snapshot.val();
         });
-        fb.child("state/system_state").on("value", function(snapshot) {
+        fb.child("state/systemState").on("value", function(snapshot) {
           self.state = snapshot.val();
           if (self.state === "ARMED") {
             self.pushedState = "AWAY";
           } else {
             self.pushedState = "";
           }
+        });
+        fb.child("state/doNotDisturb").on("value", function(snapshot) {
+          self.doNotDisturb = snapshot.val();
         });
         var weatherRef = new Firebase('https://publicdata-weather.firebaseio.com/newyork');
         weatherRef.child('daily/data/0').on('value', function(snapshot) {
@@ -169,11 +173,19 @@
         console.log("Push State", h);
         history.pushState(h, null, "/" + this.selectedTab);
       },
+      toggleDND: function(event, details, sender) {
+        if (sender.checked === true) {
+          fb.child("commands").push({"command": "DO_NOT_DISTURB"});
+        } else {
+          fb.child("commands").push({"command": "DO_NOT_DISTURB", "modifier": "OFF"});
+        }
+        window.lastEvent = Date.now();
+      },
       toggleDropcam: function(event, details, sender) {
         if (sender.checked === true) {
           fb.child("commands").push({"command": "DROPCAM"});
         } else {
-          fb.child("commands").push({"command": "DROPCAM", "modifier": "Off"});
+          fb.child("commands").push({"command": "DROPCAM", "modifier": "OFF"});
         }
         window.lastEvent = Date.now();
       }

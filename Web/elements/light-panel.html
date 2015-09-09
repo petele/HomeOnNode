@@ -50,7 +50,7 @@
         this.lightsOn = [];
         this.lightsOff = [];
         var self = this;
-        fb.child("config/light_recipes").on("value", function(snapshot) {
+        fb.child("config/lightScenes").on("value", function(snapshot) {
           var newModifiers = [];
           snapshot.forEach(function(snap) {
             var cmd = {
@@ -64,7 +64,7 @@
         fb.child("config/commands").on("value", function(snapshot) {
           self.devices = window.getCommands(snapshot.val(), "lights");
         });
-        fb.child("state/hue/lights").on("value", function(snapshot) {
+        fb.child("state/hue").on("value", function(snapshot) {
           self.lightStateChanged(snapshot.val());
         });
       },
@@ -114,7 +114,7 @@
       },
       tapOff: function(event, details, sender) {
         window.lastEvent = Date.now();
-        this.$.coreMenu.selected = "Off";
+        this.$.coreMenu.selected = "OFF";
       },
       setModifier: function(event, details, sender) {
         if (details.isSelected === true) {
@@ -131,13 +131,13 @@
         if (this.modifier === "TOGGLE") {
           if (device.isOn === true) {
             device.isOn = false;
-            cmd.modifier = "Off";
+            cmd.modifier = "OFF";
           } else {
             device.isOn = true;
             cmd.modifier = "Default";
           }
-        } else if (this.modifier === "Off") {
-          cmd.modifier = "Off";
+        } else if (this.modifier === "OFF") {
+          cmd.modifier = "OFF";
           device.isOn = false;
         } else {
           device.isOn = true;

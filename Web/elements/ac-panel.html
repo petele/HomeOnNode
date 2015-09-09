@@ -65,12 +65,12 @@
       created: function() {
         this.devices = [];
         var self = this;
-        fb.child("state/ac").on("value", function(snapshot) {
+        fb.child("state/hvac").on("value", function(snapshot) {
           var val = snapshot.val();
           var devices = [
-            {"label": "Living Room", "command": "LR_AC", "id": "LR", "temp": val.LR},
-            {"label": "Kitchen", "command": "KI_AC", "id": "KI", "temp": val.KI},
-            {"label": "Bed Room", "command": "BR_AC", "id": "BR", "temp": val.BR}
+            {"label": "Living Room", "command": "LR_AC", "id": "LR", "temp": val.LR.temperature},
+            {"label": "Kitchen", "command": "KI_AC", "id": "KI", "temp": val.KI.temperature},
+            {"label": "Bed Room", "command": "BR_AC", "id": "BR", "temp": val.BR.temperature}
           ];
           self.devices = devices;
         });

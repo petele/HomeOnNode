@@ -10,7 +10,7 @@ var pToast = document.querySelector('paper-toast');
 var pErrorToast = document.querySelector('error-toast');
 var ignoreError = true;
 
-var fb = new Firebase('https://boiling-torch-4633.firebaseio.com/');
+var fb = new Firebase('https://petele-at-home.firebaseio.com/');
 fb.authWithCustomToken(fbKey, function(error) {
   if(error) {
     console.error('[FIREBASE] Auth failed. ' + error.toString());

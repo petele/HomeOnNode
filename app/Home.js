@@ -173,7 +173,7 @@ function Home(config, fb) {
     if (command.doNotDisturb) {
       var val = command.doNotDisturb.enabled || false;
       if (modifier === 'OFF') {
-        val = true;
+        val = false;
       }
       _self.state.doNotDisturb = val;
       fbSet('state/doNotDisturb', val);
