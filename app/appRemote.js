@@ -55,10 +55,12 @@ fs.readFile('remote.json', {'encoding': 'utf8'}, function(err, data) {
       });
       door.on('change', function(data) {
         log.log('[DOOR] ' + config.id + ' ' + data);
-        var d = {
-          doorName: config.id,
-          doorState: data
-        };
+        var d;
+        if (data === 'OPEN') {
+          d = config.door.onOpen;
+        } else {
+          d = config.door.onClose;
+        }
         sendCommand(d, '/door');
       });
     }
