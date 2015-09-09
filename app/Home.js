@@ -229,6 +229,11 @@ function Home(config, fb) {
     return result;
   };
 
+  this.hueCommand = function(cmd) {
+    // TODO: Add hue commands
+    log.todo('[HOME] Hue API Access not yet implemented.');
+  };
+
   //Updated
   this.shutdown = function() {
     if (harmonyIsReady) {
