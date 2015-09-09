@@ -52,16 +52,16 @@
               {{d.heartbeat | toDateTime}}
             </div>
           </div>
-          <template if="{{d.started_at}}">
+          <template if="{{d.startedAt}}">
             <div horizontal layout>
               <div flex>Started</div>
-              <div flex two class="text-right">{{d.started_at | toDateTime}}</div>
+              <div flex two class="text-right">{{d.startedAt | toDateTime}}</div>
             </div>
           </template>
-          <template if="{{d.shutdown_at}}">
+          <template if="{{d.shutdownAt}}">
             <div horizontal layout>
               <div flex>Shutdown</div>
-              <div flex two class="text-right">{{d.shutdown_at | toDateTime}}</div>
+              <div flex two class="text-right">{{d.shutdownAt | toDateTime}}</div>
             </div>
           </template>
           <div horizontal layout>
@@ -87,13 +87,17 @@
     </paper-action-dialog>
   </template>
   <script type="text/javascript">
+    /* jshint browser: true */
+    /* global fb, moment */
+    'use strict';
+
     Polymer({
       created: function() {
         this.devices = [];
         this.action = null;
         this.deviceToAction = null;
         var self = this;
-        fb.child("devices").on("value", function(snapshot) {
+        fb.child('devices').on('value', function(snapshot) {
           self.devices = [];
           snapshot.forEach(function(itemObj) {
             var item = itemObj.val();
@@ -102,34 +106,22 @@
           });
         });
       },
-      toggleFBLog: function(event, details, sender) {
-        var model = sender.templateInstance.model.d;
-        var path = "devices/" + model.key + "/logToFirebase";
-        fb.child(path).set(sender.checked);
-        window.lastEvent = Date.now();
-      },
-      toggleDBLog: function(event, details, sender) {
-        var model = sender.templateInstance.model.d;
-        var path = "devices/" + model.key + "/debugLog";
-        fb.child(path).set(sender.checked);
-        window.lastEvent = Date.now();
-      },
       tapRestart: function(event, details, sender) {
         var model = sender.templateInstance.model.d;
         this.deviceToAction = model;
-        this.action = "restart";
+        this.action = 'restart';
         this.$.dialog.open();
         window.lastEvent = Date.now();
       },
       tapShutdown: function(event, details, sender) {
         var model = sender.templateInstance.model.d;
         this.deviceToAction = model;
-        this.action = "shutdown";
+        this.action = 'shutdown';
         this.$.dialog.open();
         window.lastEvent = Date.now();
       },
       tapConfirm: function(event, details, sender) {
-        var path = "devices/" + this.deviceToAction.key + "/"+ this.action;
+        var path = 'devices/' + this.deviceToAction.key + '/' + this.action;
         fb.child(path).set(true);
         window.lastEvent = Date.now();
       },
@@ -148,9 +140,9 @@
       },
       toDateTime: function(value) {
         if (value) {
-          return moment(value).format("M/D/YY, h:mm:ss a");
+          return moment(value).format('M/D/YY, h:mm:ss a');
         } else {
-          return "";
+          return '';
         }
       },
       isOld: function(value) {

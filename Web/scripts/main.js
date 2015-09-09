@@ -1,5 +1,5 @@
 /* jshint browser: true */
-/* global Firebase, fbKey */
+/* global Firebase, fbKey, fbAppId */
 'use strict';
 
 window.lastEvent = Date.now();
@@ -10,9 +10,10 @@ var pToast = document.querySelector('paper-toast');
 var pErrorToast = document.querySelector('error-toast');
 var ignoreError = true;
 
-var fb = new Firebase('https://petele-at-home.firebaseio.com/');
+var fbURL = 'https://' + fbAppId + '.firebaseio.com';
+var fb = new Firebase(fbURL);
 fb.authWithCustomToken(fbKey, function(error) {
-  if(error) {
+  if (error) {
     console.error('[FIREBASE] Auth failed. ' + error.toString());
     window.showErrorToast('Firebase authentication failure.');
   } else {
@@ -99,10 +100,9 @@ window.addEventListener('load', function(e) {
   if (window.location.pathname === '/') {
 
   } else {
-    
+
   }
 });
-
 
 //var cacheBustedUrl = 'index.html?cache-bust=' + Date.now();
 //document.querySelector('#reload').href = cacheBustedUrl;
