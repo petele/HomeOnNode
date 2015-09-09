@@ -129,6 +129,7 @@ function Dropcam(username, password) {
     });
   };
 
+  // TODO: fix this!
   this.enableCamera = function(uuid, enabled, callback) {
     var body = 'uuid=[[UUID]]&key=streaming.enabled&value=[[ENABLED]]';
     body = body.replace('[[UUID]]', uuid);

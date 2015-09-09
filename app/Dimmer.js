@@ -63,7 +63,7 @@ function Dimmer(config) {
 
   function handleWheelTurn(d) {
     log.debug('[POWERMATE] Wheel Turn - Delta: ' + d.toString());
-    delta += (d * 5);
+    delta += (d * 2);
   }
 
   function handlePowermateError(err) {
