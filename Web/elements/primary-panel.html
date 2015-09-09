@@ -120,7 +120,7 @@
           self.insideTemp = Math.round(val.inside);
           self.outsideTemp = Math.round(val.outside);
         });
-        fb.child("state/dropcam/streaming").on("value", function(snapshot) {
+        fb.child("state/dropcam/0/is_streaming").on("value", function(snapshot) {
           self.dropcamStreaming = snapshot.val();
         });
         fb.child("state/systemState").on("value", function(snapshot) {
