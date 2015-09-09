@@ -7,8 +7,8 @@
   "door": {
     "enabled": true,
     "pin": 23,
-    "onOpen": {"door": "FRONT", "state": "OPEN"},
-    "onClose": {"door": "FRONT", "state": "CLOSED"}
+    "onOpen": {"door": "FRONT", "state": "OPEN", "kind": "entry"},
+    "onClose": {"door": "FRONT", "state": "CLOSED", "kind": "entry"}
   },
   "keypad": {
     "enabled": true,

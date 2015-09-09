@@ -7,7 +7,7 @@
   "door": {
     "enabled": true,
     "pin": 23,
-    "onOpen": {"command": "CLOSET"},
-    "onClose": {"command": "CLOSET", "modifier": "OFF"}
+    "onOpen": {"door": "CLOSET", "state": "Default"},
+    "onClose": {"door": "CLOSET", "state": "OFF"}
   }
 }

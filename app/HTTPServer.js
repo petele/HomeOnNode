@@ -92,7 +92,12 @@ function HTTPServer(config, home, fb) {
       body = JSON.parse(body);
     }
     var sender = '[HTTP ' + req.ip + ']';
-    var result = home.entryDoor(body.doorName, body.doorState, sender);
+    var result = {};
+    if (body.kind === 'entry') {
+      result = home.entryDoor(body.door, body.state, sender);
+    } else {
+      result = home.executeCommand(body.door, body.state, sender);
+    }
     res.send(result);
   });
 
