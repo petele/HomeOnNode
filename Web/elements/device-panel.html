@@ -68,18 +68,6 @@
             <div flex>Version</div>
             <div flex two class="text-right">{{d.version}}</div>
           </div>
-          <div horizontal layout>
-            <div flex>Log to Firebase</div>
-            <div flex class="text-right">
-              <paper-toggle-button on-change="{{toggleFBLog}}" checked?="{{p.logToFirebase === true}}"></paper-toggle-button>
-            </div>
-          </div>
-          <div horizontal layout>
-            <div flex>Debug Log</div>
-            <div flex class="text-right">
-              <paper-toggle-button on-change="{{toggleDBLog}}" checked?="{{p.debugLog === true}}"></paper-toggle-button>
-            </div>
-          </div>
           <div horizontal center-justified layout>
             <paper-button on-tap="{{tapRestart}}">Restart</paper-button>
             <paper-button on-tap="{{tapShutdown}}">Shutdown</paper-button>
