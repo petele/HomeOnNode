@@ -18,7 +18,7 @@ function Dimmer(config) {
       powerMate.on('buttonUp', handleButUp);
       powerMate.on('wheelTurn', handleWheelTurn);
       powerMate.on('error', handlePowermateError);
-      updateInterval = setInterval(updateBrightness, 250);
+      updateInterval = setInterval(updateBrightness, 500);
       log.log('[DIMMER] Ready.');
     } catch (ex) {
       log.exception('[DIMMER] Initialization error', ex);
@@ -63,7 +63,7 @@ function Dimmer(config) {
 
   function handleWheelTurn(d) {
     log.debug('[POWERMATE] Wheel Turn - Delta: ' + d.toString());
-    delta += (d * 2);
+    delta += (d * 10);
   }
 
   function handlePowermateError(err) {
