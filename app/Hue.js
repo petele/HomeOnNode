@@ -108,12 +108,51 @@ function Hue(key, ip) {
     }
   };
 
+  this.searchForNewLights = function(callback) {
+    if (hueBridge) {
+      try {
+        hueBridge.searchForNewLights(callback);
+      } catch (ex) {
+        log.exception('[HUE] Unable to search for new lights', ex);
+        if (callback) {
+          callback(ex, false);
+        }
+      }
+    }
+  };
+
+  this.getNewLights = function(callback) {
+    if (hueBridge) {
+      try {
+        hueBridge.newLights(callback);
+      } catch (ex) {
+        log.exception('[HUE] Could not return new lights', ex);
+        if (callback) {
+          callback(ex, null);
+        }
+      }
+    }
+  };
+
+  this.setLightName = function(id, label, callback) {
+    if (hueBridge) {
+      try {
+        hueBridge.setLightName(id, label, callback);
+      } catch (ex) {
+        log.exception('[HUE] Could not set light name', ex);
+        if (callback) {
+          callback(ex, null);
+        }
+      }
+    }
+  };
+
   function monitorHue() {
     setTimeout(function() {
       hueBridge.getFullState(function(err, hueState) {
         if (err) {
           log.exception('[HUE] Unable to retrieve light state.', err);
-          if (self.refreshInterval < self.defaultRefreshInterval * 5) {
+          if (self.refreshInterval < self.defaultRefreshInterval * 10) {
             self.refreshInterval += 2500;
           } else {
             log.error('[HUE] Exceeded maximum timeout, throwing error.');
@@ -136,7 +175,7 @@ function Hue(key, ip) {
 
   function init() {
     if (bridgeIP === null || bridgeIP === undefined) {
-      log.debug('[HUE] No bridge IP set, starting search.');
+      log.init('[HUE] No bridge IP set, starting search.');
       hueApi.nupnpSearch(function(err, result) {
         if (err) {
           log.exception('[HUE] Error searching for Hue Bridge', err);
@@ -145,13 +184,16 @@ function Hue(key, ip) {
           log.error('[HUE] No Hue bridges found.');
           self.emit('error');
         } else {
+          if (result.length > 1) {
+            log.warn('[HUE] Multiple bridges found, will use the first.');
+          }
           log.debug('[HUE] Bridge found: ' + JSON.stringify(result[0]));
           bridgeIP = result[0].ipaddress;
           init();
         }
       });
     } else {
-      log.init('[HUE]');
+      log.init('[HUE] on IP: ' + bridgeIP);
       hueBridge = hueApi.HueApi(bridgeIP, bridgeKey);
       log.log('[HUE] Ready.');
       self.emit('ready');

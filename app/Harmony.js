@@ -19,7 +19,7 @@ function Harmony(uuid, ip) {
 
   function connect() {
     if (_ip) {
-      log.init('[HARMONY]');
+      log.init('[HARMONY] on IP: ' + _ip);
       try {
         log.debug('[HARMONY] Starting connection on IP: ' + _ip);
         var _connectionString = {
@@ -47,11 +47,11 @@ function Harmony(uuid, ip) {
   }
 
   function findHarmonyHubs() {
-    log.log('[HARMONY] Searching for Harmony Hub...');
+    log.init('[HARMONY] Searching for Harmony Hub...');
     var discover = new HarmonyHubDiscovery(61991);
     discover.on('online', function(hub) {
       _isSearching = false;
-      log.log('[HARMONY] Hub found on IP address: ' + hub.ip);
+      log.debug('[HARMONY] Hub found on IP address: ' + hub.ip);
       _ip = hub.ip;
       discover.stop();
       connect();
@@ -62,7 +62,7 @@ function Harmony(uuid, ip) {
       if (_isSearching === true) {
         discover.stop();
         _isSearching = false;
-        log.error('[HARMONY] No Harmony Hub found.');
+        log.error('[HARMONY] Timeout exceeded, no Harmony Hubs found.');
         _self.emit('error');
         discover = null;
       }
