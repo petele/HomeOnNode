@@ -56,7 +56,7 @@ function Dimmer(config) {
 
   function updateBrightness() {
     if (delta !== 0) {
-      setLights({"inc_bri": delta});
+      setLights({bri_inc: delta});
       delta = 0;
     }
   }
