@@ -4,35 +4,29 @@
 
 var cronJob = function() {
   log.log('[CronDaily]');
-
-  cleanLogs('logs/app', 30);
-  cleanLogs('logs/door', 120);
-  cleanLogs('logs/errors', 7);
-  cleanLogs('logs/presence', 365);
-  cleanLogs('logs/systemState', 120);
+  cleanLogs('logs/logs', 2);
+  cleanLogs('logs/doors');
+  cleanLogs('logs/presence');
+  cleanLogs('logs/systemState');
 };
 
 function cleanLogs(path, maxAgeDays) {
-  var now = Date.now();
+  maxAgeDays = maxAgeDays || 90;
+  var endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
   log.log('[CleanLogs] Cleaning path: ', path);
-  fb.child(path).once('value', function(snapshot) {
-    var maxAgeMilli = 60 * 60 * 24 * maxAgeDays * 1000;
-    var countTotal = 0;
-    var countRemoved = 0;
-    snapshot.forEach(function(childSnapshot) {
-      countTotal++;
-      var age = now - childSnapshot.val().date;
-      if (age > maxAgeMilli) {
-        countRemoved++;
-        log.debug('[CleanLogs] Removed: ' + childSnapshot.val());
-        childSnapshot.ref().remove();
-      }
-    });
-    var msg = '[CleanLog] Completed. Checked: [countTotal], Removed: [countRemoved]';
-    msg = msg.replace('[countTotal]', countTotal);
-    msg = msg.replace('[countRemoved]', countRemoved);
-    log.log(msg);
-  });
+  fb.child(path).orderByChild('date').endAt(endAt).once('value',
+    function(snapshot) {
+      var itemsRemoved = 0;
+      snapshot.forEach(function(item) {
+        item.ref().remove();
+        itemsRemoved++;
+      });
+      var msg = '[CleanLogs] Removed: [COUNT] from [PATH]';
+      msg = msg.replace('[COUNT]', itemsRemoved);
+      msg = msg.replace('[PATH]', path);
+      log.log(msg);
+    }
+  );
 }
 
 cronJob();

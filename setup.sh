@@ -20,3 +20,14 @@ git clone https://github.com/petele/HomeOnNode.git
 cd HomeOnNode/app
 mkdir logs
 npm install
+
+# Setup Log Rotation
+# see http://www.linuxcommand.org/man_pages/logrotate8.html
+# run in /etc/cron.daily/logrotate
+# config file: /etc/logrotate.conf
+# "/users/pi/HomeOnNode/app/logs/rpi-system.log" {
+#   rotate 4
+#   weekly
+#   missingok
+#   nocompress
+# }

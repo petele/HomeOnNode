@@ -1,6 +1,7 @@
 'use strict';
 
 var fs = require('fs');
+var util = require('util');
 var colors = require('colors');
 var gitHead = require('./version');
 var moment = require('moment');
@@ -29,15 +30,16 @@ function writeLog(logger, level, message, error) {
   }
   if (_fb) {
     var fb = {
+      appName: _appName,
       date: dt,
-      datePretty: dtPretty,
+      date_: dtPretty,
       level: level,
       message: message
     };
     if (error) {
       fb.error = error;
     }
-    _fb.child('logs/' + _appName).push(fb);
+    _fb.child('logs/logs').push(fb);
   }
   var levelColor = colors.reset;
   var wholeLine = false;
@@ -65,8 +67,8 @@ function writeLog(logger, level, message, error) {
   logger(line);
   var strLog = dtPretty + ' | ' + l + ' | ' + m;
   if (error) {
-    console.dir(error);
-    strLog += '\n  ' + error.toString();
+    console.log(util.inspect(error, {showHidden: true, colors: true}));
+    strLog += '\n' + util.inspect(error, {showHidden: true});
   }
   fs.appendFile(LOG_FILE, strLog + '\n');
 }

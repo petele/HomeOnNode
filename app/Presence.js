@@ -5,45 +5,65 @@ var log = require('./SystemLog');
 var util = require('util');
 var noble;
 
-function Presence(maxAway) {
+function Presence() {
 
-  var STATE_AWAY = 'AWAY';
-  var STATE_PRESENT = 'PRESENT';
-  var MAX_AWAY = maxAway;
+  var AWAY = 'AWAY';
+  var PRESENT = 'PRESENT';
+  var MAX_AWAY = 60 * 3;
   var self = this;
   var nobleStarted = false;
-  var status, numPresent, intervalID;
+  var status = {};
+  var numPresent = 0;
+  var intervalID;
 
   function emitChange(person) {
-    var data = {
-      'present': numPresent,
-      'state': person.state,
-      'person': person
-    };
-    self.emit('change', data);
-    log.log('[Presence] ' + person.name + ' is ' + person.state);
+    var msg = '[PRESENCE] [NAME] is [STATE] ([COUNT])';
+    msg = msg.replace('[NAME]', person.name);
+    msg = msg.replace('[STATE]', person.state);
+    msg = msg.replace('[COUNT]', numPresent);
+    log.log(msg);
+    self.emit('change', person, numPresent, status);
   }
 
-  function timerTick() {
+  function checkAwayTimer() {
     var keys = Object.keys(status);
     var keyLen = keys.length;
+    var now = Date.now();
     for (var i = 0; i < keyLen; i++) {
       var person = status[keys[i]];
-      var timeSinceLastSeen = (Date.now() - person.lastSeen) / 1000;
-      if ((timeSinceLastSeen > MAX_AWAY) && (person.state === STATE_PRESENT)) {
-        person.state = STATE_AWAY;
-        numPresent -= 1;
-        emitChange(person);
+      if (person.track === true) {
+        var timeSinceLastSeen = (now() - person.lastSeen) / 1000;
+        if ((timeSinceLastSeen > MAX_AWAY) && (person.state === PRESENT)) {
+          person.state = AWAY;
+          numPresent -= 1;
+          emitChange(person);
+        }
       }
+    }
+  }
+
+  function startCheckAwayTimer() {
+    log.debug('[PRESENCE] checkAwayTimer started.');
+    if (intervalID) {
+      stopCheckAwayTimer();
+    }
+    intervalID = setInterval(checkAwayTimer, 2000);
+  }
+
+  function stopCheckAwayTimer() {
+    log.debug('[PRESENCE] checkAwayTimer stopped.');
+    if (intervalID) {
+      clearInterval(intervalID);
+      intervalID = null;
     }
   }
 
   function sawPerson(peripheral) {
     var person = status[peripheral.uuid];
-    if (person) {
+    if (person && person.track === true) {
       person.lastSeen = Date.now();
-      if (person.state === STATE_AWAY) {
-        person.state = STATE_PRESENT;
+      if (person.state === AWAY) {
+        person.state = PRESENT;
         numPresent += 1;
         emitChange(person);
       }
@@ -52,23 +72,24 @@ function Presence(maxAway) {
 
   function startNoble() {
     noble.on('stateChange', function(state) {
-      log.log('[Presence] Noble State Change: ' + state);
+      log.log('[PRESENCE] Noble State Change: ' + state);
       if (state === 'poweredOn') {
-        self.emit('scanning', true);
         noble.startScanning([], true);
       } else {
         noble.stopScanning();
-        self.emit('scanning', false);
-        self.emit('error', {'adapterState': state});
+        self.emit('adapterError', {'adapterState': state});
+        log.exception('[PRESENCE] Unknown adapter state.', state);
       }
     });
     noble.on('scanStart', function() {
-      log.log('[Presence] Noble Scanning Started.');
+      log.log('[PRESENCE] Noble Scanning Started.');
       nobleStarted = true;
+      self.emit('scanning', false);
     });
     noble.on('scanStop', function() {
-      log.log('[Presence] Noble Scanning Stopped.');
+      log.log('[PRESENCE] Noble Scanning Stopped.');
       nobleStarted = false;
+      self.emit('scanning', false);
     });
     noble.on('discover', sawPerson);
     if (nobleStarted === false) {
@@ -76,46 +97,74 @@ function Presence(maxAway) {
     }
   }
 
-  this.addPeople = function(people) {
-    if (intervalID) {
-      clearInterval(intervalID);
-    }
-    status = {};
-    numPresent = 0;
-    if (util.isArray(people) === false) {
-      var keys = Object.keys(people);
-      var keyLen = keys.length;
-      for (var i = 0; i < keyLen; i++) {
-        addPerson(people[keys[i]]);
+  this.addPerson = function(newPerson) {
+    try {
+      var uuid = newPerson.uuid;
+      var person = status[uuid];
+      if (person) {
+        log.warn('[PRESENCE] ' + newPerson.name + ' already exists.');
+        return false;
       }
-    } else {
-      for (var i = 0; i < people.length; i++) {
-        addPerson(people[i]);
-      }
+      status[uuid] = person;
+      status[uuid].lastSeen = 0;
+      status[uuid].state = AWAY;
+      log.log('[PRESENCE] Added: ' + person.name + ' (' + uuid + ')');
+      return true;
+    } catch (ex) {
+      log.exception('[PRESENCE] Error adding new person.', ex);
+      return false;
     }
-    log.log('[Presence] Added ' + Object.keys(status).length + ' people.');
-    intervalID = setInterval(timerTick, 2000);
   };
 
-  function addPerson(person) {
-    if (person.track === true) {
-      var p = {
-        'name': person.name,
-        'uuid': person.uuid,
-        'lastSeen': 0,
-        'state': STATE_AWAY
-      };
-      status[person.uuid] = p;
+  this.removePersonByKey = function(uuid) {
+    try {
+      var person = status[uuid];
+      if (person) {
+        log.log('[PRESENCE] Removed: ' + person.name + ' (' + uuid + ')');
+        status[uuid] = null;
+        return true;
+      }
+      log.warn('[PRESENCE] Could not find ' + uuid + ' to remove.');
+      return false;
+    } catch (ex) {
+      log.exception('[PRESENCE] Error removing person', ex);
+      return false;
     }
-  }
+  };
+
+  this.updatePerson = function(uPerson) {
+    try {
+      var uuid = uPerson.uuid;
+      var person = status[uuid];
+      if (person) {
+        status[uuid].name = uPerson.name;
+        status[uuid].track = uPerson.track;
+        log.log('[PRESENCE] Updated: ' + uPerson.name + ' (' + uuid + ')');
+        return true;
+      }
+      log.warn('[PRESENCE] Could not find ' + uuid + ' to update.');
+      return false;
+    } catch (ex) {
+      log.exception('[PRESENCE] Error updating person.', ex);
+      return false;
+    }
+  };
+
+  this.shutdown = function() {
+    stopCheckAwayTimer();
+    if (noble) {
+      noble.stopScanning();
+    }
+    nobleStarted = false;
+    log.log('[PRESENCE] Shut down.');
+  };
 
   function init() {
     log.init('[PRESENCE]');
     try {
       noble = require('noble');
-      numPresent = 0;
-      status = {};
       startNoble();
+      startCheckAwayTimer();
     } catch (ex) {
       log.exception('[PRESENCE] Presence initialization error.', ex);
       setTimeout(function() {

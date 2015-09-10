@@ -403,15 +403,16 @@ function Home(config, fb) {
     presence = new Presence();
     presence.on('error', function(err) {
       log.error('[HOME] Presence init error, retrying in 90 seconds');
+      presence.shutdown();
       presence = null;
       setTimeout(function() {
         initPresence();
       }, 90000);
     });
-    presence.on('change', function(data) {
-      fbPush('logs/presence', data.person);
+    presence.on('change', function(person, present) {
+      fbPush('logs/presence', person);
       var cmd = 'PRESENCE_SOME';
-      if (data.present === 0) {
+      if (present === 0) {
         cmd = 'PRESENCE_NONE';
       }
       _self.executeCommand(cmd, null, 'PRESENCE');
