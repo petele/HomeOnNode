@@ -1,20 +1,17 @@
 'use strict';
 
-// TODO: Add HueAPI
 var log = require('./SystemLog');
-// var hueApi = require('node-hue-api');
-var webRequest = require('./webRequest');
+var hueApi = require('node-hue-api');
 var Keys = require('./Keys').keys;
 
 function Dimmer(config) {
   var powerMate;
-  // var hueBridge;
+  var hueBridge;
   var delta = 0;
   var updateInterval;
 
   function init() {
     log.init('[DIMMER]');
-    log.todo('[DIMMER] add use of Hue API');
     try {
       var PowerMate = require('node-powermate');
       powerMate = new PowerMate();
@@ -22,7 +19,8 @@ function Dimmer(config) {
       powerMate.on('buttonUp', handleButUp);
       powerMate.on('wheelTurn', handleWheelTurn);
       powerMate.on('error', handlePowermateError);
-      updateInterval = setInterval(updateBrightness, 500);
+      updateInterval = setInterval(updateBrightness, 300);
+      hueBridge = hueApi.HueApi(config.hueIP, Keys.hueBridge.key);
       setTimeout(function() {
         try {
           powerMate.setBrightness(0);
@@ -39,25 +37,17 @@ function Dimmer(config) {
 
   function handleButDown() {
     log.debug('[POWERMATE] Button Down');
-    var uri = {
-      'host': config.hueIP,
-      'path': '/api/' + Keys.hueBridge.key + '/lights/' + config.lights[0]
-    };
-    webRequest.request(uri, null, function(resp) {
-      if (resp.error) {
-        log.exception('[DIMMER] Error getting light status', resp.error);
+    hueBridge.lightStatus(config.hueLight, function(err, result) {
+      if (err) {
+        log.exception('[DIMMER] Error getting light status', err);
       } else {
-        try {
-          var newState = {};
-          if (resp.state.on === true) {
-            newState.on = false;
-          } else {
-            newState.on = true;
-          }
-          setLights(newState);
-        } catch (ex) {
-          log.exception('[DIMMER] Error getting light state', ex);
+        var newState = {};
+        if (result.state.on === true) {
+          newState.on = false;
+        } else {
+          newState.on = true;
         }
+        hueBridge.setGroupLightState(config.hueGroup, newState);
       }
     });
   }
@@ -69,7 +59,8 @@ function Dimmer(config) {
   function updateBrightness() {
     try {
       if (delta !== 0) {
-        setLights({bri_inc: delta});
+        var newState = {bri_inc: delta};
+        hueBridge.setGroupLightState(config.hueGroup, newState);
         delta = 0;
       }
     } catch (ex) {
@@ -84,21 +75,6 @@ function Dimmer(config) {
 
   function handlePowermateError(err) {
     log.exception('[POWERMATE] Error', err);
-  }
-
-  function setLights(state) {
-    log.log('[DIMMER] ' + JSON.stringify(state));
-    config.lights.forEach(function(l) {
-      var uri = {
-        'host': config.hueIP,
-        'path': '/api/' + Keys.hueBridge.key + '/lights/' + l + '/state',
-        'method': 'PUT'
-      };
-      var body = JSON.stringify(state);
-      webRequest.request(uri, body, function(resp) {
-        log.debug('[POWERMATE] Response' + JSON.stringify(resp));
-      });
-    });
   }
 
   this.close = function() {

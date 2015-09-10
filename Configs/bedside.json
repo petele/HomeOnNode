@@ -6,9 +6,8 @@
   },
   "dimmer": {
     "enabled": true,
-    "lights": [16,11,15],
-    "refreshInterval": 2000,
-    "interval": 200,
+    "hueLight": 16,
+    "hueGroup": 8,
     "hueIP": "192.168.1.210"
   },
   "keypad": {
