@@ -19,7 +19,7 @@ function Dimmer(config) {
       powerMate.on('buttonUp', handleButUp);
       powerMate.on('wheelTurn', handleWheelTurn);
       powerMate.on('error', handlePowermateError);
-      updateInterval = setInterval(updateBrightness, 300);
+      updateInterval = setInterval(updateBrightness, 200);
       hueBridge = hueApi.HueApi(config.hueIP, Keys.hueBridge.key);
       setTimeout(function() {
         try {
