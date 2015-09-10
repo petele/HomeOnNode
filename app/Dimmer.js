@@ -59,7 +59,7 @@ function Dimmer(config) {
   function updateBrightness() {
     try {
       if (delta !== 0) {
-        var newState = {bri_inc: delta, transitiontime: 0};
+        var newState = {bri_inc: delta, transitiontime: 1};
         hueBridge.setGroupLightState(config.hueGroup, newState);
         delta = 0;
       }
