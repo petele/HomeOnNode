@@ -25,6 +25,7 @@ function Hue(key, ip) {
         msg = msg.replace('[id]', light);
         try {
           if (light <= 0) {
+            light = Math.abs(light);
             result = hueBridge.setGroupLightState(light, cmd);
           } else {
             result = hueBridge.setLightState(light, cmd);
