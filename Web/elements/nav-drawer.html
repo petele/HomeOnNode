@@ -141,48 +141,48 @@
   </template>
   <script type="text/javascript">
     /* jshint browser: true */
-    /* global fb */
+    /* global fb, moment */
     'use strict';
 
     Polymer({
       created: function() {
-        this.version = "";
-        this.ghVersion = "";
-        this.startedAt = "";
-        this.lastUpdatedAt = "";
+        this.version = '';
+        this.ghVersion = '';
+        this.startedAt = '';
+        this.lastUpdatedAt = '';
       },
       formatDate: function(dt) {
         if (dt) {
-          return moment(dt).format("M/D/YY, h:mm:ss a");
+          return moment(dt).format('M/D/YY, h:mm:ss a');
         } else {
-          return "";
+          return '';
         }
       },
       ready: function() {
         var self = this;
-        fb.child("state/time/last_updated").on("value", function(snapshot) {
+        fb.child('state/time/last_updated').on('value', function(snapshot) {
           self.lastUpdatedAt = self.formatDate(snapshot.val());
         });
-        fb.child("state/time/started").on("value", function(snapshot) {
+        fb.child('state/time/started').on('value', function(snapshot) {
           self.startedAt = self.formatDate(snapshot.val());
         });
-        fb.child("state/version").on("value", function(snapshot) {
+        fb.child('state/version').on('value', function(snapshot) {
           self.version = snapshot.val();
         });
       },
       tapButton: function(event, details, sender) {
-        var page = sender.getAttribute("page");
-        var path = sender.getAttribute("path");
+        var page = sender.getAttribute('page');
+        var path = sender.getAttribute('path');
         window.pages.selected = page;
 
         var h = {
-          "panel": page,
-          "tab": this.selectedTab,
-          "path": path
+          panel: page,
+          tab: this.selectedTab,
+          path: path
         };
-        console.log("Push State", h);
+        console.log('Push State', h);
 
-        history.pushState(h, null, "/" + path);
+        history.pushState(h, null, '/' + path);
 
         setTimeout(function() {
           window.primaryPanel.$.drawer.closeDrawer();

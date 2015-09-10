@@ -95,7 +95,7 @@ window.addEventListener('popstate', function(e) {
 });
 
 window.addEventListener('load', function(e) {
-  var h = {'panel': 'primary', 'tab': 'status', 'path': '/status'};
+  var h = {panel: 'primary', tab: 'status', path: '/status'};
   history.replaceState(h, null, '/status');
   if (window.location.pathname === '/') {
 

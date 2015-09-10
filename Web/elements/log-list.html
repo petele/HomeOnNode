@@ -72,7 +72,7 @@
   </template>
   <script type="text/javascript">
     /* jshint browser: true */
-    /* global fb */
+    /* global fb, moment */
     'use strict';
 
     Polymer({
@@ -81,7 +81,7 @@
       },
       ready: function() {
         var self = this;
-        fb.child(this.path).limitToLast(125).on("child_added", function(snapshot) {
+        fb.child(this.path).limitToLast(125).on('child_added', function(snapshot) {
           var item = snapshot.val();
           item.key = snapshot.key();
           self.items.unshift(item);
@@ -89,9 +89,9 @@
       },
       toDateTime: function(value) {
         if (value) {
-          return moment(value).format("M/D/YY, h:mm:ss a");
+          return moment(value).format('M/D/YY, h:mm:ss a');
         } else {
-          return "";
+          return '';
         }
       }
     });

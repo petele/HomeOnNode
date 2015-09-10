@@ -102,94 +102,95 @@
   </template>
   <script type="text/javascript">
     /* jshint browser: true */
-    /* global fb */
+    /* global Firebase, fb, moment */
     'use strict';
 
     Polymer({
       created: function() {
-        this.selectedTab = "status";
-        this.pages = document.querySelector("core-animated-pages");
+        this.selectedTab = 'status';
+        this.pages = document.querySelector('core-animated-pages');
         this.doNotDisturb = false;
-        this.curTime = "";
-        this.insideTemp = "";
-        this.outsideTemp = "";
-        this.forecastTemp = "";
+        this.curTime = '';
+        this.insideTemp = '';
+        this.outsideTemp = '';
+        this.forecastTemp = '';
         this.dropcamStreaming = false;
-        this.state = "AWAY";
-        this.pushedState = "";
+        this.state = 'AWAY';
+        this.pushedState = '';
 
         var self = this;
-        fb.child("state/temperature").on("value", function(snapshot) {
+        fb.child('state/temperature').on('value', function(snapshot) {
           var val = snapshot.val();
           self.insideTemp = Math.round(val.inside);
           self.outsideTemp = Math.round(val.outside);
         });
-        fb.child("state/dropcam/0/is_streaming").on("value", function(snapshot) {
+        fb.child('state/dropcam/0/is_streaming').on('value', function(snapshot) {
           self.dropcamStreaming = snapshot.val();
         });
-        fb.child("state/systemState").on("value", function(snapshot) {
+        fb.child('state/systemState').on('value', function(snapshot) {
           self.state = snapshot.val();
-          if (self.state === "ARMED") {
-            self.pushedState = "AWAY";
+          if (self.state === 'ARMED') {
+            self.pushedState = 'AWAY';
           } else {
-            self.pushedState = "";
+            self.pushedState = '';
           }
         });
-        fb.child("state/doNotDisturb").on("value", function(snapshot) {
+        fb.child('state/doNotDisturb').on('value', function(snapshot) {
           self.doNotDisturb = snapshot.val();
         });
         var weatherRef = new Firebase('https://publicdata-weather.firebaseio.com/newyork');
         weatherRef.child('daily/data/0').on('value', function(snapshot) {
           self.forecastTemp = Math.floor(snapshot.val().temperatureMax);
         });
-        this.curTime = moment().format("h:mm a");
+        this.curTime = moment().format('h:mm a');
         setInterval(function() {
-          self.curTime = moment().format("h:mm a");
+          self.curTime = moment().format('h:mm a');
           var diff = (Date.now() - window.lastEvent) / 1000;
-          if ((diff > 90) && (self.selectedTab !== "status")) {
-            var h = {"panel": "primary", "tab": "status"};
-            history.pushState(h, null, "/status");
-            self.selectedTab = "status";
+          var h;
+          if ((diff > 90) && (self.selectedTab !== 'status')) {
+            h = {panel: 'primary', tab: 'status'};
+            history.pushState(h, null, '/status');
+            self.selectedTab = 'status';
             window.lastEvent = Date.now();
           }
-          if ((diff > 180) && (self.pages.selected !== "primary")) {
-            var h = {"panel": "primary", "tab": self.selectedTab};
-            history.pushState(h, null, "/" + self.selectedTab);
-            self.pages.selected = "primary";
+          if ((diff > 180) && (self.pages.selected !== 'primary')) {
+            h = {panel: 'primary', tab: self.selectedTab};
+            history.pushState(h, null, '/' + self.selectedTab);
+            self.pages.selected = 'primary';
             window.lastEvent = Date.now();
           }
         }, 1000);
       },
       setState: function(event, details, sender) {
-        var newState = sender.getAttribute("state");
-        this.state = "";
+        var newState = sender.getAttribute('state');
+        this.state = '';
         this.pushedState = newState;
-        fb.child("commands").push({"command": newState});
+        fb.child('commands').push({'command': newState});
         window.lastEvent = Date.now();
         var self = this;
         setTimeout(function() {
-          self.pushedState = "";
+          self.pushedState = '';
         }, 1000*100);
       },
       tabChanged: function(event, details, sender) {
         window.lastEvent = Date.now();
-        var h = {"panel": "primary", "tab": this.selectedTab};
-        console.log("Push State", h);
-        history.pushState(h, null, "/" + this.selectedTab);
+        var h = {panel: 'primary', tab: this.selectedTab};
+        console.log('Push State', h);
+        history.pushState(h, null, '/' + this.selectedTab);
       },
       toggleDND: function(event, details, sender) {
         if (sender.checked === true) {
-          fb.child("commands").push({"command": "DO_NOT_DISTURB"});
+          fb.child('commands').push({command: 'DO_NOT_DISTURB'});
         } else {
-          fb.child("commands").push({"command": "DO_NOT_DISTURB", "modifier": "OFF"});
+          fb.child('commands').push({command: 'DO_NOT_DISTURB', modifier: 'OFF'});
         }
         window.lastEvent = Date.now();
       },
       toggleDropcam: function(event, details, sender) {
         if (sender.checked === true) {
-          fb.child("commands").push({"command": "DROPCAM"});
+          fb.child('commands').push({command: 'DROPCAM'});
         } else {
-          fb.child("commands").push({"command": "DROPCAM", "modifier": "OFF"});
+          fb.child('commands').push({command: 'DROPCAM', modifier: 'OFF'});
         }
         window.lastEvent = Date.now();
       }

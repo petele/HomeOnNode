@@ -24,25 +24,25 @@
     Polymer({
       created: function() {
         this.devices = [];
-        this.activity = "";
-        this.pushedActivity = "";
+        this.activity = '';
+        this.pushedActivity = '';
         var self = this;
-        fb.child("state/harmony/label").on("value", function(snapshot) {
+        fb.child('state/harmony/label').on('value', function(snapshot) {
           self.activity = snapshot.val();
-          self.pushedActivity = "";
+          self.pushedActivity = '';
         });
-        fb.child("config/commands").on("value", function(snapshot) {
-          self.devices = window.getCommands(snapshot.val(), "media");
+        fb.child('config/commands').on('value', function(snapshot) {
+          self.devices = window.getCommands(snapshot.val(), 'media');
         });
       },
       tapButton: function(event, details, sender) {
         var cmd = {
-          "command": sender.templateInstance.model.device.command
+          command: sender.templateInstance.model.device.command
         };
         this.pushedActivity = sender.templateInstance.model.device.harmony;
         window.lastEvent = Date.now();
-        console.log("tapButton", cmd);
-        fb.child("commands").push(cmd);
+        console.log('tapButton', cmd);
+        fb.child('commands').push(cmd);
       }
     });
   </script>

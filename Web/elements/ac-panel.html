@@ -2,7 +2,6 @@
 <link rel="import" href="/bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="/bower_components/paper-icon-button/paper-icon-button.html">
 
-
 <polymer-element name="ac-panel" attributes="devices">
   <template>
     <link rel="stylesheet" type="text/css" href="/styles/main.css">
@@ -69,60 +68,60 @@
       created: function() {
         this.devices = [];
         var self = this;
-        fb.child("state/hvac").on("value", function(snapshot) {
+        fb.child('state/hvac').on('value', function(snapshot) {
           var val = snapshot.val();
           var devices = [
-            {"label": "Living Room", "command": "LR_AC", "id": "LR", "temp": val.LR.temperature},
-            {"label": "Kitchen", "command": "KI_AC", "id": "KI", "temp": val.KI.temperature},
-            {"label": "Bed Room", "command": "BR_AC", "id": "BR", "temp": val.BR.temperature}
+            {label: 'Living Room', command: 'LR_AC', id: 'LR', temp: val.LR.temperature},
+            {label: 'Kitchen', command: 'KI_AC', id: 'KI', temp: val.KI.temperature},
+            {label: 'Bed Room', command: 'BR_AC', id: 'BR', temp: val.BR.temperature}
           ];
           self.devices = devices;
         });
       },
       fastCool: function(event, details, sender) {
         var cmd = {
-          "command": "FAST_COOL"
+          command: 'FAST_COOL'
         };
         window.lastEvent = Date.now();
-        console.log("fastCool", cmd);
-        fb.child("commands").push(cmd);
+        console.log('fastCool', cmd);
+        fb.child('commands').push(cmd);
       },
       toggleAC: function(event, details, sender) {
         var device = sender.templateInstance.model.device;
         var cmd = {
-          "command": device.command
-        }
-        if (device.temp == 0) {
+          command: device.command
+        };
+        if (device.temp === 0) {
           device.temp = 72;
         } else {
-          cmd.modifier = "Off";
+          cmd.modifier = 'OFF';
           device.temp = 0;
         }
         window.lastEvent = Date.now();
-        console.log("toggleAC", cmd);
-        fb.child("commands").push(cmd);
+        console.log('toggleAC', cmd);
+        fb.child('commands').push(cmd);
       },
       tempUp: function(event, details, sender) {
         var newTemp = sender.templateInstance.model.device.temp + 1;
         sender.templateInstance.model.device.temp = newTemp;
         var cmd = {
-          "command": sender.templateInstance.model.device.command,
-          "modifier": "UP"
+          command: sender.templateInstance.model.device.command,
+          modifier: 'UP'
         };
         window.lastEvent = Date.now();
-        console.log("tempUp", cmd);
-        fb.child("commands").push(cmd);
+        console.log('tempUp', cmd);
+        fb.child('commands').push(cmd);
       },
       tempDown: function(event, details, sender) {
         var newTemp = sender.templateInstance.model.device.temp - 1;
         sender.templateInstance.model.device.temp = newTemp;
         var cmd = {
-          "command": sender.templateInstance.model.device.command,
-          "modifier": "DOWN"
+          command: sender.templateInstance.model.device.command,
+          modifier: 'DOWN'
         };
         window.lastEvent = Date.now();
-        console.log("tempDown", cmd);
-        fb.child("commands").push(cmd);
+        console.log('tempDown', cmd);
+        fb.child('commands').push(cmd);
       }
     });
   </script>
