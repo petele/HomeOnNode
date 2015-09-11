@@ -1,6 +1,6 @@
 'use strict';
 
-var Keys = require('./Keys');
+var Keys = require('../app/Keys').keys.firebase;
 var Firebase = require('firebase');
 var readline = require('readline');
 
@@ -12,8 +12,9 @@ function init() {
     input: process.stdin,
     output: process.stdout
   });
-  fb = new Firebase('https://boiling-torch-4633.firebaseio.com/');
-  fb.auth(Keys.keys.fb, function(error) {
+  var fbURL = 'https://' + Keys.appId + '.firebaseio.com';
+  fb = new Firebase(fbURL);
+  fb.authWithCustomToken(Keys.key, function(error) {
     if(error) {
 
     } else {

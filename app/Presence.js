@@ -32,7 +32,7 @@ function Presence() {
     for (var i = 0; i < keyLen; i++) {
       var person = status[keys[i]];
       if (person.track === true) {
-        var timeSinceLastSeen = (now() - person.lastSeen) / 1000;
+        var timeSinceLastSeen = (now - person.lastSeen) / 1000;
         if ((timeSinceLastSeen > MAX_AWAY) && (person.state === PRESENT)) {
           person.state = AWAY;
           numPresent -= 1;
@@ -105,10 +105,10 @@ function Presence() {
         log.warn('[PRESENCE] ' + newPerson.name + ' already exists.');
         return false;
       }
-      status[uuid] = person;
+      status[uuid] = newPerson;
       status[uuid].lastSeen = 0;
       status[uuid].state = AWAY;
-      log.log('[PRESENCE] Added: ' + person.name + ' (' + uuid + ')');
+      log.log('[PRESENCE] Added: ' + newPerson.name + ' (' + uuid + ')');
       return true;
     } catch (ex) {
       log.exception('[PRESENCE] Error adding new person.', ex);
