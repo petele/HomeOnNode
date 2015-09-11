@@ -3,8 +3,13 @@
 var log = require('./SystemLog');
 var keypress = require('keypress');
 
+// TODO change so that it waits for a command, then returns the result, the
+// controller should then restart listening again, thus no need for keys,
+// only modifiers and no callback.
+
 function listen(keys, modifiers, callback) {
   log.init('[KeyPad]');
+  log.todo('KEYPAD] Refactor to end after each key stroke.');
   var modifier;
   keypress(process.stdin);
 

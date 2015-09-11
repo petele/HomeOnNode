@@ -2,6 +2,6 @@
 
 cd app
 
-echo "Starting controller..."
-node getConfig.js
+node getConfig.js HomeOnNode
+echo ""
 node appController.js

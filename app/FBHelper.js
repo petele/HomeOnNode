@@ -1,5 +1,6 @@
 'use strict';
 
+var os = require('os');
 var Firebase = require('firebase');
 var log = require('./SystemLog');
 var moment = require('moment');
@@ -32,8 +33,33 @@ function init(fbAppId, key, appName) {
     heartbeat_: startedAt,
     version: version.head,
     online: true,
-    shutdownAt: null
+    shutdownAt: null,
+    host: {
+      hostname: null,
+      ipAddress: null,
+    }
   };
+
+  log.todo('[FIREBASE] Get local IP address and save it along with HB info');
+  // var addresses = [];
+  // var hostname = '--UNKNOWN--';
+  // try {
+  //   hostname = os.hostname();
+  //   var interfaces = os.networkInterfaces();
+  //   for (var k in interfaces) {
+  //     for (var k2 in interfaces[k]) {
+  //       var address = interfaces[k][k2];
+  //       if (address.family === 'IPv4' && !address.internal) {
+  //         addresses.push(address.address);
+  //       }
+  //     }
+  //   }
+  // } catch (ex) {
+  //   log.exception('[FIREBASE] Unable to get local device IP addresses', ex);
+  // }
+  // def.host.hostname = hostname;
+  // def.host.ipAddress = addresses;
+
   fb.child('devices/' + appName).set(def);
 
   fb.child('.info/connected').on('value', function(snapshot) {

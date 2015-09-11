@@ -48,7 +48,8 @@ function init() {
               home.executeCommand(cmd.command, cmd.modifier, 'FB');
               snapshot.ref().remove();
             } catch (ex) {
-              log.error('Unable to execute FireBase Command: ' + JSON.stringify(cmd));
+              var failedCmd = JSON.stringify(cmd);
+              log.error('Unable to execute FireBase Command: ' + failedCmd);
             }
           });
         });
@@ -68,6 +69,8 @@ function init() {
     }
   });
 
+  // TODO change to use config's keypad
+  log.todo('[APP] Change to use config\'s keypad');
   fs.readFile('./keypad.json', {'encoding': 'utf8'}, function(err, data) {
     var hasKeypad = true;
     if (err) {
@@ -129,7 +132,7 @@ function loadAndRunJS(file, callback) {
     } else {
       try {
         eval(data.toString());  // jshint ignore:line
-        log.log('[LoadAndRun] Completed.');
+        log.debug('[LoadAndRun] Completed.');
       } catch (exception) {
         log.exception('[LoadAndRun] Exception caught on eval.', exception);
         if (callback) {

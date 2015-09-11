@@ -26,7 +26,7 @@ function Dimmer(config) {
           powerMate.setBrightness(0);
           log.debug('[POWERMATE] Brightness set to 0');
         } catch (ex) {
-          log.exception('[POWERMATE] Unable to set PowerMate brightness to 0', ex);
+          log.exception('[POWERMATE] PowerMate brightness to 0 failed.', ex);
         }
       }, 1250);
       log.log('[DIMMER] Ready.');
@@ -59,7 +59,12 @@ function Dimmer(config) {
   function updateBrightness() {
     try {
       if (delta !== 0) {
-        var newState = {bri_inc: delta, transitiontime: 1};
+        var newState;
+        /* jshint ignore:start */
+        // jscs:disable
+        newState = {bri_inc: delta, transitiontime: 1};
+        // jscs:enable
+        /* jshint ignore:end */
         hueBridge.setGroupLightState(config.hueGroup, newState);
         delta = 0;
       }

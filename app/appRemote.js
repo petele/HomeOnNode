@@ -39,6 +39,8 @@ function sendCommand(command, path) {
   }
 }
 
+//TODO change to use config.json
+log.todo('[REMOTE] change to use config.json instead of remote.json');
 fs.readFile('remote.json', {'encoding': 'utf8'}, function(err, data) {
   if (err) {
     log.exception('Unable to open config file.', err);
