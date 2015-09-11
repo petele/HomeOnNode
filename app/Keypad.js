@@ -3,20 +3,15 @@
 var log = require('./SystemLog');
 var keypress = require('keypress');
 
-// TODO change so that it waits for a command, then returns the result, the
-// controller should then restart listening again, thus no need for keys,
-// only modifiers and no callback.
-
-function listen(keys, modifiers, callback) {
-  log.init('[KeyPad]');
-  log.todo('KEYPAD] Refactor to end after each key stroke.');
-  var modifier;
+function listen(modifiers, callback) {
+  log.init('[KEYPAD]');
+  var modifier = null;
   keypress(process.stdin);
 
   // listen for the 'keypress' event
   process.stdin.on('keypress', function(ch, key) {
     if ((key && key.ctrl && key.name === 'c') || (ch === 'q')) {
-      callback({'exit': true, 'reason': 'SIGINT', 'code': 0});
+      callback(null, null, {exit: true});
     }
 
     if (ch === '\r') {
@@ -37,23 +32,20 @@ function listen(keys, modifiers, callback) {
       ch = 'SQOPEN';
     } else if (ch === ']') {
       ch = 'SQCLOSE';
+    } else if (ch === '\u001b') {
+      ch = 'ESC';
     }
     try {
       ch = ch.toString();
       var m = modifiers[ch];
-      var k = keys[ch];
       if (m) {
         modifier = m;
         setTimeout(function() {
-          modifier = undefined;
+          modifier = null;
         }, 5000);
-      } else if (k) {
-        var body = {
-          'command': k,
-          'modifier': modifier
-        };
-        callback(body);
-        modifier = undefined;
+      } else if (ch) {
+        callback(ch, modifier, null);
+        modifier = null;
       }
     } catch (ex) {
       log.exception('[KEYPAD]', ex);

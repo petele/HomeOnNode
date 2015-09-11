@@ -562,7 +562,7 @@ function Home(config, fb) {
       },
       version: version.head
     };
-    fb.child('config').on('value', function(snapshot) {
+    fb.child('config/HomeOnNode').on('value', function(snapshot) {
       config = snapshot.val();
       log.log('[HOME] Config file updated.');
       fs.writeFile('config.json', JSON.stringify(config, null, 2));

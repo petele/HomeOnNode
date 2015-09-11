@@ -57,6 +57,22 @@ function init() {
         log.exception('[APP] Error initializing home modules ', ex);
         exit('HomeInitError', 1);
       }
+      try {
+        Keypad.listen(config.keypad.modifiers, function(key, modifier, exit) {
+          if (exit) {
+            exit('SIGINT', 0);
+          } else {
+            var cmdName = config.keypad.keys[key];
+            if (cmdName) {
+              home.executeCommand(cmdName, modifier, 'KEYPAD');
+            } else {
+              log.warn('[APP] Unknown key pressed: ' + key);
+            }
+          }
+        });
+      } catch (ex) {
+        log.exception('[APP] Error initializing keyboard', ex);
+      }
       setInterval(function() {
         loadAndRunJS('cron15.js');
       }, 15 * 60 * 1000);
@@ -66,33 +82,6 @@ function init() {
       setInterval(function() {
         loadAndRunJS('cronDaily.js');
       }, 24 * 60 * 60 * 1000);
-    }
-  });
-
-  // TODO change to use config's keypad
-  log.todo('[APP] Change to use config\'s keypad');
-  fs.readFile('./keypad.json', {'encoding': 'utf8'}, function(err, data) {
-    var hasKeypad = true;
-    if (err) {
-      log.exception('[APP] Error reading local keypad.json.', err);
-      hasKeypad = false;
-    } else {
-      try {
-        var keyConfig = JSON.parse(data);
-        Keypad.listen(keyConfig.keys, keyConfig.modifiers, function(cmd) {
-          if (cmd.exit === true) {
-            exit(cmd.reason, cmd.code);
-          } else {
-            home.executeCommand(cmd.command, cmd.modifier, 'KEYPAD');
-          }
-        });
-      } catch (ex) {
-        log.exception('[APP] Error starting keypad listener', ex);
-        hasKeypad = false;
-      }
-    }
-    if (hasKeypad === false) {
-      log.warn('[APP] No keyboard functionality available.');
     }
   });
 }
