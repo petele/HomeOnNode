@@ -1,0 +1,21 @@
+'use strict';
+
+var appKeys = {
+  firebase: {
+    appId: 'firebase-app-id',
+    key: '1234567890abcdefghijklmnopqrstuvwxyz1234'
+  },
+  hueBridge: {
+    key: 'abcdefghijklmnopqrstuvwxyz123456'
+  },
+  harmony: {
+    key: '12345678-1234-1234-1234-123456789012'
+  },
+  nest: {
+    user: 'name@example.com',
+    password: 'password',
+    token: 'token'
+  }
+};
+
+exports.keys = appKeys;

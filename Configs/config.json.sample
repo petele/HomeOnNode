@@ -1,0 +1,44 @@
+{
+  "appName": "frontdoor",
+  "controller": {
+    "ip": "192.168.1.1",
+    "port": 3000
+  },
+  "dimmer": {
+    "enabled": true,
+    "hueLight": 0,
+    "hueGroup": 1,
+    "hueIP": "192.168.1.2"
+  },
+  "door": {
+    "enabled": true,
+    "pin": 23,
+    "onOpen": {"door": "FRONT", "state": "OPEN", "kind": "entry"},
+    "onClose": {"door": "FRONT", "state": "CLOSED", "kind": "entry"}
+  },
+  "keypad": {
+    "enabled": true,
+    "keys": {
+      "0": "AWAY",
+      "1": "ALL_LIGHTS",
+      "2": "BATHROOM",
+      "3": "BEDROOM",
+      "4": "DO_NOT_DISTURB",
+      "5": "DROPCAM",
+      "6": "MEDIA_FM",
+      "7": "MEDIA_OFF",
+      "8": "LR_AC",
+      "9": "NEST_AWAY",
+      "DOT": "ALL_LIGHTS",
+      "ENTER": "HOME"
+    },
+    "modifiers": {
+      "TAB": "OFF",
+      "FW": "VirginBlue",
+      "*": "NightRed",
+      "BS": "DimWhite",
+      "-": "DOWN",
+      "+": "UP"
+    }
+  }
+}
