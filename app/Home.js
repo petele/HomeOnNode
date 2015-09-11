@@ -402,12 +402,7 @@ function Home(config, fb) {
   function initPresence() {
     presence = new Presence();
     presence.on('error', function(err) {
-      log.error('[HOME] Presence init error, retrying in 90 seconds');
-      presence.shutdown();
-      presence = null;
-      setTimeout(function() {
-        initPresence();
-      }, 90000);
+      log.debug('[HOME] Presence error, whoops!');
     });
     presence.on('change', function(person, present) {
       fbPush('logs/presence', person);
@@ -417,29 +412,17 @@ function Home(config, fb) {
       }
       _self.executeCommand(cmd, null, 'PRESENCE');
     });
+    var fbPresPath = 'config/presence/people';
+    fb.child(fbPresPath).on('child_added', function(snapshot) {
+      console.log('PPP - added', snapshot.val());
+    });
+    fb.child(fbPresPath).on('child_removed', function(snapshot) {
+      console.log('PPP - removed', snapshot.val());
+    });
+    fb.child(fbPresPath).on('child_changed', function(snapshot) {
+      console.log('PPP - changed', snapshot.val());
+    });
   }
-
-  // function initPresence() {
-  //   presence = new Presence(config.presence.max_away);
-  //   presence.on('error', function(err) {
-  //     log.error('[HOME] Presence Error: ' + JSON.stringify(err));
-  //     _self.set('ERROR');
-  //   });
-  //   presence.on('change', function(data) {
-  //     fbPush('logs/presence', data.person);
-  //     //log.log('[HOME] data.present: ' + data.present);
-  //     //log.log('[HOME] config.presence.disable_cam: ' + config.presence.disable_cam);
-  //     //log.log('[HOME] _self.state.dropcam: ')
-  //     if ((data.present >= 1) && (config.presence.disable_cam === true) &&
-  //         (_self.state.dropcam.streaming === true)) {
-  //           dropcam.enableCamera(false);
-  //           log.log('[HOME] DropCam disabled by Presence detection.');
-  //     }
-  //   });
-  //   fb.child('config/presence/people').on('value', function(snapshot) {
-  //     presence.addPeople(snapshot.val());
-  //   });
-  // }
 
   //Updated
   function initHarmony() {
