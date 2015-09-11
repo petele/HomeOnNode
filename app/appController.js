@@ -58,16 +58,11 @@ function init() {
         exit('HomeInitError', 1);
       }
       try {
-        Keypad.listen(config.keypad.modifiers, function(key, modifier, exit) {
-          if (exit) {
+        Keypad.listen(config.keypad.modifiers, function(key, modifier, exitApp) {
+          if (exitApp) {
             exit('SIGINT', 0);
           } else {
-            var cmdName = config.keypad.keys[key];
-            if (cmdName) {
-              home.executeCommand(cmdName, modifier, 'KEYPAD');
-            } else {
-              log.warn('[APP] Unknown key pressed: ' + key);
-            }
+            home.handleKeyEntry(key, modifier, 'KEYPAD');
           }
         });
       } catch (ex) {

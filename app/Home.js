@@ -67,6 +67,19 @@ function Home(config, fb) {
     return result;
   }
 
+  this.handleKeyEntry = function(key, modifier, sender) {
+    try {
+      var cmdName = config.keypad.keys[key];
+      if (cmdName) {
+        _self.executeCommand(cmdName, modifier, sender);
+      } else {
+        log.warn('[HOME] Unknown key pressed: ' + key);
+      }
+    } catch (ex) {
+      log.exception('[HOME] Error handling key entry.', ex);
+    }
+  };
+
   this.executeCommand = function(commandName, modifier, source) {
     var result = {};
     var msg = '[HOME] Command received: ' + commandName + ' [' + modifier + ']';
