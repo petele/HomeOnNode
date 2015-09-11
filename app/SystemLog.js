@@ -111,7 +111,7 @@ function appStart(appName, debug) {
   if (appName) {
     _appName = appName;
     DEBUG = debug === true ? true : false;
-    writeLog(console.log, 'START', gitHead.head);
+    writeLog(console.log, 'START', appName + ' (' + gitHead.head + ')');
   } else {
     throw new Error('No appName provided');
   }
