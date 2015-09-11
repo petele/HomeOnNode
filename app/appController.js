@@ -20,6 +20,8 @@ log.appStart(APP_NAME, false);
 function init() {
   fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
+  log.setFirebase(fb);
+
   log.log('[APP] Reading local config file.');
 
   fs.readFile('./config.json', {'encoding': 'utf8'}, function(err, data) {
