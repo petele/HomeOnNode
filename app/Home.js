@@ -414,13 +414,14 @@ function Home(config, fb) {
     });
     var fbPresPath = 'config/presence/people';
     fb.child(fbPresPath).on('child_added', function(snapshot) {
-      console.log('PPP - added', snapshot.val());
+      presence.addPerson(snapshot.val());
     });
     fb.child(fbPresPath).on('child_removed', function(snapshot) {
-      console.log('PPP - removed', snapshot.val());
+      var uuid = snapshot.val().uuid;
+      presence.removePersonByKey(uuid);
     });
     fb.child(fbPresPath).on('child_changed', function(snapshot) {
-      console.log('PPP - changed', snapshot.val());
+      presence.updatePerson(snapshot.val());
     });
   }
 
@@ -545,7 +546,6 @@ function Home(config, fb) {
 
   function init() {
     log.init('[HOME] Initializing home.');
-    fbSet('state', 'STARTING');
     _self.state.systemState = 'STARTING';
     var now = Date.now();
     var now_ = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
