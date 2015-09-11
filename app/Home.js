@@ -604,8 +604,6 @@ function Home(config, fb) {
     if (config.features.harmony === true) {
       initHarmony();
     }
-    // TODO finish setting up presence!
-    log.todo('[HOME] Set up presence!');
     if (config.features.presence === true) {
       initPresence();
     }

@@ -116,7 +116,9 @@ function Presence() {
     }
   };
 
+  // TODO Remove person from status and numPresent! 
   this.removePersonByKey = function(uuid) {
+    log.todo('Remove person from status and numPresent! ');
     try {
       var person = status[uuid];
       if (person) {
@@ -132,7 +134,9 @@ function Presence() {
     }
   };
 
+  // TODO Remove person from numPresent if track==false
   this.updatePerson = function(uPerson) {
+    log.todo('Remove person from numPresent if track==false');
     try {
       var uuid = uPerson.uuid;
       var person = status[uuid];

@@ -54,8 +54,7 @@
         {
           "command": "Default",
           "lights": [
-            5,
-            6
+            -4
           ]
         }
       ],
@@ -68,14 +67,7 @@
         {
           "command": "Reading",
           "lights": [
-            16,
-            15
-          ]
-        },
-        {
-          "command": "VirginBlue",
-          "lights": [
-            11
+            -8
           ]
         }
       ],
@@ -183,9 +175,7 @@
         {
           "command": "Default",
           "lights": [
-            13,
-            8,
-            10
+            -6
           ]
         }
       ],
@@ -220,7 +210,7 @@
       "description": "All Lights",
       "hue": [
         {
-          "command": "Off",
+          "command": "OFF",
           "lights": [
             0
           ]
@@ -234,9 +224,7 @@
         {
           "command": "Default",
           "lights": [
-            1,
-            2,
-            9
+            -1
           ]
         }
       ],
@@ -395,7 +383,7 @@
       "harmony": "PowerOff",
       "hue": [
         {
-          "command": "Off",
+          "command": "OFF",
           "lights": [
             0
           ]
@@ -452,9 +440,7 @@
         {
           "command": "Default",
           "lights": [
-            1,
-            2,
-            9,
+            -1,
             4
           ]
         }
@@ -489,14 +475,7 @@
         {
           "command": "Reading",
           "lights": [
-            16,
-            15
-          ]
-        },
-        {
-          "command": "NightRed",
-          "lights": [
-            11
+            -8
           ]
         },
         {
@@ -548,7 +527,7 @@
     "hue": true,
     "insideTemp": false,
     "nest": true,
-    "presence": false
+    "presence": true
   },
   "hvac": {
     "defaultTemperature": 72,
@@ -684,9 +663,6 @@
         0.322
       ]
     },
-    "OFF": {
-      "on": false
-    },
     "Reading": {
       "bri": 250,
       "on": true,
@@ -716,5 +692,29 @@
     }
   },
   "logToFirebase": false,
+  "presence": {
+    "people": {
+      "-JytoAt-XnkZh0WRJvkc": {
+        "name": "Pete (t1)",
+        "track": true,
+        "uuid": "efa8b3ccf2e8"
+      },
+      "-JytoEOaQxPDfRNrNQjh": {
+        "name": "Tile 2",
+        "track": false,
+        "uuid": "d35fc9eb1725"
+      },
+      "-JytoGlqb7PyDKq1KxbK": {
+        "name": "Tile 3",
+        "track": false,
+        "uuid": "d140c4316025"
+      },
+      "-JytsQXMSWhw55tpal5F": {
+        "name": "Tile 4",
+        "track": false,
+        "uuid": "f9c99a9236bf"
+      }
+    }
+  },
   "readySound": "file"
 }
