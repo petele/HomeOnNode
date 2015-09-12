@@ -335,7 +335,7 @@ function Home(config, fb) {
   function playSound(file) {
     if (_self.state.doNotDisturb === false) {
       setTimeout(function() {
-        var cmd = 'mplayer -ao alsa -really-quiet -noconsolecontrols ';
+        var cmd = 'mplayer ';
         cmd += file;
         exec(cmd, function(error, stdout, stderr) {
           if (error) {
