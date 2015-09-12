@@ -417,8 +417,9 @@ function Home(config, fb) {
     presence.on('error', function(err) {
       log.debug('[HOME] Presence error, whoops!');
     });
-    presence.on('change', function(person, present) {
+    presence.on('change', function(person, present, who) {
       fbPush('logs/presence', person);
+      fbSet('state/presence', who);
       var cmd = 'PRESENCE_SOME';
       if (present === 0) {
         cmd = 'PRESENCE_NONE';
