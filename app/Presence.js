@@ -3,6 +3,7 @@
 var EventEmitter = require('events').EventEmitter;
 var log = require('./SystemLog');
 var util = require('util');
+var moment = require('moment');
 var noble;
 
 function Presence() {
@@ -15,6 +16,7 @@ function Presence() {
   var status = {};
   var numPresent = 0;
   var intervalID;
+  var timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
 
   function emitChange(person) {
     var msg = '[PRESENCE] [NAME] is [STATE] ([COUNT])';
@@ -61,7 +63,9 @@ function Presence() {
   function sawPerson(peripheral) {
     var person = status[peripheral.uuid];
     if (person && person.track === true) {
-      person.lastSeen = Date.now();
+      var now = Date.now();
+      person.lastSeen = now;
+      person.lastSeen_ = moment(now).format(timeFormat);
       if (person.state === AWAY) {
         person.state = PRESENT;
         numPresent += 1;
