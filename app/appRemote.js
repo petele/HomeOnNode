@@ -39,9 +39,7 @@ function sendCommand(command, path) {
   }
 }
 
-//TODO change to use config.json
-log.todo('[REMOTE] change to use config.json instead of remote.json');
-fs.readFile('remote.json', {'encoding': 'utf8'}, function(err, data) {
+fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
   if (err) {
     log.exception('Unable to open config file.', err);
   } else {
@@ -49,14 +47,20 @@ fs.readFile('remote.json', {'encoding': 'utf8'}, function(err, data) {
     APP_NAME = config.appName;
     fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
+    var keypadConfigPath = 'config/' + config.appName + '/keypad';
+    fb.child(keypadConfigPath).on('value', function(snapshot) {
+      log.log('[REMOTE] Keypad settings updated.');
+      config.keypad = snapshot.val();
+    });
+
     // Check door state and start monitoring door
     if ((config.door) && (config.door.enabled === true)) {
       door = new Door(config.id, config.door.pin);
       door.on('no-gpio', function(e) {
-        log.exception('[DOOR] No GPIO for door ' + config.id, e);
+        log.exception('[REMOTE] No GPIO for door ' + config.id, e);
       });
       door.on('change', function(data) {
-        log.log('[DOOR] ' + config.id + ' ' + data);
+        log.log('[REMOTE] Door ' + config.id + ' ' + data);
         var d;
         if (data === 'OPEN') {
           d = config.door.onOpen;
@@ -72,11 +76,20 @@ fs.readFile('remote.json', {'encoding': 'utf8'}, function(err, data) {
     }
 
     if ((config.keypad) && (config.keypad.enabled === true)) {
-      Keypad.listen(config.keypad.keys, config.keypad.modifiers, function(data) {
-        if (data.exit === true) {
-          exit(data.reason, data.code);
+      Keypad.listen(config.keypad.modifiers, function(key, modifier, exitApp) {
+        if (exitApp) {
+          exit('SIGINT', 0);
         } else {
-          sendCommand(data);
+          var cmdName = config.keypad.keys[key];
+          if (cmdName) {
+            var cmd = {
+              command: cmdName,
+              modifier: modifier
+            };
+            sendCommand(cmd);
+          } else {
+            log.warn('[HOME] Unknown key pressed: ' + key);
+          }
         }
       });
     }

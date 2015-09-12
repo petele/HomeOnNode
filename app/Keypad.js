@@ -12,6 +12,7 @@ function listen(modifiers, callback) {
   process.stdin.on('keypress', function(ch, key) {
     if ((key && key.ctrl && key.name === 'c') || (ch === 'q')) {
       callback(null, null, {exit: true});
+      return;
     }
 
     if (ch === '\r') {
