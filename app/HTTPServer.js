@@ -42,7 +42,7 @@ function HTTPServer(config, home, fb) {
   });
 
   exp.get('/favicon.ico', function(req, res) {
-    res.sendFile(path.join(__dirname, '/favicon.ico'));
+    res.sendFile(path.join(__dirname, '/web/favicon.ico'));
   });
 
   exp.use('/web/', express.static(path.join(__dirname, 'web')));
