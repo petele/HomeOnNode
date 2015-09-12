@@ -8,6 +8,7 @@ var version = require('./version');
 var exec = require('child_process').exec;
 
 function init(fbAppId, key, appName) {
+  log.init('[FIREBASE] ' + fbAppId + ' for ' + appName);
   var timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
   var fbURL = 'https://' + fbAppId + '.firebaseio.com/';
   var fb = new Firebase(fbURL);
@@ -39,26 +40,37 @@ function init(fbAppId, key, appName) {
       ipAddress: null,
     }
   };
-
-  log.todo('[FIREBASE] Get local IP address and save it along with HB info');
-  // var addresses = [];
-  // var hostname = '--UNKNOWN--';
-  // try {
-  //   hostname = os.hostname();
-  //   var interfaces = os.networkInterfaces();
-  //   for (var k in interfaces) {
-  //     for (var k2 in interfaces[k]) {
-  //       var address = interfaces[k][k2];
-  //       if (address.family === 'IPv4' && !address.internal) {
-  //         addresses.push(address.address);
-  //       }
-  //     }
-  //   }
-  // } catch (ex) {
-  //   log.exception('[FIREBASE] Unable to get local device IP addresses', ex);
-  // }
-  // def.host.hostname = hostname;
-  // def.host.ipAddress = addresses;
+  
+  try {
+    var hostname = os.hostname();
+    log.log('[NETWORK] Hostname: ' + hostname);
+    def.host.hostname = hostname;
+  } catch (ex) {
+    log.exception('[NETWORK] Unable to retrieve hostname.');
+  }
+  try {
+    var addresses = [];
+    var interfaces = os.networkInterfaces();
+    for (var k in interfaces) {
+      for (var k2 in interfaces[k]) {
+        var address = interfaces[k][k2];
+        if (address.family === 'IPv4' && !address.internal) {
+          addresses.push(address.address);
+        }
+      }
+    }
+    if (addresses.length === 0) {
+      log.error('[NETWORK] Whoops, 0 IP addresses returned');
+    } else if (addresses.length === 1) {
+      def.host.ipAddress = addresses[0];
+      log.log('[NETWORK] IP address: ' + addresses[0]);
+    } else {
+      def.host.ipAddress = addresses[0];
+      log.log('[NETWORK] Multiple IP addresses returned. Using: ' + addresses[0]);
+    }
+  } catch (ex) {
+    log.exception('[FIREBASE] Unable to get local device IP addresses', ex);
+  }
 
   fb.child('devices/' + appName).set(def);
 
