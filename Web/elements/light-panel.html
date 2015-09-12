@@ -60,7 +60,7 @@
         this.lightsOn = [];
         this.lightsOff = [];
         var self = this;
-        fb.child('config/lightScenes').on('value', function(snapshot) {
+        fb.child('config/HomeOnNode/lightScenes').on('value', function(snapshot) {
           var newModifiers = [];
           snapshot.forEach(function(snap) {
             var cmd = {
@@ -71,7 +71,7 @@
           });
           self.modifiers = newModifiers;
         });
-        fb.child('config/commands').on('value', function(snapshot) {
+        fb.child('config/HomeOnNode/commands').on('value', function(snapshot) {
           self.devices = window.getCommands(snapshot.val(), 'lights');
         });
         fb.child('state/hue/lights').on('value', function(snapshot) {

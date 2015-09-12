@@ -31,7 +31,7 @@
           self.activity = snapshot.val();
           self.pushedActivity = '';
         });
-        fb.child('config/commands').on('value', function(snapshot) {
+        fb.child('config/HomeOnNode/commands').on('value', function(snapshot) {
           self.devices = window.getCommands(snapshot.val(), 'media');
         });
       },

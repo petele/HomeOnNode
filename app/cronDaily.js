@@ -4,8 +4,8 @@
 
 var cronJob = function() {
   log.log('[CronDaily]');
-  cleanLogs('logs/logs', 2);
   cleanLogs('logs/doors');
+  cleanLogs('logs/logs', 2);
   cleanLogs('logs/presence');
   cleanLogs('logs/systemState');
 };

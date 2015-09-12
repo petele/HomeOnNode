@@ -46,6 +46,12 @@
               <core-icon icon="image:brightness-1" class="{{d.online === true ? 'online' : 'offline'}}"></core-icon>
             </div>
           </div>
+          <template if="{{d.host}}">
+            <div horizontal layout>
+              <div flex>IP Address</div>
+              <div flex two class="text-right">{{d.host.ipAddress}}</div>
+            </div>
+          </template>
           <div horizontal layout>
             <div flex>Last Updated</div>
             <div flex two class="text-right {{isOld(d.heartbeat) === true ? 'offline' : ''}}">

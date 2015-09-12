@@ -49,7 +49,7 @@
       created: function() {
         this.presence = [];
         var self = this;
-        fb.child('config/presence/people').on('value', function(snapshot) {
+        fb.child('config/HomeOnNode/presence/people').on('value', function(snapshot) {
           self.presence = [];
           snapshot.forEach(function(itemObj) {
             var item = itemObj.val();
@@ -60,7 +60,7 @@
       },
       togglePresence: function(event, details, sender) {
         var pres = sender.templateInstance.model.p;
-        var path = 'config/presence/people/' + pres.key + '/track';
+        var path = 'config/HomeOnNode/presence/people/' + pres.key + '/track';
         fb.child(path).set(!pres.track);
         window.lastEvent = Date.now();
       }
