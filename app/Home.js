@@ -425,7 +425,7 @@ function Home(config, fb) {
       }
       _self.executeCommand(cmd, null, 'PRESENCE');
     });
-    var fbPresPath = 'config/presence/people';
+    var fbPresPath = 'config/HomeOnNode/presence/people';
     fb.child(fbPresPath).on('child_added', function(snapshot) {
       presence.addPerson(snapshot.val());
     });
