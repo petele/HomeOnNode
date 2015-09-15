@@ -3,7 +3,7 @@
 'use strict';
 
 var cronJob = function() {
-  log.log('[Cron60]');
+  log.debug('[Cron60]');
 };
 
 cronJob();

@@ -3,7 +3,7 @@
 'use strict';
 
 var cronJob = function() {
-  log.log('[CronDaily]');
+  log.debug('[CronDaily]');
   cleanLogs('logs/doors');
   cleanLogs('logs/logs', 2);
   cleanLogs('logs/presence');
@@ -13,7 +13,7 @@ var cronJob = function() {
 function cleanLogs(path, maxAgeDays) {
   maxAgeDays = maxAgeDays || 90;
   var endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
-  log.log('[CleanLogs] Cleaning path: ', path);
+  log.log('[CleanLogs] Cleaning path: ' + path);
   fb.child(path).orderByChild('date').endAt(endAt).once('value',
     function(snapshot) {
       var itemsRemoved = 0;

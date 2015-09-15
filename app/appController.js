@@ -106,7 +106,7 @@ process.on('SIGINT', function() {
 });
 
 function loadAndRunJS(file, callback) {
-  log.log('[LoadAndRun] Trying to and run: ' + file);
+  log.debug('[LoadAndRun] Trying to and run: ' + file);
   fs.readFile(file, function(err, data) {
     if (err) {
       log.exception('[LoadAndRun] Unable to load file.', err);
@@ -116,7 +116,6 @@ function loadAndRunJS(file, callback) {
     } else {
       try {
         eval(data.toString());  // jshint ignore:line
-        log.debug('[LoadAndRun] Completed.');
       } catch (exception) {
         log.exception('[LoadAndRun] Exception caught on eval.', exception);
         if (callback) {
