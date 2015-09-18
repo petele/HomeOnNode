@@ -418,6 +418,7 @@ function Home(config, fb) {
       log.debug('[HOME] Presence error, whoops!');
     });
     presence.on('change', function(person, present, who) {
+      person.date = Date.now();
       fbPush('logs/presence', person);
       fbSet('state/presence', who);
       var cmd = 'PRESENCE_SOME';
