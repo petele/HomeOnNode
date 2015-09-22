@@ -48,34 +48,46 @@ function Harmony(uuid, ip) {
 
   function findHarmonyHubs() {
     log.init('[HARMONY] Searching for Harmony Hub...');
-    var discover = new HarmonyHubDiscovery(61991);
-    discover.on('online', function(hub) {
-      _isSearching = false;
-      log.debug('[HARMONY] Hub found on IP address: ' + hub.ip);
-      _ip = hub.ip;
-      discover.stop();
-      connect();
-    });
-    discover.start();
-    _isSearching = true;
-    setTimeout(function() {
-      if (_isSearching === true) {
-        discover.stop();
+    var discover;
+    try {
+      discover = new HarmonyHubDiscovery(61991);
+    } catch (ex) {
+      log.exception('[HARMONY] Unable to initialize HarmonyHubDiscovery', ex);
+      _self.emit('error', ex);
+    }
+
+    if (discover) {
+      discover.on('online', function(hub) {
         _isSearching = false;
-        log.error('[HARMONY] Timeout exceeded, no Harmony Hubs found.');
-        _self.emit('error');
+        log.debug('[HARMONY] Hub found on IP address: ' + hub.ip);
+        _ip = hub.ip;
+        discover.stop();
         discover = null;
-      }
-    }, 10000);
+        connect();
+      });
+      discover.start();
+      _isSearching = true;
+      setTimeout(function() {
+        if (_isSearching === true) {
+          discover.stop();
+          _isSearching = false;
+          log.error('[HARMONY] Timeout exceeded, no Harmony Hubs found.');
+          _self.emit('no_hubs_found');
+          discover = null;
+        }
+      }, 10000);
+    }
   }
 
   function handleError(err) {
     log.exception('[HARMONY] Error reported', err);
+    _self.close();
     _self.emit('error', err);
   }
 
   function handleOnline(connection) {
-    log.log('[HARMONY] Online. ' + JSON.stringify(connection));
+    log.log('[HARMONY] Online.');
+    log.debug('[HARMONY] Connection string: ' + JSON.stringify(connection));
     _self.getConfig();
     _self.getActivity();
     keepAlive();
@@ -89,7 +101,7 @@ function Harmony(uuid, ip) {
         result = child.children.join('');
         result = JSON.parse(result);
         handleConfig(result);
-        log.log('[HARMONY] Ready.');
+        log.debug('[HARMONY] Ready.');
         _self.emit('ready', result);
       } else if (child.attrs.mime === 'vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity') {
         result = child.children.join('');
@@ -106,7 +118,7 @@ function Harmony(uuid, ip) {
             _self.currentActivity = result[1];
             break;
           } // if
-        } // fpr
+        } // for
       } else if (child.attrs.type === 'connect.stateDigest?notify') {
         log.debug('[HARMONY] State digest notification.');
       } else {
@@ -147,7 +159,7 @@ function Harmony(uuid, ip) {
       var cmd = new XMPP.Element('iq', {'id': _uuid});
       client.send(cmd);
     } else {
-
+      log.warn('[HARMONY] No client available! Eeep!');
     }
     setTimeout(function() {
       if (reconnect) {
