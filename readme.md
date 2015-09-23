@@ -10,7 +10,7 @@
 
 ### Install Required Packages
 
-`sudo apt-get -y install alsa-utils mpg321 mplayer git-core lynx netatalk python-setuptools python-dev python-rpi.gpio bluetooth bluez-utils libbluetooth-dev libcap2-bin`
+`sudo apt-get -y install alsa-utils mpg321 mplayer git-core lynx netatalk python-setuptools python-dev python-rpi.gpio bluetooth bluez-utils libbluetooth-dev libcap2-bin libudev-dev libusb-1.0-0-dev`
 
 ### Install Node
 
