@@ -14,7 +14,6 @@ var Firebase = require('firebase');
 var AirConditioner = require('./AirConditioner');
 var Harmony = require('./Harmony');
 var Hue = require('./Hue');
-var Dropcam = require('./Dropcam');
 var Presence = require('./Presence');
 var Nest = require('./Nest');
 
@@ -25,8 +24,6 @@ function Home(config, fb) {
   var armingTimer;
   var nest;
   var nestIsReady = false;
-  var dropcam;
-  var dropcamIsReady = false;
   var insideTemp;
   var hue;
   var hueIsReady = false;
@@ -135,20 +132,24 @@ function Home(config, fb) {
       }
     }
     if (command.dropcam) {
-      if (dropcamIsReady) {
+      if (nestIsReady) {
         var enabled = true;
         if ((modifier === 'OFF') || (command.dropcam.all === false)) {
           enabled = false;
         }
         try {
-          dropcam.enableCameras(enabled);
+          if (enabled) {
+            nest.enableCamera();
+          } else {
+            nest.disableCamera();
+          }
           result.dropcam = enabled;
         } catch (ex) {
-          log.exception('[HOME] Dropcam change failed', ex);
+          log.exception('[HOME] Nest Cam change failed', ex);
           result.dropcam = ex;
         }
       } else {
-        msg = '[HOME] Dropcam change failed, Dropcam not ready.';
+        msg = '[HOME] Nest Cam change failed, Nest cam not ready.';
         log.warn(msg);
         result.dropcam = msg;
       }
@@ -490,33 +491,6 @@ function Home(config, fb) {
   }
 
   //Updated
-  function initDropcam() {
-    _self.state.dropcam = {};
-    dropcam = new Dropcam(Keys.nest.user, Keys.nest.password);
-    dropcam.on('authError', function(err) {
-      log.error('[HOME] Dropcam error occured, will reattempt in 90 seconds.');
-      dropcam = null;
-      dropcamIsReady = false;
-      setTimeout(function() {
-        initDropcam();
-      }, 90000);
-    });
-    dropcam.on('error', function(err) {
-      log.error('[HOME] Dropcam Error received: ' + JSON.stringify(err));
-    });
-    dropcam.on('ready', function(cameras) {
-      _self.state.dropcam = cameras;
-      fbSet('state/dropcam', cameras);
-      dropcamIsReady = true;
-    });
-    dropcam.on('change', function(cameras) {
-      log.debug('[HOME] Dropcam changed');
-      _self.state.dropcam = cameras;
-      fbSet('state/dropcam', cameras);
-    });
-  }
-
-  //Updated
   function initHue() {
     hue = new Hue(Keys.hueBridge.key);
     hue.on('change', function(lights, groups) {
@@ -566,7 +540,6 @@ function Home(config, fb) {
     var now_ = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
     _self.state = {
       doNotDisturb: {enabled: false},
-      dropcam: false,
       hvac: false,
       nest: false,
       systemState: 'INIT',
@@ -609,9 +582,6 @@ function Home(config, fb) {
     initHVAC();
     if (config.features.nest === true) {
       initNest();
-    }
-    if (config.features.dropcam === true) {
-      initDropcam();
     }
     if (config.features.hue === true) {
       initHue();

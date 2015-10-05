@@ -10,23 +10,21 @@ function Nest() {
   var _isReady = false;
   var _fbNest;
   var _self = this;
-  var _clientID = 'c26b3b01-349c-4995-bae7-4e835bc71940';
-  var _clientSecret = '8GvLtCFXY3oyx4RYzKCvVfFbX';
   var _authExpiresAt;
   var _nestData;
 
-  this.generatePinURL = function() {
-    var url = 'https://home.nest.com/login/oauth2?client_id=' + _clientID;
+  this.generatePinURL = function(clientId) {
+    var url = 'https://home.nest.com/login/oauth2?client_id=' + clientId;
     url += '&state=' + Math.random();
     log.debug('[NEST] Pin Request URL: ' + url);
     return url;
   };
 
-  this.getAccessToken = function(pin, callback) {
+  this.getAccessToken = function(pin, clientId, secret, callback) {
     var path = '/oauth2/access_token?';
     path += 'code=' + pin;
-    path += '&client_id=' + _clientID;
-    path += '&client_secret=' + _clientSecret;
+    path += '&client_id=' + clientId;
+    path += '&client_secret=' + secret;
     path += '&grant_type=authorization_code';
     var options = {
       hostname: 'api.home.nest.com',
@@ -39,6 +37,7 @@ function Nest() {
         result += data;
       });
       resp.on('end', function() {
+        console.log('getAccessToken:', result);
         var r = JSON.parse(result);
         if (callback) {
           callback(r);
@@ -106,6 +105,7 @@ function Nest() {
     if (_isReady === true && _fbNest) {
       _fbNest.once('value', function(snapshot) {
         _nestData = snapshot.val();
+        // console.log(JSON.stringify(_nestData));
         if (callback) {
           callback(null, _nestData);
         }
@@ -127,6 +127,25 @@ function Nest() {
     }
   };
 
+  this.enableCamera = function(cameraId) {
+    return setCameraStreamingState(cameraId, true);
+  };
+
+  this.disableCamera = function(cameraId) {
+    return setCameraStreamingState(cameraId, false);
+  };
+
+  function setCameraStreamingState(cameraId, state) {
+    if (_isReady === true && _fbNest) {
+      log.log('[NEST] Setting NestCam streaming: ' + state.toString());
+      var cameraId = _nestData.structures[0].cameras[0];
+      _fbNest.child('devices/cameras/' + cameraId + '/is_streaming').set(state);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   this.setAway = function() {
     return setHomeAway('away');
   };
@@ -139,8 +158,8 @@ function Nest() {
     if (_isReady === true && _fbNest) {
       state = state || 'home';
       log.log('[NEST] Set home state to: ' + state);
-      var structureId = getKeys(_nestData.structures);
-      _fbNest.child('structures/' + structureId[0] + '/away').set(state);
+      var structureId = _nestData.structures[0];
+      _fbNest.child('structures/' + structureId + '/away').set(state);
       return true;
     } else {
       return false;
