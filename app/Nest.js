@@ -101,11 +101,22 @@ function Nest() {
     return keys;
   }
 
+  this.getDevices = function() {
+    var structures = getKeys(_nestData.structures);
+    var firstStructure = structures[0]
+    var result = {
+      structureId: firstStructure,
+      cameras: _nestData.structures[firstStructure].cameras,
+      protects: _nestData.structures[firstStructure].smoke_co_alarms,
+      thermostats: _nestData.structures[firstStructure].thermostats
+    };
+    return result;
+  }
+
   this.getStatus = function(callback) {
     if (_isReady === true && _fbNest) {
       _fbNest.once('value', function(snapshot) {
         _nestData = snapshot.val();
-        // console.log(JSON.stringify(_nestData));
         if (callback) {
           callback(null, _nestData);
         }
@@ -137,12 +148,30 @@ function Nest() {
 
   function setCameraStreamingState(cameraId, state) {
     if (_isReady === true && _fbNest) {
+      if (!cameraId) {
+        var devices = _self.getDevices();
+        if (devices.cameras) {
+          cameraId = _self.getDevices().cameras[0];
+        } else {
+          log.warn('[NEST] No NestCam found.');
+          return false;
+        }
+      }
+      var path = 'devices/cameras/' + cameraId + '/is_streaming';
+      _fbNest.child(path).set(state, function(err) {
+        onSetComplete(path, err);
+      });
       log.log('[NEST] Setting NestCam streaming: ' + state.toString());
-      var cameraId = _nestData.structures[0].cameras[0];
-      _fbNest.child('devices/cameras/' + cameraId + '/is_streaming').set(state);
       return true;
     } else {
+      log.warn('[NEST] Nest not ready or no Nest FB connection available.');
       return false;
+    }
+  }
+
+  function onSetComplete(path, err) {
+    if (err) {
+      log.exception('[NEST] ' + err.message + ' at path: ' + path, err);
     }
   }
 
@@ -158,8 +187,12 @@ function Nest() {
     if (_isReady === true && _fbNest) {
       state = state || 'home';
       log.log('[NEST] Set home state to: ' + state);
-      var structureId = _nestData.structures[0];
-      _fbNest.child('structures/' + structureId + '/away').set(state);
+      var devices = _self.getDevices();
+      var structureId = devices.structureId;
+      var path = 'structures/' + structureId + '/away';
+      _fbNest.child(path).set(state, function(err) {
+        onSetComplete(path, err);
+      });
       return true;
     } else {
       return false;
@@ -191,7 +224,9 @@ function Nest() {
       //TODO add verification of mode: heat/cool/heat-cool/off
       var fbPath = 'devices/thermostats/' + thermostat;
       log.log('[NEST] Set thermostat ' + thermostat + ' to ' + state.toString());
-      _fbNest.child(fbPath).set(state);
+      _fbNest.child(fbPath).set(state, function(err) {
+        onSetComplete(path, err);
+      });
       return true;
     } else {
       return false;
