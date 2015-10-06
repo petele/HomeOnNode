@@ -154,15 +154,17 @@ function ZWave() {
   this.setNodeBinary = function(nodeId, value) {
     if (_isReady === true && _zwave) {
       try  {
+        var result = null;
         if (value === true) {
-          _zwave.setNodeOn(nodeId);
+          result = _zwave.setNodeOn(nodeId);
           log.log('[ZWAVE] Set node[' + nodeId + '] ON');
         } else if (value === false) {
-          _zwave.setNodeOff(nodeId);
+          result = _zwave.setNodeOff(nodeId);
           log.log('[ZWAVE] Set node[' + nodeId + '] OFF');
         } else {
           log.error('[ZWAVE] setNodeBinary - expected true/false, got: ' + value);
         }
+        return result;
       } catch (ex) {
         log.exception('[ZWAVE] Unable to setNodeBinary', ex);
       }
@@ -174,9 +176,11 @@ function ZWave() {
   this.setNodeLevel = function(nodeId, value) {
     if (_isReady === true && _zwave) {
       try  {
+        var result = null;
         var v = parseInt(value);
-        _zwave.setLevel(nodeId, v);
+        result = _zwave.setLevel(nodeId, v);
         log.log('[ZWAVE] Set node[' + nodeId + '] to ' + v);
+        return result;
       } catch (ex) {
         log.exception('[ZWAVE] Unable to setNodeLevel', ex);
       } 
@@ -188,15 +192,17 @@ function ZWave() {
   this.pollNode = function(nodeId, enabled, comClass) {
     if (_isReady === true && _zwave) {
       try {
+        var result = null;
         if (enabled === true) {
-          _zwave.enablePoll(nodeId, comClass);
+          result = _zwave.enablePoll(nodeId, comClass);
           log.log('[ZWAVE] Enabled polling on node[' + nodeId + '] for ' + comClass);
         } else if (enabled === false) {
-          _zwave.disablePoll(nodeId, comClass);
+          result = _zwave.disablePoll(nodeId, comClass);
           log.log('[ZWAVE] Disabled polling on node[' + nodeId + '] for ' + comClass);
         } else {
           log.warn('[ZWAVE] pollNode: Unexpected value for enabled. ' + enabled);
         }
+        return result;
       } catch (ex) {
         log.exception('[ZWAVE] Unable to setup polling.', ex);
       }
@@ -208,8 +214,10 @@ function ZWave() {
   this.setNodeName = function(nodeId, name) {
     if (_isReady === true && _zwave) {
       try {
-        _zwave.setName(nodeId, name);
+        var result = null;
+        result = _zwave.setName(nodeId, name);
         log.log('[ZWAVE] Set node[' + nodeId + '] name to: ' + name);
+        return result;
       } catch (ex) {
         var msg = '[ZWAVE] Unable to set name of node[' + nodeId + '] to: ' + name;
         log.exception(msg, ex);
@@ -222,8 +230,10 @@ function ZWave() {
   this.setNodeLocation = function(nodeId, location) {
     if (_isReady === true && _zwave) {
       try {
-        _zwave.setLocation(nodeId, location);
+        var result = null;
+        result = _zwave.setLocation(nodeId, location);
         log.log('[ZWAVE] Set node[' + nodeId + '] location to: ' + location);
+        return result;
       } catch (ex) {
         var msg = '[ZWAVE] Unable to set location of node[' + nodeId + '] to: ' + location;
         log.exception(msg, ex);
