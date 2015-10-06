@@ -20,7 +20,7 @@ function setDebug(isDebug) {
   DEBUG = isDebug;
 }
 
-function writeLog(logger, level, message, error) {
+function writeLog(logger, level, message, ex) {
   var dt = Date.now();
   var dtPretty = moment(dt).format('YYYY-MM-DDTHH:mm:ss.SSS');
   var l = ('     ' + level).slice(-5);
@@ -36,8 +36,8 @@ function writeLog(logger, level, message, error) {
       level: level,
       message: message
     };
-    if (error) {
-      fb.error = error;
+    if (ex) {
+      fb.ex = JSON.stringify(ex);
     }
     _fb.child('logs/logs').push(fb);
   }
@@ -66,9 +66,9 @@ function writeLog(logger, level, message, error) {
   }
   logger(line);
   var strLog = dtPretty + ' | ' + l + ' | ' + m;
-  if (error) {
-    console.log(util.inspect(error, {showHidden: true, colors: true}));
-    strLog += '\n' + util.inspect(error, {showHidden: true});
+  if (ex) {
+    console.log(util.inspect(ex, {showHidden: true, colors: true}));
+    strLog += '\n' + util.inspect(ex, {showHidden: true});
   }
   fs.appendFile(LOG_FILE, strLog + '\n');
 }
