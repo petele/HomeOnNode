@@ -7,7 +7,6 @@ var moment = require('moment');
 var util = require('util');
 var colors = require('colors');
 
-
 function writeLog(level, dt, message, ex) {
   var dtPretty = moment(dt).format('YYYY-MM-DDTHH:mm:ss.SSS');
   var l = ('     ' + level).slice(-5);
@@ -44,22 +43,18 @@ function writeLog(level, dt, message, ex) {
   }
 }
 
-
 function printLogs(path) {
-  fb.child(path).orderByChild('date').once('value',
+  fb.child(path).orderByChild('date').limitToLast(50).on('value',
     function(snapshot) {
       var itemsRemoved = 0;
       snapshot.forEach(function(item) {
         var msg = item.val();
         writeLog(msg.level, msg.date, msg.message, msg.ex);
       });
-      process.exit(0);
     }
   );
 }
 
-
-//Keys.firebase.appId, Keys.firebase.key
 var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com/';
 var fb = new Firebase(fbURL);
 fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
