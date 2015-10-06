@@ -70,8 +70,8 @@
                     <paper-toggle-button checked?="{{doNotDisturb}}" on-change="{{toggleDND}}"></paper-toggle-button>
                   </div>
                   <div>
-                    Dropcam
-                    <paper-toggle-button checked?="{{dropcamStreaming}}" on-change="{{toggleDropcam}}"></paper-toggle-button>
+                    NestCam
+                    <paper-toggle-button disabled?={{!hasNestCam}} checked?="{{dropcamStreaming}}" on-change="{{toggleDropcam}}"></paper-toggle-button>
                   </div>
                 </div>
                 <div layout horizontal center-justified>
@@ -110,6 +110,7 @@
         this.selectedTab = 'status';
         this.pages = document.querySelector('core-animated-pages');
         this.doNotDisturb = false;
+        this.hasNestCam = false;
         this.curTime = '';
         this.insideTemp = '';
         this.outsideTemp = '';
@@ -124,9 +125,20 @@
           self.insideTemp = Math.round(val.inside);
           self.outsideTemp = Math.round(val.outside);
         });
-        fb.child('state/dropcam/0/is_streaming').on('value', function(snapshot) {
-          self.dropcamStreaming = snapshot.val();
-        });
+        fb.child('state/nest/devices/cameras').once('value', function(snapshot) {
+          var cameras = Object.keys(snapshot.val());
+          if (cameras[0]) {
+            var firstCamPath = 'state/nest/devices/cameras/';
+            firstCamPath += cameras[0];
+            firstCamPath += '/is_streaming';
+            self.hasNestCam = true;
+            fb.child(firstCamPath).on('value', function(snapshot) {
+              self.dropcamStreaming = snapshot.val();
+            });
+          } else {
+            console.log("NOPE");
+          }
+        })
         fb.child('state/systemState').on('value', function(snapshot) {
           self.state = snapshot.val();
           if (self.state === 'ARMED') {
