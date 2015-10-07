@@ -4,89 +4,119 @@ var log = require('./SystemLog');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 
+// TODO: remove this
 log.setDebug(true);
 
 function ZWave() {
   var _self = this;
-
+  var _isReady = false;
+  var _zwave = null;
+  var _nodes = null;
+  var _debouncers = null;
+  var _homeId = null;
   var OZWave = null;
   try {
     OZWave = require('openzwave-shared');
   } catch (ex) {
     log.exception('[ZWAVE] Unable to initialize Open ZWave Library.', ex);
     _self.emit('zwave_unavailable');
+    return;
   }
 
-  var _isReady = false;
-  var _zwave = null;
-  var _nodes = null;
-
-  var zwaveDebugConfig = {
-    ConsoleOutput: true,
-    Logging: true
+  // TODO change logging to false
+  var ZWaveConfig = {
+    ConsoleOutput: false,
+    Logging: true,
+    SaveConfiguration: true,
+    DriverMaxAttempts: 3,
+    ConfigPath: './zwave/devicedb/',
+    UserPath: './zwave/'
   };
 
   function init() {
     log.init('[ZWAVE] Init start.');
-    _nodes = [];
-    //_zwave = new OZWave(zwaveDebugConfig);
-    _zwave = new OZWave();
+    _zwave = new OZWave(ZWaveConfig);
     _zwave.on('connected', handleConnected);
     _zwave.on('driver ready', driverReady);
     _zwave.on('driver failed', driverFailed);
     _zwave.on('node added', nodeAdded);
     _zwave.on('node available', nodeAvailable);
+    _zwave.on('node ready', nodeReady);
     _zwave.on('node event', nodeEvent);
     _zwave.on('value added', valueAdded);
     _zwave.on('value changed', valueChanged);
     _zwave.on('value refreshed', valueRefreshed);
     _zwave.on('value removed', valueRemoved);
-    _zwave.on('node ready', nodeReady);
     _zwave.on('notification', handleNotification);
     _zwave.on('scan complete', scanComplete);
     _zwave.on('polling enabled', onPollingEnabled);
     _zwave.on('polling disabled', onPollingDisabled);
-    _zwave.on('controller command', function(r,s) {
-      console.log('controller commmand feedback: r=%d, s=%d',r,s);
-    });
+    _zwave.on('controller command', handleControllerCommand);
     log.init('[ZWAVE] Init complete.');
     _self.connect();
   }
 
   this.connect = function() {
     if (_isReady === false) {
-      log.log('[ZWAVE] Connect.');
+      _nodes = [];
+      _debouncers = [];
+      log.log('[ZWAVE] Connecting...');
       _zwave.connect('/dev/ttyUSB0');
+      return true;
     } else {
       log.error('[ZWAVE] Already connected.');
     }
+    return false;
   };
 
   this.disconnect = function() {
-    log.log('[ZWAVE] Disconnect.');
-    if (_zwave) {
-      _zwave.disconnect();
+    log.log('[ZWAVE] Disconnecting...');
+    try {
+      if (_zwave) {
+        _zwave.disconnect();
+      }
+      _isReady = false;
+      _nodes = [];
+      _debouncers = [];
+      return true;
+    } catch (ex) {
+      log.exception('[ZWAVE] disconnect', ex);
     }
-    _isReady = false;
-    _nodes = [];
+    return false;
   };
 
-  function onPollingEnabled(a,b,c) {
-    console.log('onPollingEnabled', a ,b, c);
+  function handleControllerCommand(ctrlState, ctrlError) {
+    var uLog = log.debug;
+    if (ctrlError) {
+      uLog = log.error;
+    }
+    uLog('[ZWAVE] handleControllerCommand');
+    uLog('  ctrlState: ' + JSON.stringify(ctrlState));
+    uLog('  ctrlError: ' + JSON.stringify(ctrlError));
   }
 
-  function onPollingDisabled(a,b,c) {
-    console.log('onPollingDisabled', a ,b, c);
+  function onPollingEnabled(nodeId) {
+    log.debug('[ZWAVE] onPollingEnabled node[' + nodeId + ']');
+    _self.emit('polling_enabled', nodeId);
   }
 
-  function nodeAvailable(nodeId, nodeInfo) {
-    updateNodeInfo(nodeId, nodeInfo);
+  function onPollingDisabled(nodeId) {
+    log.debug('[ZWAVE] onPollingDisabled node[' + nodeId + ']');
+    _self.emit('polling_disabled', nodeId);
   }
 
   function nodeEvent(nodeId, value) {
     log.log('[ZWAVE] nodeEvent node[' + nodeId + ']');
-    log.debug(JSON.stringify(value));
-    _self.emit('node_event', nodeId, value);
+    var debouncer = _debouncers[nodeId];
+    if (!debouncer) {
+      debouncer = debounce(function(nodeId, value) {
+        log.log('[ZWAVE] nodeEventDebounced node[' + nodeId + ']');
+        log.debug('  ' + JSON.stringify(value));
+        _self.emit('node_event', nodeId, value);
+      }, 100);
+      _debouncers[nodeId] = debouncer;
+    }
+    debouncer(nodeId, value);
   }
 
   function handleConnected() {
@@ -95,7 +125,8 @@ function ZWave() {
   }
 
   function driverReady(homeId) {
-    log.log('[ZWAVE] Driver ready: ' + homeId);
+    log.log('[ZWAVE] Driver ready: 0x' + homeId.toString(16));
+    _homeId = homeId;
     _self.emit('driver_ready');
   }
 
@@ -111,72 +142,123 @@ function ZWave() {
     _self.emit('ready', _nodes);
   }
 
-  function nodeAdded(nodeId) {
-    log.log('[ZWAVE] nodeAdded node[' + nodeId + ']');
-    _nodes[nodeId] = {
-      manufacturer: '', manufacturerId: '', product: '', productId: '',
-      productType: '', type: '', name: '', loc: '', classes: {}, ready: false};
-  }
-
   function valueAdded(nodeId, comClass, value) {
-    log.log('[ZWAVE] valueAdded node[' + nodeId + '][' + comClass + ']');
-    log.debug(JSON.stringify(value));
-    if (!_nodes[nodeId]['classes'][comClass]) {
-      _nodes[nodeId]['classes'][comClass] = {};
-    }
-    _nodes[nodeId]['classes'][comClass][value.index] = value;
+    log.debug('[ZWAVE] valueAdded');
+    setNodeValue(nodeId, comClass, value);
+    emitChange('node_value_change', value);
   }
 
   function valueChanged(nodeId, comClass, value) {
-    log.log('[ZWAVE] valueChanged node[' + nodeId + '][' + comClass + ']');
-    log.debug(JSON.stringify(value));
-    _nodes[nodeId]['classes'][comClass][value.index] = value;
+    log.debug('[ZWAVE] valueChanged');
+    setNodeValue(nodeId, comClass, value);
+    emitChange('node_value_change', value);
   }
 
   function valueRefreshed(nodeId, comClass, value) {
-    log.log('[ZWAVE] valueRefreshed node[' + nodeId + '][' + comClass + ']');
-    log.debug(JSON.stringify(value));
-    _nodes[nodeId]['classes'][comClass][value.index] = value;
+    log.debug('[ZWAVE] valueRefreshed');
+    setNodeValue(nodeId, comClass, value);
+    emitChange('node_value_refresh', value);
+  }
+
+  function setNodeValue(nodeId, comClass, value) {
+    var msg = '[ZWAVE] setNodeValue nodeId[' + nodeId + ']';
+    msg += '[0x' + comClass.toString(16) + ']';
+    msg += '[' + value.index + ']';
+    log.debug(msg);
+    log.debug('  ' + JSON.stringify(value));
+    try {
+      if (!_nodes[nodeId]['classes'][comClass]) {
+        _nodes[nodeId]['classes'][comClass] = {};
+      }
+      _nodes[nodeId]['classes'][comClass][value.index] = value;
+    } catch (ex) {
+      log.exception('[ZWAVE] setNodeValue', ex);
+    }
   }
 
   function valueRemoved(nodeId, comClass, index) {
-    log.log('[ZWAVE] valueRemoved node[' + nodeId + '][' + comClass + ']');
-    log.debug(JSON.stringify(index));
-    if (_nodes[nodeId]['classes'][comClass] && 
-        _nodes[nodeId]['classes'][comClass][index]) {
-      delete _nodes[nodeId]['classes'][comClass][index];
+    var msg = '[ZWAVE] valueRemoved nodeId[' + nodeId + ']';
+    msg += '[0x' + comClass.toString(16) + '][' + index + ']';
+    log.debug(msg);
+    try {
+      if (_nodes[nodeId]['classes'][comClass] &&
+          _nodes[nodeId]['classes'][comClass][index]) {
+        delete _nodes[nodeId]['classes'][comClass][index];
+        _self.emit('node_value_removed', nodeId, comClass, index);
+      }
+    } catch (ex) {
+      log.exception('[ZWAVE] valueRemoved', ex);
     }
+  }
+
+  function emitChange(eventName, info) {
+    var emit = false;
+    if (info.class_id === 49) {
+      // sensor data
+      emit = true;
+    } else if (info.class_id === 128) {
+      // battery level
+      emit = true;
+    } else if (info.class_id === 113 && info.instance === 1 && info.index === 1) {
+      // tamper alarm
+      emit = true;
+    }
+
+    if (emit === true) {
+      log.log('[ZWAVE] emitChange: ' + JSON.stringify(info));
+      _self.emit(eventName, info.node_id, info);
+    }
+  }
+
+  function nodeAdded(nodeId) {
+    log.debug('[ZWAVE] nodeAdded node[' + nodeId + ']');
+    _nodes[nodeId] = {
+      manufacturer: '',
+      manufacturerId: '',
+      product: '',
+      productId: '',
+      productType: '',
+      type: '',
+      name: '',
+      loc: '',
+      classes: {},
+      ready: false
+    };
+  }
+
+  function nodeAvailable(nodeId, nodeInfo) {
+    log.debug('[ZWAVE] nodeAvailable node[' + nodeId + ']');
+    updateNodeInfo(nodeId, nodeInfo);
+  }
+
+  function nodeReady(nodeId, nodeInfo) {
+    log.debug('[ZWAVE] nodeReady node[' + nodeId + ']');
+    updateNodeInfo(nodeId, nodeInfo);
+    _nodes[nodeId].ready = true;
   }
 
   function updateNodeInfo(nodeId, nodeInfo) {
     log.log('[ZWAVE] updateNodeInfo node[' + nodeId + ']');
-    log.debug(JSON.stringify(nodeInfo));
+    log.debug('  ' + JSON.stringify(nodeInfo));
     _nodes[nodeId].manufacturer = nodeInfo.manufacturer;
     _nodes[nodeId].manufacturerId = nodeInfo.manufacturerid;
     _nodes[nodeId].product = nodeInfo.product;
     _nodes[nodeId].productType = nodeInfo.producttype;
-    _nodes[nodeId].productId= nodeInfo.productid;
+    _nodes[nodeId].productId = nodeInfo.productid;
     _nodes[nodeId].type = nodeInfo.type;
     _nodes[nodeId].name = nodeInfo.name;
-    _nodes[nodeId].loc = nodeInfo.loc;  
-  }
-
-  function nodeReady(nodeId, nodeInfo) {
-    log.log('[ZWAVE] nodeReady node[' + nodeId + ']');
-    _nodes[nodeId].ready = true;
-    updateNodeInfo(nodeId, nodeInfo);
+    _nodes[nodeId].loc = nodeInfo.loc;
     for (var comClass in _nodes[nodeId]['classes']) {
       switch (comClass) {
         case 0x25: // COMMAND_CLASS_SWITCH_BINARY
         case 0x26: // COMMAND_CLASS_SWITCH_MULTILEVEL
-        case 0x30: // COMMAND_CLASS_SENSOR_BINARY 
-        case 0x31: // COMMAND_CLASS_SENSOR_MULTILEVEL 
-        case 0x60: // COMMAND_CLASS_MULTI_INSTANCE 
-        case 0x84: // COMMAND_CLASS_MULTI_INSTANCE ??
-          _zwave.enablePoll(nodeId, comClass);
+        case 0x30: // COMMAND_CLASS_SENSOR_BINARY
+        case 0x31: // COMMAND_CLASS_SENSOR_MULTILEVEL
+        case 0x60: // COMMAND_CLASS_MULTI_INSTANCE
+        case 0x84: // COMMAND_CLASS_MULTI_INSTANCE
+          _self.setNodePoll(nodeId, true, comClass);
           break;
       }
-      var values = _nodes[nodeId]['classes'][comClass];
     }
   }
 
@@ -187,7 +269,7 @@ function ZWave() {
     } else if (notif === 1) {
       kind = 'timeout';
     } else if (notif === 2) {
-      kind = 'nop';
+      kind = 'no operation';
     } else if (notif === 3) {
       kind = 'awake';
     } else if (notif === 4) {
@@ -197,125 +279,186 @@ function ZWave() {
     } else if (notif === 6) {
       kind = 'alive';
     }
-    log.log('[ZWAVE] Notification: Node[' + nodeId + '] ' + kind);
+    log.debug('[ZWAVE] Notification: Node[' + nodeId + '] ' + kind);
   }
 
   this.setNodeBinary = function(nodeId, value) {
+    log.log('[ZWAVE] setNodeBinary node[' + nodeId + '] = ' + value);
     if (_isReady === true && _zwave) {
-      try  {
-        var result = null;
+      try {
         if (value === true) {
-          result = _zwave.setNodeOn(nodeId);
-          log.log('[ZWAVE] Set node[' + nodeId + '] ON');
+          _zwave.setNodeOn(nodeId);
+          return true;
         } else if (value === false) {
-          result = _zwave.setNodeOff(nodeId);
-          log.log('[ZWAVE] Set node[' + nodeId + '] OFF');
+          _zwave.setNodeOff(nodeId);
+          return true;
         } else {
-          log.error('[ZWAVE] setNodeBinary - expected true/false, got: ' + value);
+          log.error('[ZWAVE] setNodeBinary - unexpected value');
         }
-        return result;
       } catch (ex) {
-        log.exception('[ZWAVE] Unable to setNodeBinary', ex);
+        log.exception('[ZWAVE] setNodeBinary', ex);
       }
     } else {
       log.error('[ZWAVE] Not ready. (setNodeBinary)');
     }
+    return false;
   };
 
   this.setNodeLevel = function(nodeId, value) {
+    log.log('[ZWAVE] setNodeLevel node[' + nodeId + '] = ' + value);
     if (_isReady === true && _zwave) {
-      try  {
-        var result = null;
+      try {
         var v = parseInt(value);
-        result = _zwave.setLevel(nodeId, v);
-        log.log('[ZWAVE] Set node[' + nodeId + '] to ' + v);
-        return result;
+        _zwave.setLevel(nodeId, v);
+        return true;
       } catch (ex) {
-        log.exception('[ZWAVE] Unable to setNodeLevel', ex);
-      } 
+        log.exception('[ZWAVE] setNodeLevel', ex);
+      }
     } else {
       log.error('[ZWAVE] Not ready. (setNodeLevel)');
     }
+    return false;
   };
 
-  this.pollNode = function(nodeId, enabled, comClass) {
+  this.setNodePoll = function(nodeId, enabled, comClass) {
+    var msg = '[ZWAVE] setNodePoll[' + enabled + '] for node[' + nodeId + ']';
+    msg += '[0x' + comClass.toString(16) + ']';
+    log.log(msg);
     if (_isReady === true && _zwave) {
       try {
-        var result = null;
         if (enabled === true) {
-          result = _zwave.enablePoll(nodeId, comClass);
-          log.log('[ZWAVE] Enabled polling on node[' + nodeId + '] for ' + comClass);
+          _zwave.enablePoll(nodeId, comClass);
+          return true;
         } else if (enabled === false) {
-          result = _zwave.disablePoll(nodeId, comClass);
-          log.log('[ZWAVE] Disabled polling on node[' + nodeId + '] for ' + comClass);
+          _zwave.disablePoll(nodeId, comClass);
+          return true;
         } else {
-          log.warn('[ZWAVE] pollNode: Unexpected value for enabled. ' + enabled);
+          log.error('[ZWAVE] setNodePoll - unexpected value');
         }
-        return result;
       } catch (ex) {
-        log.exception('[ZWAVE] Unable to setup polling.', ex);
+        log.exception('[ZWAVE] setNodePoll', ex);
       }
     } else {
-      log.error('[ZWAVE] Not ready. (pollNode)');
+      log.error('[ZWAVE] Not ready. (setNodePoll)');
     }
+    return false;
   };
 
   this.setNodeName = function(nodeId, name) {
+    log.log('[ZWAVE] Set node[' + nodeId + '] name to: ' + name);
     if (_isReady === true && _zwave) {
       try {
-        var result = null;
-        result = _zwave.setName(nodeId, name);
-        log.log('[ZWAVE] Set node[' + nodeId + '] name to: ' + name);
-        return result;
+        _zwave.setName(nodeId, name);
+        return true;
       } catch (ex) {
-        var msg = '[ZWAVE] Unable to set name of node[' + nodeId + '] to: ' + name;
-        log.exception(msg, ex);
+        log.exception('[ZWAVE] setNodeName', ex);
       }
     } else {
       log.error('[ZWAVE] Not ready. (setNodeName)');
     }
+    return false;
   };
 
   this.setNodeLocation = function(nodeId, location) {
+    log.log('[ZWAVE] setNodeLocation node[' + nodeId + '] = ' + location);
     if (_isReady === true && _zwave) {
       try {
-        var result = null;
-        result = _zwave.setLocation(nodeId, location);
-        log.log('[ZWAVE] Set node[' + nodeId + '] location to: ' + location);
-        return result;
+        _zwave.setLocation(nodeId, location);
+        return true;
       } catch (ex) {
-        var msg = '[ZWAVE] Unable to set location of node[' + nodeId + '] to: ' + location;
-        log.exception(msg, ex);
-      }  
+        log.exception('[ZWAVE] setNodeLocation', ex);
+      }
     } else {
       log.error('[ZWAVE] Not ready. (setNodeLocation)');
-    }  
+    }
+    return false;
   };
 
-  this.getConfig = function(nodeId) {
+  this.getNodeConfig = function(nodeId) {
+    log.log('[ZWAVE] getNodeConfig node[' + nodeId + ']');
     if (_isReady === true && _zwave) {
       try {
         return _zwave.requestAllConfigParams(nodeId);
       } catch (ex) {
-        log.exception('[ZWAVE] Error retreiving config', ex);
+        log.exception('[ZWAVE] getNodeConfig', ex);
       }
     } else {
-      log.error('[ZWAVE] Not ready. (getConfig)');   
+      log.error('[ZWAVE] Not ready. (getNodeConfig)');
     }
+    return false;
   };
 
-  this.getNodes = function() {
-    log.log('[ZWAVE] getNodes');
-    return _nodes;
+  this.getNode = function(nodeId) {
+    log.debug('[ZWAVE] getNode [' + nodeId + ']');
+    if (_isReady === true && _zwave) {
+      if (nodeId) {
+        try {
+          return _nodes[nodeId];
+        } catch (ex) {
+          log.exception('[ZWAVE] getNode', ex);
+        }
+      } else {
+        return _nodes;
+      }
+    } else {
+      log.error('[ZWAVE] Not ready. (getNode)');
+    }
+    return false;
   };
 
-  this.raw = function() {
+  this.isReady = function() {
+    log.debug('[ZWAVE] isReady: ' + _isReady);
+    return _isReady;
+  };
+
+  this.__getRawZWaveObject = function() {
+    log.warn('[ZWAVE] __getRawZWaveObject');
     return _zwave;
   };
 
   if (OZWave) {
     init();
   }
+
+  var debounce = function(func, wait) {
+    var immediate = true;
+    var timeout;
+    var args;
+    var context;
+    var timestamp;
+    var result;
+
+    var later = function() {
+      var last = Date.now() - timestamp;
+
+      if (last < wait && last >= 0) {
+        timeout = setTimeout(later, wait - last);
+      } else {
+        timeout = null;
+        if (!immediate) {
+          result = func.apply(context, args);
+          if (!timeout) {
+            context = args = null;
+          }
+        }
+      }
+    };
+
+    return function() {
+      context = this;
+      args = arguments;
+      timestamp = Date.now();
+      var callNow = immediate && !timeout;
+      if (!timeout) {
+        timeout = setTimeout(later, wait);
+      }
+      if (callNow) {
+        result = func.apply(context, args);
+        context = args = null;
+      }
+      return result;
+    };
+  };
 
 }
 
