@@ -2,25 +2,29 @@
 
 var log = require('./SystemLog');
 var EventEmitter = require('events').EventEmitter;
+var util = require('util');
+
+log.setDebug(true);
 
 function ZWave() {
+  var _self = this;
+
   var OZWave = null;
   try {
-    OZWave = require('./lib/openzwave-shared.js');
+    OZWave = require('openzwave-shared');
   } catch (ex) {
     log.exception('[ZWAVE] Unable to initialize Open ZWave Library.', ex);
     _self.emit('zwave_unavailable');
   }
 
   var _isReady = false;
-  var _self = this;
   var _zwave = null;
   var _nodes = null;
 
   var zwaveDebugConfig = {
     ConsoleOutput: true,
     Logging: true
-  }
+  };
 
   function init() {
     log.init('[ZWAVE] Init start.');
@@ -28,15 +32,23 @@ function ZWave() {
     //_zwave = new OZWave(zwaveDebugConfig);
     _zwave = new OZWave();
     _zwave.on('connected', handleConnected);
-    _zwave.on('driver ready', driverReady;
+    _zwave.on('driver ready', driverReady);
     _zwave.on('driver failed', driverFailed);
-    _zwave.on('node added', addNode);
+    _zwave.on('node added', nodeAdded);
+    _zwave.on('node available', nodeAvailable);
+    _zwave.on('node event', nodeEvent);
     _zwave.on('value added', valueAdded);
     _zwave.on('value changed', valueChanged);
+    _zwave.on('value refreshed', valueRefreshed);
     _zwave.on('value removed', valueRemoved);
     _zwave.on('node ready', nodeReady);
     _zwave.on('notification', handleNotification);
     _zwave.on('scan complete', scanComplete);
+    _zwave.on('polling enabled', onPollingEnabled);
+    _zwave.on('polling disabled', onPollingDisabled);
+    _zwave.on('controller command', function(r,s) {
+      console.log('controller commmand feedback: r=%d, s=%d',r,s);
+    });
     log.init('[ZWAVE] Init complete.');
     _self.connect();
   }
@@ -48,7 +60,7 @@ function ZWave() {
     } else {
       log.error('[ZWAVE] Already connected.');
     }
-  }
+  };
 
   this.disconnect = function() {
     log.log('[ZWAVE] Disconnect.');
@@ -57,15 +69,33 @@ function ZWave() {
     }
     _isReady = false;
     _nodes = [];
+  };
+
+  function onPollingEnabled(a,b,c) {
+    console.log('onPollingEnabled', a ,b, c);
   }
 
-  function handleConnected(homeId) {
-    log.log('[ZWAVE] Connected: ' + homeid);
+  function onPollingDisabled(a,b,c) {
+    console.log('onPollingDisabled', a ,b, c);
+  }
+
+  function nodeAvailable(nodeId, nodeInfo) {
+    updateNodeInfo(nodeId, nodeInfo);
+  }
+
+  function nodeEvent(nodeId, value) {
+    log.log('[ZWAVE] nodeEvent node[' + nodeId + ']');
+    log.debug(JSON.stringify(value));
+    _self.emit('node_event', nodeId, value);
+  }
+
+  function handleConnected() {
+    log.log('[ZWAVE] Connected');
     _self.emit('connected');
   }
 
   function driverReady(homeId) {
-    log.log('[ZWAVE] Driver ready: ' + homeid);
+    log.log('[ZWAVE] Driver ready: ' + homeId);
     _self.emit('driver_ready');
   }
 
@@ -81,15 +111,16 @@ function ZWave() {
     _self.emit('ready', _nodes);
   }
 
-  function addNode(nodeId) {
-    log.log('[ZWAVE] addNode ' + nodeId);
+  function nodeAdded(nodeId) {
+    log.log('[ZWAVE] nodeAdded node[' + nodeId + ']');
     _nodes[nodeId] = {
       manufacturer: '', manufacturerId: '', product: '', productId: '',
       productType: '', type: '', name: '', loc: '', classes: {}, ready: false};
   }
 
   function valueAdded(nodeId, comClass, value) {
-    log.log('[ZWAVE] valueAdded ' + nodeId + ' ' + comClass + ' ' + value);
+    log.log('[ZWAVE] valueAdded node[' + nodeId + '][' + comClass + ']');
+    log.debug(JSON.stringify(value));
     if (!_nodes[nodeId]['classes'][comClass]) {
       _nodes[nodeId]['classes'][comClass] = {};
     }
@@ -97,35 +128,53 @@ function ZWave() {
   }
 
   function valueChanged(nodeId, comClass, value) {
-    log.log('[ZWAVE] valueChanged ' + nodeId + ' ' + comClass + ' ' + value);
+    log.log('[ZWAVE] valueChanged node[' + nodeId + '][' + comClass + ']');
+    log.debug(JSON.stringify(value));
+    _nodes[nodeId]['classes'][comClass][value.index] = value;
+  }
+
+  function valueRefreshed(nodeId, comClass, value) {
+    log.log('[ZWAVE] valueRefreshed node[' + nodeId + '][' + comClass + ']');
+    log.debug(JSON.stringify(value));
     _nodes[nodeId]['classes'][comClass][value.index] = value;
   }
 
   function valueRemoved(nodeId, comClass, index) {
-    log.log('[ZWAVE] valueRemoved ' + nodeId + ' ' + comClass + ' ' + index);
+    log.log('[ZWAVE] valueRemoved node[' + nodeId + '][' + comClass + ']');
+    log.debug(JSON.stringify(index));
     if (_nodes[nodeId]['classes'][comClass] && 
         _nodes[nodeId]['classes'][comClass][index]) {
       delete _nodes[nodeId]['classes'][comClass][index];
     }
   }
 
+  function updateNodeInfo(nodeId, nodeInfo) {
+    log.log('[ZWAVE] updateNodeInfo node[' + nodeId + ']');
+    log.debug(JSON.stringify(nodeInfo));
+    _nodes[nodeId].manufacturer = nodeInfo.manufacturer;
+    _nodes[nodeId].manufacturerId = nodeInfo.manufacturerid;
+    _nodes[nodeId].product = nodeInfo.product;
+    _nodes[nodeId].productType = nodeInfo.producttype;
+    _nodes[nodeId].productId= nodeInfo.productid;
+    _nodes[nodeId].type = nodeInfo.type;
+    _nodes[nodeId].name = nodeInfo.name;
+    _nodes[nodeId].loc = nodeInfo.loc;  
+  }
+
   function nodeReady(nodeId, nodeInfo) {
-    log.log('[ZWAVE] nodeReady ' + nodeId + ' ' + nodeInfo);
-    _nodes[nodeId]['manufacturer'] = nodeInfo.manufacturer;
-    _nodes[nodeId]['manufacturerId'] = nodeInfo.manufacturerid;
-    _nodes[nodeId]['product'] = nodeInfo.product;
-    _nodes[nodeId]['productType'] = nodeInfo.producttype;
-    _nodes[nodeId]['productId'] = nodeInfo.productid;
-    _nodes[nodeId]['type'] = nodeInfo.type;
-    _nodes[nodeId]['name'] = nodeInfo.name;
-    _nodes[nodeId]['loc'] = nodeInfo.loc;
-    _nodes[nodeId]['ready'] = true;
-    for (comClass in _nodes[nodeId]['classes']) {
+    log.log('[ZWAVE] nodeReady node[' + nodeId + ']');
+    _nodes[nodeId].ready = true;
+    updateNodeInfo(nodeId, nodeInfo);
+    for (var comClass in _nodes[nodeId]['classes']) {
       switch (comClass) {
         case 0x25: // COMMAND_CLASS_SWITCH_BINARY
         case 0x26: // COMMAND_CLASS_SWITCH_MULTILEVEL
-        _zwave.enablePoll(nodeId, comClass);
-        break;
+        case 0x30: // COMMAND_CLASS_SENSOR_BINARY 
+        case 0x31: // COMMAND_CLASS_SENSOR_MULTILEVEL 
+        case 0x60: // COMMAND_CLASS_MULTI_INSTANCE 
+        case 0x84: // COMMAND_CLASS_MULTI_INSTANCE ??
+          _zwave.enablePoll(nodeId, comClass);
+          break;
       }
       var values = _nodes[nodeId]['classes'][comClass];
     }
@@ -148,7 +197,7 @@ function ZWave() {
     } else if (notif === 6) {
       kind = 'alive';
     }
-    log.log('[ZWAVE] Notification: Node[' + nodeId + '] ' + notif);
+    log.log('[ZWAVE] Notification: Node[' + nodeId + '] ' + kind);
   }
 
   this.setNodeBinary = function(nodeId, value) {
@@ -171,7 +220,7 @@ function ZWave() {
     } else {
       log.error('[ZWAVE] Not ready. (setNodeBinary)');
     }
-  }
+  };
 
   this.setNodeLevel = function(nodeId, value) {
     if (_isReady === true && _zwave) {
@@ -187,7 +236,7 @@ function ZWave() {
     } else {
       log.error('[ZWAVE] Not ready. (setNodeLevel)');
     }
-  }
+  };
 
   this.pollNode = function(nodeId, enabled, comClass) {
     if (_isReady === true && _zwave) {
@@ -209,7 +258,7 @@ function ZWave() {
     } else {
       log.error('[ZWAVE] Not ready. (pollNode)');
     }
-  }
+  };
 
   this.setNodeName = function(nodeId, name) {
     if (_isReady === true && _zwave) {
@@ -225,7 +274,7 @@ function ZWave() {
     } else {
       log.error('[ZWAVE] Not ready. (setNodeName)');
     }
-  }
+  };
 
   this.setNodeLocation = function(nodeId, location) {
     if (_isReady === true && _zwave) {
@@ -241,7 +290,7 @@ function ZWave() {
     } else {
       log.error('[ZWAVE] Not ready. (setNodeLocation)');
     }  
-  }
+  };
 
   this.getConfig = function(nodeId) {
     if (_isReady === true && _zwave) {
@@ -253,12 +302,16 @@ function ZWave() {
     } else {
       log.error('[ZWAVE] Not ready. (getConfig)');   
     }
-  }
+  };
 
   this.getNodes = function() {
     log.log('[ZWAVE] getNodes');
     return _nodes;
-  }
+  };
+
+  this.raw = function() {
+    return _zwave;
+  };
 
   if (OZWave) {
     init();
@@ -266,6 +319,6 @@ function ZWave() {
 
 }
 
-util.inherits(Nest, EventEmitter);
+util.inherits(ZWave, EventEmitter);
 
 module.exports = ZWave;
