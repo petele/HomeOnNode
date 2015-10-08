@@ -19,3 +19,7 @@ node_modules
 /app/test.js
 
 /app/config.json
+
+/app/zwconfig/
+
+/open-zwave/
