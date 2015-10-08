@@ -77,6 +77,7 @@ function Home(config, fb) {
     }
   };
 
+  // TODO refactor to executeCommand and executeCommandByName
   this.executeCommand = function(commandName, modifier, source) {
     var result = {};
     var msg = '[HOME] Command received: ' + commandName + ' [' + modifier + ']';
