@@ -40,7 +40,7 @@ function init(fbAppId, key, appName) {
       ipAddress: null,
     }
   };
-  
+
   try {
     var hostname = os.hostname();
     log.log('[NETWORK] Hostname: ' + hostname);
