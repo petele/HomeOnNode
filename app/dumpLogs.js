@@ -46,7 +46,6 @@ function writeLog(level, dt, message, ex) {
 function printLogs(path) {
   fb.child(path).orderByChild('date').limitToLast(50).on('value',
     function(snapshot) {
-      var itemsRemoved = 0;
       snapshot.forEach(function(item) {
         var msg = item.val();
         writeLog(msg.level, msg.date, msg.message, msg.ex);
@@ -65,5 +64,3 @@ fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
     printLogs('logs/logs');
   }
 });
-
-
