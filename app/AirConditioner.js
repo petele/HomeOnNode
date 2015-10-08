@@ -44,7 +44,7 @@ function AirConditioner(acID, ip, irPort, cmds) {
 
   this.setTemperature = function(temperature, mode, callback) {
     var result = true;
-    if (temperature === 0) {
+    if (temperature === 0 || mode === 'off') {
       log.log('[HVACi] ' + acID + ' turned off.');
       sendCommand(buildCommand(cmds.OFF), callback);
       this.temperature = 0;
