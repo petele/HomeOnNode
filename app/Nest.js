@@ -234,21 +234,6 @@ function Nest() {
     return null;
   };
 
-  this.getStatus = function(callback) {
-    if (checkIfReady(true)) {
-      _fbNest.once('value', function(snapshot) {
-        _nestData = snapshot.val();
-        if (callback) {
-          callback(null, _nestData);
-        }
-      });
-      return true;
-    } else if (callback) {
-      callback(false, null);
-    }
-    return false;
-  };
-
   this.enableListener = function() {
     if (checkIfReady(true)) {
       _fbNest.on('value', function(snapshot) {
