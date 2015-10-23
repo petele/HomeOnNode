@@ -1,12 +1,9 @@
-
-
 ## Setup
 
 ### Update/Upgrade system
 
 1. `sudo apt-get -y update`
 1. `sudo apt-get -y upgrade`
-
 
 ### Install Required Packages
 
@@ -41,3 +38,5 @@ Enable Bluetooth without root
 		  missingok
 		  nocompress
 		}
+
+Celebrate!
