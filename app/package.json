@@ -11,7 +11,6 @@
   "dependencies": {
     "ansi": "~0.3.0",
     "body-parser": "^1.6.5",
-    "castv2": "~0.1.4",
     "colors": "^1.1.2",
     "deep-diff": "^0.2.0",
     "express": "^4.8.5",
@@ -27,9 +26,7 @@
     "noble": "^0.3.9",
     "node-hue-api": "^1.1.2",
     "node-xmpp": "^1.0.0-alpha2",
-    "onoff": "~1.0.0",
-    "unofficial-nest-api": "^0.1.4",
-    "node-powermate": "0.0.3"
+    "unofficial-nest-api": "^0.1.4"
   },
   "devDependencies": {}
 }

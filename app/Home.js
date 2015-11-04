@@ -9,9 +9,7 @@ var version = require('./version');
 var moment = require('moment');
 var fs = require('fs');
 
-var InsideTemperature = require('./InsideTemperature');
 var Firebase = require('firebase');
-var AirConditioner = require('./AirConditioner');
 var Harmony = require('./Harmony');
 var Hue = require('./Hue');
 var Presence = require('./Presence');
@@ -24,12 +22,10 @@ function Home(config, fb) {
   var armingTimer;
   var nest;
   var nestIsReady = false;
-  var insideTemp;
   var hue;
   var hueIsReady = false;
   var harmony;
   var harmonyIsReady = false;
-  var hvac;
   var presence;
 
   function getCommandByName(commandName) {
@@ -155,28 +151,6 @@ function Home(config, fb) {
         result.dropcam = msg;
       }
     }
-    if (command.hvac) {
-      try {
-        command.hvac.forEach(function(roomCmd) {
-          var room = roomCmd.room;
-          var mode = roomCmd.mode || 'auto';
-          var temp;
-          if (modifier === 'UP') {
-            temp = 1;
-          } else if (modifier === 'DOWN') {
-            temp = -1;
-          } else if (modifier === 'OFF') {
-            temp = 0;
-            mode = 'off';
-          } else {
-            temp = parseInt(roomCmd.temperature);
-          }
-          _self.setTemperature(room, mode, temp, source);
-        });
-      } catch (ex) {
-        log.exception('[HOME] HVAC Exception', ex);
-      }
-    }
     if (command.harmony) {
       if (harmonyIsReady) {
         try {
@@ -206,22 +180,8 @@ function Home(config, fb) {
 
   //Updated
   this.setTemperature = function(room, mode, temperature, sender) {
-    var result;
-    var currentTemp = _self.state.hvac[room].temperature;
-    if (temperature === 1) {
-      temperature = currentTemp + 1;
-    } else if (temperature === -1) {
-      temperature = currentTemp - 1;
-    }
-    if (hvac) {
-      log.log('[HOME] AC in ' + room + ' set to ' + temperature + ' ' + mode);
-      result = hvac[room].setTemperature(temperature, mode);
-      _self.state.hvac[room].temperature = result.temperature;
-      _self.state.hvac[room].mode = result.mode;
-      fbSet('state/hvac/' + room + '/temperature', result.temperature);
-      fbSet('state/hvac/' + room + '/mode', result.mode);
-    }
-    return result;
+    log.todo('[HOME] setTemperature not yet implemented.');
+    return {result: 'NYI'};
   };
 
   //Updated
@@ -245,7 +205,6 @@ function Home(config, fb) {
   };
 
   this.hueCommand = function(cmd) {
-    // TODO: Add hue commands
     log.todo('[HOME] Hue API Access not yet implemented.');
   };
 
@@ -350,27 +309,6 @@ function Home(config, fb) {
   }
 
   //Updated
-  function initInsideTemp() {
-    insideTemp = new InsideTemperature(90000);
-    _self.state.temperature = _self.state.temperature || {};
-    insideTemp.on('error', function(error) {
-      _self.state.temperature.inside = 0;
-      fbSet('state/temperature/inside', null);
-      log.exception('[HOME] Error reading inside temperature', error);
-      insideTemp = null;
-      setTimeout(function() {
-        initInsideTemp();
-      }, 90000);
-    });
-    insideTemp.on('change', function(data) {
-      var val = parseFloat(data.f).toFixed(2);
-      _self.state.temperature.inside = val;
-      fbSet('state/temperature/inside', val);
-      log.debug('[HOME] Inside temperature is ' + val + 'F');
-    });
-  }
-
-  //Updated
   function initOutsideTemp() {
     _self.state.temperature = _self.state.temperature || {};
     var url = 'https://publicdata-weather.firebaseio.com/';
@@ -394,23 +332,6 @@ function Home(config, fb) {
       fbSet('state/time/sunset_', sunset_);
       log.debug('[HOME] Sunrise is at ' + sunrise_);
       log.debug('[HOME] Sunset is at ' + sunset_);
-    });
-  }
-
-  function initHVAC() {
-    var itachIP = '192.168.1.211';
-    hvac = {};
-    _self.state.hvac = {};
-    config.hvac.rooms.forEach(function(room) {
-      if (room.itach) {
-        var irPort = room.itach.port;
-        var cmds = config.hvac.itachCommands[room.itach.protocol];
-        hvac[room.id] = new AirConditioner(room.id, itachIP, irPort, cmds);
-      }
-      room.temperature = 0;
-      room.mode = 'off';
-      _self.state.hvac[room.id] = room;
-      fbSet('state/hvac/' + room.id, room);
     });
   }
 
@@ -575,12 +496,8 @@ function Home(config, fb) {
       log.exception('[HOME] Unable to retreive previous state.', err);
       setState('AWAY');
     });
-    if (config.features.insideTemp === true) {
-      initInsideTemp();
-    }
     initOutsideTemp();
     initNotifications();
-    initHVAC();
     if (config.features.nest === true) {
       initNest();
     }

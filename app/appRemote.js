@@ -6,15 +6,11 @@ var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
 var webRequest = require('./webRequest');
 
-var Door = require('./Door');
 var Keypad = require('./Keypad');
-var Dimmer = require('./Dimmer');
 
 var APP_NAME;
 var fb;
 var config;
-var door;
-var dimmer;
 
 log.appStart('Remote', false);
 
@@ -53,28 +49,6 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
       config.keypad = snapshot.val();
     });
 
-    // Check door state and start monitoring door
-    if ((config.door) && (config.door.enabled === true)) {
-      door = new Door(config.id, config.door.pin);
-      door.on('no-gpio', function(e) {
-        log.exception('[REMOTE] No GPIO for door ' + config.id, e);
-      });
-      door.on('change', function(data) {
-        log.log('[REMOTE] Door ' + config.id + ' ' + data);
-        var d;
-        if (data === 'OPEN') {
-          d = config.door.onOpen;
-        } else {
-          d = config.door.onClose;
-        }
-        sendCommand(d, '/door');
-      });
-    }
-
-    if ((config.dimmer) && (config.dimmer.enabled === true)) {
-      dimmer = new Dimmer(config.dimmer);
-    }
-
     if ((config.keypad) && (config.keypad.enabled === true)) {
       Keypad.listen(config.keypad.modifiers, function(key, modifier, exitApp) {
         if (exitApp) {
@@ -100,9 +74,6 @@ function exit(sender, exitCode) {
   exitCode = exitCode || 0;
   log.log('[APP] Starting shutdown process');
   log.log('[APP] Will exit with error code: ' + String(exitCode));
-  if (dimmer) {
-    dimmer.close();
-  }
   setTimeout(function() {
     log.appStop(sender);
     process.exit(exitCode);
