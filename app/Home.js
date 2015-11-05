@@ -26,6 +26,8 @@ function Home(config, fb) {
   var hueIsReady = false;
   var harmony;
   var harmonyIsReady = false;
+  var zwave;
+  var zwaveIsReady = false;
   var presence;
 
   function getCommandByName(commandName) {
@@ -115,7 +117,18 @@ function Home(config, fb) {
         result.hue = msg;
       }
     }
+    if (command.zwave) {
+      log.todo('[HOME] execute ZWave Command is NYI.');
+      if (zwaveIsReady) {
+
+      } else {
+        var msg = '[HOME] ZWave command failed, ZWave not ready.';
+        log.warn(msg);
+        result.zwave = msg;
+      }
+    }
     if (command.nest) {
+      log.todo('[HOME] execute Nest Command is NYI.');
       if (nestIsReady) {
         try {
 
@@ -455,6 +468,10 @@ function Home(config, fb) {
     });
   }
 
+  function initZWave() {
+    log.todo('[HOME] execute ZWave Command is NYI.');
+  }
+
   function init() {
     log.init('[HOME] Initializing home.');
     _self.state.systemState = 'STARTING';
@@ -498,6 +515,9 @@ function Home(config, fb) {
     });
     initOutsideTemp();
     initNotifications();
+    if (config.features.zwave === true) {
+      initZWave();
+    }
     if (config.features.nest === true) {
       initNest();
     }
