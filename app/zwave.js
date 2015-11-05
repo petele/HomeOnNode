@@ -46,7 +46,7 @@ function ZWave(ozwConfig) {
         ZWaveConfig.NetworkKey = ozwConfig.networkKey;
       } else {
         log.error('[ZWAVE] Invalid network key');
-        _self.emit('error', 'invalid network key');
+        _self.emit('invalid_network_key', 'invalid network key');
         return false;
       }
     }

@@ -14,6 +14,7 @@ var Harmony = require('./Harmony');
 var Hue = require('./Hue');
 var Presence = require('./Presence');
 var Nest = require('./Nest');
+var ZWave = require('./ZWave');
 
 function Home(config, fb) {
   this.state = {};
@@ -21,13 +22,9 @@ function Home(config, fb) {
 
   var armingTimer;
   var nest;
-  var nestIsReady = false;
   var hue;
-  var hueIsReady = false;
   var harmony;
-  var harmonyIsReady = false;
   var zwave;
-  var zwaveIsReady = false;
   var presence;
 
   function getCommandByName(commandName) {
@@ -86,7 +83,7 @@ function Home(config, fb) {
       setState(command.state);
     }
     if (command.hue) {
-      if (hueIsReady) {
+      if (hue) {
         result.hue = [];
         command.hue.forEach(function(cmd) {
           var scene;
@@ -119,7 +116,7 @@ function Home(config, fb) {
     }
     if (command.zwave) {
       log.todo('[HOME] execute ZWave Command is NYI.');
-      if (zwaveIsReady) {
+      if (zwave) {
 
       } else {
         var msg = '[HOME] ZWave command failed, ZWave not ready.';
@@ -129,7 +126,7 @@ function Home(config, fb) {
     }
     if (command.nest) {
       log.todo('[HOME] execute Nest Command is NYI.');
-      if (nestIsReady) {
+      if (nest) {
         try {
 
         } catch (ex) {
@@ -142,7 +139,7 @@ function Home(config, fb) {
       }
     }
     if (command.dropcam) {
-      if (nestIsReady) {
+      if (nest) {
         var enabled = true;
         if ((modifier === 'OFF') || (command.dropcam.all === false)) {
           enabled = false;
@@ -165,7 +162,7 @@ function Home(config, fb) {
       }
     }
     if (command.harmony) {
-      if (harmonyIsReady) {
+      if (harmony) {
         try {
           harmony.setActivityByName(command.harmony);
         } catch (ex) {
@@ -178,15 +175,9 @@ function Home(config, fb) {
     if (command.sound) {
       playSound(command.sound);
     }
-    if (command.doNotDisturb) {
-      var val = command.doNotDisturb.enabled || false;
-      if (modifier === 'OFF') {
-        val = false;
-      }
-      _self.state.doNotDisturb = val;
-      fbSet('state/doNotDisturb', val);
-      log.debug('[HOME] Do Not Disturb set to: ' + val);
-      result.doNotDisturb = val;
+    if (command.doNotDisturb === true || command.doNotDisturb === false) {
+      setDoNotDisturb(command.doNotDisturb);
+      result.doNotDisturb = command.doNotDisturb;
     }
     return result;
   };
@@ -222,17 +213,6 @@ function Home(config, fb) {
   };
 
   //Updated
-  this.shutdown = function() {
-    if (harmonyIsReady) {
-      try {
-        harmony.close();
-      } catch (ex) {
-        log.debug('[HOME] Error shutting down Harmony command.');
-      }
-    }
-  };
-
-  //Updated
   function fbPush(path, value) {
     var fbObj = fb;
     if (path) {
@@ -258,7 +238,11 @@ function Home(config, fb) {
       fbObj = fb.child(path);
     }
     try {
-      fbObj.set(value);
+      if (value === null) {
+        fbObj.remove();
+      } else {
+        fbObj.set(value);
+      }
       var now = Date.now();
       fb.child('state/time').update({
         lastUpdated: now,
@@ -266,8 +250,29 @@ function Home(config, fb) {
       });
       _self.state.time.lastUpdated = now;
     } catch (ex) {
-      log.exception('[HOME] Unable to SET data to firebase.', ex);
+      log.exception('[FBSet] Unable to set data on path: ' + path, ex);
     }
+  }
+
+  function generateLastError(err, description) {
+    var now = Date.now();
+    var result = {
+      date: now,
+      date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
+    };
+    if (err) {
+      result.error = err;
+    }
+    if (description) {
+      result.description = description;
+    }
+    return result;
+  }
+
+  function setDoNotDisturb(val) {
+    _self.state.doNotDisturb = val;
+    fbSet('state/doNotDisturb', val);
+    log.debug('[HOME] Do Not Disturb set to: ' + val);
   }
 
   //Updated
@@ -288,20 +293,17 @@ function Home(config, fb) {
       return;
     }
     _self.state.systemState = newState;
-    log.log('[HOME] State changed to: ' + newState);
     fbSet('state/systemState', newState);
     fbPush('logs/systemState', {'date': Date.now(), 'state': newState});
-    var cmd = 'RUN_ON_' + newState;
-    if (newState === 'AWAY' || newState === 'ARMED') {
-      if (nestIsReady) {
+    log.log('[HOME] State changed to: ' + newState);
+    if (_self.state.nest) {
+      if (newState === 'AWAY' || newState === 'ARMED') {
         nest.setAway();
-      }
-    } else {
-      if (nestIsReady) {
+      } else {
         nest.setHome();
       }
     }
-    _self.executeCommand(cmd);
+    _self.executeCommand('RUN_ON_' + newState);
     return newState;
   }
 
@@ -330,134 +332,205 @@ function Home(config, fb) {
     weatherRef.child('currently/temperature').on('value', function(snapshot) {
       var temp = snapshot.val();
       _self.state.temperature.outside = temp;
-      fbSet('state/temperature/outside', temp);
+      fbSet('state/temperature', _self.state.temperature);
       log.debug('[HOME] Outside temperature is ' + temp + 'F');
     });
     weatherRef.child('daily/data/0').on('value', function(snapshot) {
       var snap = snapshot.val();
       _self.state.time.sunrise = snap.sunriseTime * 1000;
+      _self.state.time.sunrise_ = moment(snap.sunriseTime * 1000).format();
       _self.state.time.sunset = snap.sunsetTime * 1000;
-      var sunrise_ = moment(snap.sunriseTime * 1000).format();
-      var sunset_ = moment(snap.sunsetTime * 1000).format();
-      fbSet('state/time/sunrise', _self.state.time.sunrise);
-      fbSet('state/time/sunrise_', sunrise_);
-      fbSet('state/time/sunset', _self.state.time.sunset);
-      fbSet('state/time/sunset_', sunset_);
-      log.debug('[HOME] Sunrise is at ' + sunrise_);
-      log.debug('[HOME] Sunset is at ' + sunset_);
+      _self.state.time.sunset_ = moment(snap.sunsetTime * 1000).format();
+      fbSet('state/time', _self.state.time);
+      log.debug('[HOME] Sunrise is at ' + _self.state.time.sunrise_);
+      log.debug('[HOME] Sunset is at ' + _self.state.time.sunset_);
     });
   }
 
   function initPresence() {
-    presence = new Presence();
-    presence.on('error', function(err) {
-      log.debug('[HOME] Presence error, whoops!');
-    });
-    presence.on('change', function(person, present, who) {
-      person.date = Date.now();
-      fbPush('logs/presence', person);
-      fbSet('state/presence', who);
-      var cmd = 'PRESENCE_SOME';
-      if (present === 0) {
-        cmd = 'PRESENCE_NONE';
-      }
-      _self.executeCommand(cmd, null, 'PRESENCE');
-    });
-    var fbPresPath = 'config/HomeOnNode/presence/people';
-    fb.child(fbPresPath).on('child_added', function(snapshot) {
-      presence.addPerson(snapshot.val());
-    });
-    fb.child(fbPresPath).on('child_removed', function(snapshot) {
-      var uuid = snapshot.val().uuid;
-      presence.removePersonByKey(uuid);
-    });
-    fb.child(fbPresPath).on('child_changed', function(snapshot) {
-      presence.updatePerson(snapshot.val());
-    });
+    try {
+      presence = new Presence();
+      _self.state.presence = {};
+    } catch (ex) {
+      log.exception('[HOME] Unable to initialize Presence', ex);
+      shutdownPresence();
+      return;
+    }
+
+    if (presence) {
+      presence.on('adapterError', shutdownPresence);
+      presence.on('error', function(err) {
+        log.debug('[HOME] Presence error, whoops!');
+        _self.state.presence.lastError = generateLastError(err, 'presence');
+        fbSet('state/presence', _self.state.presence);
+      });
+      presence.on('change', function(person, present, who) {
+        person.date = Date.now();
+        fbPush('logs/presence', person);
+        _self.state.presence = who;
+        fbSet('state/presence', who);
+        var cmd = 'PRESENCE_SOME';
+        if (present === 0) {
+          cmd = 'PRESENCE_NONE';
+        }
+        _self.executeCommand(cmd, null, 'PRESENCE');
+      });
+      var fbPresPath = 'config/HomeOnNode/presence/people';
+      fb.child(fbPresPath).on('child_added', function(snapshot) {
+        if (presence) {
+          presence.addPerson(snapshot.val());
+        }
+      });
+      fb.child(fbPresPath).on('child_removed', function(snapshot) {
+        if (presence) {
+          var uuid = snapshot.val().uuid;
+          presence.removePersonByKey(uuid);
+        }
+      });
+      fb.child(fbPresPath).on('child_changed', function(snapshot) {
+        if (presence) {
+          presence.updatePerson(snapshot.val());
+        }
+      });
+    }
+  }
+
+  function shutdownPresence() {
+    presence.shutdown();
+    presence = null;
+    fbSet('state/presence', null);
   }
 
   //Updated
   function initHarmony() {
-    _self.state.harmony = {};
-    harmony = new Harmony(Keys.harmony.key);
-    harmony.on('ready', function(config) {
-      harmonyIsReady = true;
-    });
-    harmony.on('activity', function(activity) {
-      _self.state.harmony = activity;
-      fbSet('state/harmony', activity);
-      log.log('[HOME] Harmony activity is: ' + JSON.stringify(activity));
-    });
-    harmony.on('error', function() {
-      log.error('[HOME] Harmony error occured, will reattempt in 90 seconds.');
-      harmonyIsReady = false;
+    try {
+      harmony = new Harmony(Keys.harmony.key);
+      _self.state.harmony = {};
+    } catch (ex) {
+      log.exception('[HOME] Unable to initialize Harmony', ex);
+      shutdownHarmony();
+      return;
+    }
+
+    if (harmony) {
+      harmony.on('ready', function(config) {
+        _self.state.harmony.ready = true;
+        fbSet('state/harmony', _self.state.harmony);
+      });
+      harmony.on('activity', function(activity) {
+        _self.state.harmony = activity;
+        fbSet('state/harmony', _self.state.harmony);
+        log.log('[HOME] Harmony activity is: ' + JSON.stringify(activity));
+      });
+      harmony.on('no_hubs_found', shutdownHarmony);
+      harmony.on('connection_failed', shutdownHarmony);
+      harmony.on('error', function(err) {
+        log.error('[HOME] Harmony error occured.');
+        _self.state.harmony.lastError = generateLastError(err, 'harmony');
+        fbSet('state/harmony', _self.state.harmony);
+      });
+    }
+  }
+
+  function shutdownHarmony() {
+    log.log('[HOME] Shutting down Harmony.');
+    try {
       harmony.close();
-      harmony = null;
-      setTimeout(function() {
-        initHarmony();
-      }, 90000);
-    });
+    } catch (ex) {
+
+    }
+    harmony = null;
+    fbSet('state/harmony', null);
   }
 
   //Updated
   function initNest() {
-    nest = new Nest();
-    nest.login(Keys.nest.token);
-    nest.on('authError', function(err) {
-      nestIsReady = false;
-      nest = null;
-      log.error('[HOME] Nest Auth error occured, retrying in 90 seconds');
-      setTimeout(function() {
-        initNest();
-      }, 90000);
-    });
-    nest.on('change', function(data) {
-      log.debug('[HOME] Nest changed');
-      _self.state.nest = data;
-      fbSet('state/nest', data);
-    });
-    nest.on('alarm', function(kind, protect) {
-      _self.executeCommand('NEST_ALARM', null, 'NEST-' + protect);
-    });
-    nest.on('ready', function(data) {
-      nestIsReady = true;
-      nest.enableListener();
-    });
+    try {
+      nest = new Nest();
+      _self.state.nest = {};
+    } catch (ex) {
+      log.exception('[HOME] Unable to initialize Nest', ex);
+      shutdownNest();
+      return;
+    }
+
+    if (nest) {
+      nest.login(Keys.nest.token);
+      nest.on('authError', function(err) {
+        log.exception('[HOME] Nest auth error occured.', err);
+        shutdownNest();
+      });
+      nest.on('change', function(data) {
+        log.debug('[HOME] Nest changed');
+        _self.state.nest = data;
+        fbSet('state/nest', _self.state.nest);
+      });
+      nest.on('alarm', function(kind, protect) {
+        _self.executeCommand('NEST_ALARM', null, 'NEST-' + protect);
+        var alarm = {
+          kind: kind,
+          protect: protect
+        };
+        _self.state.nest.lastAlarm = generateLastError('NEST_ALARM', alarm);
+        fbSet('state/nest', _self.state.nest);
+      });
+      nest.on('ready', function(data) {
+        _self.state.nest.ready = true;
+        nest.enableListener();
+        fbSet('state/nest', _self.state.nest);
+      });
+    }
+  }
+
+  function shutdownNest() {
+    log.log('[HOME] Shutting down Nest.');
+    nest = null;
+    fbSet('state/nest', null);
   }
 
   //Updated
   function initHue() {
-    hue = new Hue(Keys.hueBridge.key);
-    hue.on('change', function(lights, groups) {
-      _self.state.hue.lights = lights;
-      fbSet('state/hue/lights', lights);
-      _self.state.hue.groups = groups;
-      fbSet('state/hue/groups', groups);
-    });
-    hue.on('ready', function() {
-      _self.state.hue = {
-        lights: false,
-        groups: false
-      };
-      hueIsReady = true;
-    });
-    hue.on('error', function() {
-      log.error('[HOME] Hue error occured, will reattempt in 90 seconds.');
-      hueIsReady = false;
-      hue = null;
-      _self.state.hue.lights = false;
-      fbSet('state/hue/lights', false);
-      _self.state.hue.groups = false;
-      fbSet('state/hue/groups', false);
-      setTimeout(function() {
-        initHue();
-      }, 90000);
-    });
+    try {
+      hue = new Hue(Keys.hueBridge.key);
+      _self.state.hue = {};
+    } catch (ex) {
+      log.exception('[HOME] Unable to initialize Hue', ex);
+      shutdownHue();
+      return;
+    }
+
+    if (hue) {
+      hue.on('no_hubs_found', function() {
+        log.error('[HOME] No Hue Hubs found.');
+        shutdownHue();
+      });
+      hue.on('change', function(lights, groups) {
+        _self.state.hue.lights = lights;
+        _self.state.hue.groups = groups;
+        fbSet('state/hue', _self.state.hue);
+      });
+      hue.on('ready', function() {
+        _self.state.hue.ready = true;
+        fbSet('state/hue', _self.state.hue);
+      });
+      hue.on('error', function(err) {
+        log.error('[HOME] Hue error occured.');
+        _self.state.hue.lastError = generateLastError(err, 'hue');
+        fbSet('state/hue', _self.state.hue);
+      });
+    }
+  }
+
+  function shutdownHue() {
+    log.log('[HOME] Shutting down Hue.');
+    hue = null;
+    fbSet('state/hue', null);
   }
 
   //Updated
   function initNotifications() {
     fb.child('state/hasNotification').on('value', function(snapshot) {
+      _self.state.hasNotification = snapshot.val();
       if (snapshot.val() === true) {
         if (_self.state.systemState === 'HOME') {
           _self.executeCommand('NEW_NOTIFICATION');
@@ -469,7 +542,54 @@ function Home(config, fb) {
   }
 
   function initZWave() {
-    log.todo('[HOME] execute ZWave Command is NYI.');
+    try {
+      zwave = new ZWave();
+      _self.state.zwave = {};
+    } catch (ex) {
+      log.exception('[HOME] Unable to initialize ZWave', ex);
+      shutdownZWave();
+      return;
+    }
+
+    if (zwave) {
+      //zwave_unavailable, error, polling_enabled, polling_disabled, node_event
+      //connected, driver_ready, driver_failed, ready, node_value_change,
+      //node_value_refresh, node_value_removed
+      zwave.on('zwave_unavailable', shutdownZWave);
+      zwave.on('invalid_network_key', shutdownZWave);
+      zwave.on('error', function(err) {
+        _self.state.zwave.lastError = generateLastError(err, 'zwave');
+        log.error('[HOME] ZWave Error: ' + JSON.stringify(err));
+        fbSet('state/zwave', _self.state.zwave);
+      });
+      zwave.on('ready', function(nodes) {
+        _self.state.zwave.ready = true;
+        _self.state.zwave.nodes = nodes;
+        fbSet('state/zwave', _self.state.zwave);
+      });
+      zwave.on('node_event', function(nodeId, value) {
+        var msg = '[' + nodeId + '] ' + value.toString();
+        log.log('[HOME] ZWave - nodeEvent: ' + msg);
+      });
+      zwave.on('node_value_change', function(nodeId, info) {
+        var msg = '[' + nodeId + '] ' + JSON.stringify(info);
+        log.log('[HOME] ZWave - nodeValueChange: ' + msg);
+      });
+      zwave.on('node_value_refresh', function(nodeId, info) {
+        var msg = '[' + nodeId + '] ' + JSON.stringify(info);
+        log.log('[HOME] ZWave - nodeValueRefresh: ' + msg);
+      });
+      zwave.on('node_value_removed', function(nodeId, info) {
+        var msg = '[' + nodeId + '] ' + JSON.stringify(info);
+        log.log('[HOME] ZWave - nodeValueRemoved: ' + msg);
+      });
+    }
+  }
+
+  function shutdownZWave() {
+    log.log('[HOME] Shutting down ZWave.');
+    zwave = null;
+    fbSet('state/zwave', null);
   }
 
   function init() {
@@ -478,11 +598,9 @@ function Home(config, fb) {
     var now = Date.now();
     var now_ = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
     _self.state = {
-      doNotDisturb: {enabled: false},
-      hvac: false,
-      nest: false,
+      doNotDisturb: false,
+      hasNotification: false,
       systemState: 'INIT',
-      temperature: false,
       time: {
         started: now,
         started_: now_,
@@ -495,18 +613,18 @@ function Home(config, fb) {
       fs.writeFile('config.json', JSON.stringify(config, null, 2));
     });
     fb.child('state/systemState').once('value', function(snapshot) {
-      var newState;
+      var previousState;
       try {
-        newState = snapshot.val();
+        previousState = snapshot.val();
       } catch (ex) {
         log.exception('[HOME] Unable to read state.', ex);
-        newState = null;
+        previousState = null;
       }
-      if (newState === 'HOME' || newState === 'AWAY') {
-        log.log('[HOME] Set state based on previous setting: ' + newState);
-        _self.state.systemState = newState;
+      if (previousState === 'HOME' || previousState === 'AWAY') {
+        log.log('[HOME] Set state based on previous setting: ' + previousState);
+        _self.state.systemState = previousState;
       } else {
-        log.log('[HOME] Previous state unavailable: ' + newState);
+        log.log('[HOME] Previous state unavailable: ' + previousState);
         setState('AWAY');
       }
     }, function(err) {
@@ -536,6 +654,15 @@ function Home(config, fb) {
     }, 750);
     playSound(config.readySound);
   }
+
+  //Updated
+  this.shutdown = function() {
+    shutdownHarmony();
+    shutdownHue();
+    shutdownNest();
+    shutdownZWave();
+    shutdownPresence();
+  };
 
   init();
 }

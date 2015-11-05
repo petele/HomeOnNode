@@ -33,7 +33,7 @@ function Hue(key, ip) {
           log.log(msg);
         } catch (ex) {
           log.exception(msg, ex);
-          self.emit('error');
+          self.emit('error', ex);
         }
         if (result === false) {
           msg = '[HUE] Error setting light [' + light + '] state to ';
@@ -157,7 +157,7 @@ function Hue(key, ip) {
             self.refreshInterval += 2500;
           } else {
             log.error('[HUE] Exceeded maximum timeout, throwing error.');
-            self.emit('error');
+            self.emit('error', '[monitorHue] timeout_exceeded');
           }
         } else {
           var diffLights = diff(self.hueLights, hueState.lights);
@@ -183,7 +183,7 @@ function Hue(key, ip) {
           self.emit('error');
         } else if (result.length === 0) {
           log.error('[HUE] No Hue bridges found.');
-          self.emit('error');
+          self.emit('no_hubs_found');
         } else {
           if (result.length > 1) {
             log.warn('[HUE] Multiple bridges found, will use the first.');

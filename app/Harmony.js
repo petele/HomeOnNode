@@ -38,7 +38,7 @@ function Harmony(uuid, ip) {
         client.on('disconnect', handleDisconnect);
       } catch (ex) {
         log.exception('[HARMONY] Unable to connect to Harmony Hub', ex);
-        _self.emit('error', ex);
+        _self.emit('connection_failed', ex);
       }
     } else {
       log.debug('[HARMONY] No Hub IP set, starting search.');
