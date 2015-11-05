@@ -26,6 +26,7 @@
     "noble": "^0.3.9",
     "node-hue-api": "^1.1.2",
     "node-xmpp": "^1.0.0-alpha2",
+    "openzwave-shared": "^1.1.4",
     "unofficial-nest-api": "^0.1.4"
   },
   "devDependencies": {}
