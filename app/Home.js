@@ -20,12 +20,14 @@ function Home(config, fb) {
   this.state = {};
   var _self = this;
 
-  var armingTimer;
   var nest;
   var hue;
   var harmony;
   var zwave;
   var presence;
+
+  var armingTimer;
+  var zwaveTimer;
 
   function getCommandByName(commandName) {
     var result = config.commands[commandName];
@@ -36,6 +38,9 @@ function Home(config, fb) {
       return {};
     }
   }
+
+  // TODO: reset doNotDisturb
+  // TODO: reset Nest Away
 
   function getLightSceneByName(sceneName) {
     var result;
@@ -115,20 +120,75 @@ function Home(config, fb) {
       }
     }
     if (command.zwave) {
-      log.todo('[HOME] execute ZWave Command is NYI.');
       if (zwave) {
-
+        var keys = Object.keys(command.zwave);
+        keys.forEach(function(k) {
+          var onOff = command.zwave[k];
+          if (modifier === 'OFF') {
+            onOff = false;
+          }
+          try {
+            zwave.setNodeBinary(k, onOff);
+          } catch (ex) {
+            log.exception('[HOME] ZWave command failed', ex);
+          }
+        });
       } else {
         var msg = '[HOME] ZWave command failed, ZWave not ready.';
         log.warn(msg);
         result.zwave = msg;
       }
     }
-    if (command.nest) {
-      log.todo('[HOME] execute Nest Command is NYI.');
-      if (nest) {
+    if (command.zwaveAdmin) {
+      if (zwave) {
         try {
+          if (command.zwaveAdmin === 'addDevice') {
+            zwave.addDevice();
+          } else if (command.zwaveAdmin === 'healNetwork') {
+            zwave.healNetwork();
+          }
+        } catch (ex) {
+          log.exception('[HOME] ZWave AddDevice command failed', ex);
+        }
+      } else {
+        var msg = '[HOME] ZWave command failed, ZWave not ready.';
+        log.warn(msg);
+        result.zwaveAddDevice = msg;
+      }
+    }
+    if (command.nest) {
+      var thermostatId;
+      var thermostat;
+      try {
+        thermostatId = config.nest.thermostat[command.nest.room];
+        thermostat = _self.state.nest.devices.thermostats[thermostatId];
+      } catch (ex) {
+        log.error('[HOME] Unable to get Nest thermostat state');
+      }
+      if (nest && thermostatId && thermostat) {
+        try {
+          var temperature;
+          var mode;
 
+          /* jshint -W106 */
+          // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+          if (modifier === 'UP') {
+            temperature = thermostat.target_temperature_f + 1;
+            mode = thermostat.hvac_mode;
+          } else if (modifier === 'DOWN') {
+            temperature = thermostat.target_temperature_f - 1;
+            mode = thermostat.hvac_mode;
+          } else if (modifier === 'OFF') {
+            temperature = config.nest.thermostat.defaultTemperature;
+            mode = 'off';
+          } else {
+            temperature = command.nest.temperature;
+            mode = command.nest.mode || 'heat-cool';
+          }
+          // jscs:enable
+          /* jshint +W106 */
+
+          nest.setThermostat(thermostatId, temperature, mode);
         } catch (ex) {
           log.exception('[HOME] Nest command failed', ex);
         }
@@ -136,29 +196,6 @@ function Home(config, fb) {
         msg = '[HOME] Nest command failed, Nest not ready.';
         log.warn(msg);
         result.nest = msg;
-      }
-    }
-    if (command.dropcam) {
-      if (nest) {
-        var enabled = true;
-        if ((modifier === 'OFF') || (command.dropcam.all === false)) {
-          enabled = false;
-        }
-        try {
-          if (enabled) {
-            nest.enableCamera();
-          } else {
-            nest.disableCamera();
-          }
-          result.dropcam = enabled;
-        } catch (ex) {
-          log.exception('[HOME] Nest Cam change failed', ex);
-          result.dropcam = ex;
-        }
-      } else {
-        msg = '[HOME] Nest Cam change failed, Nest cam not ready.';
-        log.warn(msg);
-        result.dropcam = msg;
       }
     }
     if (command.harmony) {
@@ -172,20 +209,37 @@ function Home(config, fb) {
         log.warn('[HOME] Harmony activity failed, Harmony not ready.');
       }
     }
+    if (command.dropcam === true || command.dropcam === false) {
+      if (nest) {
+        try {
+          if (modifier === 'OFF' || command.dropcam === false) {
+            nest.disableCamera();
+            result.dropcam = false;
+          } else {
+            nest.enableCamera();
+            result.dropcam = true;
+          }
+        } catch (ex) {
+          log.exception('[HOME] Nest Cam change failed', ex);
+          result.dropcam = ex;
+        }
+      } else {
+        msg = '[HOME] Nest Cam change failed, Nest cam not ready.';
+        log.warn(msg);
+        result.dropcam = msg;
+      }
+    }
     if (command.sound) {
       playSound(command.sound);
     }
     if (command.doNotDisturb === true || command.doNotDisturb === false) {
+      if (modifier === 'OFF') {
+        command.doNotDisturb = false;
+      }
       setDoNotDisturb(command.doNotDisturb);
       result.doNotDisturb = command.doNotDisturb;
     }
     return result;
-  };
-
-  //Updated
-  this.setTemperature = function(room, mode, temperature, sender) {
-    log.todo('[HOME] setTemperature not yet implemented.');
-    return {result: 'NYI'};
   };
 
   //Updated
@@ -359,6 +413,7 @@ function Home(config, fb) {
 
     if (presence) {
       presence.on('adapterError', shutdownPresence);
+      presence.on('presence_unavailable', shutdownPresence);
       presence.on('error', function(err) {
         log.debug('[HOME] Presence error, whoops!');
         _self.state.presence.lastError = generateLastError(err, 'presence');
@@ -396,7 +451,14 @@ function Home(config, fb) {
   }
 
   function shutdownPresence() {
-    presence.shutdown();
+    log.log('[HOME] Shutting down Presence.');
+    try {
+      presence.shutdown();
+    } catch (ex) {
+      log.debug('[HOME] Error attempting to shut down Presence.');
+    }
+    var fbPresPath = 'config/HomeOnNode/presence/people';
+    fb.child(fbPresPath).off();
     presence = null;
     fbSet('state/presence', null);
   }
@@ -437,7 +499,7 @@ function Home(config, fb) {
     try {
       harmony.close();
     } catch (ex) {
-
+      log.debug('[HOME] Error attempting to shut down Harmony.');
     }
     harmony = null;
     fbSet('state/harmony', null);
@@ -566,6 +628,7 @@ function Home(config, fb) {
         _self.state.zwave.ready = true;
         _self.state.zwave.nodes = nodes;
         fbSet('state/zwave', _self.state.zwave);
+        zwaveTimer = setInterval(zwaveTimerTick, 3000);
       });
       zwave.on('node_event', function(nodeId, value) {
         var msg = '[' + nodeId + '] ' + value.toString();
@@ -586,15 +649,28 @@ function Home(config, fb) {
     }
   }
 
+  function zwaveTimerTick() {
+    log.debug('[HOME] ZWave Timer Tick');
+    // TODO: Check status of lights and anything else we want
+  }
+
   function shutdownZWave() {
     log.log('[HOME] Shutting down ZWave.');
+    if (zwaveTimer) {
+      clearInterval(zwaveTimer);
+      zwaveTimer = null;
+    }
+    try {
+      zwave.disconnect();
+    } catch (ex) {
+      log.debug('[HOME] Error attempting to shut down Harmony.');
+    }
     zwave = null;
     fbSet('state/zwave', null);
   }
 
   function init() {
     log.init('[HOME] Initializing home.');
-    _self.state.systemState = 'STARTING';
     var now = Date.now();
     var now_ = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
     _self.state = {
@@ -633,21 +709,11 @@ function Home(config, fb) {
     });
     initOutsideTemp();
     initNotifications();
-    if (config.features.zwave === true) {
-      initZWave();
-    }
-    if (config.features.nest === true) {
-      initNest();
-    }
-    if (config.features.hue === true) {
-      initHue();
-    }
-    if (config.features.harmony === true) {
-      initHarmony();
-    }
-    if (config.features.presence === true) {
-      initPresence();
-    }
+    initZWave();
+    initNest();
+    initHue();
+    initHarmony();
+    initPresence();
     setTimeout(function() {
       log.log('[HOME] Ready');
       _self.emit('ready');

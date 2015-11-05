@@ -180,7 +180,7 @@ function Nest() {
   }
 
   function setHomeAway(state) {
-    if (checkIfReady(true)) {
+    if (checkIfReady(false)) {
       state = state || 'home';
       log.log('[NEST] Set home state to: ' + state);
       var devices = _self.getDevices();

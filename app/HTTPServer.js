@@ -45,8 +45,6 @@ function HTTPServer(config, home, fb) {
     res.sendFile(path.join(__dirname, '/web/favicon.ico'));
   });
 
-  exp.use('/web/', express.static(path.join(__dirname, 'web')));
-
   exp.get('/logs/', function(req, res) {
     res.sendFile(path.join(__dirname, '/logs/rpi-system.log'));
   });
@@ -83,31 +81,6 @@ function HTTPServer(config, home, fb) {
     }
     var sender = '[HTTP ' + req.ip + ']';
     var result = home.executeCommand(body.command, body.modifier, sender);
-    res.send(result);
-  });
-
-  exp.post('/door', function(req, res) {
-    var body = req.body;
-    if (typeof body === 'string') {
-      body = JSON.parse(body);
-    }
-    var sender = '[HTTP ' + req.ip + ']';
-    var result = {};
-    if (body.kind === 'entry') {
-      result = home.entryDoor(body.door, body.state, sender);
-    } else {
-      result = home.executeCommand(body.door, body.state, sender);
-    }
-    res.send(result);
-  });
-
-  exp.post('/temperature', function(req, res) {
-    var body = req.body;
-    if (typeof body === 'string') {
-      body = JSON.parse(body);
-    }
-    var sender = '[HTTP ' + req.ip + ']';
-    var result = home.setTemperature(body.room, body.temperature, sender);
     res.send(result);
   });
 

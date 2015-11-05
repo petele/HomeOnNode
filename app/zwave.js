@@ -16,7 +16,9 @@ function ZWave(ozwConfig) {
     OZWave = require('openzwave-shared');
   } catch (ex) {
     log.exception('[ZWAVE] Unable to initialize Open ZWave Library.', ex);
-    _self.emit('zwave_unavailable');
+    setTimeout(function() {
+      _self.emit('zwave_unavailable');
+    }, 50);
     return false;
   }
 

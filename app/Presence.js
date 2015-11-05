@@ -176,7 +176,7 @@ function Presence() {
     } catch (ex) {
       log.exception('[PRESENCE] Presence initialization error.', ex);
       setTimeout(function() {
-        self.emit('error');
+        self.emit('presence_unavailable');
       }, 100);
     }
   }
