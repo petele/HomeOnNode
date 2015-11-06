@@ -38,10 +38,7 @@ function Home(config, fb) {
       return {};
     }
   }
-
-  // TODO: reset doNotDisturb
-  // TODO: reset Nest Away
-
+ 
   function getLightSceneByName(sceneName) {
     var result;
     var defaultScene = {bri: 254, ct: 369, on: true};
@@ -350,7 +347,7 @@ function Home(config, fb) {
     fbSet('state/systemState', newState);
     fbPush('logs/systemState', {'date': Date.now(), 'state': newState});
     log.log('[HOME] State changed to: ' + newState);
-    if (_self.state.nest) {
+    if (nest) {
       if (newState === 'AWAY' || newState === 'ARMED') {
         nest.setAway();
       } else {
