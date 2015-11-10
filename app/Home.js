@@ -627,13 +627,7 @@ function Home(config, fb) {
         fbSet('state/zwave', _self.state.zwave);
         zwaveTimer = setInterval(zwaveTimerTick, 3000);
       });
-      zwave.on('node_event', function(nodeId, value) {
-        var msg = '[' + nodeId + '] ' + value.toString();
-        log.log('[HOME] ZWave - nodeEvent: ' + msg);
-        _self.state.zwave.nodes[nodeId].lastEvent = value;
-        var path = 'state/zwave/nodes/' + nodeId + '/lastEvent';
-        fbSet(path, value);
-      });
+      zwave.on('node_event', zwaveEvent);
       zwave.on('node_value_change', zwaveSaveNodeValue);
       zwave.on('node_value_refresh', zwaveSaveNodeValue);
       zwave.on('node_value_removed', function(nodeId, info) {
@@ -641,6 +635,14 @@ function Home(config, fb) {
         log.log('[HOME] ZWave - nodeValueRemoved: ' + msg);
       });
     }
+  }
+
+  function zwaveEvent(nodeId, value) {
+    var msg = '[' + nodeId + '] ' + value.toString();
+    log.log('[HOME] ZWave - nodeEvent: ' + msg);
+    _self.state.zwave.nodes[nodeId].lastEvent = value;
+    var path = 'state/zwave/nodes/' + nodeId + '/lastEvent';
+    fbSet(path, value);
   }
 
   function zwaveSaveNodeValue(nodeId, info) {
@@ -651,6 +653,7 @@ function Home(config, fb) {
     /* jshint +W106 */
     if (valueId) {
       try {
+        valueId = valueId.replace(nodeId + '-', '');
         _self.state.zwave.nodes[nodeId][valueId] = info;
         var path = 'state/zwave/nodes/' + nodeId + '/' + valueId;
         fbSet(path, info);
