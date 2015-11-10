@@ -1,5 +1,7 @@
 #!/bin/bash
 
+./pull.sh
+
 cd app
 
 node getConfig.js HomeOnNode
