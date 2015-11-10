@@ -38,7 +38,7 @@ function Home(config, fb) {
       return {};
     }
   }
- 
+
   function getLightSceneByName(sceneName) {
     var result;
     var defaultScene = {bri: 254, ct: 369, on: true};
@@ -634,27 +634,33 @@ function Home(config, fb) {
         var path = 'state/zwave/nodes/' + nodeId + '/lastEvent';
         fbSet(path, value);
       });
-      zwave.on('node_value_change', function(nodeId, info) {
-        var msg = '[' + nodeId + '] ' + JSON.stringify(info);
-        log.log('[HOME] ZWave - nodeValueChange: ' + msg);
-        _self.state.zwave.nodes[nodeId].value = info;
-        var path = 'state/zwave/nodes/' + nodeId + '/value';
-        fbSet(path, info);
-      });
-      zwave.on('node_value_refresh', function(nodeId, info) {
-        var msg = '[' + nodeId + '] ' + JSON.stringify(info);
-        log.log('[HOME] ZWave - nodeValueRefresh: ' + msg);
-        _self.state.zwave.nodes[nodeId].value = info;
-        var path = 'state/zwave/nodes/' + nodeId + '/value';
-        fbSet(path, info);
-      });
+      zwave.on('node_value_change', zwaveSaveNodeValue);
+      zwave.on('node_value_refresh', zwaveSaveNodeValue);
       zwave.on('node_value_removed', function(nodeId, info) {
         var msg = '[' + nodeId + '] ' + JSON.stringify(info);
         log.log('[HOME] ZWave - nodeValueRemoved: ' + msg);
-        _self.state.zwave.nodes[nodeId].value = null;
-        var path = 'state/zwave/nodes/' + nodeId + '/value';
-        fbSet(path, null);
       });
+    }
+  }
+
+  function zwaveSaveNodeValue(nodeId, info) {
+    /* jshint -W106 */
+    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+    var valueId = info.value_id;
+    // jscs:enable
+    /* jshint +W106 */
+    if (valueId) {
+      try {
+        _self.state.zwave.nodes[nodeId][valueId] = info;
+        var path = 'state/zwave/nodes/' + nodeId + '/' + valueId;
+        fbSet(path, info);
+        var msg = '[' + path + '] ' + JSON.stringify(info);
+        log.log('[HOME] ZWave - saveNodeValue: ' + msg);
+      } catch (ex) {
+        log.exception('[HOME] Error in saveNodeValue', ex);
+      }
+    } else {
+      log.error('[HOME] ZWave - no valueId for saveNodeValue');
     }
   }
 
