@@ -149,7 +149,7 @@ function ZWave(ozwConfig) {
     var debouncer = _debouncers[nodeId];
     if (!debouncer) {
       debouncer = debounce(function(nodeId, value) {
-        log.log('[ZWAVE] nodeEvent node[' + nodeId + ']');
+        log.debug('[ZWAVE] nodeEvent node[' + nodeId + ']');
         log.debug('  ' + JSON.stringify(value));
         _self.emit('node_event', nodeId, value);
       }, 100);
@@ -308,7 +308,7 @@ function ZWave(ozwConfig) {
     }
 
     if (emit === true) {
-      log.log('[ZWAVE] emitChange: ' + JSON.stringify(info));
+      log.debug('[ZWAVE] emitChange: ' + JSON.stringify(info));
       _self.emit(eventName, info.node_id, info);
     }
     // jscs:enable
@@ -332,7 +332,7 @@ function ZWave(ozwConfig) {
   }
 
   function updateNodeInfo(nodeId, nodeInfo) {
-    log.log('[ZWAVE] updateNodeInfo node[' + nodeId + ']');
+    log.debug('[ZWAVE] updateNodeInfo node[' + nodeId + ']');
     log.debug('  ' + JSON.stringify(nodeInfo));
     _nodes[nodeId].manufacturer = nodeInfo.manufacturer;
     _nodes[nodeId].manufacturerId = nodeInfo.manufacturerid;

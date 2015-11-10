@@ -630,18 +630,30 @@ function Home(config, fb) {
       zwave.on('node_event', function(nodeId, value) {
         var msg = '[' + nodeId + '] ' + value.toString();
         log.log('[HOME] ZWave - nodeEvent: ' + msg);
+        _self.state.zwave.nodes[nodeId].lastEvent = value;
+        var path = 'state/zwave/nodes/' + nodeId + '/lastEvent';
+        fbSet(path, value);
       });
       zwave.on('node_value_change', function(nodeId, info) {
         var msg = '[' + nodeId + '] ' + JSON.stringify(info);
         log.log('[HOME] ZWave - nodeValueChange: ' + msg);
+        _self.state.zwave.nodes[nodeId].value = info;
+        var path = 'state/zwave/nodes/' + nodeId + '/value';
+        fbSet(path, info);
       });
       zwave.on('node_value_refresh', function(nodeId, info) {
         var msg = '[' + nodeId + '] ' + JSON.stringify(info);
         log.log('[HOME] ZWave - nodeValueRefresh: ' + msg);
+        _self.state.zwave.nodes[nodeId].value = info;
+        var path = 'state/zwave/nodes/' + nodeId + '/value';
+        fbSet(path, info);
       });
       zwave.on('node_value_removed', function(nodeId, info) {
         var msg = '[' + nodeId + '] ' + JSON.stringify(info);
         log.log('[HOME] ZWave - nodeValueRemoved: ' + msg);
+        _self.state.zwave.nodes[nodeId].value = null;
+        var path = 'state/zwave/nodes/' + nodeId + '/value';
+        fbSet(path, null);
       });
     }
   }
