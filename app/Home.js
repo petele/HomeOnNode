@@ -243,7 +243,7 @@ function Home(config, fb) {
   this.entryDoor = function(doorName, doorState, source) {
     var result = {};
     if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
-      result = _self.executeCommand('ENTRY_DOOR', null, source);
+      result = _self.executeCommand('DOOR_ENTRY', null, source);
     }
     fbSet('state/doors/' + doorName, doorState);
     var now = Date.now();
@@ -638,11 +638,31 @@ function Home(config, fb) {
   }
 
   function zwaveEvent(nodeId, value) {
-    var msg = '[' + nodeId + '] ' + value.toString();
-    log.log('[HOME] ZWave - nodeEvent: ' + msg);
-    _self.state.zwave.nodes[nodeId].lastEvent = value;
-    var path = 'state/zwave/nodes/' + nodeId + '/lastEvent';
-    fbSet(path, value);
+    var device = config.zwave[nodeId];
+    if (device) {
+      var doorState;
+      var cmdName;
+      var source = 'ZWAVE-' + nodeId;
+      var deviceName = device.name.toUpperCase();
+      if (device.kind === 'ENTRY_DOOR') {
+        doorState = value === 255 ? 'OPEN' : 'CLOSED';
+        _self.entryDoor(deviceName, doorState, source);
+      } else if (device.kind === 'DOOR') {
+        doorState = value === 255 ? 'OPEN' : 'CLOSED';
+        cmdName = 'DOOR_' + deviceName + '-' + doorState;
+        _self.executeCommand(cmdName, null, source);
+      } else if (device.kind === 'MOTION') {
+        cmdName = 'MOTION_' + deviceName;
+        _self.executeCommand(cmdName, null, source);
+      } else {
+        log.warn('[HOME] Unknown ZWave device kind: ' + nodeId);
+      }
+      _self.state.zwave.nodes[nodeId].lastEvent = value;
+      var path = 'state/zwave/nodes/' + nodeId + '/lastEvent';
+      fbSet(path, value);
+    } else {
+      log.warn('[HOME] Unhandled ZWave Event:' + nodeId + ':' + value);
+    }
   }
 
   function zwaveSaveNodeValue(nodeId, info) {
