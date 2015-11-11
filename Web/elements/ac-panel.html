@@ -10,14 +10,12 @@
         min-width: 1.1em;
         text-align: center;
       }
+      .mode {
+        min-width: 4em;
+      }
       .acTemp[disabled] {
         color: #c9c9c9;
         opacity: 0;
-      }
-      .fastCool {
-        background-color: white;
-        border-radius: 50%;
-        border: 1px solid #e0e0e0;
       }
       paper-toggle-button::shadow [checked] .toggle {
         background-color: #03A9F4;
@@ -44,17 +42,25 @@
       }
     </style>
     <ul vertical layout class="text-large">
-      <li horizontal layout center>
-        <span flex>Fast Cool</span>
-        <paper-icon-button class="rm fastCool" on-tap="{{fastCool}}" src="/images/snowflake.png"></paper-icon-button>
-      </li>
       <template repeat="{{devices as device}}">
         <li horizontal layout center>
-          <span flex>{{device.label}}</span>
-          <paper-toggle-button on-change="{{toggleAC}}" checked?="{{device.temp > 0}}"></paper-toggle-button>
-          <paper-icon-button class="lm" on-tap="{{tempDown}}" disabled?="{{device.temp <= 60 || device.temp == 0}}" icon="expand-more"></paper-icon-button>
-          <div class="acTemp" disabled?="{{device.temp == 0}}">{{device.temp}}</div>
-          <paper-icon-button class="rm" on-tap="{{tempUp}}" disabled?="{{device.temp >= 75 || device.temp == 0}}" icon="expand-less"></paper-icon-button>
+          <span flex>
+            {{device.name}} 
+            ({{device.ambient_temperature_f}}&deg;F)
+          </span>
+          <paper-dropdown-menu class="mode">
+            <paper-dropdown class="dropdown">
+              <core-menu id="coreMenu" selected="{{device.hvac_mode}}" class="menu" valueattr="modifier" flex on-core-select="{{stateChanged}}">
+                <paper-item modifier="heat-cool">Auto</paper-item>
+                <paper-item modifier="cool">Cool</paper-item>
+                <paper-item modifier="heat">Heat</paper-item>
+                <paper-item modifier="off">Off</paper-item>
+              </core-menu>
+            </paper-dropdown>
+          </paper-dropdown-menu>
+          <paper-icon-button class="lm" on-tap="{{tempDown}}" disabled?="{{device.hvac_mode == 'off'}}" icon="expand-more"></paper-icon-button>
+          <div class="acTemp" disabled?="{{device.hvac_mode == 'off'}}">{{device.target_temperature_f}}</div>
+          <paper-icon-button class="rm" on-tap="{{tempUp}}" disabled?="{{device.hvac_mode == 'off'}}" icon="expand-less"></paper-icon-button>
         </li>
       </template>
     </ul>
@@ -68,61 +74,61 @@
       created: function() {
         this.devices = [];
         var self = this;
-        fb.child('state/hvac').on('value', function(snapshot) {
+        fb.child('state/nest/devices/thermostats').on('value', function(snapshot) {
           var val = snapshot.val();
-          var devices = [
-            {label: 'Living Room', command: 'LR_AC', id: 'LR', temp: val.LR.temperature},
-            {label: 'Kitchen', command: 'KI_AC', id: 'KI', temp: val.KI.temperature},
-            {label: 'Bed Room', command: 'BR_AC', id: 'BR', temp: val.BR.temperature}
-          ];
-          self.devices = devices;
+          if (val) {
+            var devices = [];
+            var keys = Object.keys(val);
+            for (var i = 0; i < keys.length; i++) {
+              var k = keys[i];
+              var thermostat = val[k];
+              thermostat.key = k;
+              devices.push(thermostat);
+            }
+            self.devices = devices;
+            console.log('Nest HVAC', devices);
+          }
         });
-      },
-      fastCool: function(event, details, sender) {
-        var cmd = {
-          command: 'FAST_COOL'
-        };
-        window.lastEvent = Date.now();
-        console.log('fastCool', cmd);
-        fb.child('commands').push(cmd);
-      },
-      toggleAC: function(event, details, sender) {
-        var device = sender.templateInstance.model.device;
-        var cmd = {
-          command: device.command
-        };
-        if (device.temp === 0) {
-          device.temp = 72;
-        } else {
-          cmd.modifier = 'OFF';
-          device.temp = 0;
-        }
-        window.lastEvent = Date.now();
-        console.log('toggleAC', cmd);
-        fb.child('commands').push(cmd);
-      },
-      tempUp: function(event, details, sender) {
-        var newTemp = sender.templateInstance.model.device.temp + 1;
-        sender.templateInstance.model.device.temp = newTemp;
-        var cmd = {
-          command: sender.templateInstance.model.device.command,
-          modifier: 'UP'
-        };
-        window.lastEvent = Date.now();
-        console.log('tempUp', cmd);
-        fb.child('commands').push(cmd);
+        // var f1 = {name: 'LR', hvac_mode: 'off', target_temperature_f: 72, ambient_temperature_f: 68};
+        // self.devices.push(f1);
+        // var f2 = {name: 'BR', hvac_mode: 'heat-cool', target_temperature_f: 72, ambient_temperature_f: 70};
+        // self.devices.push(f2);
       },
       tempDown: function(event, details, sender) {
-        var newTemp = sender.templateInstance.model.device.temp - 1;
-        sender.templateInstance.model.device.temp = newTemp;
+        var thermostat = sender.templateInstance.model.device;
+        thermostat.target_temperature_f -= 1;
         var cmd = {
-          command: sender.templateInstance.model.device.command,
-          modifier: 'DOWN'
+          thermostat: thermostat.key,
+          targetTemperature: thermostat.target_temperature_f
         };
-        window.lastEvent = Date.now();
-        console.log('tempDown', cmd);
         fb.child('commands').push(cmd);
+        console.log('tempDown', cmd);
+        window.lastEvent = Date.now();
+      },
+      tempUp: function(event, details, sender) {
+        var thermostat = sender.templateInstance.model.device;
+        thermostat.target_temperature_f += 1;
+        var cmd = {
+          thermostat: thermostat.key,
+          targetTemperature: thermostat.target_temperature_f
+        };
+        fb.child('commands').push(cmd);
+        console.log('tempUp', cmd);
+        window.lastEvent = Date.now();
+      },
+      stateChanged: function(event, details, sender) {
+        if (details.isSelected === true) {
+          var thermostat = sender.templateInstance.model.device;
+          var cmd = {
+            thermostat: thermostat.key,
+            mode: thermostat.hvac_state
+          };
+          fb.child('commands').push(cmd);
+          console.log('stateChanged', cmd);
+          window.lastEvent = Date.now();
+        }
       }
+
     });
   </script>
 </polymer-element>
