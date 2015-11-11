@@ -128,7 +128,7 @@
       tapButton: function(event, details, sender) {
         var device = sender.templateInstance.model.device;
         var cmd = {
-          'command': device.command
+          'cmdName': device.command
         };
         if (this.modifier === 'TOGGLE') {
           if (device.isOn === true) {

@@ -45,7 +45,11 @@ function init() {
           fb.child('commands').on('child_added', function(snapshot) {
             try {
               var cmd = snapshot.val();
-              home.executeCommand(cmd.command, cmd.modifier, 'FB');
+              if (cmd.thermostatId) {
+                home.executeCommand({nest: [cmd]});
+              } else {
+                home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
+              }
               snapshot.ref().remove();
             } catch (ex) {
               var failedCmd = JSON.stringify(cmd);

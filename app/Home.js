@@ -71,7 +71,7 @@ function Home(config, fb) {
     try {
       var cmdName = config.keypad.keys[key];
       if (cmdName) {
-        _self.executeCommand(cmdName, modifier, sender);
+        _self.executeCommandByName(cmdName, modifier, sender);
       } else {
         log.warn('[HOME] Unknown key pressed: ' + key);
       }
@@ -80,13 +80,24 @@ function Home(config, fb) {
     }
   };
 
-  // TODO refactor to executeCommand and executeCommandByName
-  this.executeCommand = function(commandName, modifier, source) {
+  this.executeCommandByName = function(commandName, modifier, source) {
     var result = {};
     var msg = '[HOME] Command received: ' + commandName + ' [' + modifier + ']';
     msg += ' from ' + source;
     log.log(msg);
     var command = getCommandByName(commandName);
+    if (command) {
+      result = _self.executeCommand(command);
+    } else {
+      msg = '[HOME] Command (' + commandName + ') not found.';
+      console.warn(msg);
+      result = {error: msg};
+    }
+    return result;
+  };
+
+  this.executeCommand = function(command, modifier, source) {
+    var result = {};
     if (command.state) {
       setState(command.state);
     }
@@ -160,46 +171,24 @@ function Home(config, fb) {
       }
     }
     if (command.nest) {
-      var thermostatId;
-      var thermostat;
-      try {
-        thermostatId = config.nest.thermostat[command.nest.room];
-        thermostat = _self.state.nest.devices.thermostats[thermostatId];
-      } catch (ex) {
-        log.error('[HOME] Unable to get Nest thermostat state');
-      }
-      if (nest && thermostatId && thermostat) {
-        try {
-          var temperature;
-          var mode;
-
-          /* jshint -W106 */
-          // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-          if (modifier === 'UP') {
-            temperature = thermostat.target_temperature_f + 1;
-            mode = thermostat.hvac_mode;
-          } else if (modifier === 'DOWN') {
-            temperature = thermostat.target_temperature_f - 1;
-            mode = thermostat.hvac_mode;
-          } else if (modifier === 'OFF') {
-            temperature = config.nest.thermostat.defaultTemperature;
-            mode = 'off';
-          } else {
-            temperature = command.nest.temperature;
-            mode = command.nest.mode || 'heat-cool';
-          }
-          // jscs:enable
-          /* jshint +W106 */
-
-          nest.setThermostat(thermostatId, temperature, mode);
-        } catch (ex) {
-          log.exception('[HOME] Nest command failed', ex);
+      command.nest.forEach(function(cmd) {
+        /* jshint -W106 */
+        // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+        var thermostatId = cmd.thermostatId;
+        var mode = cmd.hvac_mode;
+        var temperature = cmd.targetTemperature;
+        var current = _self.state.nest.devices.thermostats[thermostatId];
+        if (modifier === 'OFF') {
+          mode = 'off';
+        } else if (modifier === 'DOWN') {
+          temperature = current.target_temperature_f - 1;
+        } else if (modifier === 'UP') {
+          temperature = current.target_temperature_f + 1;
         }
-      } else {
-        msg = '[HOME] Nest command failed, Nest not ready.';
-        log.warn(msg);
-        result.nest = msg;
-      }
+        setNestThermostat(thermostatId, temperature, mode);
+        /* jshint +W106 */
+        // jscs:enable
+      });
     }
     if (command.harmony) {
       if (harmony) {
@@ -251,10 +240,29 @@ function Home(config, fb) {
    *
    ****************************************************************************/
 
-  this.entryDoor = function(doorName, doorState, source) {
+  function setNestThermostat(thermostatId, targetTemperature, mode) {
+    /* jshint -W106 */
+    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+    if (nest) {
+      var current = _self.state.nest.devices.thermostats[thermostatId];
+      if (!targetTemperature) {
+        targetTemperature = current.target_temperature_f;
+      }
+      if (!mode) {
+        mode = current.hvac_mode;
+      }
+      nest.setTemperature(thermostatId, targetTemperature, mode);
+    } else {
+      log.warn('[HOME] Nest thermostat change failed, Nest not ready.');
+    }
+    /* jshint +W106 */
+    // jscs:enable
+  }
+
+  function entryDoorHandler(doorName, doorState, source) {
     var result = {};
     if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
-      result = _self.executeCommand('DOOR_ENTRY', null, source);
+      result = _self.executeCommandByName('DOOR_ENTRY', null, source);
     }
     fbSet('state/doors/' + doorName, doorState);
     var now = Date.now();
@@ -268,11 +276,7 @@ function Home(config, fb) {
     fbPush('logs/doors', doorLogObj);
     log.log('[HOME] ' + doorName + ' ' + doorState);
     return result;
-  };
-
-  this.hueCommand = function(cmd) {
-    log.todo('[HOME] Hue API Access not yet implemented.');
-  };
+  }
 
   function setDoNotDisturb(val) {
     _self.state.doNotDisturb = val;
@@ -307,7 +311,7 @@ function Home(config, fb) {
         nest.setHome();
       }
     }
-    _self.executeCommand('RUN_ON_' + newState);
+    _self.executeCommandByName('RUN_ON_' + newState);
     return newState;
   }
 
@@ -445,11 +449,11 @@ function Home(config, fb) {
         fbPush('logs/presence', person);
         _self.state.presence = who;
         fbSet('state/presence', who);
-        var cmd = 'PRESENCE_SOME';
+        var cmdName = 'PRESENCE_SOME';
         if (present === 0) {
-          cmd = 'PRESENCE_NONE';
+          cmdName = 'PRESENCE_NONE';
         }
-        _self.executeCommand(cmd, null, 'PRESENCE');
+        _self.executeCommandByName(cmdName, null, 'PRESENCE');
       });
       var fbPresPath = 'config/HomeOnNode/presence/people';
       fb.child(fbPresPath).on('child_added', function(snapshot) {
@@ -559,7 +563,7 @@ function Home(config, fb) {
         fbSet('state/nest', _self.state.nest);
       });
       nest.on('alarm', function(kind, protect) {
-        _self.executeCommand('NEST_ALARM', null, 'NEST-' + protect);
+        _self.executeCommandByName('NEST_ALARM', null, 'NEST-' + protect);
         var alarm = {
           kind: kind,
           protect: protect
@@ -636,7 +640,7 @@ function Home(config, fb) {
       _self.state.hasNotification = snapshot.val();
       if (snapshot.val() === true) {
         if (_self.state.systemState === 'HOME') {
-          _self.executeCommand('NEW_NOTIFICATION');
+          _self.executeCommandByName('NEW_NOTIFICATION', null, 'HOME');
         }
         log.log('[HOME] New notification received.');
         snapshot.ref().set(false);
@@ -696,14 +700,14 @@ function Home(config, fb) {
       var deviceName = device.name.toUpperCase();
       if (device.kind === 'ENTRY_DOOR') {
         doorState = value === 255 ? 'OPEN' : 'CLOSED';
-        _self.entryDoor(deviceName, doorState, source);
+        entryDoorHandler(deviceName, doorState, source);
       } else if (device.kind === 'DOOR') {
         doorState = value === 255 ? 'OPEN' : 'CLOSED';
         cmdName = 'DOOR_' + deviceName + '-' + doorState;
-        _self.executeCommand(cmdName, null, source);
+        _self.executeCommandByName(cmdName, null, source);
       } else if (device.kind === 'MOTION') {
         cmdName = 'MOTION_' + deviceName;
-        _self.executeCommand(cmdName, null, source);
+        _self.executeCommandByName(cmdName, null, source);
       } else {
         log.warn('[HOME] Unknown ZWave device kind: ' + nodeId);
       }

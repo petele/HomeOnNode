@@ -98,7 +98,7 @@
         var thermostat = sender.templateInstance.model.device;
         thermostat.target_temperature_f -= 1;
         var cmd = {
-          thermostat: thermostat.key,
+          thermostatId: thermostat.key,
           targetTemperature: thermostat.target_temperature_f
         };
         fb.child('commands').push(cmd);
@@ -109,7 +109,7 @@
         var thermostat = sender.templateInstance.model.device;
         thermostat.target_temperature_f += 1;
         var cmd = {
-          thermostat: thermostat.key,
+          thermostatId: thermostat.key,
           targetTemperature: thermostat.target_temperature_f
         };
         fb.child('commands').push(cmd);
@@ -120,7 +120,7 @@
         if (details.isSelected === true) {
           var thermostat = sender.templateInstance.model.device;
           var cmd = {
-            thermostat: thermostat.key,
+            thermostatId: thermostat.key,
             mode: thermostat.hvac_state
           };
           fb.child('commands').push(cmd);

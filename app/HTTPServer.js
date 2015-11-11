@@ -74,13 +74,13 @@ function HTTPServer(config, home, fb) {
     res.send(home.state);
   });
 
-  exp.post('/execute', function(req, res) {
+  exp.post('/execute/name', function(req, res) {
     var body = req.body;
     if (typeof body === 'string') {
       body = JSON.parse(body);
     }
     var sender = '[HTTP ' + req.ip + ']';
-    var result = home.executeCommand(body.command, body.modifier, sender);
+    var result = home.executeCommandByName(body.cmdName, body.modifier, sender);
     res.send(result);
   });
 

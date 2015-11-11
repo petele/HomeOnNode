@@ -37,7 +37,7 @@
       },
       tapButton: function(event, details, sender) {
         var cmd = {
-          command: sender.templateInstance.model.device.command
+          cmdName: sender.templateInstance.model.device.command
         };
         this.pushedActivity = sender.templateInstance.model.device.harmony;
         window.lastEvent = Date.now();

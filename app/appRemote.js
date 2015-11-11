@@ -15,7 +15,7 @@ var config;
 log.appStart('Remote', false);
 
 function sendCommand(command, path) {
-  path = path || '/execute';
+  path = path || '/execute/name';
   var uri = {
     'host': config.controller.ip,
     'port': config.controller.port,
@@ -57,7 +57,7 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
           var cmdName = config.keypad.keys[key];
           if (cmdName) {
             var cmd = {
-              command: cmdName,
+              cmdName: cmdName,
               modifier: modifier
             };
             sendCommand(cmd);
