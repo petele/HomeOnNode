@@ -128,13 +128,13 @@ function Home(config, fb) {
           }
         });
       } else {
-        msg = '[HOME] Hue command failed, Hue not ready.';
-        log.warn(msg);
-        result.hue = msg;
+        result.hue = '[HOME] Hue command failed, Hue not ready.';
+        log.warn(result.hue);
       }
     }
     if (command.zwave) {
       if (zwave) {
+        result.zwave = [];
         var keys = Object.keys(command.zwave);
         keys.forEach(function(k) {
           var onOff = command.zwave[k];
@@ -142,36 +142,37 @@ function Home(config, fb) {
             onOff = false;
           }
           try {
-            zwave.setNodeBinary(k, onOff);
+            result.zwave.push(zwave.setNodeBinary(k, onOff));
           } catch (ex) {
             log.exception('[HOME] ZWave command failed', ex);
+            result.zwave.push({zwave: k, onOff: onOff, error: ex});
           }
         });
       } else {
-        var msg = '[HOME] ZWave command failed, ZWave not ready.';
-        log.warn(msg);
-        result.zwave = msg;
+        result.zwave = '[HOME] ZWave command failed, ZWave not ready.';
+        log.warn(result.zwave);
       }
     }
     if (command.zwaveAdmin) {
       if (zwave) {
         try {
           if (command.zwaveAdmin === 'addDevice') {
-            zwave.addDevice();
+            result.zwaveAdmin = zwave.addDevice();
           } else if (command.zwaveAdmin === 'healNetwork') {
-            zwave.healNetwork();
+            result.zwaveAdmin = zwave.healNetwork();
           }
         } catch (ex) {
           log.exception('[HOME] ZWave AddDevice command failed', ex);
+          result.zwaveAdmin = ex;
         }
       } else {
-        var msg = '[HOME] ZWave command failed, ZWave not ready.';
-        log.warn(msg);
-        result.zwaveAddDevice = msg;
+        result.zwaveAdmin = '[HOME] ZWave command failed, ZWave not ready.';
+        log.warn(result.zwaveAdmin);
       }
     }
     if (command.nest) {
       command.nest.forEach(function(cmd) {
+        result.nest = [];
         /* jshint -W106 */
         // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
         var thermostatId = cmd.thermostatId;
@@ -185,7 +186,7 @@ function Home(config, fb) {
         } else if (modifier === 'UP') {
           temperature = current.target_temperature_f + 1;
         }
-        setNestThermostat(thermostatId, temperature, mode);
+        result.nest.push(setNestThermostat(thermostatId, temperature, mode));
         /* jshint +W106 */
         // jscs:enable
       });
@@ -193,12 +194,14 @@ function Home(config, fb) {
     if (command.harmony) {
       if (harmony) {
         try {
-          harmony.setActivityByName(command.harmony);
+          result.harmony = harmony.setActivityByName(command.harmony);
         } catch (ex) {
           log.exception('[HOME] Harmony activity failed', ex);
+          result.harmony = ex;
         }
       } else {
-        log.warn('[HOME] Harmony activity failed, Harmony not ready.');
+        result.harmony = '[HOME] Harmony activity failed, Harmony not ready.';
+        log.warn(result.harmony);
       }
     }
     if (command.dropcam === true || command.dropcam === false) {
@@ -216,9 +219,8 @@ function Home(config, fb) {
           result.dropcam = ex;
         }
       } else {
-        msg = '[HOME] Nest Cam change failed, Nest cam not ready.';
-        log.warn(msg);
-        result.dropcam = msg;
+        result.dropcam = '[HOME] Nest Cam change failed, Nest cam not ready.';
+        log.warn(result.dropcam);
       }
     }
     if (command.sound) {
@@ -251,7 +253,7 @@ function Home(config, fb) {
       if (!mode) {
         mode = current.hvac_mode;
       }
-      nest.setTemperature(thermostatId, targetTemperature, mode);
+      return nest.setTemperature(thermostatId, targetTemperature, mode);
     } else {
       log.warn('[HOME] Nest thermostat change failed, Nest not ready.');
     }
@@ -679,7 +681,7 @@ function Home(config, fb) {
         _self.state.zwave.ready = true;
         _self.state.zwave.nodes = nodes;
         fbSet('state/zwave', _self.state.zwave);
-        zwaveTimer = setInterval(zwaveTimerTick, 3000);
+        zwaveTimer = setInterval(zwaveTimerTick, 30000);
       });
       zwave.on('node_event', zwaveEvent);
       zwave.on('node_value_change', zwaveSaveNodeValue);
@@ -786,24 +788,21 @@ function Home(config, fb) {
       log.log('[HOME] Config file updated.');
       fs.writeFile('config.json', JSON.stringify(config, null, 2));
     });
-    fb.child('state/systemState').once('value', function(snapshot) {
-      var previousState;
-      try {
-        previousState = snapshot.val();
-      } catch (ex) {
-        log.exception('[HOME] Unable to read state.', ex);
-        previousState = null;
-      }
-      if (previousState === 'HOME' || previousState === 'AWAY') {
-        log.log('[HOME] Set state based on previous setting: ' + previousState);
-        _self.state.systemState = previousState;
+    fb.child('state').once('value', function(snapshot) {
+      var previous = snapshot.val();
+      if (previous) {
+        if (previous.sysetmState === 'ARMED' || !previous.systemState) {
+          setState('AWAY');
+        } else {
+          _self.state.sysetmState = previous.systemState;
+        }
+        if (previous.doNotDisturb === true) {
+          _self.state.doNotDisturb = true;
+        }
       } else {
-        log.log('[HOME] Previous state unavailable: ' + previousState);
+        log.warn('[HOME] Unable to load previous state.');
         setState('AWAY');
       }
-    }, function(err) {
-      log.exception('[HOME] Unable to retreive previous state.', err);
-      setState('AWAY');
     });
     initOutsideTemp();
     initNotifications();
