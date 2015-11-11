@@ -29,6 +29,12 @@ function Home(config, fb) {
   var armingTimer;
   var zwaveTimer;
 
+  /*****************************************************************************
+   *
+   * Primary commands
+   *
+   ****************************************************************************/
+
   function getCommandByName(commandName) {
     var result = config.commands[commandName];
     if (result) {
@@ -239,7 +245,12 @@ function Home(config, fb) {
     return result;
   };
 
-  //Updated
+  /*****************************************************************************
+   *
+   * Primary command helpers
+   *
+   ****************************************************************************/
+
   this.entryDoor = function(doorName, doorState, source) {
     var result = {};
     if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
@@ -263,7 +274,64 @@ function Home(config, fb) {
     log.todo('[HOME] Hue API Access not yet implemented.');
   };
 
-  //Updated
+  function setDoNotDisturb(val) {
+    _self.state.doNotDisturb = val;
+    fbSet('state/doNotDisturb', val);
+    log.debug('[HOME] Do Not Disturb set to: ' + val);
+  }
+
+  function setState(newState) {
+    if (armingTimer) {
+      clearTimeout(armingTimer);
+      armingTimer = null;
+    }
+    var armingDelay = config.armingDelay || 90000;
+    if (newState === 'ARMED') {
+      armingTimer = setTimeout(function() {
+        armingTimer = null;
+        setState('AWAY');
+      }, armingDelay);
+    }
+    if (_self.state.systemState === newState) {
+      log.warn('[HOME] State already set to ' + newState);
+      return;
+    }
+    _self.state.systemState = newState;
+    fbSet('state/systemState', newState);
+    fbPush('logs/systemState', {'date': Date.now(), 'state': newState});
+    log.log('[HOME] State changed to: ' + newState);
+    if (nest) {
+      if (newState === 'AWAY' || newState === 'ARMED') {
+        nest.setAway();
+      } else {
+        nest.setHome();
+      }
+    }
+    _self.executeCommand('RUN_ON_' + newState);
+    return newState;
+  }
+
+  function playSound(file) {
+    if (_self.state.doNotDisturb === false) {
+      setTimeout(function() {
+        var cmd = 'mplayer ';
+        cmd += file;
+        exec(cmd, function(error, stdout, stderr) {
+          if (error) {
+            log.exception('[HOME] PlaySound Error', error);
+          }
+        });
+        log.debug('[HOME] PlaySound: ' + file);
+      }, 1);
+    }
+  }
+
+  /*****************************************************************************
+   *
+   * Firebase & Log Helpers
+   *
+   ****************************************************************************/
+
   function fbPush(path, value) {
     var fbObj = fb;
     if (path) {
@@ -282,7 +350,6 @@ function Home(config, fb) {
     }
   }
 
-  //Updated
   function fbSet(path, value) {
     var fbObj = fb;
     if (path) {
@@ -320,61 +387,12 @@ function Home(config, fb) {
     return result;
   }
 
-  function setDoNotDisturb(val) {
-    _self.state.doNotDisturb = val;
-    fbSet('state/doNotDisturb', val);
-    log.debug('[HOME] Do Not Disturb set to: ' + val);
-  }
+  /*****************************************************************************
+   *
+   * Outside Temperature - Initialization
+   *
+   ****************************************************************************/
 
-  //Updated
-  function setState(newState) {
-    if (armingTimer) {
-      clearTimeout(armingTimer);
-      armingTimer = null;
-    }
-    var armingDelay = config.armingDelay || 90000;
-    if (newState === 'ARMED') {
-      armingTimer = setTimeout(function() {
-        armingTimer = null;
-        setState('AWAY');
-      }, armingDelay);
-    }
-    if (_self.state.systemState === newState) {
-      log.warn('[HOME] State already set to ' + newState);
-      return;
-    }
-    _self.state.systemState = newState;
-    fbSet('state/systemState', newState);
-    fbPush('logs/systemState', {'date': Date.now(), 'state': newState});
-    log.log('[HOME] State changed to: ' + newState);
-    if (nest) {
-      if (newState === 'AWAY' || newState === 'ARMED') {
-        nest.setAway();
-      } else {
-        nest.setHome();
-      }
-    }
-    _self.executeCommand('RUN_ON_' + newState);
-    return newState;
-  }
-
-  //Updated
-  function playSound(file) {
-    if (_self.state.doNotDisturb === false) {
-      setTimeout(function() {
-        var cmd = 'mplayer ';
-        cmd += file;
-        exec(cmd, function(error, stdout, stderr) {
-          if (error) {
-            log.exception('[HOME] PlaySound Error', error);
-          }
-        });
-        log.debug('[HOME] PlaySound: ' + file);
-      }, 1);
-    }
-  }
-
-  //Updated
   function initOutsideTemp() {
     _self.state.temperature = _self.state.temperature || {};
     var url = 'https://publicdata-weather.firebaseio.com/';
@@ -397,6 +415,12 @@ function Home(config, fb) {
       log.debug('[HOME] Sunset is at ' + _self.state.time.sunset_);
     });
   }
+
+  /*****************************************************************************
+   *
+   * Presence - Initialization & Shut Down
+   *
+   ****************************************************************************/
 
   function initPresence() {
     try {
@@ -460,7 +484,12 @@ function Home(config, fb) {
     fbSet('state/presence', null);
   }
 
-  //Updated
+  /*****************************************************************************
+   *
+   * Harmony - Initialization & Shut Down
+   *
+   ****************************************************************************/
+
   function initHarmony() {
     try {
       harmony = new Harmony(Keys.harmony.key);
@@ -502,7 +531,12 @@ function Home(config, fb) {
     fbSet('state/harmony', null);
   }
 
-  //Updated
+  /*****************************************************************************
+   *
+   * Nest - Initialization & Shut Down
+   *
+   ****************************************************************************/
+
   function initNest() {
     try {
       nest = new Nest();
@@ -547,7 +581,12 @@ function Home(config, fb) {
     fbSet('state/nest', null);
   }
 
-  //Updated
+  /*****************************************************************************
+   *
+   * Hue - Initialization & Shut Down
+   *
+   ****************************************************************************/
+
   function initHue() {
     try {
       hue = new Hue(Keys.hueBridge.key);
@@ -586,7 +625,12 @@ function Home(config, fb) {
     fbSet('state/hue', null);
   }
 
-  //Updated
+  /*****************************************************************************
+   *
+   * Notifications - Initialization & Shut Down
+   *
+   ****************************************************************************/
+
   function initNotifications() {
     fb.child('state/hasNotification').on('value', function(snapshot) {
       _self.state.hasNotification = snapshot.val();
@@ -599,6 +643,12 @@ function Home(config, fb) {
       }
     });
   }
+
+  /*****************************************************************************
+   *
+   * ZWave - Initialization, Shut Down & Event handlers
+   *
+   ****************************************************************************/
 
   function initZWave() {
     try {
@@ -707,6 +757,12 @@ function Home(config, fb) {
     fbSet('state/zwave', null);
   }
 
+  /*****************************************************************************
+   *
+   * Main App - Initialization & Shut Down
+   *
+   ****************************************************************************/
+
   function init() {
     log.init('[HOME] Initializing home.');
     var now = Date.now();
@@ -759,7 +815,6 @@ function Home(config, fb) {
     playSound(config.readySound);
   }
 
-  //Updated
   this.shutdown = function() {
     shutdownHarmony();
     shutdownHue();
