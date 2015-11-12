@@ -1,0 +1,140 @@
+<link rel="import" href="/bower_components/polymer/polymer.html">
+<link rel="import" href="/bower_components/core-drawer-panel/core-drawer-panel.html">
+<link rel="import" href="/bower_components/core-header-panel/core-header-panel.html">
+<link rel="import" href="/bower_components/core-toolbar/core-toolbar.html">
+<link rel="import" href="/bower_components/paper-button/paper-button.html">
+<link rel="import" href="/bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="/bower_components/paper-dropdown/paper-dropdown.html">
+<link rel="import" href="/bower_components/paper-item/paper-item.html">
+<link rel="import" href="/bower_components/core-menu/core-menu.html">
+
+
+<link rel="import" href="/elements/nav-drawer.html">
+<link rel="import" href="/elements/light-panel.html">
+<link rel="import" href="/elements/media-panel.html">
+<link rel="import" href="/elements/ac-panel.html">
+
+<polymer-element name="switch-panel">
+  <template>
+    <link rel="stylesheet" type="text/css" href="/styles/main.css">
+    <link no-shim href="/styles/pbutton.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/styles/toolbar.css">
+    <style>
+      [drawer] {
+        background-color: #efefef;
+      }
+      paper-toggle-button::shadow #toggleContainer[disabled] {
+        opacity: 0.7 !important;
+      }
+      paper-button {
+        min-height: 112px;
+      }
+    </style>
+
+    <core-drawer-panel id="drawer" forceNarrow="true">
+      <core-header-panel main flex>
+        <core-toolbar class="no-select text-upper">
+          {{switchInfo.label}}
+        </core-toolbar>
+
+        <div class="container" fit>
+          <div layout vertical flex>
+            <paper-dropdown-menu>
+              <paper-dropdown class="dropdown" flex>
+                <core-menu id="coreMenu" selected="_DEFAULT_" class="menu" flex valueattr="modifier">
+                  <paper-item modifier="_DEFAULT_">
+                    Default
+                  </paper-item>
+                  <template repeat="{{modifier in modifiers}}">
+                    <paper-item modifier="{{modifier.command}}">
+                      {{modifier.label}}
+                    </paper-item>
+                  </template>
+                </core-menu>
+              </paper-dropdown>
+            </paper-dropdown-menu>
+            <paper-button flex hidden?="{{!isReady}}" on-tap="{{tapSwitch}}" state='ON' colored?="{{switchState}}" pushed?="{{switchState}}">
+              On
+            </paper-button>
+            <div layout horizontal>
+              <paper-button flex hidden?="{{!switchInfo.isDimmable}}" disabled?="{{!switchState}}" on-tap="{{tapDimmer}}" direction='UP'>
+                Up
+              </paper-button>
+              <paper-button flex hidden?="{{!switchInfo.isDimmable}}" disabled?="{{!switchState}}" on-tap="{{tapDimmer}}" direction='DOWN'>
+                Down
+              </paper-button>
+            </div>
+            <paper-button flex hidden?="{{!isReady}}" on-tap="{{tapSwitch}}" state='OFF' colored?="{{!switchState}}" pushed?="{{!switchState}}">
+              Off
+            </paper-button>
+          </div>
+        </div>
+      </core-header-panel>
+    </core-drawer-panel>
+  </template>
+  <script type="text/javascript">
+    /* jshint browser: true */
+    /* global fb */
+    'use strict';
+
+    Polymer({
+      created: function() {
+        this.isReady = true;
+        this.switchName = window.location.search.replace('?', '');
+        this.switchInfo = {
+          label: 'Loading...',
+          isDimmable: false
+        };
+        this.switchState = false;
+        this.modifiers = [];
+        this.modifierTimer = null;
+        var self = this;
+
+        fb.child('config/HomeOnNode/lightScenes').on('value', function(snapshot) {
+          var newModifiers = [];
+          snapshot.forEach(function(snap) {
+            var cmd = {
+              label: snap.key(),
+              command: snap.key()
+            };
+            newModifiers.push(cmd);
+          });
+          self.modifiers = newModifiers;
+        });
+
+        var fbConfigRoot = 'config/HomeOnNode/commands/';
+        var fbConfigPath = fbConfigRoot + this.switchName;
+        if (fbConfigPath !== fbConfigRoot) {
+          fb.child(fbConfigPath).on('value', function(snapshot) {
+            var lSwitch = snapshot.val();
+            if (lSwitch) {
+              self.switchInfo = lSwitch;
+              self.isReady = true;
+            }
+          });
+        }
+      },
+      tapSwitch: function(event, details, sender) {
+        var newState = sender.getAttribute('state');
+        var cmd = {
+          cmdName: this.switchName
+        };
+        if (newState === 'OFF') {
+          cmd.modifier = 'OFF';
+        } else if (this.$.coreMenu.selected !== '_DEFAULT_') {
+          cmd.modifier = this.$.coreMenu.selected;
+        }
+        this.switchState = newState === 'OFF' ? false : true;
+        console.log('SW', cmd);
+      },
+      tapDimmer: function(event, details, sender) {
+        var direction = sender.getAttribute('direction');
+        var cmd = {
+          cmdName: this.switchName,
+          modifier: direction
+        };
+        console.log('DIMMER', cmd);
+      }
+    });
+  </script>
+</polymer-element>

@@ -59,6 +59,13 @@ handlers:
   secure: always
   login: admin
 
+- url: /switch
+  static_files: switch.html
+  upload: switch.html
+  expiration: "0s"
+  login: admin
+  secure: always
+
 - url: /.*
   static_files: index.html
   upload: index.html
