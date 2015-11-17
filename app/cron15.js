@@ -6,7 +6,7 @@ var cronJob = function() {
   log.debug('[Cron15]');
 
   if (home.state.systemState === 'AWAY') {
-    home.executeCommand('ALL_LIGHTS', 'OFF', 'AWAY_TIMER');
+    home.executeCommand('LIGHTS_ALL', 'OFF', 'AWAY_TIMER');
   }
 };
 

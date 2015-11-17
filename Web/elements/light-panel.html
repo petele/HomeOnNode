@@ -23,12 +23,6 @@
             <paper-item modifier="TOGGLE">
               Toggle
             </paper-item>
-            <paper-item modifier="ON">
-              On
-            </paper-item>
-            <paper-item modifier="OFF">
-              Off
-            </paper-item>
             <template repeat="{{modifier in modifiers}}">
               <paper-item modifier="{{modifier.command}}">
                 {{modifier.label}}
@@ -63,11 +57,14 @@
         fb.child('config/HomeOnNode/lightScenes').on('value', function(snapshot) {
           var newModifiers = [];
           snapshot.forEach(function(snap) {
-            var cmd = {
-              label: snap.key(),
-              command: snap.key()
-            };
-            newModifiers.push(cmd);
+            var ls = snap.val();
+            if (ls.label) {
+              var cmd = {
+                label: ls.label,
+                command: snap.key()
+              };
+              newModifiers.push(cmd);
+            }
           });
           self.modifiers = newModifiers;
         });

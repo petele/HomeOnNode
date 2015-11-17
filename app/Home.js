@@ -46,25 +46,22 @@ function Home(config, fb) {
   }
 
   function getLightSceneByName(sceneName) {
-    var result;
     var defaultScene = {bri: 254, ct: 369, on: true};
-    try {
-      if (sceneName.toUpperCase() === 'OFF') {
-        result = {on: false};
-      } else if (sceneName.toUpperCase() === 'ON') {
-        result = {on: true};
-      } else {
-        result = config.lightScenes[sceneName];
+    sceneName = sceneName.toString();
+    if (sceneName) {
+      try {
+        sceneName = sceneName.toUpperCase();
+        var result = config.lightScenes[sceneName];
+        if (result.hue) {
+          return result.hue;
+        }
+      } catch (ex) {
+        log.error('[HOME] Error retreiving light scene: ' + sceneName);
+        return defaultScene;
       }
-      if (result === undefined || result === null) {
-        log.error('[HOME] Unable to find light scene: ' + sceneName);
-        result = defaultScene;
-      }
-    } catch (ex) {
-      log.exception('[HOME] Error getting light scene:' + sceneName, ex);
-      result = defaultScene;
     }
-    return result;
+    log.warn('[HOME] Could not determine light scene: ' + sceneName);
+    return defaultScene;
   }
 
   this.handleKeyEntry = function(key, modifier, sender) {
@@ -90,7 +87,7 @@ function Home(config, fb) {
       result = _self.executeCommand(command);
     } else {
       msg = '[HOME] Command (' + commandName + ') not found.';
-      console.warn(msg);
+      log.warn(msg);
       result = {error: msg};
     }
     return result;
@@ -107,15 +104,7 @@ function Home(config, fb) {
         command.hue.forEach(function(cmd) {
           var scene;
           if (modifier) {
-            if (modifier === 'UP') {
-              scene = {'bri_inc': 20};
-            } else if (modifier === 'DOWN') {
-              scene = {'bri_inc': -20};
-            } else if (modifier === 'OFF') {
-              scene = {on: false};
-            } else {
-              scene = getLightSceneByName(modifier);
-            }
+            scene = getLightSceneByName(modifier);
           } else {
             scene = getLightSceneByName(cmd.command);
           }
@@ -515,6 +504,14 @@ function Home(config, fb) {
         _self.state.harmony = activity;
         fbSet('state/harmony', _self.state.harmony);
         log.log('[HOME] Harmony activity is: ' + JSON.stringify(activity));
+        var activityLabel = activity.label;
+        if (activityLabel) {
+          var cmdName = 'RUN_ON_H_';
+          activityLabel = activityLabel.replace(/ /g, '_');
+          activityLabel = activityLabel.toUpperCase();
+          cmdName += activityLabel;
+          _self.executeCommandByName(cmdName, null, 'HARMONY');
+        }
       });
       harmony.on('no_hubs_found', shutdownHarmony);
       harmony.on('connection_failed', shutdownHarmony);
