@@ -250,23 +250,28 @@ function Home(config, fb) {
     // jscs:enable
   }
 
-  function entryDoorHandler(doorName, doorState, source) {
-    var result = {};
-    if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
-      result = _self.executeCommandByName('DOOR_ENTRY', null, source);
-    }
+  function handleDoorEvent(doorName, doorState, updateState) {
     fbSet('state/doors/' + doorName, doorState);
     var now = Date.now();
     var doorLogObj = {
       doorName: doorName,
       state: doorState,
-      source: source,
       date: now,
       date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
     };
     fbPush('logs/doors', doorLogObj);
     log.log('[HOME] ' + doorName + ' ' + doorState);
-    return result;
+    if (updateState === true) {
+      if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
+        setState('HOME');
+      }
+    }
+    var cmdName = 'DOOR_' + doorName;
+    var modifier;
+    if (doorState === 'CLOSED') {
+      modifier = 'OFF';
+    }
+    return _self.executeCommandByName(cmdName, modifier);
   }
 
   function setDoNotDisturb(val) {
@@ -695,18 +700,13 @@ function Home(config, fb) {
     if (device) {
       var doorState;
       var cmdName;
-      var source = 'ZWAVE-' + nodeId;
-      var deviceName = device.name.toUpperCase();
-      if (device.kind === 'ENTRY_DOOR') {
+      var deviceName = device.label.toUpperCase();
+      if (device.kind === 'DOOR') {
         doorState = value === 255 ? 'OPEN' : 'CLOSED';
-        entryDoorHandler(deviceName, doorState, source);
-      } else if (device.kind === 'DOOR') {
-        doorState = value === 255 ? 'OPEN' : 'CLOSED';
-        cmdName = 'DOOR_' + deviceName + '-' + doorState;
-        _self.executeCommandByName(cmdName, null, source);
+        handleDoorEvent(deviceName, doorState, device.updateState);
       } else if (device.kind === 'MOTION') {
         cmdName = 'MOTION_' + deviceName;
-        _self.executeCommandByName(cmdName, null, source);
+        _self.executeCommandByName(cmdName, null, deviceName);
       } else {
         log.warn('[HOME] Unknown ZWave device kind: ' + nodeId);
       }
