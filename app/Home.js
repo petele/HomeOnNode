@@ -84,7 +84,7 @@ function Home(config, fb) {
     log.log(msg);
     var command = getCommandByName(commandName);
     if (command) {
-      result = _self.executeCommand(command);
+      result = _self.executeCommand(command, modifier, source);
     } else {
       msg = '[HOME] Command (' + commandName + ') not found.';
       log.warn(msg);
