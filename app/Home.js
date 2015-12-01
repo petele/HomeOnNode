@@ -727,6 +727,15 @@ function Home(config, fb) {
     if (valueId) {
       try {
         valueId = valueId.replace(nodeId + '-', '');
+        if (valueId === '49-1-1') { // Temperature
+          fbSet('state/temperature/' + nodeId, info.value);
+        } else if (valueId === '49-1-5') { // Humidity
+          fbSet('state/temperature/humidity/' + nodeId, info.value);
+        } else if (valueId === '49-1-3') { // Luminance
+          fbSet('state/luminance/' + nodeId, info.value);
+        } else if (valueId === '49-1-27') { // UV
+          fbSet('state/uv/' + nodeId, info.value);
+        }
         _self.state.zwave.nodes[nodeId][valueId] = info;
         var path = 'state/zwave/nodes/' + nodeId + '/' + valueId;
         fbSet(path, info);
