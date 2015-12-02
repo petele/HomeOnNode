@@ -2,7 +2,8 @@
 
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
-var XMPP = require('node-xmpp');
+//var XMPP = require('node-xmpp');
+var XMPP = null;
 var log = require('./SystemLog');
 var HarmonyHubDiscovery = require('harmonyhubjs-discover');
 
