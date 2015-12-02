@@ -2,8 +2,7 @@
 
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
-//var XMPP = require('node-xmpp');
-var XMPP = null;
+var XMPP = require('node-xmpp-client');
 var log = require('./SystemLog');
 var HarmonyHubDiscovery = require('harmonyhubjs-discover');
 
@@ -30,6 +29,7 @@ function Harmony(uuid, ip) {
           domain: '@connect.logitech.com/gatorade.'
         };
         client = new XMPP.Client(_connectionString);
+        client.connection.socket.on('error', handleSocketError);
         client.on('error', handleError);
         client.on('online', handleOnline);
         client.on('stanza', handleStanza);
@@ -80,6 +80,11 @@ function Harmony(uuid, ip) {
     }
   }
 
+  function handleSocketError(err) {
+    log.exception('[HARMONY] Socket Error', err);
+    _self.emit('socket_error', err);
+  }
+
   function handleError(err) {
     log.exception('[HARMONY] Error reported', err);
     _self.close();
@@ -96,6 +101,7 @@ function Harmony(uuid, ip) {
 
   function handleStanza(data) {
     var result;
+    log.debug('[HARMONY] Incoming Stanza: ' + JSON.stringify(data));
     if (data.children.length >= 1) {
       var child = data.children[0];
       if (child.attrs.mime === 'vnd.logitech.harmony/vnd.logitech.harmony.engine?config') {
@@ -170,6 +176,7 @@ function Harmony(uuid, ip) {
   }
 
   function handleConfig(harmonyConfig) {
+    log.debug('[HARMONY] Config: ' + JSON.stringify(harmonyConfig));
     var activities = harmonyConfig.activity;
     _activitiesById = {};
     _activitiesByName = {};
@@ -201,6 +208,7 @@ function Harmony(uuid, ip) {
       return {'error': 'Client not connected'};
     } else {
       log.debug('[HARMONY] getActivity.');
+      // might need to be client.stanza
       var cmd = new XMPP.Element('iq', {'id': _uuid})
         .c('oa', {
           'xmlns': 'connect.logitech.com',
@@ -235,6 +243,16 @@ function Harmony(uuid, ip) {
         }).t(cmdText);
       client.send(cmd);
       return {'action': 'setActivity', 'activityID': activityID};
+    }
+  };
+
+  this.sendCommand = function(commandID) {
+    if (client === undefined) {
+      _self.emit('error', 'Client not connected.');
+      return {'error': 'Client not connected'};
+    } else {
+      log.todo('[HARMONY] sendCommand: ' + commandID);
+      return {'action': 'sendCommand', 'commandID': commandID};
     }
   };
 

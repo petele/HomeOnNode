@@ -165,7 +165,7 @@ function Hue(key, ip) {
           if (diffLights || diffGroups) {
             self.hueLights = hueState.lights;
             self.hueGroups = hueState.groups;
-            self.emit('change', hueState.lights, hueState.groups);
+            self.emit('change', hueState.lights, hueState.groups, hueState);
           }
           self.refreshInterval = self.defaultRefreshInterval;
         }

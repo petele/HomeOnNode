@@ -15,12 +15,12 @@ var httpServer;
 
 var APP_NAME = 'HomeOnNode';
 
-log.appStart(APP_NAME, false);
-
 function init() {
   fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
-  log.setFirebase(fb);
+  log.logToFBRef = fb;
+  log.logToFile = './logs/rpi-system.log';
+  log.appStart(APP_NAME);
 
   log.log('[APP] Reading local config file.');
 

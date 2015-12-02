@@ -88,12 +88,12 @@ function Presence() {
     noble.on('scanStart', function() {
       log.log('[PRESENCE] Noble Scanning Started.');
       nobleStarted = true;
-      self.emit('scanning', false);
+      self.emit('scanStarted', false);
     });
     noble.on('scanStop', function() {
       log.log('[PRESENCE] Noble Scanning Stopped.');
       nobleStarted = false;
-      self.emit('scanning', false);
+      self.emit('scanStopped', false);
     });
     noble.on('discover', sawPerson);
     if (nobleStarted === false) {

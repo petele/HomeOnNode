@@ -3,9 +3,9 @@
 'use strict';
 
 var cronJob = function() {
-  log.debug('[CronDaily]');
+  log.log('[CronDaily]');
   cleanLogs('logs/doors');
-  cleanLogs('logs/logs', 2);
+  cleanLogs('logs/logs', 7);
   cleanLogs('logs/presence');
   cleanLogs('logs/systemState');
 };

@@ -12,7 +12,8 @@ var APP_NAME;
 var fb;
 var config;
 
-log.appStart('Remote', false);
+log.logToFile = './logs/rpi-system.log';
+log.appStart('Remote');
 
 function sendCommand(command, path) {
   path = path || '/execute/name';

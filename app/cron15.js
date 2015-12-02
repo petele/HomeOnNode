@@ -3,10 +3,10 @@
 'use strict';
 
 var cronJob = function() {
-  log.debug('[Cron15]');
+  log.log('[Cron15]');
 
   if (home.state.systemState === 'AWAY') {
-    home.executeCommand('LIGHTS_ALL', 'OFF', 'AWAY_TIMER');
+    home.executeCommandByName('LIGHTS_ALL', 'OFF', 'AWAY_TIMER');
   }
 };
 
