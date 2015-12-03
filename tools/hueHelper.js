@@ -1,31 +1,21 @@
 'use strict';
 
-var HueApi = require('node-hue-api');
-var log = require('./SystemLog');
+var HueApi = require('../app/node_modules/node-hue-api/index').HueApi;
 var Keys = require('../app/Keys').keys;
 
 function handleResponse(err, result) {
   if (err) {
-    log.error(err);
+    console.error(err);
   } else {
-    log.log(result);
+    console.log(result);
   }
 }
 
-var hubIP = '';
+var hubIP = '10.0.0.210';
 var hue = new HueApi(hubIP, Keys.hueBridge.key);
 
-hue.deleteGroup(13, handleResponse);
-hue.deleteGroup(12, handleResponse);
-hue.deleteGroup(11, handleResponse);
-hue.deleteGroup(10, handleResponse);
-hue.deleteGroup(9, handleResponse);
-hue.deleteGroup(8, handleResponse);
-hue.deleteGroup(7, handleResponse);
-hue.deleteGroup(6, handleResponse);
-hue.deleteGroup(5, handleResponse);
-hue.deleteGroup(4, handleResponse);
-hue.deleteGroup(3, handleResponse);
-hue.deleteGroup(2, handleResponse);
-hue.deleteGroup(1, handleResponse);
 
+//hue.createGroup('Sleep', [1,2,3,4,5, 6,7,8,9,10, 11,12,13,14,18,19], handleResponse);
+//hue.createGroup('Front Hall', [1,2,3], handleResponse);
+//hue.createGroup('Front Hall', [1,2,3], handleResponse);
+hue.groups(handleResponse);

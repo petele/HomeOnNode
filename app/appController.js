@@ -19,7 +19,7 @@ function init() {
   fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
   log.logToFBRef = fb;
-  log.logToFile = './logs/rpi-system.log';
+  // log.logToFile = './logs/rpi-system.log';
   log.appStart(APP_NAME);
 
   log.log('[APP] Reading local config file.');

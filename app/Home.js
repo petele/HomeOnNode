@@ -695,7 +695,7 @@ function Home(config, fb) {
           path = valueId;
         }
         var value = info;
-        if (info.value) {
+        if (info.value !== undefined) {
           value = info.value;
         }
         var nodeName = config.zwave[nodeId].label || nodeId;

@@ -2,7 +2,8 @@
 
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
-var XMPP = require('node-xmpp-client');
+//var XMPP = require('node-xmpp-client');
+var XMPP = null;
 var log = require('./SystemLog');
 var HarmonyHubDiscovery = require('harmonyhubjs-discover');
 
@@ -101,7 +102,7 @@ function Harmony(uuid, ip) {
 
   function handleStanza(data) {
     var result;
-    log.debug('[HARMONY] Incoming Stanza: ' + JSON.stringify(data));
+    log.debug('[HARMONY] Incoming Stanza: ' + data.toString());
     if (data.children.length >= 1) {
       var child = data.children[0];
       if (child.attrs.mime === 'vnd.logitech.harmony/vnd.logitech.harmony.engine?config') {
@@ -192,11 +193,12 @@ function Harmony(uuid, ip) {
       return {'error': 'Client not connected'};
     } else {
       log.debug('[HARMONY] getConfig');
-      var cmd = new XMPP.Element('iq', {'id': _uuid})
+      var cmd = new XMPP.Stanza.Iq({'id': _uuid, type: 'get'})
         .c('oa', {
           'xmlns': 'connect.logitech.com',
           'mime': 'vnd.logitech.harmony/vnd.logitech.harmony.engine?config'
         });
+      console.log('getConfig', cmd.toString());
       client.send(cmd);
       return {'action': 'getConfig'};
     }

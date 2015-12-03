@@ -146,7 +146,7 @@ function appStop(receivedFrom) {
 exports.logToFile = _logFile;
 exports.logToFBRef = _fbRef;
 exports.logToConsole = _logToConsole;
-exports.debug = _logDebug;
+exports.isDebug = _logDebug;
 exports.printLogObj = printLogObj;
 exports.log = log;
 exports.error = error;
