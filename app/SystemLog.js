@@ -7,10 +7,37 @@ var gitHead = require('./version');
 var moment = require('moment');
 
 var _appName = 'NOT_SET';
-var _logFile = null;
+var _logFile = './logs/rpi-system.log';
 var _fbRef = null;
-var _logToConsole = true;
 var _logDebug = false;
+
+function setFirebase(fbRef) {
+  if (fbRef) {
+    log('[LOGGER] Firebase logging enabled.');
+  } else {
+    log('[LOGGER] Firebase logging disabled.');
+  }
+  _fbRef = fbRef;
+}
+
+function setLogfile(filename) {
+  if (filename) {
+    log('[LOGGER] Local file logging enabled: ' + filename);
+  } else {
+    log('[LOGGER] Local file logging disabled.');
+  }
+  _logFile = filename;
+}
+
+function setDebug(debug) {
+  if (debug === true) {
+    _logDebug = true;
+    log('[LOGGER] Logger debug level: DEBUG');
+  } else {
+    log('[LOGGER] Logger debug level: NORMAL');
+    _logDebug = false;
+  }
+}
 
 function generateLog(level, message, error) {
   var dt = Date.now();
@@ -61,9 +88,7 @@ function printLogObj(logObj) {
 }
 
 function saveLog(logObj) {
-  if (_logToConsole === true) {
-    printLogObj(logObj);
-  }
+  printLogObj(logObj);
   if (_fbRef) {
     try {
       _fbRef.child('logs/logs').push(logObj);
@@ -143,10 +168,9 @@ function appStop(receivedFrom) {
   saveLog(generateLog('STOP', message));
 }
 
-exports.logToFile = _logFile;
-exports.logToFBRef = _fbRef;
-exports.logToConsole = _logToConsole;
-exports.isDebug = _logDebug;
+exports.setFirebase = setFirebase;
+exports.setLogfile = setLogfile;
+exports.setDebug = setDebug;
 exports.printLogObj = printLogObj;
 exports.log = log;
 exports.error = error;

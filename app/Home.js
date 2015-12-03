@@ -225,6 +225,11 @@ function Home(config, fb) {
     return result;
   };
 
+  this.executeHueCommand = function(path, method, body, source) {
+    // TODO
+    log.todo('[HOME] executeHueCommand NYI');
+  };
+
   /*****************************************************************************
    *
    * Primary command helpers
@@ -251,6 +256,14 @@ function Home(config, fb) {
   }
 
   function handleDoorEvent(doorName, doorState, updateState) {
+    try {
+      if (_self.state.doors[doorName] === doorState) {
+        log.info('[HOME] Door debouncer, door already ' + doorState);
+        return;
+      }
+    } catch (ex) {
+      // NoOp - if the door wasn't set before, it will be now.
+    }
     fbSet('state/doors/' + doorName, doorState);
     var now = Date.now();
     var doorLogObj = {
@@ -650,20 +663,16 @@ function Home(config, fb) {
   function zwaveEvent(nodeId, value) {
     var device = config.zwave[nodeId];
     if (device) {
-      var doorState;
-      var cmdName;
       var deviceName = device.label.toUpperCase();
       if (device.kind === 'DOOR') {
-        doorState = value === 255 ? 'OPEN' : 'CLOSED';
+        var doorState = value === 255 ? 'OPEN' : 'CLOSED';
         handleDoorEvent(deviceName, doorState, device.updateState);
       } else if (device.kind === 'MOTION') {
-        cmdName = 'MOTION_' + deviceName;
+        var cmdName = 'MOTION_' + deviceName;
         _self.executeCommandByName(cmdName, null, deviceName);
       } else {
         log.warn('[HOME] Unknown ZWave device kind: ' + nodeId);
       }
-      var path = 'state/zwave/nodes/' + nodeId + '/lastEvent';
-      fbSet(path, value);
     } else {
       log.warn('[HOME] Unhandled ZWave Event:' + nodeId + ':' + value);
     }

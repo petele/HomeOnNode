@@ -12,7 +12,6 @@ var APP_NAME;
 var fb;
 var config;
 
-log.logToFile = './logs/rpi-system.log';
 log.appStart('Remote');
 
 function sendCommand(command, path) {
@@ -48,6 +47,27 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     fb.child(keypadConfigPath).on('value', function(snapshot) {
       log.log('[REMOTE] Keypad settings updated.');
       config.keypad = snapshot.val();
+    });
+
+    fb.child('config/' + APP_NAME + '/logs').on('value', function(snapshot) {
+      var logSettings = snapshot.val();
+      if (logSettings) {
+        if (logSettings.logLevel === 'DEBUG') {
+          log.setDebug(true);
+        } else {
+          log.setDebug(false);
+        }
+        if (logSettings.toFirebase === true) {
+          log.setFirebase(fb);
+        } else {
+          log.setFirebase(null);
+        }
+        if (logSettings.toFilename && logSettings.toFile === true) {
+          log.setLogfile(logSettings.toFilename);
+        } else {
+          log.setLogfile(null);
+        }
+      }
     });
 
     if ((config.keypad) && (config.keypad.enabled === true)) {

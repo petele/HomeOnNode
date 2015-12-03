@@ -14,16 +14,12 @@ var home;
 var httpServer;
 
 var APP_NAME = 'HomeOnNode';
+log.appStart(APP_NAME);
 
 function init() {
   fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
-  log.logToFBRef = fb;
-  // log.logToFile = './logs/rpi-system.log';
-  log.appStart(APP_NAME);
-
   log.log('[APP] Reading local config file.');
-
   fs.readFile('./config.json', {'encoding': 'utf8'}, function(err, data) {
     if (err) {
       log.exception('[APP] Error reading local config.json', err);
@@ -31,36 +27,60 @@ function init() {
     } else {
       try {
         config = JSON.parse(data);
-        if (config.logToFirebase === true) {
-          log.setFirebase(fb);
-        }
       } catch (ex) {
         log.exception('[APP] Error parsing local config.json ', ex);
         exit('ConfigError', 1);
       }
+
+      fb.child('config/' + APP_NAME + '/logs').on('value', function(snapshot) {
+        var logSettings = snapshot.val();
+        if (logSettings) {
+          if (logSettings.logLevel === 'DEBUG') {
+            log.setDebug(true);
+          } else {
+            log.setDebug(false);
+          }
+          if (logSettings.toFirebase === true) {
+            log.setFirebase(fb);
+          } else {
+            log.setFirebase(null);
+          }
+          if (logSettings.toFilename && logSettings.toFile === true) {
+            log.setLogfile(logSettings.toFilename);
+          } else {
+            log.setLogfile(null);
+          }
+        }
+      });
+
       try {
         home = new Home(config, fb);
-        home.on('ready', function() {
-          httpServer = new HTTPServer(config, home, fb);
-          fb.child('commands').on('child_added', function(snapshot) {
-            try {
-              var cmd = snapshot.val();
-              if (cmd.thermostatId) {
-                home.executeCommand({nest: [cmd]});
-              } else {
-                home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
-              }
-              snapshot.ref().remove();
-            } catch (ex) {
-              var failedCmd = JSON.stringify(cmd);
-              log.error('Unable to execute FireBase Command: ' + failedCmd);
-            }
-          });
-        });
       } catch (ex) {
         log.exception('[APP] Error initializing home modules ', ex);
         exit('HomeInitError', 1);
       }
+
+      home.on('ready', function() {
+        httpServer = new HTTPServer(config, home, fb);
+      });
+
+      fb.child('commands').on('child_added', function(snapshot) {
+        var cmd = null;
+        try {
+          cmd = snapshot.val();
+          if (cmd.cmdName) {
+            home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
+          } else if (cmd.huePath) {
+            home.executeHueCommand(cmd.huePath, cmd.method, cmd.body, 'FB');
+          }
+        } catch (ex) {
+          var msg = '[APP] Unable to execute Firebase Command: ';
+          msg += JSON.stringify(cmd);
+          log.exception(msg, ex);
+        }
+        snapshot.ref().remove();
+      });
+
       try {
         Keypad.listen(config.keypad.modifiers, function(key, modifier, exitApp) {
           if (exitApp) {
