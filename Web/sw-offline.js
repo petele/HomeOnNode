@@ -11,7 +11,7 @@
  limitations under the License.
 */
 
-var OFFLINE_CACHE = 'offline-v1';
+var OFFLINE_CACHE = 'offline-v3';
 var OFFLINE_URL = 'offline.html';
 var OFFLINE_URLS = ['offline.html', '/images/sadpanda.png'];
 

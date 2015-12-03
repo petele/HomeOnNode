@@ -177,7 +177,13 @@
         var newState = sender.getAttribute('state');
         this.state = '';
         this.pushedState = newState;
-        fb.child('commands').push({'command': newState});
+        var pushState;
+        if (newState === 'HOME') {
+          pushState = 'STATE_HOME';
+        } else {
+          pushState = 'STATE_ARMED';
+        }
+        fb.child('commands').push({'cmdName': pushState});
         window.lastEvent = Date.now();
         var self = this;
         setTimeout(function() {
