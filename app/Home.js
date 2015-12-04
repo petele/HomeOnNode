@@ -720,7 +720,7 @@ function Home(config, fb) {
   }
 
   function zwaveTimerTick() {
-    log.debug('[HOME] ZWave Timer Tick');
+    //log.debug('[HOME] ZWave Timer Tick');
     var nodes = zwave.getNode();
     fbSet('state/zwave/nodes', nodes);
   }
