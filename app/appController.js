@@ -72,6 +72,10 @@ function init() {
             home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
           } else if (cmd.huePath) {
             home.executeHueCommand(cmd.huePath, cmd.method, cmd.body, 'FB');
+          } else {
+            var msg = '[APP] Unknown command recieved from Firebase';
+            msg += JSON.stringify(cmd);
+            log.error(msg);
           }
         } catch (ex) {
           var msg = '[APP] Unable to execute Firebase Command: ';

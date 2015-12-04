@@ -198,17 +198,17 @@
       },
       toggleDND: function(event, details, sender) {
         if (sender.checked === true) {
-          fb.child('commands').push({command: 'DO_NOT_DISTURB'});
+          fb.child('commands').push({cmdName: 'DO_NOT_DISTURB'});
         } else {
-          fb.child('commands').push({command: 'DO_NOT_DISTURB', modifier: 'OFF'});
+          fb.child('commands').push({cmdName: 'DO_NOT_DISTURB', modifier: 'OFF'});
         }
         window.lastEvent = Date.now();
       },
       toggleDropcam: function(event, details, sender) {
         if (sender.checked === true) {
-          fb.child('commands').push({command: 'DROPCAM'});
+          fb.child('commands').push({cmdName: 'DROPCAM'});
         } else {
-          fb.child('commands').push({command: 'DROPCAM', modifier: 'OFF'});
+          fb.child('commands').push({cmdName: 'DROPCAM', modifier: 'OFF'});
         }
         window.lastEvent = Date.now();
       }

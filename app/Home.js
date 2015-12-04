@@ -96,10 +96,12 @@ function Home(config, fb) {
   this.executeCommand = function(command, modifier, source) {
     var result = {};
     if (command.state) {
+      log.debug('[HOME] ExecuteCommand:state ' + command.state);
       setState(command.state);
     }
     if (command.hue) {
       if (hue) {
+        log.debug('[HOME] ExecuteCommand:hue');
         result.hue = [];
         command.hue.forEach(function(cmd) {
           var scene;
@@ -123,6 +125,7 @@ function Home(config, fb) {
     }
     if (command.zwave) {
       if (zwave) {
+        log.debug('[HOME] ExecuteCommand:zwave');
         result.zwave = [];
         var keys = Object.keys(command.zwave);
         keys.forEach(function(k) {
@@ -144,6 +147,7 @@ function Home(config, fb) {
     }
     if (command.zwaveAdmin) {
       if (zwave) {
+        log.debug('[HOME] ExecuteCommand:zwaveAdmin');
         try {
           if (command.zwaveAdmin === 'addDevice') {
             result.zwaveAdmin = zwave.addDevice();
@@ -160,6 +164,7 @@ function Home(config, fb) {
       }
     }
     if (command.nest) {
+      log.debug('[HOME] ExecuteCommand:nest');
       command.nest.forEach(function(cmd) {
         result.nest = [];
         /* jshint -W106 */
@@ -182,6 +187,7 @@ function Home(config, fb) {
     }
     if (command.harmony) {
       if (harmony) {
+        log.debug('[HOME] ExecuteCommand:harmony');
         try {
           result.harmony = harmony.setActivityByName(command.harmony);
         } catch (ex) {
@@ -195,6 +201,7 @@ function Home(config, fb) {
     }
     if (command.dropcam === true || command.dropcam === false) {
       if (nest) {
+        log.debug('[HOME] ExecuteCommand:dropcam');
         try {
           if (modifier === 'OFF' || command.dropcam === false) {
             nest.disableCamera();
@@ -213,9 +220,11 @@ function Home(config, fb) {
       }
     }
     if (command.sound) {
+      log.debug('[HOME] ExecuteCommand:sound');
       playSound(command.sound);
     }
     if (command.doNotDisturb === true || command.doNotDisturb === false) {
+      log.debug('[HOME] ExecuteCommand:doNotDisturb');
       if (modifier === 'OFF') {
         command.doNotDisturb = false;
       }
