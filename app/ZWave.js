@@ -152,7 +152,7 @@ function ZWave(ozwConfig) {
         log.debug('[ZWAVE] nodeEvent node[' + nodeId + ']');
         log.debug('  ' + JSON.stringify(value));
         _self.emit('node_event', nodeId, value);
-      }, 100);
+      }, 500);
       _debouncers[nodeId] = debouncer;
     }
     debouncer(nodeId, value);
