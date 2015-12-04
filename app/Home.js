@@ -721,7 +721,8 @@ function Home(config, fb) {
 
   function zwaveTimerTick() {
     log.debug('[HOME] ZWave Timer Tick');
-    // TODO: Check status of lights and anything else we want
+    var nodes = zwave.getNode();
+    fbSet('state/zwave/nodes', nodes);
   }
 
   function shutdownZWave() {

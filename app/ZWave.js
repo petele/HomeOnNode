@@ -475,7 +475,7 @@ function ZWave(ozwConfig) {
     log.log('[ZWAVE] Set node[' + nodeId + '] name to: ' + name);
     if (checkIfReady(true)) {
       try {
-        _zwave.setName(nodeId, name);
+        _zwave.setNodeName(nodeId, name);
         return true;
       } catch (ex) {
         log.exception('[ZWAVE] setNodeName', ex);
