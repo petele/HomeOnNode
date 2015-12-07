@@ -16,7 +16,7 @@ function Hue(key, ip) {
   this.hueSensors = null;
   this.refreshInterval = 1;
   //this.defaultRefreshInterval = 20000;
-  this.defaultRefreshInterval = 3000;
+  this.defaultRefreshInterval = 2000;
   var self = this;
 
   this.setLightState = function(lights, cmd, callback) {
@@ -159,7 +159,7 @@ function Hue(key, ip) {
           path: '/api/' + bridgeKey + '/sensors/' + id + '/state',
           method: 'PUT'
         };
-        var body = {value: val};
+        var body = {flag: val};
         webRequest.request(uri, JSON.stringify(body), function(resp) {
 
         });

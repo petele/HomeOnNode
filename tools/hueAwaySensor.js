@@ -7,7 +7,7 @@ log.setLogfile(null);
 log.setDebug(false);
 
 var hubIP = '10.0.0.210';
-var tapId = 9;
+var tapId = 10;
 
 var sensorUri = {
   host: hubIP,
