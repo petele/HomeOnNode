@@ -5,6 +5,7 @@ var util = require('util');
 var diff = require('deep-diff').diff;
 var hueApi = require('node-hue-api');
 var log = require('./SystemLog');
+var webRequest = require('./webRequest');
 
 function Hue(key, ip) {
   var bridgeKey = key;
@@ -12,8 +13,10 @@ function Hue(key, ip) {
   var hueBridge;
   this.hueLights = null;
   this.hueGroups = null;
+  this.hueSensors = null;
   this.refreshInterval = 1;
-  this.defaultRefreshInterval = 20000;
+  //this.defaultRefreshInterval = 20000;
+  this.defaultRefreshInterval = 3000;
   var self = this;
 
   this.setLightState = function(lights, cmd, callback) {
@@ -148,13 +151,32 @@ function Hue(key, ip) {
     }
   };
 
+  this.setSensorFlag = function(id, val) {
+    if (hueBridge) {
+      try {
+        var uri = {
+          host: bridgeIP,
+          path: '/api/' + bridgeKey + '/sensors/' + id + '/state',
+          method: 'PUT'
+        };
+        var body = {value: val};
+        webRequest.request(uri, JSON.stringify(body), function(resp) {
+
+        });
+        self.hueSensors[id].state.flag = val;
+      } catch (ex) {
+        log.exception('[HUE] Unable to set sensor', ex);
+      }
+    }
+  };
+
   function monitorHue() {
     setTimeout(function() {
       hueBridge.getFullState(function(err, hueState) {
         if (err) {
           log.exception('[HUE] Unable to retrieve light state.', err);
-          if (self.refreshInterval < self.defaultRefreshInterval * 10) {
-            self.refreshInterval += 2500;
+          if (self.refreshInterval < self.defaultRefreshInterval * 20) {
+            self.refreshInterval += 3000;
           } else {
             log.error('[HUE] Exceeded maximum timeout, throwing error.');
             self.emit('error', '[monitorHue] timeout_exceeded');
@@ -162,10 +184,12 @@ function Hue(key, ip) {
         } else {
           var diffLights = diff(self.hueLights, hueState.lights);
           var diffGroups = diff(self.hueGroups, hueState.groups);
-          if (diffLights || diffGroups) {
+          var diffSensors = diff(self.hueSensors, hueState.sensors);
+          if (diffLights || diffGroups || diffSensors) {
             self.hueLights = hueState.lights;
             self.hueGroups = hueState.groups;
-            self.emit('change', hueState.lights, hueState.groups, hueState);
+            self.hueSensors = hueState.sensors;
+            self.emit('change', hueState);
           }
           self.refreshInterval = self.defaultRefreshInterval;
         }

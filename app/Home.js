@@ -596,14 +596,35 @@ function Home(config, fb) {
         log.error('[HOME] No Hue Hubs found.');
         shutdownHue();
       });
-      hue.on('change', function(lights, groups, hueState) {
+      hue.on('change', function(hueState) {
         fbSet('state/hue', hueState);
+        hueAwayToggle(hueState.sensors);
       });
       hue.on('ready', function() {
       });
       hue.on('error', function(err) {
         log.error('[HOME] Hue error occured.' + JSON.stringify(err));
       });
+    }
+  }
+
+  function hueAwayToggle(sensors) {
+    var sensorId = config.hueAwaySensorToggleId;
+    if (sensorId && sensors && sensors[sensorId]) {
+      var sensor = sensors[sensorId];
+      if (sensor.modelid !== 'awayToggler') {
+        log.error('[HOME] Invalid Hue Sensor type for Away Toggler.');
+        return;
+      }
+      if (sensor.state.flag === true) {
+        hue.setSensorFlag(sensorId, false);
+        log.log('[HOME] Stage change triggered by Hue');
+        if (_self.state.systemState === 'HOME') {
+          setState('ARMED');
+        } else {
+          setState('HOME');
+        }
+      }
     }
   }
 

@@ -51,11 +51,11 @@ var button1 = {
   conditions: [
     {
       address: '/sensors/' + tapId + '/state/buttonevent',
-      operator : 'eq',
-      value : '34'
+      operator: 'eq',
+      value: '34'
     }, {
-      address : '/sensors/' + tapId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + tapId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: action1
@@ -65,25 +65,25 @@ var button2 = {
   conditions: [
     {
       address: '/sensors/' + tapId + '/state/buttonevent',
-      operator : 'eq',
-      value : '16'
+      operator: 'eq',
+      value: '16'
     }, {
-      address : '/sensors/' + tapId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + tapId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: action2
 };
-var button3= {
+var button3 = {
   name: tapName + ' - 3',
   conditions: [
     {
       address: '/sensors/' + tapId + '/state/buttonevent',
-      operator : 'eq',
-      value : '17'
+      operator: 'eq',
+      value: '17'
     }, {
-      address : '/sensors/' + tapId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + tapId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: action3
@@ -93,11 +93,11 @@ var button4 = {
   conditions: [
     {
       address: '/sensors/' + tapId + '/state/buttonevent',
-      operator : 'eq',
-      value : '18'
+      operator: 'eq',
+      value: '18'
     }, {
-      address : '/sensors/' + tapId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + tapId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: action4
