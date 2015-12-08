@@ -196,7 +196,6 @@ function Harmony(uuid, ip) {
           'xmlns': 'connect.logitech.com',
           'mime': 'vnd.logitech.harmony/vnd.logitech.harmony.engine?config'
         });
-      console.log('getConfig', cmd.toString());
       client.send(cmd);
       return {'action': 'getConfig'};
     }
@@ -236,7 +235,7 @@ function Harmony(uuid, ip) {
     } else {
       log.log('[HARMONY] setActivity to: ' + activityID);
       var cmdText = 'activityId=' + activityID.toString() + ':timestamp=0';
-      var cmd = new XMPP.Element('iq', {'id': _uuid, 'type': 'get'})
+      var cmd = new XMPP.Stanza.Iq({'id': _uuid, 'type': 'get'})
         .c('oa', {
           'xmlns': 'connect.logitech.com',
           'mime': 'harmony.engine?startactivity'
