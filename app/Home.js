@@ -358,10 +358,14 @@ function Home(config, fb) {
       fbObj = fb.child(path);
     }
     try {
-      fbObj.push(value);
+      fbObj.push(value, function(err) {
+        if (err) {
+          log.exception('[HOME] Unable to push data to Firebase. (CB)', err);
+        }
+      });
       fbSetLastUpdated();
     } catch (ex) {
-      log.exception('[HOME] Unable to PUSH data to firebase.', ex);
+      log.exception('[HOME] Unable to PUSH data to Firebase. (TC)', ex);
     }
   }
 
@@ -374,11 +378,15 @@ function Home(config, fb) {
       if (value === null) {
         fbObj.remove();
       } else {
-        fbObj.set(value);
+        fbObj.set(value, function(err) {
+          if (err) {
+            log.exception('[HOME] Set data failed on path: ' + path, err);
+          }
+        });
       }
       fbSetLastUpdated();
     } catch (ex) {
-      log.exception('[FBSet] Unable to set data on path: ' + path, ex);
+      log.exception('[HOME] Unable to set data on path: ' + path, ex);
     }
   }
 
@@ -736,7 +744,7 @@ function Home(config, fb) {
         var now = new Date();
         var value = {
           date: now,
-          date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+          date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
         };
         value.value = info.value;
         if (info.value === undefined || info.value === null) {
@@ -745,7 +753,7 @@ function Home(config, fb) {
         var nodeName = config.zwave[nodeId].label || nodeId;
         path = 'state/sensor/' + nodeName + '/' + path;
         fbSet(path, value);
-        log.log('[HOME] ZWave - saveNodeValue: ' + path + ': ' + value);
+        log.log('[HOME] ZWave - saveNodeValue: ' + path + ': ' + value.value);
       } catch (ex) {
         log.exception('[HOME] Error in saveNodeValue', ex);
       }

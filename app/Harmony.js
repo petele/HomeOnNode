@@ -234,7 +234,8 @@ function Harmony(uuid, ip) {
       return {'error': 'Client not connected'};
     } else {
       log.log('[HARMONY] setActivity to: ' + activityID);
-      var cmdText = 'activityId=' + activityID.toString() + ':timestamp=0';
+      var cmdText = 'activityId=' + activityID.toString();
+      cmdText += ':timestamp=' + Date.now();
       var cmd = new XMPP.Stanza.Iq({'id': _uuid, 'type': 'get'})
         .c('oa', {
           'xmlns': 'connect.logitech.com',
@@ -245,13 +246,21 @@ function Harmony(uuid, ip) {
     }
   };
 
-  this.sendCommand = function(commandID) {
+  this.sendCommand = function(cmd) {
     if (client === undefined) {
       _self.emit('error', 'Client not connected.');
       return {'error': 'Client not connected'};
     } else {
-      log.todo('[HARMONY] sendCommand: ' + commandID);
-      return {'action': 'sendCommand', 'commandID': commandID};
+      cmd = JSON.stringify(cmd);
+      cmd = cmd.replace(/:/g, '::');
+      var cmdText = 'action=' + cmd + ':status=press';
+      var cmdStanza = new XMPP.Stanza.Iq({iq: _uuid, type: 'get'})
+        .c('oa', {
+          xmlns: 'connect.logitech.com',
+          mime: 'vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'
+        }).t(cmdText);
+      client.send(cmdStanza);
+      return;
     }
   };
 
