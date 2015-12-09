@@ -733,9 +733,14 @@ function Home(config, fb) {
         } else {
           path = valueId;
         }
-        var value = info;
-        if (info.value !== undefined) {
-          value = info.value;
+        var now = new Date();
+        var value = {
+          date: now,
+          date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        };
+        value.value = info.value;
+        if (info.value === undefined || info.value === null) {
+          value.value = info;
         }
         var nodeName = config.zwave[nodeId].label || nodeId;
         path = 'state/sensor/' + nodeName + '/' + path;

@@ -7,26 +7,40 @@ var gitHead = require('./version');
 var moment = require('moment');
 
 var _appName = 'NOT_SET';
-var _logFile = './logs/rpi-system.log';
+var _logToFile = false;
+var _logFileDefault = './logs/rpi-system.log';
+var _logFile = _logFileDefault;
 var _fbRef = null;
 var _logDebug = false;
 
 function setFirebase(fbRef) {
   if (fbRef) {
+    _fbRef = fbRef;
     log('[LOGGER] Firebase logging enabled.');
   } else {
     log('[LOGGER] Firebase logging disabled.');
+    _fbRef = null;
   }
-  _fbRef = fbRef;
 }
 
-function setLogfile(filename) {
-  if (filename) {
-    log('[LOGGER] Local file logging enabled: ' + filename);
+function setFileLogging(val) {
+  if (val === true) {
+    _logToFile = true;
+    log('[LOGGER] Local file logging enabled: ' + _logFile);
   } else {
     log('[LOGGER] Local file logging disabled.');
+    _logToFile = false;
   }
-  _logFile = filename;
+}
+
+function setLogFileName(filename) {
+  if (filename) {
+    _logFile = filename;
+    log('[LOGGER] Saving log information to: ' + filename);
+  } else {
+    _logFile = _logFileDefault;
+    warn('[LOGGER] Log filename not provided, using default');
+  }
 }
 
 function setDebug(debug) {
@@ -91,14 +105,19 @@ function saveLog(logObj) {
   printLogObj(logObj);
   if (_fbRef) {
     try {
-      _fbRef.child('logs/logs').push(logObj);
+      _fbRef.child('logs/logs').push(logObj, function(err) {
+        if (err) {
+          var message = '[LOGGER] Unable to write log to Firebase. (CB)';
+          saveLog(generateLog('ERROR', message, err));
+        }
+      });
     } catch (ex) {
       _fbRef = null;
-      var message = '[LOGGER] Unable to write log to Firebase.';
+      var message = '[LOGGER] Unable to write log to Firebase. (TC)';
       saveLog(generateLog('ERROR', message, ex));
     }
   }
-  if (_logFile) {
+  if (_logToFile === true && _logFile) {
     var formattedLevel = ('     ' + logObj.level).slice(-5);
     var strLog = logObj.date_ + ' | ' + formattedLevel + ' | ';
     strLog += logObj.message;
@@ -107,10 +126,16 @@ function saveLog(logObj) {
       strLog += util.inspect(logObj.error, {showHidden: true, colors: false});
     }
     try {
-      fs.appendFile(_logFile, strLog + '\n');
+      fs.appendFile(_logFile, strLog + '\n', function(err) {
+        if (err) {
+          _logToFile = false;
+          var message = '[LOGGER] Unable to write log file. (CB)';
+          saveLog(generateLog('ERROR', message, err));
+        }
+      });
     } catch (ex) {
-      _logFile = null;
-      var message = '[LOGGER] Unable to write log file.';
+      _logToFile = false;
+      var message = '[LOGGER] Unable to write log file. (TC)';
       saveLog(generateLog('ERROR', message, ex));
     }
   }
@@ -168,8 +193,38 @@ function appStop(receivedFrom) {
   saveLog(generateLog('STOP', message));
 }
 
+function cleanLogs(path, maxAgeDays) {
+  if (!_fbRef) {
+    error('[LOGGER] Cannot clean logs, Firebase reference not set.');
+    return;
+  }
+  if (path.indexOf('logs/') !== 0) {
+    error('[LOGGER] Cannot clean logs, invalid path provided.');
+    return;
+  }
+  maxAgeDays = maxAgeDays || 365;
+  var endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
+  var msg = '[LOGGER] Cleaning logs from (' + path + ') older than ';
+  msg += moment(endAt).format('YYYY-MM-DDTHH:mm:ss.SSS');
+  log(msg);
+  _fbRef.child(path).orderByChild('date').endAt(endAt).once('value',
+    function(snapshot) {
+      var itemsRemoved = 0;
+      snapshot.forEach(function(item) {
+        item.ref().remove();
+        itemsRemoved++;
+      });
+      var msgCompleted = '[LOGGER] Cleaning logs completed. ';
+      msgCompleted += 'Removed: ' + itemsRemoved.toString() + ' items.';
+      log(msgCompleted);
+    }
+  );
+}
+
+exports.cleanLogs = cleanLogs;
 exports.setFirebase = setFirebase;
-exports.setLogfile = setLogfile;
+exports.setLogFileName = setLogFileName;
+exports.setFileLogging = setFileLogging;
 exports.setDebug = setDebug;
 exports.printLogObj = printLogObj;
 exports.log = log;

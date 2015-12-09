@@ -15,7 +15,6 @@ function Hue(key, ip) {
   this.hueGroups = null;
   this.hueSensors = null;
   this.refreshInterval = 1;
-  //this.defaultRefreshInterval = 20000;
   this.defaultRefreshInterval = 2000;
   var self = this;
 

@@ -9,7 +9,7 @@
 
 `sudo apt-get -y install alsa-utils mpg321 mplayer git-core lynx netatalk python-setuptools python-dev python-rpi.gpio bluetooth bluez libbluetooth-dev libcap2-bin libudev-dev libusb-1.0-0-dev`
 
-### Install Node
+### Install Node 0.12
 
 1. `wget http://node-arm.herokuapp.com/node_latest_armhf.deb`
 1. `sudo dpkg -i node_latest_armhf.deb`
@@ -18,8 +18,7 @@
 ### Install Z-Wave
 
 1. Follow instructions from [OpenZWaveShared](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md)
-2. Add
-3. `sudo ldconfig`
+1. `sudo ldconfig`
 
 ### Clone Repo
 
@@ -54,3 +53,15 @@ Edit `/etc/kbd/config` and set:
 		}
 
 Celebrate!
+
+
+### Other notes and resources:
+
+#### Interesting projects
+* [HomeAssistant](https://github.com/balloob/home-assistant/)
+* [Node Sonos](https://github.com/bencevans/node-sonos)
+
+#### Harmony Info
+* [Protocol Guide 1](https://github.com/jterrace/pyharmony/blob/master/PROTOCOL.md)
+* [Protocol Guide 2](https://github.com/swissmanu/harmonyhubjs-client/tree/master/docs/protocol)
+

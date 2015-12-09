@@ -8,11 +8,13 @@ var webRequest = require('./webRequest');
 
 var Keypad = require('./Keypad');
 
-var APP_NAME;
+var APP_NAME = 'REMOTE';
 var fb;
 var config;
 
-log.appStart('Remote');
+log.setLogFileName('./start.log');
+log.setFileLogging(true);
+log.appStart(APP_NAME);
 
 function sendCommand(command, path) {
   path = path || '/execute/name';
@@ -62,10 +64,13 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
         } else {
           log.setFirebase(null);
         }
-        if (logSettings.toFilename && logSettings.toFile === true) {
-          log.setLogfile(logSettings.toFilename);
+        if (logSettings.toFilename) {
+          log.setLogFileName(logSettings.toFilename);
+        }
+        if (logSettings.toFile === true) {
+          log.setFileLogging(true);
         } else {
-          log.setLogfile(null);
+          log.setFileLogging(false);
         }
       }
     });

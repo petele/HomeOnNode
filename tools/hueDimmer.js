@@ -31,17 +31,17 @@ function handleResponse(result) {
 //   '/groups/4/action'
 // ];
 
+// var dimmerName = 'Front Hall';
+// var dimmerId = 12;
+// var lights = [
+//   '/groups/1/action'
+// ];
+
 // var dimmerName = 'Living Room - Rear';
 // var dimmerId = 13;
 // var lights = [
 //   '/groups/3/action',
 //   '/groups/4/action'
-// ];
-
-// var dimmerName = 'Front Hall';
-// var dimmerId = 12;
-// var lights = [
-//   '/groups/1/action'
 // ];
 
 // var dimmerName = 'Front Door';
@@ -50,16 +50,22 @@ function handleResponse(result) {
 //   '/groups/1/action'
 // ];
 
+// var dimmerName = 'Bedside';
+// var dimmerId = 15;
+// var lights = [
+//   '/groups/7/action'
+// ];
+
 var buttonOn = {
   name: dimmerName + ' - ON',
   conditions: [
     {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
-      operator : 'eq',
-      value : '1000'
+      operator: 'eq',
+      value: '1000'
     }, {
-      address : '/sensors/' + dimmerId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: []
@@ -69,11 +75,11 @@ var buttonOff = {
   conditions: [
     {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
-      operator : 'eq',
-      value : '4000'
+      operator: 'eq',
+      value: '4000'
     }, {
-      address : '/sensors/' + dimmerId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: []
@@ -83,11 +89,11 @@ var buttonUp0 = {
   conditions: [
     {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
-      operator : 'eq',
-      value : '2000'
+      operator: 'eq',
+      value: '2000'
     }, {
-      address : '/sensors/' + dimmerId + '/state/lastupdated',
-      operator : 'dx'
+      address:  '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: []
@@ -97,11 +103,11 @@ var buttonUp1 = {
   conditions: [
     {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
-      operator : 'eq',
-      value : '2001'
+      operator: 'eq',
+      value: '2001'
     }, {
-      address : '/sensors/' + dimmerId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: []
@@ -111,11 +117,11 @@ var buttonUp3 = {
   conditions: [
     {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
-      operator : 'eq',
-      value : '2003'
+      operator: 'eq',
+      value: '2003'
     }, {
-      address : '/sensors/' + dimmerId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: []
@@ -125,11 +131,11 @@ var buttonDown0 = {
   conditions: [
     {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
-      operator : 'eq',
-      value : '3000'
+      operator: 'eq',
+      value: '3000'
     }, {
-      address : '/sensors/' + dimmerId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: []
@@ -139,11 +145,11 @@ var buttonDown1 = {
   conditions: [
     {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
-      operator : 'eq',
-      value : '3001'
+      operator: 'eq',
+      value: '3001'
     }, {
-      address : '/sensors/' + dimmerId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: []
@@ -153,11 +159,11 @@ var buttonDown3 = {
   conditions: [
     {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
-      operator : 'eq',
-      value : '3003'
+      operator: 'eq',
+      value: '3003'
     }, {
-      address : '/sensors/' + dimmerId + '/state/lastupdated',
-      operator : 'dx'
+      address: '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
     }
   ],
   actions: []

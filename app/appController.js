@@ -14,6 +14,8 @@ var home;
 var httpServer;
 
 var APP_NAME = 'HomeOnNode';
+log.setLogFileName('./start.log');
+log.setFileLogging(true);
 log.appStart(APP_NAME);
 
 function init() {
@@ -45,10 +47,13 @@ function init() {
           } else {
             log.setFirebase(null);
           }
-          if (logSettings.toFilename && logSettings.toFile === true) {
-            log.setLogfile(logSettings.toFilename);
+          if (logSettings.toFilename) {
+            log.setLogFileName(logSettings.toFilename);
+          }
+          if (logSettings.toFile === true) {
+            log.setFileLogging(true);
           } else {
-            log.setLogfile(null);
+            log.setFileLogging(false);
           }
         }
       });
