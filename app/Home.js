@@ -234,9 +234,12 @@ function Home(config, fb) {
     return result;
   };
 
-  this.executeHueCommand = function(path, method, body, source) {
-    // TODO
-    log.todo('[HOME] executeHueCommand NYI');
+  this.executeHueCommand = function(light, sceneName, source) {
+    var scene = getLightSceneByName(sceneName);
+    var msg = '[HOME] ExecuteHueCommand [' + light + '] to ';
+    msg += sceneName + ' from: ' + source;
+    log.log(msg);
+    return hue.setLightState(light, scene);
   };
 
   /*****************************************************************************

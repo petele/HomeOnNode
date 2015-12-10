@@ -75,8 +75,11 @@ function init() {
           cmd = snapshot.val();
           if (cmd.cmdName) {
             home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
-          } else if (cmd.huePath) {
-            home.executeHueCommand(cmd.huePath, cmd.method, cmd.body, 'FB');
+          } else if (cmd.hueLight) {
+            home.executeHueCommand(cmd.hueLight, cmd.modifier, 'FB');
+          } else if (cmd.hueGroup) {
+            var group = cmd.hueGroup * -1;
+            home.executeHueCommand(group, cmd.modifier, 'FB');
           } else {
             var msg = '[APP] Unknown command recieved from Firebase';
             msg += JSON.stringify(cmd);
