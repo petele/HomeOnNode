@@ -239,7 +239,7 @@ function Home(config, fb) {
     var msg = '[HOME] ExecuteHueCommand [' + light + '] to ';
     msg += sceneName + ' from: ' + source;
     log.log(msg);
-    return hue.setLightState(light, scene);
+    return hue.setLightState([light], scene);
   };
 
   /*****************************************************************************
