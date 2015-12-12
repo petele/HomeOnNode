@@ -1,0 +1,74 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="nest-cam">
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+    </style>
+      <firebase-document id="fbCameraList" data="{{cameras}}">
+      </firebase-document>
+      <firebase-document id="fbCamera" data="{{camera}}">
+      </firebase-document>
+
+      <paper-toggle-button id="ptBut" checked="[[isStreaming]]" on-change="onChange">
+        NestCam
+      </paper-toggle-button>
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'nest-cam',
+        state: 'state/doNotDisturb',
+        commandName: 'NOOP',
+        ready: function() {
+          this.isStreaming = false;
+          this.cameraPath = window.fbURL + 'state/nest/devices/cameras';
+          this.$.fbCameraList.location = this.cameraPath;
+        },
+        observers: [
+          'cameraListChange(cameras)',
+          'cameraChange(camera)'
+        ],
+        cameraListChange: function(value) {
+          var keys = Object.keys(value);
+          if (keys.length >= 1) {
+            this.$.fbCameraList.disconnect();
+            var path = this.cameraPath + '/' + keys[0];
+            this.$.fbCamera.location = path;
+          }
+        },
+        cameraChange: function(camera) {
+          /* jshint -W106 */
+          // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+          if (camera.is_streaming === true) {
+            /* jshint +W106 */
+            // jscs:enable
+            this.isStreaming = true;
+          } else {
+            this.isStreaming = false;
+          }
+        },
+        onChange: function() {
+          var cmd = {cmdName: 'DROPCAM'};
+          var newState = this.$.ptBut.checked;
+          if (newState === false) {
+            cmd.modifier = 'OFF';
+          }
+          window.sendCommand(cmd);
+        }
+      });
+    })();
+  </script>
+</dom-module>

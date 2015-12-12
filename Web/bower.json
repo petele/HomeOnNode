@@ -1,26 +1,22 @@
 {
-  "name": "scratch2",
-  "version": "0.0.0",
-  "authors": [
-    "Pete LePage <pete.lepage@pobox.com>"
-  ],
-  "license": "MIT",
-  "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests"
-  ],
+  "name": "polymer-starter-kit",
+  "private": true,
   "dependencies": {
-    "polymer": "Polymer/polymer#^0.5.4",
-    "firebase": "~2.2.2",
-    "core-animated-pages": "Polymer/core-animated-pages#^0.5.5",
-    "core-list": "Polymer/core-list#^0.5.5",
-    "paper-elements": "Polymer/paper-elements#^0.5.5",
-    "core-ajax": "Polymer/core-ajax#^0.5.5",
-    "core-elements": "Polymer/core-elements#^0.5.5",
-    "moment": "~2.9.0",
-    "paper-toast": "Polymer/paper-toast#^0.5.5"
+    "iron-elements": "PolymerElements/iron-elements#^1.0.0",
+    "neon-elements": "PolymerElements/neon-elements#^1.0.0",
+    "page": "visionmedia/page.js#~1.6.4",
+    "paper-elements": "PolymerElements/paper-elements#^1.0.1",
+    "platinum-elements": "PolymerElements/platinum-elements#^1.1.0",
+    "polymer": "Polymer/polymer#^1.2.0",
+    "paper-menu": "PolymerElements/paper-menu#4fecb43601",
+    "firebase-element": "GoogleWebComponents/firebase-element#~1.0.9",
+    "moment": "~2.10.6"
+  },
+  "devDependencies": {
+    "web-component-tester": "*"
+  },
+  "ignore": [],
+  "resolutions": {
+    "paper-menu": "4fecb43601"
   }
 }

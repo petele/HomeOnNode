@@ -1,0 +1,82 @@
+application: petele-home-automation
+version: 20151209-1
+runtime: python27
+threadsafe: yes
+api_version: 1
+
+handlers:
+- url: /bower_components
+  static_dir: bower_components
+  secure: always
+  login: admin
+
+- url: /elements
+  static_dir: elements
+  secure: always
+  login: admin
+
+- url: /images
+  static_dir: images
+  secure: always
+  login: admin
+
+- url: /scripts
+  static_dir: scripts
+  secure: always
+  login: admin
+
+- url: /styles
+  static_dir: styles
+  secure: always
+  login: admin
+
+- url: /sw-toolbox
+  static_dir: sw-toolbox
+  secure: always
+  login: admin
+
+- url: /favicon.ico
+  static_files: favicon.ico
+  upload: favicon.ico
+  secure: always
+
+- url: /index.build.js
+  static_files: index.build.js
+  upload: index.build.js
+  login: admin
+  secure: always
+
+- url: /index.html
+  static_files: index.html
+  upload: index.html
+  login: admin
+  secure: always
+
+- url: /manifest.json
+  static_files: manifest.json
+  upload: manifest.json
+  secure: always
+
+- url: /robots.txt
+  static_files: robots.txt
+  upload: robots.txt
+  secure: always
+
+- url: /sw-import.js
+  static_files: sw-import.js
+  upload: sw-import.js
+  login: admin
+  secure: always
+
+- url: /
+  static_files: index.html
+  upload: index.html
+  login: admin
+  secure: always
+
+- url: /.*
+  static_files: 404.html
+  upload: 404.html
+  secure: always
+
+

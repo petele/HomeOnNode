@@ -1,0 +1,182 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="my-devices">
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+      paper-material {
+        background-color: white;
+      }
+
+      @media (max-width: 600px) {
+        paper-material {
+          padding: 16px 16px 0 16px;
+        }
+      }
+
+      /* Tablet+ */
+      @media (min-width: 601px) {
+        paper-material {
+          padding: 32px 32px 0 32px;
+        }
+      }
+      paper-card {
+        min-width: 360px;
+      }
+      @media all and (min-width: 0px) and (max-width: 700px) {
+        paper-card { width: 100%; }
+      }
+      @media all and (min-width: 701px) and (max-width: 800px) {
+        paper-card { width: 48%; }
+      }
+      @media all and (min-width: 801px) {
+        paper-card { width: 32%; }
+      }
+      .deviceKey {
+        font-weight: bold;
+      }
+      .label {
+        display: inline-block;
+        width: 50%;
+      }
+      .icon {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        border-radius: 100%;
+      }
+      .online { 
+        color: var(--paper-green-500);
+        background-color: var(--paper-green-500);
+      }
+      .offline { 
+        color: var(--paper-red-500);
+        background-color: var(--paper-red-500);
+      }
+    </style>
+    <firebase-document id="fbLightScenes" data="{{deviceObj}}"
+       location="https://petele-at-home.firebaseio.com/devices">
+      </firebase-document>
+    <paper-material>
+      <h2>devices</h2>
+      <template is="dom-repeat" items="[[devices]]">
+        <paper-card heading="[[item.key]]">
+          <div class="card-content">
+            <div>
+              <span class="label">Status</span>
+              <span class$="[[isOnline(item.online)]]"> </span>
+            </div>
+            <template is="dom-if" if="[[item.host]]">
+            <div>
+              <span class="label">IP Address</span>
+              <span>[[item.host.ipAddress]]</span>
+            </div>
+            </template>
+            <div>
+              <span class="label">Last Updated</span>
+              <span class$="[[isStale(item.heartbeat)]">
+                [[formatDate(item.heartbeat)]]
+              </span>
+            </div>
+            <template is="dom-if" if="[[item.startedAt]]">
+            <div>
+              <span class="label">Started</span>
+              <span>[[formatDate(item.startedAt)]]</span>
+            </div>
+            </template>
+            <template is="dom-if" if="[[item.shutdownAt]]">
+            <div>
+              <span class="label">Shutdown</span>
+              <span>[[formatDate(item.shutdownAt)]]</span>
+            </div>
+            </template>
+            <div>
+              <span class="label">Version</span>
+              <span>[[item.version]]</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            <paper-button action="restart" on-tap="tapAction">Restart</paper-button>
+            <paper-button action="shutdown" on-tap="tapAction">Shutdown</paper-button>
+          </div>
+        </paper-card>
+      </template>
+    </paper-material>
+    <paper-dialog id="dialogConfirm" modal>
+      <h2>[[confirmDevice]]</h2>
+      <p>Are you sure you want to [[confirmAction]] [[confirmDevice]]?</p>
+      <div class="buttons">
+        <paper-button dialog-confirm on-tap="tapConfirm" autofocus>Yes</paper-button>
+        <paper-button dialog-dismiss autofocus>No</paper-button>
+      </div>
+    </paper-dialog>
+
+
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'my-devices',
+        ready: function() {
+          this.devices = [];
+          this.confirmAction = null;
+          this.confirmDevice = null;
+        },
+        observers: [
+          'deviceObjChange(deviceObj)'
+        ],
+        deviceObjChange: function(devObj) {
+          var devices = [];
+          var keys = Object.keys(devObj);
+          keys.forEach(function(key) {
+            var device = devObj[key];
+            device.key = key;
+            devices.push(device);
+          });
+          this.devices = devices;
+        },
+        formatDate: function(value) {
+          return moment(value).format('M/D/YY, h:mm:ss a');
+        },
+        isStale: function(value) {
+          if (((moment() - moment(value)) / 1000) > 120) {
+            return 'offline';
+          }
+          return '';
+        },
+        isOnline: function(value) {
+          if (value === true) {
+            return 'icon online';
+          }
+          return 'icon offline';
+        },
+        tapConfirm: function() {
+          if (this.confirmAction && this.confirmDevice) {
+            var path = 'deviceObj.' + this.confirmDevice;
+            path += '.' + this.confirmAction;
+            this.set(path, true);
+            this.confirmDevice = null;
+            this.confirmAction = null;
+          }
+        },
+        tapAction: function(event) {
+          this.confirmAction = event.srcElement.getAttribute('action');
+          this.confirmDevice = event.model.item.key;
+          this.$.dialogConfirm.open();
+        }
+      });
+    })();
+  </script>
+</dom-module>
