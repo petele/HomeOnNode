@@ -46,13 +46,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding: 0 16px;
         margin: 0;
       }
-
-
   </style>
     <paper-menu class="list">
-      <paper-button panel="devices" on-tap="showPanel">
-        <iron-icon icon="device:devices"></iron-icon>
-        <span>Devices</span>
+      <paper-button panel="hvac" on-tap="showPanel">
+        <iron-icon icon="hardware:toys"></iron-icon>
+        <span>HVAC</span>
       </paper-button>
 
       <paper-button panel="presence" on-tap="showPanel">
@@ -76,12 +74,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </paper-button>
 
       <hr>
+
       <a href="https://home.nest.com/#structures/ec1dea10-787f-11e3-82cb-123139253bf1">
         <iron-icon icon="xmail"></iron-icon>
         <span>Nest Home</span>
       </a>
 
       <hr>
+
+      <paper-button panel="devices" on-tap="showPanel">
+        <iron-icon icon="device:devices"></iron-icon>
+        <span>Devices</span>
+      </paper-button>
 
       <paper-button panel="settings" on-tap="showPanel">
         <iron-icon icon="settings"></iron-icon>
@@ -105,7 +109,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         },
         showPanel: function(event) {
-          var panel = event.srcElement.getAttribute('panel');
+          var elem = event.srcElement;
+          if (elem.tagName === 'SPAN') {
+            elem = elem.parentElement;
+          }
+          var panel = elem.getAttribute('panel');
+          if (!panel) {
+            console.error('No panel defined.');
+          }
           this.selected = panel;
           if (!this.drawer) {
             var dom = Polymer.dom(this.parent);

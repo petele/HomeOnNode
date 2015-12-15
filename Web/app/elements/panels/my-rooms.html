@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 
-<dom-module id="my-settings">
+<dom-module id="my-rooms">
   <template>
     <style include="shared-styles"></style>
     <style>
@@ -31,10 +31,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <paper-material>
-      <h2>Settings</h2>
-
-
-
+      <h2>rooms</h2>
+      <!--
+        room name
+        [icon] 76% Lamp Name [more button]
+        [icon] 76% Lamp Name [more button]
+        [icon] 76% Lamp Name [more button]
+        [scene 1] [scene 2] [scene 3]
+      -->
     </paper-material>
 
   </template>
@@ -44,14 +48,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       'use strict';
 
       Polymer({
-        is: 'my-settings',
+        is: 'my-rooms',
         ready: function() {
-          // var dom = Polymer.dom(this);
-          // var pages = dom.parentNode.children;
-          // for (var i = 0; i < pages.length; i++) {
-          //   var page = pages[i];
-          //   console.log(i, page.getAttribute('name'));
-          // }
         }
       });
     })();

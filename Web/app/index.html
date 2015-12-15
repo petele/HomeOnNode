@@ -34,7 +34,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <!-- endbuild-->
 
   <!-- build:js bower_components/webcomponentsjs/webcomponents-lite.min.js -->
-  <script src="bower_components/webcomponentsjs/webcomponents-lite.js"></script>
+  <script src="bower_components/webcomponentsjs/webcomponents-lite.js">
+  </script>
   <!-- endbuild -->
 
   <!-- will be replaced with elements/elements.vulcanized.html -->
@@ -77,7 +78,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-tab name="home" active>Home</paper-tab>
             <paper-tab name="lights">Lights</paper-tab>
             <paper-tab name="actions">Actions</paper-tab>
-            <paper-tab name="hvac">HVAC</paper-tab>
+            <paper-tab name="rooms">Rooms</paper-tab>
           </paper-tabs>
 
           <!-- <paper-icon-button icon="av:mic">
@@ -98,6 +99,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
             <my-media name="media">
             </my-media>
+
+            <my-rooms name="rooms">
+            </my-rooms>
 
             <my-hvac name="hvac">
             </my-hvac>
@@ -121,23 +125,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </my-settings>
 
           </iron-pages>
-          
-          <paper-dialog>
-            <h2>Header</h2>
-            <paper-dialog-scrollable>
-              Lorem ipsum...
-            </paper-dialog-scrollable>
-            <div class="buttons">
-              <paper-button dialog-dismiss>Cancel</paper-button>
-              <paper-button dialog-confirm>Accept</paper-button>
-            </div>
-          </paper-dialog>
 
         </div>
       </paper-header-panel>
     </paper-drawer-panel>
 
     <fb-auth></fb-auth>
+    <panel-timer selected="{{page}}"></panel-timer>
 
     <!-- Uncomment next block to enable Service Worker support (1/2) -->
     <!--

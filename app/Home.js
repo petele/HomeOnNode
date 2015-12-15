@@ -123,6 +123,18 @@ function Home(config, fb) {
         log.warn(result.hue);
       }
     }
+    if (command.hueScene) {
+      if (hue) {
+        log.debug('[HOME] ExecuteCommand:hueScene');
+        result.hueScene = {scene: command.hueScene};
+        try {
+          hue.activateScene(command.hueScene);
+        } catch (ex) {
+          log.exception('[HOME] Hue Scene failed', ex);
+          result.hueScene.error = ex;
+        }
+      }
+    }
     if (command.zwave) {
       if (zwave) {
         log.debug('[HOME] ExecuteCommand:zwave');
@@ -196,6 +208,20 @@ function Home(config, fb) {
         }
       } else {
         result.harmony = '[HOME] Harmony activity failed, Harmony not ready.';
+        log.warn(result.harmony);
+      }
+    }
+    if (command.harmonyCmd) {
+      if (harmony) {
+        log.debug('[HOME] ExecuteCommand:harmonyCmd');
+        try {
+          result.harmony = harmony.sendCommand(command.harmonyCmd);
+        } catch (ex) {
+          log.exception('[HOME] Harmony command failed', ex);
+          result.harmonyCmd = ex;
+        }
+      } else {
+        result.harmonyCmd = '[HOME] Harmony command failed, Harmony not ready.';
         log.warn(result.harmony);
       }
     }
@@ -296,7 +322,7 @@ function Home(config, fb) {
     if (doorState === 'CLOSED') {
       modifier = 'OFF';
     }
-    return _self.executeCommandByName(cmdName, modifier);
+    return _self.executeCommandByName(cmdName, modifier, 'DOOR_' + doorName);
   }
 
   function setDoNotDisturb(val) {
@@ -330,7 +356,7 @@ function Home(config, fb) {
         nest.setHome();
       }
     }
-    _self.executeCommandByName('RUN_ON_' + newState);
+    _self.executeCommandByName('RUN_ON_' + newState, null, 'SET_STATE');
     return newState;
   }
 

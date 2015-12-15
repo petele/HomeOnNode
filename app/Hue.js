@@ -169,6 +169,19 @@ function Hue(key, ip) {
     }
   };
 
+  this.activateScene = function(sceneId, callback) {
+    if (hueBridge) {
+      try {
+        return hueBridge.activateScene(sceneId, callback);
+      } catch (ex) {
+        log.exception('[HUE] Could not activate scene.', ex);
+        if (callback) {
+          callback(ex, null);
+        }
+      }
+    }
+  };
+
   function monitorHue() {
     setTimeout(function() {
       hueBridge.getFullState(function(err, hueState) {
