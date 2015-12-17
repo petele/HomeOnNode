@@ -36,6 +36,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin-bottom: 1em;
       }
     </style>
+    <firebase-auth id="firebaseWeatherLogin"
+      provider="anonymous"
+      location="https://publicdata-weather.firebaseio.com/">
+    </firebase-auth>
     <firebase-document id="fbInsideTemp" data="{{insideTemp}}">
     </firebase-document>
     <firebase-document id="fbOutsideWeather" data="{{outsideWeather}}">

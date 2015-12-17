@@ -39,20 +39,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // See https://github.com/Polymer/polymer/issues/1381
   window.addEventListener('WebComponentsReady', function() {
     // imports are loaded and elements have been registered
-    var savedPage = localStorage.startPage;
-    if (!savedPage) {
-      savedPage = 'home';
-    }
-    document.getElementsByTagName('paper-tabs')[0].selected = savedPage;
+    // var savedPage = localStorage.startPage;
+    // if (!savedPage) {
+    //   savedPage = 'home';
+    // }
+    // document.getElementsByTagName('paper-tabs')[0].selected = savedPage;
   });
 
   // Scroll page to top and expand header
   app.scrollPageToTop = function() {
-    app.$.headerPanelMain.scrollToTop(true);
+    //app.$.headerPanelMain.scrollToTop(true);
   };
 
   app.closeDrawer = function() {
-    app.$.paperDrawerPanel.closeDrawer();
+    //app.$.paperDrawerPanel.closeDrawer();
   };
 
   window.fbCommandRef = new Firebase(window.fbURL + 'commands');

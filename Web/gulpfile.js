@@ -215,7 +215,7 @@ gulp.task('cache-config', function(callback) {
     'index.html',
     './',
     'bower_components/webcomponentsjs/webcomponents-lite.min.js',
-    '{elements,scripts,styles}/**/*.*'],
+    '{elements,scripts,styles,images}/**/*.*'],
     {cwd: dir}, function(error, files) {
     if (error) {
       callback(error);
@@ -301,7 +301,7 @@ gulp.task('default', ['clean'], function(cb) {
     ['copy', 'styles'],
     'elements',
     ['lint', 'images', 'fonts', 'html'],
-    'vulcanize', // 'cache-config',
+    'vulcanize', 'cache-config',
     cb);
 });
 

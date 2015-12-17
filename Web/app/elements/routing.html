@@ -38,24 +38,39 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     });
 
     page('/', function() {
-      app.route = 'home';
+      app.page = 'home';
     });
 
     page(app.baseUrl, function() {
-      app.route = 'home';
+      app.page = 'home';
     });
 
-    page('/users', function() {
-      app.route = 'users';
+    page('/lights', function() {
+      app.page = 'lights';
     });
 
-    page('/users/:name', function(data) {
-      app.route = 'user-info';
-      app.params = data.params;
+    page('/actions', function() {
+      app.page = 'actions';
     });
 
-    page('/contact', function() {
-      app.route = 'contact';
+    page('/rooms', function() {
+      app.page = 'rooms';
+    });
+
+    page('/lights', function() {
+      app.page = 'lights';
+    });
+
+    page('/hvac', function() {
+      app.page = 'hvac';
+    });
+
+    page('/presence', function() {
+      app.page = 'presence';
+    });
+
+    page('/devices', function() {
+      app.page = 'devices';
     });
 
     // 404
@@ -67,7 +82,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     // add #! before urls
     page({
-      hashbang: true
+      hashbang: false
     });
 
   });
