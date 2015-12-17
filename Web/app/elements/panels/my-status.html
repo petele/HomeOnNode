@@ -33,6 +33,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       .temperature {
         font-size: 1.25em;
+        margin-bottom: 1em;
       }
     </style>
     <firebase-document id="fbInsideTemp" data="{{insideTemp}}">
@@ -52,19 +53,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
       <div class="temperature">
         <template is="dom-if" if="{{outsideTemp}}">
-          <paper-icon-button icon="{{weatherIcon}}">
-          </paper-icon-button>
           <span>{{outsideTemp}}</span>&deg;
-          (<span>{{outsideForecast}}</span>)&deg;
+          <iron-icon src="{{weatherIconNow}}"></iron-icon>
+          (<span>{{outsideForecast}}</span>&deg; 
+          <iron-icon src="{{weatherIconToday}}"></iron-icon>)
         </template>
       </div>
     </div>
     <div class="layout horizontal justified">
-      <fb-toggle state="state/doNotDisturb" 
-        command-name="DO_NOT_DISTURB">Do Not Disturb</fb-toggle>
+      <fb-toggle state="state/doNotDisturb" command-name="DO_NOT_DISTURB">
+        Do Not Disturb
+      </fb-toggle>
       <nest-cam></nest-cam>
     </div>
-    
     <div class="layout horizontal around-justified">
       <home-state></home-state>
     </div>
@@ -80,7 +81,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ready: function() {
           var path = 'state/sensor/LIVINGROOM/temperature/value';
           this.$.fbInsideTemp.location = window.fbURL + path;
-          this.weatherIcon = null;
           this.$.fbOutsideWeather.location = 'https://publicdata-weather.firebaseio.com/newyork';
         },
         observers: [
@@ -88,6 +88,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           'insideTempChange(insideTemp)'
         ],
         weatherChange: function(weather) {
+          var iconNow = weather.currently.icon;
+          iconNow = iconNow.replace('-day', '');
+          iconNow = iconNow.replace('-night', '');
+          var iconToday = weather.daily.icon;
+          iconToday = iconToday.replace('-day', '');
+          iconToday = iconToday.replace('-night', '');
+          this.weatherIconNow = '/images/weather/' + iconNow + '.png';
+          this.weatherIconToday = '/images/weather/' + iconToday + '.png';
           this.outsideTemp = Math.round(weather.currently.temperature);
           this.outsideForecast = Math.round(weather.daily.data[0].temperatureMax);
         },
