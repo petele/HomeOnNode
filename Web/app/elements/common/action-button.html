@@ -22,6 +22,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 0;
         width: 100%;
         height: 100%;
+        background-color: var(--primary-background-color);
+        /*border: 1px solid var(--divider-color);*/
       }
       paper-button.pushed {
         color: var(--light-primary-color);
@@ -37,7 +39,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background: var(--light-primary-color) !important;
       }
     </style>
-      <paper-button id="actionButton" raised on-tap="tapped" class="actionButton">
+      <paper-button id="actionButton" on-tap="tapped" class="actionButton">
         <content></content>
       </paper-button>
   </template>
@@ -68,6 +70,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.$.actionButton.active = false;
             this.$.actionButton.classList.remove('pushed');
           }
+          this.$.actionButton.toggleAttribute('focused', false);
+          this.$.actionButton.toggleClass('keyboard-focus', false);
         },
         tapped: function() {
           if (this.noToggle) {
