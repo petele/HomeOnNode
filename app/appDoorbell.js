@@ -69,18 +69,18 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     });
 
     if (config.doorbell) {
-      var doorbellState = 'RELEASED';
+      var doorbellState = 'UNKNOWN';
       var pin = new Gpio(config.doorbell, 'in', 'both');
       pin.watch(function(error, value) {
         if (error) {
           log.error('[DOORBELL] Error watching doorbell: ' + error);
         }
         log.debug('[DOORBELL] Pin Changed: ' + value);
-        if ((value === 1) && (doorbellState === 'RELEASED')) {
+        if ((value === 1) && (doorbellState !== 'PUSHED')) {
           doorbellState = 'PUSHED';
           log.log('[DOORBELL] Pushed');
           sendCommand({cmdName: 'DOORBELL'});
-        } else if ((value === 0) && (doorbellState === 'PUSHED')) {
+        } else if ((value === 0) && (doorbellState !== 'RELEASED')) {
           doorbellState = 'RELEASED';
           log.log('[DOORBELL] Released');
         } else {

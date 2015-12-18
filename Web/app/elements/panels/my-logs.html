@@ -54,6 +54,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-logs',
         ready: function() {
+          //TODO: handle case where array is longer than 150 items.
           if (this.path) {
             this.logs = [];
             var self = this;
