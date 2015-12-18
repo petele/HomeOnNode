@@ -36,10 +36,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin-bottom: 1em;
       }
     </style>
-    <firebase-auth id="firebaseWeatherLogin"
-      provider="anonymous"
-      location="https://publicdata-weather.firebaseio.com/">
-    </firebase-auth>
     <firebase-document id="fbInsideTemp" data="{{insideTemp}}">
     </firebase-document>
     <firebase-document id="fbOutsideWeather" data="{{outsideWeather}}">
@@ -57,10 +53,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
       <div class="temperature">
         <template is="dom-if" if="{{outsideTemp}}">
-          <span>{{outsideTemp}}</span>&deg;
-          <iron-icon src="{{weatherIconNow}}"></iron-icon>
-          (<span>{{outsideForecast}}</span>&deg; 
-          <iron-icon src="{{weatherIconToday}}"></iron-icon>)
+          <span>[[outsideTemp]]</span>&deg;
+          <iron-icon src="[[weatherIconNow]]"></iron-icon>
+          (<span>[[outsideForecast]]</span>&deg; 
+          <iron-icon src="[[weatherIconToday]]"></iron-icon>)
         </template>
       </div>
     </div>
@@ -85,12 +81,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ready: function() {
           var path = 'state/sensor/LIVINGROOM/temperature/value';
           this.$.fbInsideTemp.location = window.fbURL + path;
-          this.$.fbOutsideWeather.location = 'https://publicdata-weather.firebaseio.com/newyork';
+          this.async(function() {
+            var weatherPath = 'https://publicdata-weather.firebaseio.com/newyork';
+            this.$.fbOutsideWeather.location = weatherPath;
+          }, 500);
         },
         observers: [
           'weatherChange(outsideWeather)',
           'insideTempChange(insideTemp)'
         ],
+        fbLoginHandler: function(event, user) {
+          console.log('fbLoginHandler (Weather)', event, user);
+        },
+        fbErrorHandler: function(a, b, c) {
+          console.warn('fbErrorHandler (Weather)', a, b, c);
+        },
         weatherChange: function(weather) {
           var iconNow = weather.currently.icon;
           iconNow = iconNow.replace('-day', '');

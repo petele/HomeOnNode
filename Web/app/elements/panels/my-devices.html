@@ -13,105 +13,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles"></style>
     <style>
-      paper-material {
-        background-color: white;
-        margin: 16px auto;
-        max-width: 400px;
-      }
-      h2 {
-        margin-top: 0;
-        margin-bottom: 0.25em;
-      }
-
-      @media (max-width: 600px) {
-        paper-material {
-          padding: 16px 16px 0 16px;
-        }
-      }
-
-      /* Tablet+ */
-      @media (min-width: 601px) {
-        paper-material {
-          padding: 32px 32px 0 32px;
-        }
-      }
-      .deviceKey {
-        font-weight: bold;
-      }
-      .label {
-        display: inline-block;
-        width: 50%;
-      }
-      .icon {
-        display: inline-block;
-        width: 1em;
-        height: 1em;
-        border-radius: 100%;
-      }
-      .online { 
-        color: var(--paper-green-500);
-        background-color: var(--paper-green-500);
-      }
-      .offline { 
-        color: var(--paper-red-500);
-        background-color: var(--paper-red-500);
-      }
     </style>
-    <firebase-document id="fbLightScenes" data="{{deviceObj}}"
-       location="https://petele-at-home.firebaseio.com/devices">
-      </firebase-document>
-      <template is="dom-repeat" items="[[devices]]">
-        <paper-material elevation="1">
-          <h2>[[item.key]]</h2>
-          <div>
-            <span class="label">Status</span>
-            <span class$="[[isOnline(item.online)]]"> </span>
-          </div>
-          <template is="dom-if" if="[[item.host]]">
-          <div>
-            <span class="label">IP Address</span>
-            <span>[[item.host.ipAddress]]</span>
-          </div>
-          </template>
-          <div>
-            <span class="label">Last Updated</span>
-            <span class$="[[isStale(item.heartbeat)]">
-              [[formatDate(item.heartbeat)]]
-            </span>
-          </div>
-          <template is="dom-if" if="[[item.startedAt]]">
-          <div>
-            <span class="label">Started</span>
-            <span>[[formatDate(item.startedAt)]]</span>
-          </div>
-          </template>
-          <template is="dom-if" if="[[item.shutdownAt]]">
-          <div>
-            <span class="label">Shutdown</span>
-            <span>[[formatDate(item.shutdownAt)]]</span>
-          </div>
-          </template>
-          <div>
-            <span class="label">Version</span>
-            <span>[[item.version]]</span>
-          </div>
-          <div>
-            <paper-button action="restart" on-tap="tapAction">Restart</paper-button>
-            <paper-button action="shutdown" on-tap="tapAction">Shutdown</paper-button>
-          </div>
-        </paper-material>
-      </template>
-    <!-- </paper-material> -->
-    <paper-dialog id="dialogConfirm" modal>
-      <h2>[[confirmDevice]]</h2>
-      <p>Are you sure you want to [[confirmAction]] [[confirmDevice]]?</p>
-      <div class="buttons">
-        <paper-button dialog-confirm on-tap="tapConfirm" autofocus>Yes</paper-button>
-        <paper-button dialog-dismiss autofocus>No</paper-button>
-      </div>
-    </paper-dialog>
 
-
+    <firebase-collection id="fbDevices" data="{{devices}}"
+      location="https://petele-at-home.firebaseio.com/devices">
+    </firebase-collection>
+    <template is="dom-repeat" items="[[devices]]">
+      <my-device device-id="[[item.__firebaseKey__]]">
+      </my-device>
+    </template>
   </template>
 
   <script>
@@ -121,51 +31,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-devices',
         ready: function() {
-          this.devices = [];
-          this.confirmAction = null;
-          this.confirmDevice = null;
-        },
-        observers: [
-          'deviceObjChange(deviceObj)'
-        ],
-        deviceObjChange: function(devObj) {
-          var devices = [];
-          var keys = Object.keys(devObj);
-          keys.forEach(function(key) {
-            var device = devObj[key];
-            device.key = key;
-            devices.push(device);
-          });
-          this.devices = devices;
-        },
-        formatDate: function(value) {
-          return moment(value).format('M/D/YY, h:mm:ss a');
-        },
-        isStale: function(value) {
-          if (((moment() - moment(value)) / 1000) > 120) {
-            return 'offline';
-          }
-          return '';
-        },
-        isOnline: function(value) {
-          if (value === true) {
-            return 'icon online';
-          }
-          return 'icon offline';
-        },
-        tapConfirm: function() {
-          if (this.confirmAction && this.confirmDevice) {
-            var path = 'deviceObj.' + this.confirmDevice;
-            path += '.' + this.confirmAction;
-            this.set(path, true);
-            this.confirmDevice = null;
-            this.confirmAction = null;
-          }
-        },
-        tapAction: function(event) {
-          this.confirmAction = event.srcElement.getAttribute('action');
-          this.confirmDevice = event.model.item.key;
-          this.$.dialogConfirm.open();
         }
       });
     })();

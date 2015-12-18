@@ -33,17 +33,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // Listen for template bound event to know when bindings
   // have resolved and content has been stamped to the page
   app.addEventListener('dom-change', function() {
-    console.log('Our app is ready to rock!');
+    //console.log('Our app is ready to rock!');
   });
 
   // See https://github.com/Polymer/polymer/issues/1381
   window.addEventListener('WebComponentsReady', function() {
-    // imports are loaded and elements have been registered
-    // var savedPage = localStorage.startPage;
-    // if (!savedPage) {
-    //   savedPage = 'home';
-    // }
-    // document.getElementsByTagName('paper-tabs')[0].selected = savedPage;
+    app.confirmDialog = document.querySelector('#confirmDialog');
   });
 
   // Scroll page to top and expand header
@@ -52,21 +47,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   };
 
   app.closeDrawer = function() {
-    //app.$.paperDrawerPanel.closeDrawer();
+    app.$.paperDrawerPanel.closeDrawer();
   };
 
-  window.fbCommandRef = new Firebase(window.fbURL + 'commands');
-  window.sendCommand = function(cmd) {
-    window.lastInput = Date.now();
-    console.log('[PUSH] Start', cmd);
-    window.fbCommandRef.push(cmd, function(err) {
+  app.fbRoot = new Firebase(window.fbURL);
+  app.fbRoot.authWithCustomToken(window.fbKey, function(err, user) {
+    if (err) {
+      console.warn('fbRoot Auth', err);
+    } else {
+      console.log('fbRoot Auth', user);
+    }
+  });
+  app.fbCommandRef = app.fbRoot.child('commands');
+  app.sendCommand = function(cmd) {
+    app.lastInput = Date.now();
+    console.log('[sendCommand]', cmd);
+    app.fbCommandRef.push(cmd, function(err) {
       if (err) {
-        console.error('[PUSH] Failed', cmd, err);
-      } else {
-        console.log('[PUSH] Completed', cmd);
+        console.error('[sendCommand]', cmd, err);
       }
     });
   };
-  window.lastInput = Date.now();
+  app.lastInput = Date.now();
 
 })(document);

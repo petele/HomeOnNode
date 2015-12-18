@@ -109,16 +109,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <my-devices name="devices">
             </my-devices>
 
-            <my-presence name="presence">
-            </my-presence>
-
-            <my-logs name="logsState" path="state">
+            <my-logs name="presence" path="logs/presence">
             </my-logs>
 
-            <my-logs name="logsDoor" path="door">
+            <my-logs name="logsState" path="logs/systemState">
             </my-logs>
 
-            <my-logs name="logsSystem" path="system">
+            <my-logs name="logsDoor" path="logs/doors">
+            </my-logs>
+
+            <my-logs name="logsSystem" path="logs/logs">
             </my-logs>
 
             <my-settings name="settings">
@@ -130,7 +130,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </paper-header-panel>
     </paper-drawer-panel>
 
-    <fb-auth></fb-auth>
+    <confirm-dialog id="confirmDialog"></confirm-dialog>
+
+    <!-- <fb-auth></fb-auth> -->
     <panel-timer selected="{{page}}"></panel-timer>
     <paper-toast id="toast" duration="6000">
     </paper-toast>

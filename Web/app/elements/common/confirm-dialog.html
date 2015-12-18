@@ -9,45 +9,41 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 
-<dom-module id="fb-toggle">
+<dom-module id="confirm-dialog">
   <template>
     <style include="shared-styles"></style>
     <style>
+      
     </style>
-      <firebase-document id="fbNode" data="{{toggle}}">
-      </firebase-document>
-
-      <paper-toggle-button id="ptBut" checked="[[toggle]]" on-change="onChange">
-        <content></content>
-      </paper-toggle-button>
+    <paper-dialog id="dialog" modal>
+      <h2>[[title]]</h2>
+      <p>[[message]]</p>
+      <div class="buttons">
+        <paper-button dialog-confirm on-tap="tapConfirm">Yes</paper-button>
+        <paper-button dialog-dismiss autofocus on-tap="tapDismiss">No</paper-button>
+      </div>
+    </paper-dialog>
   </template>
 
   <script>
     (function() {
       'use strict';
-
       Polymer({
-        is: 'fb-toggle',
+        is: 'confirm-dialog',
         ready: function() {
-          this.$.fbNode.location = window.fbURL + this.state;
         },
-        onChange: function() {
-          var cmd = {cmdName: this.commandName};
-          var newState = this.$.ptBut.checked;
-          if (newState === false) {
-            cmd.modifier = 'OFF';
-          }
-          app.sendCommand(cmd);
+        open: function() {
+          app.lastInput = Date.now();
+          this.$.dialog.open();
         },
-        properties: {
-          state: {
-            type: String,
-            notify: true
-          },
-          commandName: {
-            type: String,
-            noitfy: true
+        tapConfirm: function() {
+          app.lastInput = Date.now();
+          if (this.onConfirm) {
+            this.onConfirm(this.action);
           }
+        },
+        tapDismiss: function() {
+          app.lastInput = Date.now();
         }
       });
     })();

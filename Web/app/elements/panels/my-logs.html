@@ -31,7 +31,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <paper-material>
-      <h2>logs {{path}}</h2>
+      <h2>Logs ({{path}})</h2>
+
+      <template is="dom-repeat" items="{{logs}}">
+        <div>
+          <span>[[formatDate(item.date)]]</span>
+          <span>[[item.level]]</span>
+          <span>[[item.message]]</span>
+          <span>[[item.state]]</span>
+          <span>[[item.name]]</span>
+        </div>
+      </my-device>
+    </template>
     </paper-material>
 
   </template>
@@ -43,7 +54,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-logs',
         ready: function() {
-        }
+          if (this.path) {
+            this.logs = [];
+            var self = this;
+            app.fbRoot.child(this.path).orderByChild('date').limitToLast(100).on('value',
+              function(snapshot) {
+                snapshot.forEach(function(item) {
+                  self.unshift('logs', item.val());
+                });
+              });
+          }
+        },
+        formatDate: function(value) {
+          return moment(value).format('M/D/YY, h:mm:ss a');
+        },
       });
     })();
   </script>

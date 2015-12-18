@@ -104,7 +104,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         tapAction: function(event) {
           var action = event.model.item;
-          window.sendCommand({cmdName: action.key});
+          app.sendCommand({cmdName: action.key});
         }
       });
     })();

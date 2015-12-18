@@ -31,18 +31,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'fb-auth',
         ready: function() {
-          console.log('fb-auth ready');
-          // this.$.firebaseLogin.location = window.fbURL;
           this.$.firebaseLogin.params = {token: window.fbKey};
           this.$.firebaseLogin.login();
         },
         loginHandler: function(event, user) {
-          console.log('fb-auth login handler', event, user);
+          console.log('fbAuth', event, user);
           this.$.toastFBAuth.text = 'Connected!';
           this.$.toastFBAuth.show();
         },
-        errorHandler: function(a, b, c) {
-          console.log('fb-auth error handler', a, b, c);
+        errorHandler: function(event) {
+          console.warn('fbAuth', event);
           this.$.toastFBAuth.text = event.detail.message;
           this.$.toastFBAuth.show();
         }

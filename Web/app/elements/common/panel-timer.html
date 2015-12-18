@@ -29,16 +29,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.timeout = 180 * 1000;
           var self = this;
           setInterval(function() {
-            var timeSinceLastInput = Date.now() - window.lastInput;
+            var timeSinceLastInput = Date.now() - app.lastInput;
             var onDefaultPanel = self.selected  === self.default;
             if (timeSinceLastInput >= self.timeout && !onDefaultPanel) {
-              window.lastInput = Date.now();
+              app.lastInput = Date.now();
               self.selected = self.default;
             }
           }, 5000);
         },
         onChange: function() {
-          window.lastInput = Date.now();
+          app.lastInput = Date.now();
         },
         observers: [
           'onChange(selected)'

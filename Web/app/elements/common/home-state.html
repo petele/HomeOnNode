@@ -63,10 +63,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         },
         tapAway: function() {
-          window.sendCommand({cmdName: 'STATE_ARMED'});
+          app.sendCommand({cmdName: 'STATE_ARMED'});
         },
         tapHome: function() {
-          window.sendCommand({cmdName: 'STATE_HOME'});
+          app.sendCommand({cmdName: 'STATE_HOME'});
         }
       });
     })();
