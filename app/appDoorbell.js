@@ -11,11 +11,27 @@ var APP_NAME = 'REMOTE';
 var fb;
 var config;
 
+var debounceTimer = null;
+var debounceTimeout = 5000;
+
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
 log.appStart(APP_NAME);
 
-function sendCommand(command, path) {
+function sendCommand(command, path, debounce) {
+  if (debounce === true) {
+    if (debounceTimer) {
+      log.warn('[sendCommand] Debounced');
+      return;
+    } else {
+      debounceTimer = setTimeout(function() {
+        log.debug('[sendCommand] Debounce Timer Cleared.');
+        debounceTimer = null;
+      }, debounceTimeout);
+    }
+  }
+
+
   path = path || '/execute/name';
   var uri = {
     'host': config.controller.ip,
@@ -76,11 +92,11 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
           log.error('[DOORBELL] Error watching doorbell: ' + error);
         }
         log.debug('[DOORBELL] Pin Changed: ' + value);
-        if ((value === 1) && (doorbellState !== 'PUSHED')) {
+        if ((value === 0) && (doorbellState !== 'PUSHED')) {
           doorbellState = 'PUSHED';
           log.log('[DOORBELL] Pushed');
-          sendCommand({cmdName: 'DOORBELL'});
-        } else if ((value === 0) && (doorbellState !== 'RELEASED')) {
+          sendCommand({cmdName: 'DOORBELL'}, null, true);
+        } else if ((value === 1) && (doorbellState !== 'RELEASED')) {
           doorbellState = 'RELEASED';
           log.log('[DOORBELL] Released');
         } else {
