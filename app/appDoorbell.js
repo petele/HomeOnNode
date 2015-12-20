@@ -12,11 +12,10 @@ var fb;
 var config;
 
 var debounceTimer = null;
-var debounceTimeout = 5000;
+var debounceTimeout = 2500;
 
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
-log.appStart(APP_NAME);
 
 function sendCommand(command, path, debounce) {
   if (debounce === true) {
@@ -30,7 +29,6 @@ function sendCommand(command, path, debounce) {
       }, debounceTimeout);
     }
   }
-
 
   path = path || '/execute/name';
   var uri = {
@@ -58,6 +56,7 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
   } else {
     config = JSON.parse(data);
     APP_NAME = config.appName;
+    log.appStart(APP_NAME);
     fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
     fb.child('config/' + APP_NAME + '/logs').on('value', function(snapshot) {
@@ -83,6 +82,10 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
         }
       }
     });
+
+    if (config.debounce) {
+      debounceTimeout = config.debounce;
+    }
 
     if (config.doorbell) {
       var doorbellState = 'UNKNOWN';

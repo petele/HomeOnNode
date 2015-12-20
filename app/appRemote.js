@@ -14,7 +14,6 @@ var config;
 
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
-log.appStart(APP_NAME);
 
 function sendCommand(command, path) {
   path = path || '/execute/name';
@@ -43,6 +42,7 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
   } else {
     config = JSON.parse(data);
     APP_NAME = config.appName;
+    log.appStart(APP_NAME);
     fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
     var keypadConfigPath = 'config/' + config.appName + '/keypad';
