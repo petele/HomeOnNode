@@ -84,6 +84,12 @@ function HTTPServer(config, home, fb) {
     res.send(result);
   });
 
+  exp.post('/doorbell', function(req, res) {
+    var sender = '[HTTP ' + req.ip + ']';
+    var result = home.ringDoorbell(sender);
+    res.send(result);
+  });
+
   exp.use(function(req, res) {
     res.status(404);
     res.send({error: 'Requested URL not found.'});

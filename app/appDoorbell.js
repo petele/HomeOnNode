@@ -9,44 +9,36 @@ var Gpio = require('onoff').Gpio;
 
 var APP_NAME = 'REMOTE';
 var fb;
+var pin;
 var config;
 
 var debounceTimer = null;
-var debounceTimeout = 2500;
+var debounceTimeout = 1500;
 
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
 
-function sendCommand(command, path, debounce) {
-  if (debounce === true) {
-    if (debounceTimer) {
-      log.warn('[sendCommand] Debounced');
-      return;
-    } else {
-      debounceTimer = setTimeout(function() {
-        log.debug('[sendCommand] Debounce Timer Cleared.');
-        debounceTimer = null;
-      }, debounceTimeout);
-    }
+function sendDoorbell() {
+  if (debounceTimer) {
+    log.warn('[sendDoorbell] Debounced.');
+    return;
   }
-
-  path = path || '/execute/name';
+  debounceTimer = setTimeout(function() {
+    log.debug('[sendDoorbell] Debounce timer cleared.');
+    debounceTimer = null;
+  }, debounceTimeout);
   var uri = {
-    'host': config.controller.ip,
-    'port': config.controller.port,
-    'path': path,
-    'method': 'POST'
+    host: config.controller.ip,
+    port: config.controller.port,
+    path: '/doorbell',
+    method: 'POST'
   };
-  if (typeof command === 'object') {
-    command = JSON.stringify(command);
-  }
   try {
-    log.http('REQ', command);
-    webRequest.request(uri, command, function(resp) {
-      log.http('RESP', JSON.stringify(resp));
+    webRequest.request(uri, null, function(resp) {
+      log.http('Response', JSON.stringify(resp));
     });
   } catch (ex) {
-    log.exception('[sendCommand] Failed', ex);
+    log.exception('[sendDoorbell] Failed', ex);
   }
 }
 
@@ -83,31 +75,17 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
       }
     });
 
-    if (config.debounce) {
-      debounceTimeout = config.debounce;
-    }
-
-    if (config.doorbell) {
-      var doorbellState = 'UNKNOWN';
-      var pin = new Gpio(config.doorbell, 'in', 'both');
+    if (config.doorbellPin) {
+      pin = new Gpio(config.doorbellPin, 'in', 'rising');
       pin.watch(function(error, value) {
         if (error) {
           log.error('[DOORBELL] Error watching doorbell: ' + error);
-        }
-        log.debug('[DOORBELL] Pin Changed: ' + value);
-        if ((value === 0) && (doorbellState !== 'PUSHED')) {
-          doorbellState = 'PUSHED';
-          log.log('[DOORBELL] Pushed');
-          sendCommand({cmdName: 'DOORBELL'}, null, true);
-        } else if ((value === 1) && (doorbellState !== 'RELEASED')) {
-          doorbellState = 'RELEASED';
-          log.log('[DOORBELL] Released');
         } else {
-          log.debug('[DOORBELL] Fired for unchanged state.');
+          log.log('[DOORBELL] Pushed');
+          sendDoorbell();
         }
       });
     }
-
   }
 });
 
@@ -115,6 +93,12 @@ function exit(sender, exitCode) {
   exitCode = exitCode || 0;
   log.log('[APP] Starting shutdown process');
   log.log('[APP] Will exit with error code: ' + String(exitCode));
+  if (pin) {
+    log.log('[APP] Unwatching pins');
+    pin.unwatchAll();
+    log.log('[APP] Unexporting GPIO');
+    pin.unexport();
+  }
   setTimeout(function() {
     log.appStop(sender);
     process.exit(exitCode);

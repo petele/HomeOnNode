@@ -296,20 +296,25 @@ function ZWave(ozwConfig) {
     var emit = false;
     /* jshint -W106 */
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    if (info.class_id === 49) {
-      // sensor data
+    if (info.class_id === 48) {
+      // binary sensor 0x30
+      emit = true;
+    } else if (info.class_id === 49) {
+      // sensor multilevel 0x31
+      emit = true;
+    } else if (info.class_id === 113) {
+      // alarm 0x71
       emit = true;
     } else if (info.class_id === 128) {
-      // battery level
-      emit = true;
-    } else if (info.class_id === 113 && info.instance === 1 && info.index === 1) {
-      // tamper alarm
+      // battery level 0x80
       emit = true;
     }
 
     if (emit === true) {
       log.debug('[ZWAVE] emitChange: ' + JSON.stringify(info));
       _self.emit(eventName, info.node_id, info);
+    } else {
+      log.log('[ZWAVE] change not emitted: ' + JSON.stringify(info));
     }
     // jscs:enable
     /* jshint +W106 */

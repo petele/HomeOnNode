@@ -249,6 +249,10 @@ function Home(config, fb) {
       log.debug('[HOME] ExecuteCommand:sound');
       playSound(command.sound);
     }
+    if (command.soundOverride) {
+      log.debug('[HOME] ExecuteCommand:soundOverride');
+      playSound(command.sound, true);
+    }
     if (command.doNotDisturb === true || command.doNotDisturb === false) {
       log.debug('[HOME] ExecuteCommand:doNotDisturb');
       if (modifier === 'OFF') {
@@ -266,6 +270,12 @@ function Home(config, fb) {
     msg += sceneName + ' from: ' + source;
     log.log(msg);
     return hue.setLightState([light], scene);
+  };
+
+  this.ringDoorbell = function(source) {
+    log.log('[HOME] Doorbell');
+    fbSet('state/lastDoorbell', Date.now());
+    return _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
   };
 
   /*****************************************************************************
@@ -305,6 +315,8 @@ function Home(config, fb) {
     fbSet('state/doors/' + doorName, doorState);
     var now = Date.now();
     var doorLogObj = {
+      level: 'INFO',
+      message: doorName + ' door ' + doorState,
       doorName: doorName,
       state: doorState,
       date: now,
@@ -347,7 +359,15 @@ function Home(config, fb) {
       return;
     }
     fbSet('state/systemState', newState);
-    fbPush('logs/systemState', {'date': Date.now(), 'state': newState});
+    var now = Date.now();
+    var stateLog = {
+      level: 'INFO',
+      message: newState,
+      state: newState,
+      date: now,
+      date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
+    };
+    fbPush('logs/systemState', stateLog);
     log.log('[HOME] State changed to: ' + newState);
     if (nest) {
       if (newState === 'AWAY' || newState === 'ARMED') {
@@ -360,8 +380,8 @@ function Home(config, fb) {
     return newState;
   }
 
-  function playSound(file) {
-    if (_self.state.doNotDisturb === false) {
+  function playSound(file, override) {
+    if (_self.state.doNotDisturb === false || override === true) {
       setTimeout(function() {
         var cmd = 'mplayer ';
         cmd += file;
@@ -429,29 +449,19 @@ function Home(config, fb) {
 
   /*****************************************************************************
    *
-   * Outside Temperature - Initialization
+   * Weather - Initialization
    *
    ****************************************************************************/
 
-  function initOutsideTemp() {
+  function initWeather() {
     var url = 'https://publicdata-weather.firebaseio.com/';
     url += config.fbWeatherCity;
     var weatherRef = new Firebase(url);
-    weatherRef.child('currently/temperature').on('value', function(snapshot) {
-      fbSet('state/temperature/outside', snapshot.val());
-      log.debug('[HOME] Outside temperature is ' + snapshot.val() + 'F');
+    weatherRef.child('currently').on('value', function(snapshot) {
+      fbSet('state/weather/now', snapshot.val());
     });
     weatherRef.child('daily/data/0').on('value', function(snapshot) {
-      var snap = snapshot.val();
-      var sun = {
-        rise: snap.sunriseTime * 1000,
-        rise_: moment(snap.sunriseTime * 1000).format(),
-        set: snap.sunsetTime * 1000,
-        set_: moment(snap.sunsetTime * 1000).format()
-      };
-      fbSet('state/time/sun', sun);
-      log.debug('[HOME] Sunrise is at ' + sun.rise_);
-      log.debug('[HOME] Sunset is at ' + sun.set_);
+      fbSet('state/weather/today', snapshot.val());
     });
   }
 
@@ -477,8 +487,15 @@ function Home(config, fb) {
         log.exception('[HOME] Presence error', err);
       });
       presence.on('change', function(person, present, who) {
-        person.date = Date.now();
-        fbPush('logs/presence', person);
+        var presenceLog = {
+          level: 'INFO',
+          message: person.name + ' is ' + person.state,
+          name: person.name,
+          state: person.state,
+          date: person.lastSeen,
+          date_: person.lastSeen_
+        };
+        fbPush('logs/presence', presenceLog);
         fbSet('state/presence', who);
         var cmdName = 'PRESENCE_SOME';
         if (present === 0) {
@@ -539,14 +556,6 @@ function Home(config, fb) {
       harmony.on('activity', function(activity) {
         fbSet('state/harmony', activity);
         log.log('[HOME] Harmony activity is: ' + JSON.stringify(activity));
-        var activityLabel = activity.label;
-        if (activityLabel) {
-          var cmdName = 'RUN_ON_H_';
-          activityLabel = activityLabel.replace(/ /g, '_');
-          activityLabel = activityLabel.toUpperCase();
-          cmdName += activityLabel;
-          _self.executeCommandByName(cmdName, null, 'HARMONY');
-        }
       });
       harmony.on('no_hubs_found', shutdownHarmony);
       harmony.on('connection_failed', shutdownHarmony);
@@ -594,13 +603,11 @@ function Home(config, fb) {
       });
       nest.on('alarm', function(kind, protect) {
         // TODO
-        // _self.executeCommandByName('NEST_ALARM', null, 'NEST-' + protect);
-        // var alarm = {
-        //   kind: kind,
-        //   protect: protect
-        // };
-        // _self.state.nest.lastAlarm = generateLastError('NEST_ALARM', alarm);
-        // fbSet('state/nest', _self.state.nest);
+        var msg = '[HOME] Nest Alarm NYI!!';
+        msg += ' kind: ' + JSON.stringify(kind);
+        msg += ' protect: ' + JSON.stringify(protect);
+        log.warn(msg);
+        _self.executeCommand({soundOverride: 'sounds/bell.mp3'});
       });
       nest.on('ready', function(data) {
         nest.enableListener();
@@ -655,7 +662,7 @@ function Home(config, fb) {
       }
       if (sensor.state.flag === true) {
         hue.setSensorFlag(sensorId, false);
-        log.log('[HOME] Stage change triggered by Hue');
+        log.log('[HOME] State change triggered by Hue');
         if (_self.state.systemState === 'HOME') {
           setState('ARMED');
         } else {
@@ -705,9 +712,6 @@ function Home(config, fb) {
     }
 
     if (zwave) {
-      //zwave_unavailable, error, polling_enabled, polling_disabled, node_event
-      //connected, driver_ready, driver_failed, ready, node_value_change,
-      //node_value_refresh, node_value_removed
       zwave.on('zwave_unavailable', shutdownZWave);
       zwave.on('invalid_network_key', shutdownZWave);
       zwave.on('error', function(err) {
@@ -846,13 +850,13 @@ function Home(config, fb) {
       log.log('[HOME] Config file updated.');
       fs.writeFile('config.json', JSON.stringify(config, null, 2));
     });
-    initOutsideTemp();
     initNotifications();
     initZWave();
     initNest();
     initHue();
     initHarmony();
     initPresence();
+    initWeather();
     setTimeout(function() {
       log.log('[HOME] Ready');
       _self.emit('ready');
