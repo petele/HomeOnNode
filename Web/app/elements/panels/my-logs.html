@@ -17,6 +17,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: white;
       }
 
+      paper-material > h2 {
+        margin: 0;
+      }
+
       @media (max-width: 600px) {
         paper-material {
           padding: 16px 16px 0 16px;
@@ -29,20 +33,53 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           padding: 32px 32px 0 32px;
         }
       }
+
+      .label {
+        font-size: 0.75em;
+        color: white;
+        border-radius: 0.25em;
+        padding: 0.2em 0.6em 0.3em;
+      }
+      .ERROR, .EXCPT, .STOP {
+        background-color: var(--paper-red-500);
+      }
+      .WARN {
+        background-color: var(--paper-red-300);
+      }
+      .INFO {
+        background-color: var(--paper-blue-500);
+      }
+      .INIT, .START {
+        background-color: var(--paper-green-500);
+      }
+      .TODO {
+        background-color: var(--paper-blue-300);
+      }
+      paper-item {
+        padding-left: 0;
+        padding-right: 0;
+        border-bottom: 1px solid var(--divider-color);
+      }
     </style>
+    <span hidden>{{path}}</span>
     <paper-material>
-      <h2>Logs ({{path}})</h2>
+      <template is="dom-if" if="[[title]]">
+      <h2>[[title]]</h2>
+      </template>
 
       <template is="dom-repeat" items="{{logs}}">
-        <div>
-          <span>[[formatDate(item.date)]]</span>
-          <span>[[item.level]]</span>
-          <span>[[item.message]]</span>
-          <span>[[item.state]]</span>
-          <span>[[item.name]]</span>
-        </div>
-      </my-device>
-    </template>
+        <paper-item>
+          <paper-item-body two-line>
+            <div>[[item.message]] [[item.state]] [[item.name]]</div>
+            <div secondary>
+              <template is="dom-if" if="[[item.level]]">
+                <span class$="label [[item.level]]">[[item.level]]</span>
+              </template>
+              <span>[[formatDate(item.date)]]<span>
+            </div>
+          </paper-item-body>
+        </paper-item>
+      </template>
     </paper-material>
 
   </template>
@@ -54,17 +91,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-logs',
         ready: function() {
-          //TODO: handle case where array is longer than 150 items.
+          this.max = 50;
+          this.logs = [];
+          this.t = 't';
+          var self = this;
           if (this.path) {
-            this.logs = [];
-            var self = this;
-            app.fbRoot.child(this.path).orderByChild('date').limitToLast(100).on('value',
-              function(snapshot) {
+            app.fbRoot.child(this.path)
+              .orderByChild('date')
+              .limitToLast(this.max)
+              .on('value', function(snapshot) {
                 snapshot.forEach(function(item) {
                   self.unshift('logs', item.val());
                 });
               });
           }
+          setInterval(function() {
+            var len = self.logs.length;
+            if (len > self.max) {
+              self.logs = self.logs.splice(0, self.max);
+              console.log('trimmed');
+            }
+          }, 5000);
         },
         formatDate: function(value) {
           return moment(value).format('M/D/YY, h:mm:ss a');

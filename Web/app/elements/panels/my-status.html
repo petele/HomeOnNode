@@ -35,41 +35,53 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         font-size: 1.25em;
         margin-bottom: 1em;
       }
+
+      my-scenes /deep/ paper-material {
+        margin-top: 1em;
+      }
+      
+      @media screen and (orientation: landscape) {
+        my-scenes {
+          display: none;
+        }
+      }
     </style>
     <firebase-document id="fbInsideTemp" data="{{insideTemp}}">
     </firebase-document>
-    <firebase-document id="fbOutsideWeather" data="{{outsideWeather}}">
+    <firebase-document id="fbWeather" data="{{weatherObj}}">
     </firebase-document>
 
     <paper-material>
-    <div class="layout horizontal around-justified">
-      <my-clock></my-clock>
-    </div>
-    <div class="layout horizontal justified">
-      <div class="temperature">
-        <template is="dom-if" if="{{insideTempRounded}}">
-          <span>{{insideTempRounded}}</span>&deg;
-        </template>
+      <div class="layout horizontal around-justified">
+        <my-clock></my-clock>
       </div>
-      <div class="temperature">
-        <template is="dom-if" if="{{outsideTemp}}">
-          <span>[[outsideTemp]]</span>&deg;
-          <iron-icon src="[[weatherIconNow]]"></iron-icon>
-          (<span>[[outsideForecast]]</span>&deg; 
-          <iron-icon src="[[weatherIconToday]]"></iron-icon>)
-        </template>
+      <div class="layout horizontal justified">
+        <div class="temperature">
+          <template is="dom-if" if="{{insideTempRounded}}">
+            <span>{{insideTempRounded}}</span>&deg;
+          </template>
+        </div>
+        <div class="temperature">
+          <template is="dom-if" if="{{outsideTemp}}">
+            <span>[[outsideTemp]]</span>&deg;
+            <iron-icon src="[[weatherIconNow]]"></iron-icon>
+            (<span>[[outsideForecast]]</span>&deg; 
+            <iron-icon src="[[weatherIconToday]]"></iron-icon>)
+          </template>
+        </div>
       </div>
-    </div>
-    <div class="layout horizontal justified">
-      <fb-toggle state="state/doNotDisturb" command-name="DO_NOT_DISTURB">
-        Do Not Disturb
-      </fb-toggle>
-      <nest-cam></nest-cam>
-    </div>
-    <div class="layout horizontal around-justified">
-      <home-state></home-state>
-    </div>
+      <div class="layout horizontal justified">
+        <fb-toggle state="state/doNotDisturb" command-name="DO_NOT_DISTURB">
+          Do Not Disturb
+        </fb-toggle>
+        <nest-cam></nest-cam>
+      </div>
+      <div class="layout horizontal around-justified">
+        <home-state></home-state>
+      </div>
     </paper-material>
+
+    <my-scenes></my-scenes>
   </template>
 
   <script>
@@ -81,13 +93,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ready: function() {
           var path = 'state/sensor/LIVINGROOM/temperature/value';
           this.$.fbInsideTemp.location = window.fbURL + path;
-          this.async(function() {
-            var weatherPath = 'https://publicdata-weather.firebaseio.com/newyork';
-            this.$.fbOutsideWeather.location = weatherPath;
-          }, 500);
+          var weatherPath = 'state/weather';
+          this.$.fbWeather.location = window.fbURL + weatherPath;
         },
         observers: [
-          'weatherChange(outsideWeather)',
+          'weatherChange(weatherObj)',
           'insideTempChange(insideTemp)'
         ],
         fbLoginHandler: function(event, user) {
@@ -97,16 +107,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           console.warn('fbErrorHandler (Weather)', a, b, c);
         },
         weatherChange: function(weather) {
-          var iconNow = weather.currently.icon;
-          iconNow = iconNow.replace('-day', '');
-          iconNow = iconNow.replace('-night', '');
-          var iconToday = weather.daily.icon;
-          iconToday = iconToday.replace('-day', '');
-          iconToday = iconToday.replace('-night', '');
-          this.weatherIconNow = '/images/weather/' + iconNow + '.png';
-          this.weatherIconToday = '/images/weather/' + iconToday + '.png';
-          this.outsideTemp = Math.round(weather.currently.temperature);
-          this.outsideForecast = Math.round(weather.daily.data[0].temperatureMax);
+          if (weather) {
+            var iconNow = weather.now.icon;
+            iconNow = iconNow.replace('-day', '');
+            iconNow = iconNow.replace('-night', '');
+            var iconToday = weather.today.icon;
+            iconToday = iconToday.replace('-day', '');
+            iconToday = iconToday.replace('-night', '');
+            this.weatherIconNow = '/images/weather/' + iconNow + '.png';
+            this.weatherIconToday = '/images/weather/' + iconToday + '.png';
+            this.outsideTemp = Math.round(weather.now.temperature);
+            this.outsideForecast = Math.round(weather.today.temperatureMax);
+          }
         },
         insideTempChange: function(temperature) {
           this.insideTempRounded = Math.round(temperature);

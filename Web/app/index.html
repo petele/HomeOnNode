@@ -28,7 +28,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <!-- Add to homescreen for Chrome on Android -->
   <link rel="icon" sizes="192x192" href="images/athome-192.png">
 
-
   <!-- build:css styles/main.css -->
   <link rel="stylesheet" href="styles/main.css">
   <!-- endbuild-->
@@ -44,12 +43,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   <!-- For shared styles, shared-styles.html import in elements.html -->
   <style is="custom-style" include="shared-styles"></style>
-  <style>
-  </style>
-
 </head>
 
-<body>
+<body unresolved>
   <span id="browser-sync-binding"></span>
   <template is="dom-bind" id="app">
 
@@ -76,9 +72,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           <paper-tabs selected="{{page}}" attr-for-selected="name" class="layout flex">
             <paper-tab name="home" active>Home</paper-tab>
-            <paper-tab name="lights">Lights</paper-tab>
             <paper-tab name="actions">Actions</paper-tab>
-            <paper-tab name="rooms">Rooms</paper-tab>
+            <paper-tab name="lights">Lights</paper-tab>
+            <paper-tab name="media">Media</paper-tab>
           </paper-tabs>
 
           <!-- <paper-icon-button icon="av:mic">
@@ -109,16 +105,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <my-devices name="devices">
             </my-devices>
 
-            <my-logs name="presence" path="logs/presence">
+            <my-logs name="presence" path="logs/presence" title="Presence">
             </my-logs>
 
-            <my-logs name="logsState" path="logs/systemState">
+            <my-logs name="logsState" path="logs/systemState" title="State">
             </my-logs>
 
-            <my-logs name="logsDoor" path="logs/doors">
+            <my-logs name="logsDoor" path="logs/doors" title="Doors">
             </my-logs>
 
-            <my-logs name="logsSystem" path="logs/logs">
+            <my-logs name="logsSystem" path="logs/logs" title="System Logs">
             </my-logs>
 
             <my-settings name="settings">

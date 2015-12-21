@@ -13,6 +13,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles"></style>
     <style>
+      div {
+        @apply(--layout-horizontal);
+        @apply(--layout-justified);
+        @apply(--layout-wrap);
+      }
       paper-material {
         background-color: white;
       }
@@ -29,9 +34,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           padding: 32px 32px 0 32px;
         }
       }
+      action-button {
+        margin: 0;
+      }
     </style>
+    <firebase-document id="fbCmdList" data="{{fbCmdList}}" 
+      location="https://petele-at-home.firebaseio.com/config/HomeOnNode/commands">
+    </firebase-document>
+    <firebase-document id="fbHarmony" data="{{fbHarmony}}" 
+      location="https://petele-at-home.firebaseio.com/state/harmony">
     <paper-material>
-      <div>media</div>
+      <div>
+        <template is="dom-repeat" items="[[harmonyActivities]]">
+          <action-button on-tap="tapAction" on="[[item.isOn]]" class="abGrow">
+            [[item.label]]
+          </action-button>
+        </template>
+      </div>
+      <div>
+        <template is="dom-repeat" items="[[harmonyCommands]]">
+          <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
+            [[item.label]]
+          </action-button>
+        </template>
+      </div>
     </paper-material>
 
   </template>
@@ -43,6 +69,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-media',
         ready: function() {
+          this.harmonyActivities = [];
+          this.harmonyCommands = [];
+        },
+        observers: [
+          'cmdListChange(fbCmdList)',
+          'harmonyChange(fbHarmony)'
+        ],
+        cmdListChange: function(commands) {
+          var harmonyActivities = [];
+          var harmonyCommands = [];
+          var keys = Object.keys(commands);
+          keys.forEach(function(key) {
+            var cmd = commands[key];
+            cmd.key = key;
+            if (cmd.kind === 'media') {
+              cmd.isOn = false;
+              harmonyActivities.push(cmd);
+            } else if (cmd.kind === 'mediaKey') {
+              harmonyCommands.push(cmd);
+            }
+          });
+          this.harmonyActivities = harmonyActivities;
+          this.harmonyCommands = harmonyCommands;
+        },
+        harmonyChange: function(activity) {
+          var self = this;
+          this.harmonyActivities.forEach(function(item, index) {
+            var path = 'harmonyActivities.' + index + '.isOn';
+            if (item.harmony === activity.label) {
+              self.set(path, true);
+            } else {
+              self.set(path, false);
+            }
+          });
+        },
+        tapAction: function(event) {
+          var action = event.model.item;
+          app.sendCommand({cmdName: action.key});
         }
       });
     })();

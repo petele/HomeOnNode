@@ -40,16 +40,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     </style>
     <paper-material>
-      <firebase-document id="fbCmdList" data="{{fbCmdList}}" location="https://petele-at-home.firebaseio.com/config/HomeOnNode/commands">
-      <firebase-document id="fbHarmony" data="{{fbHarmony}}" location="https://petele-at-home.firebaseio.com/state/harmony">
+      <firebase-document id="fbCmdList" data="{{fbCmdList}}" 
+        location="https://petele-at-home.firebaseio.com/config/HomeOnNode/commands">
       </firebase-document>
-      <div>
-        <template is="dom-repeat" items="[[mediaList]]">
-          <action-button on-tap="tapAction" on="[[item.isOn]]" class="abGrow">
-            [[item.label]]
-          </action-button>
-        </template>
-      </div>
       <div>
         <template is="dom-repeat" items="[[actionList]]">
           <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
@@ -68,39 +61,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         is: 'my-scenes',
         ready: function() {
           this.actionList = [];
-          this.mediaList = [];
         },
         observers: [
-          'cmdListChange(fbCmdList)',
-          'harmonyChange(fbHarmony)'
+          'cmdListChange(fbCmdList)'
         ],
         cmdListChange: function(commands) {
           var actionList = [];
-          var mediaList = [];
           var keys = Object.keys(commands);
           keys.forEach(function(key) {
             var cmd = commands[key];
             cmd.key = key;
             if (cmd.kind === 'action') {
               actionList.push(cmd);
-            } else if (cmd.kind === 'media') {
-              cmd.isOn = false;
-              mediaList.push(cmd);
             }
           });
           this.actionList = actionList;
-          this.mediaList = mediaList;
-        },
-        harmonyChange: function(activity) {
-          var self = this;
-          this.mediaList.forEach(function(item, index) {
-            var path = 'mediaList.' + index + '.isOn';
-            if (item.harmony === activity.label) {
-              self.set(path, true);
-            } else {
-              self.set(path, false);
-            }
-          });
         },
         tapAction: function(event) {
           var action = event.model.item;

@@ -22,6 +22,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: var(--default-primary-color);
       }
 
+      .divider {
+        color: var(--divider-color);
+      }
+
       paper-menu paper-button,
       paper-menu a {
         text-decoration: none;
@@ -73,14 +77,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span>System Logs</span>
       </paper-button>
 
-      <hr>
+      <hr class="divider">
 
       <a href="https://home.nest.com/#structures/ec1dea10-787f-11e3-82cb-123139253bf1">
         <iron-icon icon="xmail"></iron-icon>
         <span>Nest Home</span>
       </a>
 
-      <hr>
+      <hr class="divider">
 
       <paper-button panel="devices" on-tap="showPanel">
         <iron-icon icon="device:devices"></iron-icon>
