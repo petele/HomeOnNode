@@ -247,11 +247,7 @@ function Home(config, fb) {
     }
     if (command.sound) {
       log.debug('[HOME] ExecuteCommand:sound');
-      playSound(command.sound);
-    }
-    if (command.soundOverride) {
-      log.debug('[HOME] ExecuteCommand:soundOverride');
-      playSound(command.sound, true);
+      playSound(command.sound, command.soundForce);
     }
     if (command.doNotDisturb === true || command.doNotDisturb === false) {
       log.debug('[HOME] ExecuteCommand:doNotDisturb');
@@ -380,8 +376,8 @@ function Home(config, fb) {
     return newState;
   }
 
-  function playSound(file, override) {
-    if (_self.state.doNotDisturb === false || override === true) {
+  function playSound(file, force) {
+    if (_self.state.doNotDisturb === false || force === true) {
       setTimeout(function() {
         var cmd = 'mplayer ';
         cmd += file;
