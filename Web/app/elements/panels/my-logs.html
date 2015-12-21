@@ -44,16 +44,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: var(--paper-red-500);
       }
       .WARN {
-        background-color: var(--paper-red-300);
+        background-color: var(--paper-amber-300);
       }
-      .INFO {
+      .INFO, .POST {
         background-color: var(--paper-blue-500);
       }
       .INIT, .START {
         background-color: var(--paper-green-500);
       }
       .TODO {
-        background-color: var(--paper-blue-300);
+        background-color: var(--paper-cyan-300);
       }
       paper-item {
         padding-left: 0;
@@ -109,7 +109,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var len = self.logs.length;
             if (len > self.max) {
               self.logs = self.logs.splice(0, self.max);
-              console.log('trimmed');
             }
           }, 5000);
         },
