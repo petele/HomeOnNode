@@ -11,22 +11,13 @@ var APP_NAME = 'REMOTE';
 var fb;
 var pin;
 var config;
-
-var debounceTimer = null;
-var debounceTimeout = 1500;
+var lastPushed = 0;
+var minTime = 3000;
 
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
 
 function sendDoorbell() {
-  if (debounceTimer) {
-    log.warn('[sendDoorbell] Debounced.');
-    return;
-  }
-  debounceTimer = setTimeout(function() {
-    log.debug('[sendDoorbell] Debounce timer cleared.');
-    debounceTimer = null;
-  }, debounceTimeout);
   var uri = {
     host: config.controller.ip,
     port: config.controller.port,
@@ -35,7 +26,7 @@ function sendDoorbell() {
   };
   try {
     webRequest.request(uri, null, function(resp) {
-      log.http('Response', JSON.stringify(resp));
+      log.http('RESP', JSON.stringify(resp));
     });
   } catch (ex) {
     log.exception('[sendDoorbell] Failed', ex);
@@ -76,13 +67,15 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     });
 
     if (config.doorbellPin) {
-      pin = new Gpio(config.doorbellPin, 'in', 'rising');
+      pin = new Gpio(config.doorbellPin, 'in', 'falling');
       pin.watch(function(error, value) {
-        if (error) {
-          log.error('[DOORBELL] Error watching doorbell: ' + error);
-        } else {
-          log.log('[DOORBELL] Pushed');
+        var now = Date.now();
+        if (now > lastPushed + minTime) {
+          lastPushed = now;
+          log.log('[DOORBELL] Ding-dong.');
           sendDoorbell();
+        } else {
+          log.warn('[DOORBELL] Debounced.');
         }
       });
     }
