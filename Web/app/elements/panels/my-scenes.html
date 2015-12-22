@@ -68,6 +68,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             console.log(scene);
           });
           this.scenesList = scenes;
+        },
+        saveScene: function() {
+          // POST /api/<username>/scenes/
+          // {"name":"Romantic dinner", "lights":["1","2"], "recycle": false}
+          // 
+        },
+        deleteScene: function() {
+          // DELETE api/<username>/scenes/id
         }
       });
     })();
