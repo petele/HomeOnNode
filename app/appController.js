@@ -75,6 +75,8 @@ function init() {
           cmd = snapshot.val();
           if (cmd.cmdName) {
             home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
+          } else if (cmd.hueScene) {
+            home.executeHueScene(cmd.hueScene, 'FB');
           } else if (cmd.hueLight) {
             home.executeHueCommand(cmd.hueLight, cmd.modifier, 'FB');
           } else if (cmd.hueGroup) {

@@ -270,6 +270,13 @@ function Home(config, fb) {
     return hue.setLightState([light], scene);
   };
 
+  this.executeHueScene = function(hueSceneId, source) {
+    var msg = '[HOME] ExecuteHueScene [' + hueSceneId + '] from ';
+    msg += source;
+    log.log(msg);
+    return hue.activateScene(hueSceneId);
+  };
+
   this.ringDoorbell = function(source) {
     log.log('[HOME] Doorbell');
     fbSet('state/lastDoorbell', Date.now());
