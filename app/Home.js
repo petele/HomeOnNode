@@ -99,6 +99,20 @@ function Home(config, fb) {
       log.debug('[HOME] ExecuteCommand:state ' + command.state);
       setState(command.state);
     }
+    if (command.hueScene) {
+      if (hue) {
+        log.debug('[HOME] ExecuteCommand:hueScene');
+        try {
+          result.hueScene = hue.activateScene(command.hueScene);
+        } catch (ex) {
+          log.exception('[HOME] Hue scene failed', ex);
+          result.hueScene = {hueScene: cmd.hueScene, error: ex};
+        }
+      } else {
+        result.hueScene = '[HOME] Hue scene failed, Hue not ready.';
+        log.warn(result.hueScene);
+      }
+    }
     if (command.hue) {
       if (hue) {
         log.debug('[HOME] ExecuteCommand:hue');
