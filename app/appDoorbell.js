@@ -12,6 +12,7 @@ var fb;
 var pin;
 var config;
 var lastPushed = 0;
+var lastValue = 1;
 var minTime = 3000;
 
 log.setLogFileName('./start.log');
@@ -67,15 +68,22 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     });
 
     if (config.doorbellPin) {
-      pin = new Gpio(config.doorbellPin, 'in', 'falling');
+      pin = new Gpio(config.doorbellPin, 'in', 'both');
       pin.watch(function(error, value) {
         var now = Date.now();
-        if (now > lastPushed + minTime) {
+        var hasChanged = value !== lastValue ? true : false;
+        var timeOK = now > lastPushed + minTime ? true : false;
+        lastValue = value;
+        if (hasChanged && timeOK && value === 0) {
+          log.log('[DOORBELL] Ding-dong');
           lastPushed = now;
-          log.log('[DOORBELL] Ding-dong.');
           sendDoorbell();
         } else {
-          log.warn('[DOORBELL] Debounced.');
+          var msg = '[DOORBELL] Debounced.';
+          msg += ' value=' + value;
+          msg += ' hasChanged=' + hasChanged;
+          msg += ' timeOK=' + timeOK;
+          log.log(msg);
         }
       });
     }
