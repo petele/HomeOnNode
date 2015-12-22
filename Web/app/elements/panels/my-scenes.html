@@ -35,8 +35,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
     </style>
+    <firebase-document id="fbScenes" data="{{scenesObj}}"
+      location="https://petele-at-home.firebaseio.com/state/hue/scenes">
+    </firebase-document>
     <paper-material>
       <h2>scenes</h2>
+      <template is="dom-repeat" items="[[scenesList]]">
+        <div>[[item.id]] [[item.name]]</div>
+      </template>
     </paper-material>
   </template>
 
@@ -47,6 +53,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-scenes',
         ready: function() {
+          this.scenesList = [];
+        },
+        observers: [
+          'sceneObjChange(scenesObj)'
+        ],
+        sceneObjChange: function(scObj) {
+          var scenes = [];
+          var keys = Object.keys(scObj);
+          keys.forEach(function(k) {
+            var scene = scObj[k];
+            scene.id = k;
+            scenes.push(scene);
+            console.log(scene);
+          });
+          this.scenesList = scenes;
         }
       });
     })();
