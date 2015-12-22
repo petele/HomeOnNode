@@ -9,7 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 
-<dom-module id="my-scenes">
+<dom-module id="my-actions">
   <template>
     <style include="shared-styles"></style>
     <style>
@@ -34,9 +34,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           padding: 32px 32px 0 32px;
         }
       }
+      action-button {
+        margin: 0;
+      }
+
     </style>
     <paper-material>
-      <h2>scenes</h2>
+      <firebase-document id="fbCmdList" data="{{fbCmdList}}" 
+        location="https://petele-at-home.firebaseio.com/config/HomeOnNode/commands">
+      </firebase-document>
+      <div>
+        <template is="dom-repeat" items="[[actionList]]">
+          <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
+            [[item.label]]
+          </action-button>
+        </template>
+      </div>
     </paper-material>
   </template>
 
@@ -45,8 +58,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       'use strict';
 
       Polymer({
-        is: 'my-scenes',
+        is: 'my-actions',
         ready: function() {
+          this.actionList = [];
+        },
+        observers: [
+          'cmdListChange(fbCmdList)'
+        ],
+        cmdListChange: function(commands) {
+          var actionList = [];
+          var keys = Object.keys(commands);
+          keys.forEach(function(key) {
+            var cmd = commands[key];
+            cmd.key = key;
+            if (cmd.kind === 'action') {
+              actionList.push(cmd);
+            }
+          });
+          this.actionList = actionList;
+        },
+        tapAction: function(event) {
+          var action = event.model.item;
+          app.sendCommand({cmdName: action.key});
         }
       });
     })();

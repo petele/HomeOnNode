@@ -14,6 +14,7 @@ function Hue(key, ip) {
   this.hueLights = null;
   this.hueGroups = null;
   this.hueSensors = null;
+  this.hueScenes = null;
   this.refreshInterval = 1;
   this.defaultRefreshInterval = 2000;
   var self = this;
@@ -197,10 +198,12 @@ function Hue(key, ip) {
           var diffLights = diff(self.hueLights, hueState.lights);
           var diffGroups = diff(self.hueGroups, hueState.groups);
           var diffSensors = diff(self.hueSensors, hueState.sensors);
-          if (diffLights || diffGroups || diffSensors) {
+          var diffScenes = diff(self.hueScenes, hueState.scenes);
+          if (diffLights || diffGroups || diffSensors || diffScenes) {
             self.hueLights = hueState.lights;
             self.hueGroups = hueState.groups;
             self.hueSensors = hueState.sensors;
+            self.hueScenes = hueState.scenes;
             self.emit('change', hueState);
           }
           self.refreshInterval = self.defaultRefreshInterval;
