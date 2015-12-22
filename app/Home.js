@@ -137,18 +137,6 @@ function Home(config, fb) {
         log.warn(result.hue);
       }
     }
-    if (command.hueScene) {
-      if (hue) {
-        log.debug('[HOME] ExecuteCommand:hueScene');
-        result.hueScene = {scene: command.hueScene};
-        try {
-          hue.activateScene(command.hueScene);
-        } catch (ex) {
-          log.exception('[HOME] Hue Scene failed', ex);
-          result.hueScene.error = ex;
-        }
-      }
-    }
     if (command.zwave) {
       if (zwave) {
         log.debug('[HOME] ExecuteCommand:zwave');
