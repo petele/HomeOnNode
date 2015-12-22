@@ -33,8 +33,8 @@ function handleResponse(err, result) {
 var hubIP = '10.0.0.210';
 var hue = new HueApi(hubIP, Keys.hueBridge.key, null, null, 'HomeOnNode-');
 
-// var lights = [1,2,3,4,5,6,7,8,9,10,18];
-// var sceneName = 'Chill';
-// hue.createScene(lights, sceneName, handleResponse);
+var lights = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
+var sceneName = 'Watch TV';
+hue.createScene(lights, sceneName, handleResponse);
 
 // hue.activateScene('HomeOnNode-0', handleResponse);

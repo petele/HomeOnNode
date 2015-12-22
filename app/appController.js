@@ -78,7 +78,10 @@ function init() {
           } else if (cmd.hueLight) {
             home.executeHueCommand(cmd.hueLight, cmd.modifier, 'FB');
           } else if (cmd.hueGroup) {
-            var group = cmd.hueGroup * -1;
+            var group = cmd.hueGroup;
+            if (group > 0) {
+              group = group * -1;
+            }
             home.executeHueCommand(group, cmd.modifier, 'FB');
           } else {
             var msg = '[APP] Unknown command recieved from Firebase';
