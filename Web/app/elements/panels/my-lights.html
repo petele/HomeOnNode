@@ -31,9 +31,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <paper-material>
+      <lights-scenes scenes="[[scenes]]"></lights-scenes>
       <scene-picker selected="{{lightScene}}"></scene-picker>
-      <lights-groups scene="[[lightScene]]"></lights-groups>
-      <lights-lights scene="[[lightScene]]"></lights-lights>
+      <lights-groups groups="[[groups]]" scene="[[lightScene]]"></lights-groups>
+      <lights-lights lights="[[lights]]" scene="[[lightScene]]"></lights-lights>
     </paper-material>
   </template>
 

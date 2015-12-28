@@ -40,11 +40,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     </style>
     <paper-material>
-      <firebase-document id="fbCmdList" data="{{fbCmdList}}" 
-        location="https://petele-at-home.firebaseio.com/config/HomeOnNode/commands">
-      </firebase-document>
       <div>
-        <template is="dom-repeat" items="[[actionList]]">
+        <template is="dom-repeat" items="[[commands]]">
           <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
             [[item.label]]
           </action-button>
@@ -60,22 +57,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-actions',
         ready: function() {
-          this.actionList = [];
-        },
-        observers: [
-          'cmdListChange(fbCmdList)'
-        ],
-        cmdListChange: function(commands) {
-          var actionList = [];
-          var keys = Object.keys(commands);
-          keys.forEach(function(key) {
-            var cmd = commands[key];
-            cmd.key = key;
-            if (cmd.kind === 'action') {
-              actionList.push(cmd);
-            }
-          });
-          this.actionList = actionList;
         },
         tapAction: function(event) {
           var action = event.model.item;

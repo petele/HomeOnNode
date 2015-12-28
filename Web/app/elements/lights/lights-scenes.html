@@ -9,47 +9,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 <link rel="import" href="../../bower_components/polymer/polymer.html">
 
-<dom-module id="light-hue">
+<dom-module id="lights-scenes">
   <template>
     <style include="shared-styles"></style>
     <style>
-      :host {
-        display: inline-block;
+      div {
+        @apply(--layout-horizontal);
+        @apply(--layout-justified);
+        @apply(--layout-wrap);
       }
       action-button {
         margin: 0;
       }
     </style>
-    <action-button on="[[light.state.on]]" on-tap="hueTap">
-      [[light.name]]
-    </action-button>
+    <div>
+       <template is="dom-repeat" items="[[scenes]]">
+        <action-button on-tap="selectScene" no-toggle="true" class="abGrow">
+          [[item.name]]
+        </action-button>
+      </template>
+    </div>
   </template>
 
   <script>
     (function() {
       'use strict';
-
       Polymer({
-        is: 'light-hue',
+        is: 'lights-scenes',
         ready: function() {
-          if (!this.light || this.light.state.reachable === false) {
-            this.disabled = true;
-          }
         },
-        hueTap: function() {
-          var scene = '';
-          if (this.scene === '_TOGGLE_' && this.light.state.on === true) {
-            scene = 'OFF';
-          } else if (this.scene === '_TOGGLE_' && this.light.state.on === false) {
-            scene = 'DEFAULT';
-          } else {
-            scene = this.scene;
-          }
-          var cmd = {
-            hueLight: this.light.key,
-            modifier: scene
-          };
-          app.sendCommand(cmd);
+        selectScene: function(event) {
+          var sceneId = event.model.item.key;
+          app.sendCommand({hueScene: sceneId});
         }
       });
     })();

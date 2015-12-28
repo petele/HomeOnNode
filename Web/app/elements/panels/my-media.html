@@ -38,21 +38,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 0;
       }
     </style>
-    <firebase-document id="fbCmdList" data="{{fbCmdList}}" 
-      location="https://petele-at-home.firebaseio.com/config/HomeOnNode/commands">
-    </firebase-document>
-    <firebase-document id="fbHarmony" data="{{fbHarmony}}" 
-      location="https://petele-at-home.firebaseio.com/state/harmony">
     <paper-material>
       <div>
-        <template is="dom-repeat" items="[[harmonyActivities]]">
+        <template is="dom-repeat" items="[[commands]]">
           <action-button on-tap="tapAction" on="[[item.isOn]]" class="abGrow">
             [[item.label]]
           </action-button>
         </template>
       </div>
       <div>
-        <template is="dom-repeat" items="[[harmonyCommands]]">
+        <template is="dom-repeat" items="[[mediaKeys]]">
           <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
             [[item.label]]
           </action-button>
@@ -69,40 +64,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-media',
         ready: function() {
-          this.harmonyActivities = [];
-          this.harmonyCommands = [];
+          var self = this;
+          app.fbRoot.child('state/harmony/label').on('value', function(snapshot) {
+            self.currentActivity = snapshot.val();
+          });
         },
         observers: [
-          'cmdListChange(fbCmdList)',
-          'harmonyChange(fbHarmony)'
+          'dataChange(currentActivity)',
+          'dataChange(commands)'
         ],
-        cmdListChange: function(commands) {
-          var harmonyActivities = [];
-          var harmonyCommands = [];
-          var keys = Object.keys(commands);
-          keys.forEach(function(key) {
-            var cmd = commands[key];
-            cmd.key = key;
-            if (cmd.kind === 'media') {
-              cmd.isOn = false;
-              harmonyActivities.push(cmd);
-            } else if (cmd.kind === 'mediaKey') {
-              harmonyCommands.push(cmd);
-            }
-          });
-          this.harmonyActivities = harmonyActivities;
-          this.harmonyCommands = harmonyCommands;
-        },
-        harmonyChange: function(activity) {
-          var self = this;
-          this.harmonyActivities.forEach(function(item, index) {
-            var path = 'harmonyActivities.' + index + '.isOn';
-            if (item.harmony === activity.label) {
-              self.set(path, true);
-            } else {
-              self.set(path, false);
-            }
-          });
+        dataChange: function() {
+          if (this.commands) {
+            var self = this;
+            this.commands.forEach(function(item, index) {
+              var path = 'commands.' + index + '.isOn';
+              if (item.harmony === self.currentActivity) {
+                self.set(path, true);
+              } else if (item.isOn === true) {
+                self.set(path, false);
+              }
+            });
+          }
         },
         tapAction: function(event) {
           var action = event.model.item;

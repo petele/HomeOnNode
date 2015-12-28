@@ -84,16 +84,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <!-- Main Content -->
         <div class="content">
           <iron-pages id="panelPrimary" attr-for-selected="name" selected="{{page}}">
-            <my-status name="home">
+            
+            <my-status name="home" commands="[[actionCommands]]">
             </my-status>
 
-            <my-lights name="lights">
+            <my-lights name="lights" 
+              lights="[[hueLights]]" 
+              groups="[[hueGroups]]"
+              scenes="[[hueScenes]]">
             </my-lights>
 
-            <my-actions name="actions">
+            <my-actions name="actions" commands="[[actionCommands]]">
             </my-actions>
 
-            <my-media name="media">
+            <my-media name="media" commands="[[mediaCommands]]" media-keys="[[mediaKeyCommands]]">
             </my-media>
 
             <my-rooms name="rooms">
@@ -105,7 +109,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <my-devices name="devices">
             </my-devices>
 
-            <my-scenes name="scenes">
+            <my-scenes name="scenes" scenes="[[hueScenes]]" lights="[[hueLights]]">
             </my-scenes>
 
             <my-logs name="presence" path="logs/presence" title="Presence">
@@ -128,6 +132,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
       </paper-header-panel>
     </paper-drawer-panel>
+
+    <fb-data id="fbData" 
+      hue-groups="{{hueGroups}}"
+      hue-lights="{{hueLights}}"
+      hue-scenes="{{hueScenes}}"
+      media-commands="{{mediaCommands}}"
+      media-key-commands="{{mediaKeyCommands}}"
+      action-commands="{{actionCommands}}"
+    >
+    </fb-data>
 
     <confirm-dialog id="confirmDialog"></confirm-dialog>
 

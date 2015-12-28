@@ -13,13 +13,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles"></style>
     <style>
-      div {
+      h2 {
         @apply(--layout-horizontal);
-        @apply(--layout-justified);
-        @apply(--layout-wrap);
+      }
+      .center {
+        @apply(--layout-horizontal);
+        @apply(--layout-center-justified);
       }
       paper-material {
         background-color: white;
+      }
+      paper-item {
+        padding: 0;
       }
 
       @media (max-width: 600px) {
@@ -28,31 +33,92 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
+      paper-fab {
+        float: right;
+      }
+
+      paper-checkbox {
+        width: 48%;
+      }
+
       /* Tablet+ */
       @media (min-width: 601px) {
         paper-material {
           padding: 32px 32px 0 32px;
         }
       }
+
+      form {
+        margin-top: 0;
+      }
     </style>
-    <firebase-document id="fbScenes" data="{{scenesObj}}"
-      location="https://petele-at-home.firebaseio.com/state/hue/scenes">
-    </firebase-document>
+    <iron-ajax id="ajaxHandler" 
+      last-error="{{hueRequestError}}" 
+      last-response="{{hueRequestResponse}}">
+    </iron-ajax>
+    <iron-ajax id="ajaxCheckIfLocal"
+      last-response="{{hueHubResponse}}"
+      url="https://www.meethue.com/api/nupnp">
+    </iron-ajax>
     <paper-material>
-      <h2>scenes</h2>
-      <template is="dom-repeat" items="[[scenesList]]">
+      <template is="dom-repeat" items="[[scenes]]">
         <paper-item>
           <div class="avatar blue" item-icon></div>
           <paper-item-body two-line on-tap="selectScene">
             <div>[[item.name]]</div>
-            <div secondary>[[item.id]]</div>
+            <div secondary>[[item.key]]</div>
           </paper-item-body>
-          <paper-icon-button icon="create" on-tap="editScene">
+          <paper-icon-button icon="create" on-tap="showEditDialog" hidden="{{!isLocal}}">
           </paper-icon-button>
-          <paper-icon-button icon="delete" on-tap="deleteScene">
+          <paper-icon-button icon="delete" on-tap="showDeleteDialog" hidden="{{!isLocal}}">
           </paper-icon-button>
         </paper-item>
       </template>
+
+      <paper-fab icon="add" on-tap="showAddDialog" hidden="{{!isLocal}}"></paper-fab>
+
+      <paper-dialog id="sceneEditorDialog" modal on-iron-overlay-closed="sceneEditorClosed">
+        <h2></h2>
+        <form>
+          <paper-input id="sceneNameInput" label="Scene Name" 
+            required auto-validate minlength="5"
+            error-message="A scene name is required (5 char min)">
+          </paper-input>
+        </form>
+        <div>
+          <template is="dom-repeat" items="[[lights]]">
+            <paper-checkbox key="[[item.key]]">[[item.name]]</paper-checkbox>
+          </template>
+        </div>
+        <div id="numLightWarning" hidden>
+          At least one light must be selected.
+        </div>
+        <div class="buttons">
+          <paper-button dialog-dismiss>Cancel</paper-button>
+          <paper-button on-tap="saveScene">Save</paper-button>
+        </div>
+      </paper-dialog>
+
+      <paper-dialog id="confirmDeleteDialog" modal>
+        <h2></h2>
+        <div>
+          Do you want to delete <b><span id="cddSceneName"></span></b>?<br>
+          (<span id="cddSceneId"></span>)      
+        </div>
+        <div class="buttons">
+          <paper-button dialog-dismiss>No</paper-button>
+          <paper-button dialog-confirm on-tap="deleteScene">Yes</paper-button>
+        </div>
+      </paper-dialog>
+
+      <paper-dialog id="modalSpinner" modal no-cancel-on-esc-key="true">
+        <div class="center">
+          <paper-spinner active></paper-spinner>
+        </div>
+        <div>
+          <paper-button on-tap="cancelHueRequest">Cancel</paper-button>
+        </div>
+      </paper-dialog>
     </paper-material>
   </template>
 
@@ -63,37 +129,166 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-scenes',
         ready: function() {
-          this.scenesList = [];
+          this.isLocal = false;
+          this.editMode = null;
+          var handler = this.$.ajaxHandler;
+          var self = this;
+          handler.addEventListener('error', function() {
+            self.$.modalSpinner.close();
+            app.showToast('Unable to complete request.');
+            console.error('Hue Request - Error', self.hueRequestError);
+            app.lastInput = Date.now();
+          });
+          handler.addEventListener('request', function() {
+            self.$.modalSpinner.open();
+            console.log('Hue Request Started');
+            app.lastInput = Date.now() + (30 * 1000);
+          });
+          handler.addEventListener('response', function() {
+            self.$.modalSpinner.close();
+            var response = self.hueRequestResponse;
+            console.log('Hue Request - Completed:', response);
+            app.lastInput = Date.now();
+            // TODO handle response here
+          });
+          this.async(function() {
+            this.$.ajaxCheckIfLocal.generateRequest();
+          }, 750);
         },
         observers: [
-          'sceneObjChange(scenesObj)'
+          'checkForHueHub(hueHubResponse)'
         ],
-        sceneObjChange: function(scObj) {
-          var scenes = [];
-          var keys = Object.keys(scObj);
-          keys.forEach(function(k) {
-            var scene = scObj[k];
-            scene.id = k;
-            scenes.push(scene);
-          });
-          this.scenesList = scenes;
+        checkForHueHub: function(response) {
+          if (response.length === 1) {
+            this.isLocal = true;
+          } 
         },
-        createScene: function() {
-          // POST /api/<username>/scenes/
-          // {"name":"Romantic dinner", "lights":["1","2"], "recycle": false}
-          // 
+        resetDialog: function(title) {
+          var dialog = this.$.sceneEditorDialog;
+          dialog.querySelector('h2').innerText = title;
+          dialog.querySelector('form').reset();
+          dialog.querySelector('#numLightWarning').setAttribute('hidden', true);
+          var lights = dialog.querySelectorAll('paper-checkbox');
+          for (var i = 0; i < lights.length; i++) {
+            var light = lights[i];
+            light.removeAttribute('checked');
+          }
+        },
+        showAddDialog: function() {
+          this.resetDialog('New Scene');
+          this.editMode = 'ADD';
+          var dialog = this.$.sceneEditorDialog;
+          dialog.open();
+          app.lastInput = Date.now();
+        },
+        showEditDialog: function() {
+          var scene = event.model.item;
+          this.resetDialog('Edit ' + scene.name);
+          this.editMode = scene;
+          var dialog = this.$.sceneEditorDialog;
+          var inputSceneName = dialog.querySelector('paper-input');
+          inputSceneName.value = scene.name;
+          var lights = dialog.querySelectorAll('paper-checkbox');
+          for (var i = 0; i < lights.length; i++) {
+            var light = lights[i];
+            var key = light.key;
+            if (scene.lights.indexOf(key.toString()) >= 0) {
+              light.setAttribute('checked', true);
+            }
+          }
+          dialog.open();
+          app.lastInput = Date.now();
+        },
+        showDeleteDialog: function(event) {
+          var item = event.model.item;
+          var dialog = this.$.confirmDeleteDialog;
+          dialog.querySelector('h2').innerText = 'Delete ' + item.name;
+          dialog.querySelector('#cddSceneName').innerText = item.name;
+          dialog.querySelector('#cddSceneId').innerText = item.key;
+          this.sceneToDelete = item;
+          dialog.open();
+          app.lastInput = Date.now();
+        },
+        sceneEditorClosed: function() {
+          this.editMode = null;
+          app.lastInput = Date.now();
+        },
+        saveScene: function() {
+          if (this.editMode === 'ADD') {
+            this.saveNewScene();
+          } else {
+            this.updateScene();
+          }
+          app.lastInput = Date.now();
+        },
+        validateEditorAndGetData: function() {
+          app.lastInput = Date.now();
+          var dialog = this.$.sceneEditorDialog;
+          var inputSceneName = dialog.querySelector('paper-input');
+          var lights = dialog.querySelectorAll('paper-checkbox');
+          var lightsInScene = [];
+          for (var i = 0; i < lights.length; i++) {
+            var light = lights[i];
+            if (light.checked === true) {
+              lightsInScene.push(light.key.toString());
+            }           
+          }
+          var sceneNameOK = inputSceneName.validate();
+          var numLightsOK = lightsInScene.length > 0;
+          if (numLightsOK === false) {
+            dialog.querySelector('#numLightWarning').removeAttribute('hidden');
+          }
+          if (sceneNameOK && numLightsOK) {
+            return {
+              name: inputSceneName.value,
+              lights: lightsInScene
+            };
+          }
+          return null;
+        },
+        saveNewScene: function() {
+          var sceneInfo = this.validateEditorAndGetData();
+          if (sceneInfo) {
+            sceneInfo.recycle = false;
+            this.sendHueRequest('POST', '/scenes/', sceneInfo);
+            this.$.sceneEditorDialog.close();
+          }
+        },
+        updateScene: function() {
+          var sceneInfo = this.validateEditorAndGetData();
+          if (sceneInfo) {
+            var path = '/scenes/' + this.editMode.key;
+            sceneInfo.storelightstate = true;
+            this.sendHueRequest('PUT', path, sceneInfo);
+            this.$.sceneEditorDialog.close();
+          }
         },
         selectScene: function(event) {
-          var sceneId = event.model.item.id;
+          var sceneId = event.model.item.key;
           app.sendCommand({hueScene: sceneId});
         },
-        deleteScene: function(event) {
-          var path = 'api/[KEY]/scenes/' + event.model.item.id;
-          console.log('deleteScene', 'DELETE', path);
+        deleteScene: function() {
+          this.sendHueRequest('DELETE', '/scenes/' + this.sceneToDelete.key);
         },
-        editScene: function(event) {
-          var path = 'api/[KEY]/scenes/' + event.model.item.id;
-          console.log('editScene', 'edit', path);
+        sendHueRequest: function(method, path, body) {
+          var url = 'http://' + window.hueHubIP + '/' + 'api/' + window.hueKey;
+          url += path;
+          var handler = this.$.ajaxHandler;
+          handler.method = method;
+          handler.url = url;
+          if (body) {
+            handler.body = body;
+            handler.contentType = 'application/json';
+          }
+          console.log('sendHueRequest', method, url, body);
+          handler.generateRequest();
+        },
+        cancelHueRequest: function() {
+          var handler = this.$.ajaxHandler;
+          var request = handler.activeRequests[0];
+          if (request) {
+            request.abort();
+          }
         }
       });
     })();

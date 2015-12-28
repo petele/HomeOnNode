@@ -32,12 +32,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'light-group',
         ready: function() {
-          if (this.groupId === 0) {
-            this.group = {
-              name: 'All Lights',
-              action: {on: false}
-            };
-          }
         },
         hueTap: function() {
           var scene = '';
@@ -49,7 +43,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             scene = this.scene;
           }
           var cmd = {
-            hueGroup: this.groupId,
+            hueGroup: this.group.key,
             modifier: scene
           };
           app.sendCommand(cmd);

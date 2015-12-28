@@ -19,11 +19,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         @apply(--layout-wrap);
       }
     </style>
-      <firebase-document id="fbHueLights" data="{{hueLights}}">
-      </firebase-document>
       <div>
-        <template is="dom-repeat" items="[[hueLights]]">
-          <light-hue light="[[item]]" light-id="[[index]]" scene="[[scene]]" class="abGrow">
+        <template is="dom-repeat" items="[[lights]]">
+          <light-hue light="[[item]]" scene="[[scene]]" class="abGrow">
           </light-hue>
         </template>
       </div>
@@ -36,8 +34,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'lights-lights',
         ready: function() {
-          var path = 'state/hue/lights';
-          this.$.fbHueLights.location = window.fbURL + path;
         }
       });
     })();

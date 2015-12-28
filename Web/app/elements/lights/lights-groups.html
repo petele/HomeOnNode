@@ -19,11 +19,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         @apply(--layout-wrap);
       }
     </style>
-    <firebase-document id="fbHueGroups" data="{{hueGroups}}">
-    </firebase-document>
     <div>
-       <template is="dom-repeat" items="[[hueGroups]]">
-        <light-group group="[[item]]" group-id="[[index]]" scene="[[scene]]" class="abGrow">
+      <light-group group="[[groupZero]]" scene="[[scene]]" class="abGrow">
+      </light-group>
+       <template is="dom-repeat" items="[[groups]]">
+        <light-group group="[[item]]" scene="[[scene]]" class="abGrow">
         </light-group>
       </template>
     </div>
@@ -32,12 +32,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     (function() {
       'use strict';
-
       Polymer({
         is: 'lights-groups',
         ready: function() {
-          var path = 'state/hue/groups';
-          this.$.fbHueGroups.location = window.fbURL + path;
+          this.groupZero = {
+            name: 'All lights',
+            key: 0
+          };
         }
       });
     })();

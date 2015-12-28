@@ -39,6 +39,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   // See https://github.com/Polymer/polymer/issues/1381
   window.addEventListener('WebComponentsReady', function() {
     app.confirmDialog = document.querySelector('#confirmDialog');
+    app.fbData = document.querySelector('#fbData');
   });
 
   // Scroll page to top and expand header
@@ -48,6 +49,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   app.closeDrawer = function() {
     app.$.paperDrawerPanel.closeDrawer();
+  };
+
+  app.showToast = function(text) {
+    app.$.toast.text = text;
+    app.$.toast.show();
   };
 
   app.fbRoot = new Firebase(window.fbURL);
