@@ -130,6 +130,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         is: 'my-scenes',
         ready: function() {
           this.isLocal = false;
+          this.hueHubIP = null;
           this.editMode = null;
           var handler = this.$.ajaxHandler;
           var self = this;
@@ -141,15 +142,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           });
           handler.addEventListener('request', function() {
             self.$.modalSpinner.open();
-            console.log('Hue Request Started');
             app.lastInput = Date.now() + (30 * 1000);
           });
           handler.addEventListener('response', function() {
             self.$.modalSpinner.close();
             var response = self.hueRequestResponse;
-            console.log('Hue Request - Completed:', response);
             app.lastInput = Date.now();
-            // TODO handle response here
+            var passed = true;
+            response.forEach(function(item) {
+              if (item.hasOwnProperty('success') === false) {
+                console.log('FAILED', item);
+                passed = false;
+              }
+            });
+            if (passed === true) {
+              app.showToast('Completed successfully.');
+            } else {
+              app.showToast('Oops, something went wrong.');
+            }
           });
           this.async(function() {
             this.$.ajaxCheckIfLocal.generateRequest();
@@ -161,6 +171,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         checkForHueHub: function(response) {
           if (response.length === 1) {
             this.isLocal = true;
+            this.hueHubIP = response[0].internalipaddress;
           } 
         },
         resetDialog: function(title) {
@@ -271,7 +282,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.sendHueRequest('DELETE', '/scenes/' + this.sceneToDelete.key);
         },
         sendHueRequest: function(method, path, body) {
-          var url = 'http://' + window.hueHubIP + '/' + 'api/' + window.hueKey;
+          var url = 'http://' + this.hueHubIP + '/' + 'api/' + window.hueKey;
           url += path;
           var handler = this.$.ajaxHandler;
           handler.method = method;
@@ -289,6 +300,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (request) {
             request.abort();
           }
+          this.$.modalSpinner.close();
+          app.lastInput = Date.now();
         }
       });
     })();
