@@ -73,13 +73,13 @@ function init() {
         var cmd = null;
         try {
           cmd = snapshot.val();
-          if (cmd.cmdName) {
+          if (cmd.hasOwnProperty('cmdName')) {
             home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
-          } else if (cmd.hueScene) {
+          } else if (cmd.hasOwnProperty('hueScene')) {
             home.executeHueScene(cmd.hueScene, 'FB');
-          } else if (cmd.hueLight) {
+          } else if (cmd.hasOwnProperty('hueLight')) {
             home.executeHueCommand(cmd.hueLight, cmd.modifier, 'FB');
-          } else if (cmd.hueGroup) {
+          } else if (cmd.hasOwnProperty('hueGroup')) {
             var group = cmd.hueGroup;
             if (group > 0) {
               group = group * -1;
