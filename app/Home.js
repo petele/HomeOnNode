@@ -253,9 +253,11 @@ function Home(config, fb) {
     }
     if (command.hasOwnProperty('doNotDisturb')) {
       log.debug('[HOME] ExecuteCommand:doNotDisturb');
+      log.log('TEST - 1 ' + command.doNotDisturb);
       if (modifier === 'OFF') {
         command.doNotDisturb = false;
       }
+      log.log('TEST - 2 ' + command.doNotDisturb);
       setDoNotDisturb(command.doNotDisturb);
       result.doNotDisturb = command.doNotDisturb;
     }
@@ -343,6 +345,7 @@ function Home(config, fb) {
   }
 
   function setDoNotDisturb(val) {
+    log.log('TEST - 3 ' + val);
     fbSet('state/doNotDisturb', val);
     log.log('[HOME] Do Not Disturb set to: ' + val);
   }
