@@ -344,7 +344,7 @@ function Home(config, fb) {
 
   function setDoNotDisturb(val) {
     fbSet('state/doNotDisturb', val);
-    log.debug('[HOME] Do Not Disturb set to: ' + val);
+    log.log('[HOME] Do Not Disturb set to: ' + val);
   }
 
   function setState(newState) {
