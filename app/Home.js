@@ -227,7 +227,7 @@ function Home(config, fb) {
         log.warn(result.harmony);
       }
     }
-    if (command.dropcam === true || command.dropcam === false) {
+    if (command.hasOwnProperty('dropcam')) {
       if (nest) {
         log.debug('[HOME] ExecuteCommand:dropcam');
         try {
@@ -251,7 +251,7 @@ function Home(config, fb) {
       log.debug('[HOME] ExecuteCommand:sound');
       playSound(command.sound, command.soundForce);
     }
-    if (command.doNotDisturb === true || command.doNotDisturb === false) {
+    if (command.hasOwnProperty('doNotDisturb')) {
       log.debug('[HOME] ExecuteCommand:doNotDisturb');
       if (modifier === 'OFF') {
         command.doNotDisturb = false;
