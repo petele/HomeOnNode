@@ -1,0 +1,115 @@
+<!--
+@license
+Copyright (c) 2015 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+
+<dom-module id="my-thermostat">
+  <template>
+    <style include="shared-styles"></style>
+    <style>
+      .thermostat-container {
+        display: inline-block;
+        text-align: center;
+        vertical-align: top;
+        margin-top: 8px;
+        margin-bottom: 0px;
+      }
+
+      .label-thermostat {
+        position: relative;
+        display: block;
+        margin: 0 auto;
+        width: 2em;
+        height: 2em;
+        line-height: 2em;
+        text-align: center;
+        font-size: 3.0em;
+        border-radius: 50%;
+        border: 0.2em solid var(--paper-blue-grey-500);
+        color: rgb(76, 76, 76);
+        white-space: nowrap;
+        background-color: white;
+        transition: border 0.3s ease-in-out;
+      }
+      .thermostat-value {
+        font-size: 90%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: -6px;
+      }
+      .label-thermostat .label {
+        position: absolute;
+        bottom: -1em;
+        left: 0;
+        right: 0;
+        line-height: 1em;
+        font-size: 0.3em;
+      }
+      .label-thermostat .label span {
+        max-width: 80%;
+        display: inline-block;
+        background-color: var(--paper-blue-grey-500, --default-primary-color);
+        color: white;
+        border-radius: 1em;
+        padding: 8px 16px;
+        font-weight: 500;
+        text-transform: uppercase;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background-color .3s ease-in-out;
+      }
+      .label-thermostat .scale {
+        font-size: 0.4em;
+        vertical-align: super;
+      }
+      .thermostat-value paper-input /deep/ input {
+        font-size: 1em;
+      }
+      .thermostat-value paper-input /deep/ .underline {
+        display:none;
+      }
+    </style>
+    <div class="layout horizontal justified">
+      <div class='thermostat-container flex-1'>
+        <div class='label-thermostat' id='thermostat'>
+          <div class="thermostat-value">
+            <paper-input hidden no-label-float value="68" type="number">
+            </paper-input>
+            <span>NYI</span><span class="scale">&deg;F</span>
+          </div>
+          <div class='label'><span>Off</span></div>
+        </div>
+      </div>
+      <div class="layout vertical flex-1">
+        <div class="layout horizontal justified">
+          <info-bubble label="Current" value="NYI"></info-bubble>
+          <info-bubble label="RH" value="NYI"></info-bubble>
+        </div>
+        <div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    (function() {
+      'use strict';
+
+      Polymer({
+        is: 'my-thermostat',
+        ready: function() {
+        },
+        properties: {
+          loading: Boolean,
+          color: String
+        }
+      });
+    })();
+  </script>
+</dom-module>

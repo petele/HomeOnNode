@@ -85,16 +85,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <div class="content">
           <iron-pages id="panelPrimary" attr-for-selected="name" selected="{{page}}">
             
-            <my-status name="home" commands="[[actionCommands]]">
-            </my-status>
+            <my-simple name="home">
+            </my-simple>
 
             <my-lights name="lights" 
               lights="[[hueLights]]" 
-              groups="[[hueGroups]]"
-              scenes="[[hueScenes]]">
+              groups="[[hueGroups]]">
             </my-lights>
 
-            <my-actions name="actions" commands="[[actionCommands]]">
+            <my-actions name="actions" scenes="[[hueScenes]]" commands="[[actionCommands]]">
             </my-actions>
 
             <my-media name="media" commands="[[mediaCommands]]" media-keys="[[mediaKeyCommands]]">
@@ -109,7 +108,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <my-devices name="devices">
             </my-devices>
 
-            <my-scenes name="scenes" scenes="[[hueScenes]]" lights="[[hueLights]]">
+            <my-scenes name="scenes" lights="[[hueLights]]">
             </my-scenes>
 
             <my-logs name="presence" path="logs/presence" title="Presence">

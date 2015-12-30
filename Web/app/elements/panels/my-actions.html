@@ -13,7 +13,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles"></style>
     <style>
-      div {
+      .buttonContainer {
         @apply(--layout-horizontal);
         @apply(--layout-justified);
         @apply(--layout-wrap);
@@ -38,14 +38,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 0;
       }
 
+      .atTop {
+        margin-top: 0;
+      }
+
     </style>
     <paper-material>
       <div>
-        <template is="dom-repeat" items="[[commands]]">
-          <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
-            [[item.label]]
-          </action-button>
-        </template>
+        <h3 class="atTop">Hue Scenes</h3>
+        <lights-scenes scenes="[[scenes]]"></lights-scenes>
+      </div>
+      <div>
+        <h3>Actions</h3>
+        <div class="buttonContainer">
+          <template is="dom-repeat" items="[[commands]]">
+            <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
+              [[item.label]]
+            </action-button>
+          </template>
+        </div>
       </div>
     </paper-material>
   </template>

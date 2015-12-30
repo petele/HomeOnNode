@@ -253,7 +253,6 @@ function Home(config, fb) {
     }
     if (command.hasOwnProperty('doNotDisturb')) {
       log.debug('[HOME] ExecuteCommand:doNotDisturb');
-      log.log('[HOME] TEST - ' + command.doNotDisturb);
       if (modifier === 'OFF' || command.doNotDisturb === 'OFF') {
         result.doNotDisturb = setDoNotDisturb('OFF');
       } else {

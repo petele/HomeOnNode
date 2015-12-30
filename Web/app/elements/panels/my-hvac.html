@@ -17,21 +17,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: white;
       }
 
+      paper-material:nth-of-type(2) {
+        margin-top: 16px;
+      }
+
       @media (max-width: 600px) {
         paper-material {
-          padding: 16px 16px 0 16px;
+          padding: 16px;
         }
       }
 
       /* Tablet+ */
       @media (min-width: 601px) {
         paper-material {
-          padding: 32px 32px 0 32px;
+          padding: 32px;
         }
       }
+
     </style>
     <paper-material>
-      <div>hvac</div>
+      <div>Living Room</div>
+      <my-thermostat></my-thermostat>
+    </paper-material>
+
+    <paper-material>
+      <div>Bedroom</div>
+      <my-thermostat></my-thermostat>
     </paper-material>
 
   </template>
