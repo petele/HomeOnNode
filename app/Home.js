@@ -253,13 +253,12 @@ function Home(config, fb) {
     }
     if (command.hasOwnProperty('doNotDisturb')) {
       log.debug('[HOME] ExecuteCommand:doNotDisturb');
-      log.log('TEST - 1 ' + command.doNotDisturb);
-      if (modifier === 'OFF') {
-        command.doNotDisturb = false;
+      log.log('[HOME] TEST - ' + command.doNotDisturb);
+      if (modifier === 'OFF' || command.doNotDisturb === 'OFF') {
+        result.doNotDisturb = setDoNotDisturb('OFF');
+      } else {
+        result.doNotDisturb = setDoNotDisturb('ON');
       }
-      log.log('TEST - 2 ' + command.doNotDisturb);
-      setDoNotDisturb(command.doNotDisturb);
-      result.doNotDisturb = command.doNotDisturb;
     }
     return result;
   };
@@ -345,9 +344,18 @@ function Home(config, fb) {
   }
 
   function setDoNotDisturb(val) {
-    log.log('TEST - 3 ' + val);
-    fbSet('state/doNotDisturb', val);
-    log.log('[HOME] Do Not Disturb set to: ' + val);
+    if (val === 'ON') {
+      fbSet('state/doNotDisturb', true);
+      log.log('[HOME] Do not disturb: enabled');
+      return true;
+    } else if (val === 'OFF') {
+      fbSet('state/doNotDisturb', false);
+      log.log('[HOME] Do not disturb: disabled');
+      return false;
+    }
+    var msg = '[HOME] Unknown doNotDisturb state: ' + val;
+    log.error(msg);
+    return msg;
   }
 
   function setState(newState) {
