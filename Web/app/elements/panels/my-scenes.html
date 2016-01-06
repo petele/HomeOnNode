@@ -132,6 +132,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.isLocal = false;
           this.hueHubIP = null;
           this.editMode = null;
+          var randomDelay = Math.floor(Math.random() * 3000 + 1000);
+          this.async(function() {
+            this.setup();
+          }, randomDelay);
+        },
+        setup: function() {
           var handler = this.$.ajaxHandler;
           var self = this;
           handler.addEventListener('error', function() {

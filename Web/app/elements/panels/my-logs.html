@@ -93,7 +93,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ready: function() {
           this.max = 150;
           this.logs = [];
-          this.t = 't';
+          var randomDelay = Math.floor(Math.random() * 3000 + 2500);
+          this.async(function() {
+            this.setup();
+          }, randomDelay);
+        },
+        setup: function() {
           var self = this;
           if (this.path) {
             app.fbRoot.child(this.path)

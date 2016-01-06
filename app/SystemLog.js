@@ -214,8 +214,8 @@ function cleanLogs(path, maxAgeDays) {
         item.ref().remove();
         itemsRemoved++;
       });
-      var msgCompleted = '[LOGGER] Cleaning logs completed. ';
-      msgCompleted += 'Removed: ' + itemsRemoved.toString() + ' items.';
+      var msgCompleted = '[LOGGER] Cleaned logs from (' + path + '), ';
+      msgCompleted += 'removed ' + itemsRemoved.toString() + ' items.';
       log(msgCompleted);
     }
   );

@@ -31,11 +31,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      .temperature {
-        font-size: 1.25em;
-        margin-bottom: 16px;
-      }
-
       my-scenes /deep/ paper-material {
         margin-top: 1em;
       }
@@ -67,21 +62,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       info-bubble {
         margin-bottom: 12px;
       }
-
-      .weatherIcon {
-        --iron-icon-width: 96px;
-        --iron-icon-height: 96px;
-      }
-      .curTemp {
-        @apply(--paper-font-display3);
-        /*font-size: 5.5em;
-        line-height: 1em;
-        margin-left: 1em;*/
-      }
-      .curTemp sup {
-        font-size: 0.5em;
-        vertical-align: sup;
-      }
       paper-dialog {
         background-color: white;
       }
@@ -91,19 +71,60 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .secondary {
         color: var(--secondary-text-color);
       }
-    </style>
-<!--     <firebase-document id="fbInsideTemp" data="{{insideTemp}}">
-    </firebase-document>
-    <firebase-document id="fbWeather" data="{{weatherObj}}">
-    </firebase-document> -->
 
-<!--     <iron-iconset name="weather-icons" src="/images/weather-sprite.png" width="1096" size="256"
-      icons="clear cloudy-scattered-showers cloudy fog partly-cloudy rain scattered-showers sleet snow thunderstorms wind">
-    </iron-iconset> -->
+      .forecast-dialog {
+        min-width: 300px;
+      }
+
+      .current-temp {
+        @apply(--paper-font-display2);
+      }
+
+      .weatherIcon {
+        --iron-icon-width: 96px;
+        --iron-icon-height: 96px;
+      }
+
+      .feels-like:before {
+        content: "Feels like: ";
+        color: #888;
+      }
+
+      .temp-high:before {
+        content: "High: ";
+        color: #888;
+      }
+
+      .temp-low:before {
+        content: "Low: ";
+        color: #888;
+      }
+
+      .precip:before {
+        content: "Precipitation: ";
+        color: #888;
+      }
+
+      .humidity:before {
+        content: "Humidity: ";
+        color: #888;
+      }
+
+      .pollen:before {
+        content: "Pollen Count: ";
+        color: #888;
+      }
+
+      .pcount:before {
+        content: "Pollen ";
+        color: #888;
+      }
+
+    </style>
 
     <paper-material>
       <div hidden>
-        zz <iron-icon icon="weather-icons:clear"></iron-icon>
+        <iron-icon icon="weather-icons:clear"></iron-icon>
       </div>
       <div class="layout horizontal around-justified">
         <my-clock></my-clock>
@@ -137,9 +158,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </template>
       </div>
 
-      <paper-dialog id="weatherDialog" modal>
-        <h2>New York, NY, 10018</h2>
-        <div>
+      <paper-dialog id="weatherDialog" class="forecast-dialog" modal>
+        <h2>New York, NY</h2>
+        <div class="description">[[weather.now.summary]]</div>
+        <div class="layout horizontal flex">
+          <div class="layout horizontal flex">
+            <iron-icon class="weatherIcon" src="[[weather.now.icon]]"></iron-icon> 
+            <div class="current-temp">
+              <span class="value">[[weather.now.temperature]]</span><span class="scale">&deg;F</span>
+            </div>
+          </div>
+          <div class="layout vertical flex">
+            <div class="feels-like">
+              <span class="value">[[weather.now.feel]]</span><span class="scale">&deg;F</span>
+            </div>
+            <div class="temp-high">
+              <span class="value">[[weather.today.high]]</span><span class="scale">&deg;F</span>
+            </div>
+            <div class="temp-low">
+              <span class="value">[[weather.today.low]]</span><span class="scale">&deg;F</span>
+            </div>
+            <div class="precip">[[weather.today.precip]]</div>
+            <div class="humidity">[[weather.today.humidity]]</div>
+            <div class="pollen" hidden>[[weather.today.pollen]]</div>
+          </div>
+        </div>
+        <!-- <div>
           [[weather.now.summary]]
         </div>
         <div class="layout horizontal">
@@ -158,7 +202,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             [[weather.today.high]]<sup>&deg;F</sup> <span class="secondary">High</span> <br>
             [[weather.today.low]]<sup>&deg;F</sup> <span class="secondary">Low</span>
           </div>
-        </div>
+        </div> -->
         <div class="buttons">
           <paper-button dialog-dismiss>Close</paper-button>
         </div>
@@ -174,7 +218,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-simple',
         ready: function() {
-          var self = this;
           this.state = {
             state: 'State',
             stateIcon: null,
@@ -188,6 +231,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
           };
           this.buttons = [];
+          this.setup();
+        },
+        setup: function() {
+          var self = this;
           var fbRoot = app.fbRoot;
           var keyPath = 'config/WebUI/default/homeCommands';
           fbRoot.child(keyPath).on('value', 
@@ -249,12 +296,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 now: {
                   summary: val.now.summary,
                   icon: icon,
-                  temperature: Math.round(val.now.apparentTemperature),
+                  temperature: Math.round(val.now.temperature),
+                  feel: Math.round(val.now.apparentTemperature),
                 },
                 today: {
                   summary: val.today.summary,
                   low: Math.round(val.today.temperatureMin),
-                  high: Math.round(val.today.temperatureMax)
+                  high: Math.round(val.today.temperatureMax),
+                  precip: Math.round(val.today.precipProbability * 100) + '%',
+                  humidity: Math.round(val.today.humidity * 100) + '%'
                 }
               };
               self.set('weather', weather);

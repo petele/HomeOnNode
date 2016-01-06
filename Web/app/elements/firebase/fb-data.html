@@ -23,20 +23,88 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'fb-data',
         ready: function() {
-          var self = this;
           this.harmonyActivityId = -1;
+          this.hueGroups = [];
+          this.hueLights = [];
+          this.hueScenes = [];
+          this.actionCommands = [];
+          this.mediaCommands = [];
+          this.mediaKeyCommands = [];
+          var initialDelay = 500;
+          this.async(function() {
+            this.setupGroups();  
+          }, initialDelay);
+          this.async(function() {
+            this.setupLights();  
+          }, initialDelay + 150);
+          this.async(function() {
+            this.setupScenes();  
+          }, initialDelay + 300);
+          this.async(function() {
+            this.setupCommands();
+          }, initialDelay + 450);
+        },
+        setupGroups: function() {
+          var self = this;
           app.fbRoot.child('state/hue/groups').on('value', function(snapshot) {
-            self.updateHueGroups(snapshot.val());
+            var groups = snapshot.val();
+            var newGroups = [];
+            groups.forEach(function(group, index) {
+              group.key = index;
+              newGroups.push(group);
+            });
+            self.set('hueGroups', newGroups);
           });
+        },
+        setupLights: function() {
+          var self = this;
           app.fbRoot.child('state/hue/lights').on('value', function(snapshot) {
-            self.updateHueLights(snapshot.val());
+            var lights = snapshot.val();
+            var newLights = [];
+            lights.forEach(function(light, index) {
+              light.key = index;
+              newLights.push(light);
+            });
+            self.set('hueLights', newLights);
           });
+        },
+        setupScenes: function() {
+          var self = this;
           app.fbRoot.child('state/hue/scenes').on('value', function(snapshot) {
-            self.updateHueScenes(snapshot.val());
+            var scenes = snapshot.val();
+            var newScenes = [];
+            var keys = Object.keys(scenes);
+            keys.forEach(function(key) {
+              var scene = scenes[key];
+              scene.key = key;
+              newScenes.push(scene);
+            });
+            self.set('hueScenes', newScenes);
           });
+        },
+        setupCommands: function() {
+          var self = this;
           app.fbRoot.child('config/HomeOnNode/commands').on('value', 
             function(snapshot) {
-              self.updateCommands(snapshot.val());
+              var commands = snapshot.val();
+              var keys = Object.keys(commands);
+              var newActions = [];
+              var newMedia = [];
+              var newMediaKey = [];
+              keys.forEach(function(key) {
+                var command = commands[key];
+                command.key = key;
+                if (command.kind === 'action') {
+                  newActions.push(command);
+                } else if (command.kind === 'media') {
+                  newMedia.push(command);
+                } else if (command.kind === 'mediaKey') {
+                  newMediaKey.push(command);
+                }
+              });
+              self.set('actionCommands', newActions);
+              self.set('mediaCommands', newMedia);
+              self.set('mediaKeyCommands', newMediaKey);
             }
           );
         },
@@ -65,56 +133,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: Array,
             notify: true
           }
-        },
-        updateHueGroups: function(groups) {
-          var newGroups = [];
-          groups.forEach(function(group, index) {
-            group.key = index;
-            newGroups.push(group);
-          });
-          this.set('hueGroups', newGroups);
-          console.debug('hueGroups updated');
-        },
-        updateHueLights: function(lights) {
-          var newLights = [];
-          lights.forEach(function(light, index) {
-            light.key = index;
-            newLights.push(light);
-          });
-          this.set('hueLights', newLights);
-          console.debug('hueLights updated');
-        },
-        updateHueScenes: function(scenes) {
-          var newScenes = [];
-          var keys = Object.keys(scenes);
-          keys.forEach(function(key) {
-            var scene = scenes[key];
-            scene.key = key;
-            newScenes.push(scene);
-          });
-          this.set('hueScenes', newScenes);
-          console.debug('hueScenes updated');
-        },
-        updateCommands: function(commands) {
-          var keys = Object.keys(commands);
-          var newActions = [];
-          var newMedia = [];
-          var newMediaKey = [];
-          keys.forEach(function(key) {
-            var command = commands[key];
-            command.key = key;
-            if (command.kind === 'action') {
-              newActions.push(command);
-            } else if (command.kind === 'media') {
-              newMedia.push(command);
-            } else if (command.kind === 'mediaKey') {
-              newMediaKey.push(command);
-            }
-          });
-          this.set('actionCommands', newActions);
-          this.set('mediaCommands', newMedia);
-          this.set('mediaKeyCommands', newMediaKey);
-          console.debug('Commands updated');
         }
       });
     })();

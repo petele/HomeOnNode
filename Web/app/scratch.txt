@@ -1,0 +1,18 @@
+          var myO = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              if (mutation.target.classList.contains('iron-selected')) {
+                if (self.ready === false) {
+                  self.async(function() {
+                    self.setup();
+                  }, 150);
+                }
+              }
+            });
+          });
+          var cfg = {
+            attributes: true,
+            attributeOldValue: true,
+            childList: true,
+            characterData: true
+          };
+          myO.observe(this, cfg);
