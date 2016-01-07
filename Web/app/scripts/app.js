@@ -62,6 +62,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       console.warn('fbRoot Auth', err);
     } else {
       console.log('fbRoot Auth', user);
+      // app.showToast('Connected to HomeOnNode.');
+      app.fbRoot.child('.info/connected').on('value', function(snapshot) {
+        if (snapshot.val() === true) {
+          app.showToast('Connected to HomeOnNode');
+          app.fbConnected = true;
+          // app.page = 'home';
+        } else {
+          app.showToast('ERROR: Connection to HomeOnNode lost.');
+          app.fbConnected = false;
+          // app.page = 'loading';
+        }
+      });
     }
   });
   app.fbCommandRef = app.fbRoot.child('commands');

@@ -67,7 +67,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <h2>[[title]]</h2>
       </template>
 
-      <template is="dom-repeat" items="{{logs}}">
+      <template is="dom-repeat" items="[[logs]]">
         <paper-item>
           <paper-item-body two-line>
             <div>[[item.message]]</div>
@@ -93,10 +93,29 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ready: function() {
           this.max = 150;
           this.logs = [];
-          var randomDelay = Math.floor(Math.random() * 3000 + 2500);
-          this.async(function() {
-            this.setup();
-          }, randomDelay);
+          this.initOnVisible();
+        },
+        initOnVisible: function() {
+          this.isReady = false;
+          var self = this;
+          var mo = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+              if (mutation.target.classList.contains('iron-selected')) {
+                if (self.isReady === false) {
+                  self.async(function() {
+                    self.isReady = true;
+                    self.setup();
+                  }, 150);
+                }
+              }
+            });
+          });
+          var moConfig = {
+            attributes: true,
+            childList: true,
+            characterData: true
+          };
+          mo.observe(this, moConfig);
         },
         setup: function() {
           var self = this;
