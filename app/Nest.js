@@ -261,7 +261,7 @@ function Nest() {
     return setHomeAway('home');
   };
 
-  this.setTemperature = function(thermostat, temperature, mode) {
+  this.setTemperature = function(thermostat, mode, temperature) {
     mode = mode || 'heat-cool';
     /* jshint -W106 */
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers

@@ -84,6 +84,16 @@ function HTTPServer(config, home, fb) {
     res.send(result);
   });
 
+  exp.post('/execute', function(req, res) {
+    var body = req.body;
+    if (typeof body === 'string') {
+      body = JSON.parse(body);
+    }
+    var sender = '[HTTP ' + req.ip + ']';
+    var result = home.executeCommand(body, sender);
+    res.send(result);
+  });
+
   exp.post('/doorbell', function(req, res) {
     var sender = '[HTTP ' + req.ip + ']';
     var result = home.ringDoorbell(sender);

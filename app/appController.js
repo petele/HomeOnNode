@@ -75,20 +75,8 @@ function init() {
           cmd = snapshot.val();
           if (cmd.hasOwnProperty('cmdName')) {
             home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
-          } else if (cmd.hasOwnProperty('hueScene')) {
-            home.executeHueScene(cmd.hueScene, 'FB');
-          } else if (cmd.hasOwnProperty('hueLight')) {
-            home.executeHueCommand(cmd.hueLight, cmd.modifier, 'FB');
-          } else if (cmd.hasOwnProperty('hueGroup')) {
-            var group = cmd.hueGroup;
-            if (group > 0) {
-              group = group * -1;
-            }
-            home.executeHueCommand(group, cmd.modifier, 'FB');
           } else {
-            var msg = '[APP] Unknown command recieved from Firebase';
-            msg += JSON.stringify(cmd);
-            log.error(msg);
+            home.executeCommand(cmd, 'FB');
           }
         } catch (ex) {
           var msg = '[APP] Unable to execute Firebase Command: ';

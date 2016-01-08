@@ -35,16 +35,6 @@ function Home(config, fb) {
    *
    ****************************************************************************/
 
-  function getCommandByName(commandName) {
-    var result = config.commands[commandName];
-    if (result) {
-      return result;
-    } else {
-      log.error('[HOME] Unable to find command: ' + commandName);
-      return {};
-    }
-  }
-
   function getLightSceneByName(sceneName) {
     var defaultScene = {bri: 254, ct: 369, on: true};
     sceneName = sceneName.toString();
@@ -78,203 +68,91 @@ function Home(config, fb) {
   };
 
   this.executeCommandByName = function(commandName, modifier, source) {
-    var result = {};
-    var msg = '[HOME] Command received: ' + commandName + ' [' + modifier + ']';
-    msg += ' from ' + source;
-    log.log(msg);
-    var command = getCommandByName(commandName);
-    if (command) {
-      result = _self.executeCommand(command, modifier, source);
-    } else {
-      msg = '[HOME] Command (' + commandName + ') not found.';
-      log.warn(msg);
-      result = {error: msg};
+    var msg = '[HOME] executeCommandByName: ' + commandName;
+    if (modifier) {
+      msg += ' (' + modifier + ')';
     }
-    return result;
+    msg += ' received from: ' + source;
+    log.log(msg);
+    var command = config.commands[commandName];
+    if (command) {
+      command.modifier = modifier;
+      _self.executeCommand(command, source);
+      return;
+    }
+    log.warn('[HOME] Command (' + commandName + ') not found.');
   };
 
-  this.executeCommand = function(command, modifier, source) {
-    var result = {};
-    if (command.state) {
-      log.debug('[HOME] ExecuteCommand:state ' + command.state);
+  this.executeCommand = function(command, source) {
+    var modifier = command.modifier;
+    var msg = '[HOME] executeCommand received from: ' + source;
+    msg += '. [' + Object.keys(command) + ']';
+    if (modifier) {
+      msg += ' (' + modifier + ')';
+    }
+    log.log(msg);
+    var cmds;
+    if (command.hasOwnProperty('state')) {
       setState(command.state);
     }
-    if (command.hueScene) {
-      if (hue) {
-        log.debug('[HOME] ExecuteCommand:hueScene');
-        try {
-          result.hueScene = hue.activateScene(command.hueScene);
-        } catch (ex) {
-          log.exception('[HOME] Hue scene failed', ex);
-          result.hueScene = {hueScene: cmd.hueScene, error: ex};
-        }
-      } else {
-        result.hueScene = '[HOME] Hue scene failed, Hue not ready.';
-        log.warn(result.hueScene);
+    if (command.hasOwnProperty('hueScene')) {
+      var scenes = command.hueScene;
+      if (Array.isArray(scenes) === false) {
+        scenes = [scenes];
       }
-    }
-    if (command.hue) {
-      if (hue) {
-        log.debug('[HOME] ExecuteCommand:hue');
-        result.hue = [];
-        command.hue.forEach(function(cmd) {
-          var scene;
-          if (modifier) {
-            scene = getLightSceneByName(modifier);
-          } else {
-            scene = getLightSceneByName(cmd.command);
-          }
-          try {
-            hue.setLightState(cmd.lights, scene);
-            result.hue.push({lights: cmd.lights, scene: scene});
-          } catch (ex) {
-            log.exception('[HOME] Hue command failed', ex);
-            result.hue.push({lights: cmd.lights, scene: scene, error: ex});
-          }
-        });
-      } else {
-        result.hue = '[HOME] Hue command failed, Hue not ready.';
-        log.warn(result.hue);
-      }
-    }
-    if (command.zwave) {
-      if (zwave) {
-        log.debug('[HOME] ExecuteCommand:zwave');
-        result.zwave = [];
-        var keys = Object.keys(command.zwave);
-        keys.forEach(function(k) {
-          var onOff = command.zwave[k];
-          if (modifier === 'OFF') {
-            onOff = false;
-          }
-          try {
-            result.zwave.push(zwave.setNodeBinary(k, onOff));
-          } catch (ex) {
-            log.exception('[HOME] ZWave command failed', ex);
-            result.zwave.push({zwave: k, onOff: onOff, error: ex});
-          }
-        });
-      } else {
-        result.zwave = '[HOME] ZWave command failed, ZWave not ready.';
-        log.warn(result.zwave);
-      }
-    }
-    if (command.zwaveAdmin) {
-      if (zwave) {
-        log.debug('[HOME] ExecuteCommand:zwaveAdmin');
-        try {
-          if (command.zwaveAdmin === 'addDevice') {
-            result.zwaveAdmin = zwave.addDevice();
-          } else if (command.zwaveAdmin === 'healNetwork') {
-            result.zwaveAdmin = zwave.healNetwork();
-          }
-        } catch (ex) {
-          log.exception('[HOME] ZWave AddDevice command failed', ex);
-          result.zwaveAdmin = ex;
-        }
-      } else {
-        result.zwaveAdmin = '[HOME] ZWave command failed, ZWave not ready.';
-        log.warn(result.zwaveAdmin);
-      }
-    }
-    if (command.nest) {
-      log.debug('[HOME] ExecuteCommand:nest');
-      command.nest.forEach(function(cmd) {
-        result.nest = [];
-        /* jshint -W106 */
-        // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-        var thermostatId = cmd.thermostatId;
-        var mode = cmd.hvac_mode;
-        var temperature = cmd.targetTemperature;
-        var current = _self.state.nest.devices.thermostats[thermostatId];
-        if (modifier === 'OFF') {
-          mode = 'off';
-        } else if (modifier === 'DOWN') {
-          temperature = current.target_temperature_f - 1;
-        } else if (modifier === 'UP') {
-          temperature = current.target_temperature_f + 1;
-        }
-        result.nest.push(setNestThermostat(thermostatId, temperature, mode));
-        /* jshint +W106 */
-        // jscs:enable
+      scenes.forEach(function(scene) {
+        setHueScene(scene);
       });
     }
-    if (command.harmony) {
-      if (harmony) {
-        log.debug('[HOME] ExecuteCommand:harmony');
-        try {
-          result.harmony = harmony.setActivityByName(command.harmony);
-        } catch (ex) {
-          log.exception('[HOME] Harmony activity failed', ex);
-          result.harmony = ex;
-        }
-      } else {
-        result.harmony = '[HOME] Harmony activity failed, Harmony not ready.';
-        log.warn(result.harmony);
+    if (command.hasOwnProperty('hueCommand')) {
+      cmds = command.hueCommand;
+      if (Array.isArray(cmds) === false) {
+        cmds = [cmds];
       }
-    }
-    if (command.harmonyCmd) {
-      if (harmony) {
-        log.debug('[HOME] ExecuteCommand:harmonyCmd');
-        try {
-          result.harmony = harmony.sendCommand(command.harmonyCmd);
-        } catch (ex) {
-          log.exception('[HOME] Harmony command failed', ex);
-          result.harmonyCmd = ex;
+      cmds.forEach(function(cmd) {
+        var scene;
+        if (modifier) {
+          scene = getLightSceneByName(modifier);
+        } else if (cmd.lightState) {
+          scene = cmd.lightState;
+        } else {
+          scene = getLightSceneByName(cmd.lightStateName);
         }
-      } else {
-        result.harmonyCmd = '[HOME] Harmony command failed, Harmony not ready.';
-        log.warn(result.harmony);
-      }
+        setHueLights(cmd.lights, scene);
+      });
     }
-    if (command.hasOwnProperty('dropcam')) {
-      if (nest) {
-        log.debug('[HOME] ExecuteCommand:dropcam');
-        try {
-          if (modifier === 'OFF' || command.dropcam === false) {
-            nest.disableCamera();
-            result.dropcam = false;
-          } else {
-            nest.enableCamera();
-            result.dropcam = true;
-          }
-        } catch (ex) {
-          log.exception('[HOME] Nest Cam change failed', ex);
-          result.dropcam = ex;
-        }
-      } else {
-        result.dropcam = '[HOME] Nest Cam change failed, Nest cam not ready.';
-        log.warn(result.dropcam);
+    if (command.hasOwnProperty('nestThermostat')) {
+      cmds = command.nestThermostat;
+      if (Array.isArray(cmds) === false) {
+        cmds = [cmds];
       }
+      cmds.forEach(function(cmd) {
+        setNestThermostat(cmd.id, cmd.mode, cmd.temperature, modifier);
+      });
     }
-    if (command.sound) {
-      log.debug('[HOME] ExecuteCommand:sound');
+    if (command.hasOwnProperty('harmonyActivity')) {
+      setHarmonyActivity(command.harmonyActivity);
+    }
+    if (command.hasOwnProperty('harmonyKey')) {
+      sendHarmonyKey(command.harmonyKey);
+    }
+    if (command.hasOwnProperty('nestCam')) {
+      var enabled = command.nestCam;
+      if (modifier === 'OFF') {
+        enabled = 'OFF';
+      }
+      enableNestCam(enabled);
+    }
+    if (command.hasOwnProperty('sound')) {
       playSound(command.sound, command.soundForce);
     }
     if (command.hasOwnProperty('doNotDisturb')) {
-      log.debug('[HOME] ExecuteCommand:doNotDisturb');
       if (modifier === 'OFF' || command.doNotDisturb === 'OFF') {
-        result.doNotDisturb = setDoNotDisturb('OFF');
+        setDoNotDisturb('OFF');
       } else {
-        result.doNotDisturb = setDoNotDisturb('ON');
+        setDoNotDisturb('ON');
       }
     }
-    return result;
-  };
-
-  this.executeHueCommand = function(light, sceneName, source) {
-    var scene = getLightSceneByName(sceneName);
-    var msg = '[HOME] ExecuteHueCommand [' + light + '] to ';
-    msg += sceneName + ' from: ' + source;
-    log.log(msg);
-    return hue.setLightState([light], scene);
-  };
-
-  this.executeHueScene = function(hueSceneId, source) {
-    var msg = '[HOME] ExecuteHueScene [' + hueSceneId + '] from ';
-    msg += source;
-    log.log(msg);
-    return hue.activateScene(hueSceneId);
   };
 
   this.ringDoorbell = function(source) {
@@ -288,25 +166,6 @@ function Home(config, fb) {
    * Primary command helpers
    *
    ****************************************************************************/
-
-  function setNestThermostat(thermostatId, targetTemperature, mode) {
-    /* jshint -W106 */
-    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    if (nest) {
-      var current = _self.state.nest.devices.thermostats[thermostatId];
-      if (!targetTemperature) {
-        targetTemperature = current.target_temperature_f;
-      }
-      if (!mode) {
-        mode = current.hvac_mode;
-      }
-      return nest.setTemperature(thermostatId, targetTemperature, mode);
-    } else {
-      log.warn('[HOME] Nest thermostat change failed, Nest not ready.');
-    }
-    /* jshint +W106 */
-    // jscs:enable
-  }
 
   function handleDoorEvent(doorName, doorState, updateState) {
     try {
@@ -343,6 +202,7 @@ function Home(config, fb) {
   }
 
   function setDoNotDisturb(val) {
+    log.log('[HOME] setDoNotDisturb: ' + val);
     if (val === 'ON') {
       fbSet('state/doNotDisturb', true);
       log.log('[HOME] Do not disturb: enabled');
@@ -350,14 +210,14 @@ function Home(config, fb) {
     } else if (val === 'OFF') {
       fbSet('state/doNotDisturb', false);
       log.log('[HOME] Do not disturb: disabled');
-      return false;
+      return true;
     }
-    var msg = '[HOME] Unknown doNotDisturb state: ' + val;
-    log.error(msg);
-    return msg;
+    log.error('[HOME] Unknown doNotDisturb state: ' + val);
+    return false;
   }
 
   function setState(newState) {
+    log.log('[HOME] setState: ' + newState);
     if (armingTimer) {
       clearTimeout(armingTimer);
       armingTimer = null;
@@ -371,7 +231,7 @@ function Home(config, fb) {
     }
     if (_self.state.systemState === newState) {
       log.warn('[HOME] State already set to ' + newState);
-      return;
+      return false;
     }
     fbSet('state/systemState', newState);
     var now = Date.now();
@@ -383,7 +243,6 @@ function Home(config, fb) {
       date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
     };
     fbPush('logs/systemState', stateLog);
-    log.log('[HOME] State changed to: ' + newState);
     if (nest) {
       if (newState === 'AWAY' || newState === 'ARMED') {
         nest.setAway();
@@ -392,10 +251,11 @@ function Home(config, fb) {
       }
     }
     _self.executeCommandByName('RUN_ON_' + newState, null, 'SET_STATE');
-    return newState;
+    return true;
   }
 
   function playSound(file, force) {
+    log.log('[HOME] playSound: ' + file + ' ' + force);
     if (_self.state.doNotDisturb === false || force === true) {
       setTimeout(function() {
         var cmd = 'mplayer ';
@@ -590,6 +450,36 @@ function Home(config, fb) {
     harmony = null;
   }
 
+  function setHarmonyActivity(activityName) {
+    log.log('[HOME] setHarmonyActivity: ' + activityName);
+    if (harmony) {
+      try {
+        harmony.setActivityByName(activityName);
+        return true;
+      } catch (ex) {
+        log.exception('[HOME] Harmony activity failed', ex);
+        return false;
+      }
+    }
+    log.warn('[HOME] Harmony activity failed, Harmony not ready.');
+    return false;
+  }
+
+  function sendHarmonyKey(harmonyKey) {
+    log.log('[HOME] sendHarmonyKey: ' + harmonyKey);
+    if (harmony) {
+      try {
+        harmony.sendCommand(harmonyKey);
+        return true;
+      } catch (ex) {
+        log.exception('[HOME] Harmony command failed', ex);
+        return false;
+      }
+    }
+    log.warn('[HOME] Harmony command failed, Harmony not ready.');
+    return false;
+  }
+
   /*****************************************************************************
    *
    * Nest - Initialization & Shut Down
@@ -622,7 +512,11 @@ function Home(config, fb) {
         msg += ' kind: ' + JSON.stringify(kind);
         msg += ' protect: ' + JSON.stringify(protect);
         log.warn(msg);
-        _self.executeCommand({soundOverride: 'sounds/bell.mp3'});
+        var cmd = {
+          sound: 'sounds/bell.mp3',
+          forceSound: true
+        };
+        _self.executeCommand(cmd);
       });
       nest.on('ready', function(data) {
         nest.enableListener();
@@ -633,6 +527,50 @@ function Home(config, fb) {
   function shutdownNest() {
     log.log('[HOME] Shutting down Nest.');
     nest = null;
+  }
+
+  function enableNestCam(enabled) {
+    log.log('[HOME] enableNestCam: ' + enabled);
+    if (nest) {
+      try {
+        if (enabled === true) {
+          nest.enableCamera();
+          return true;
+        }
+        nest.disableCamera();
+        return true;
+      } catch (ex) {
+        log.exception('[HOME] Failed to update NestCam', ex);
+        return false;
+      }
+    }
+    log.warn('[HOME] NestCam command failed, Nest not ready.');
+    return false;
+  }
+
+  function setNestThermostat(id, mode, temperature, modifier) {
+    log.todo('[HOME] setNestThermostat');
+    return false;
+    if (nest) {
+      try {
+        if (modifier === 'OFF') {
+          mode = 'off';
+        } else if (modifier === 'UP') {
+          log.todo('[HOME] Nest Thermostat Modifier UP NYI');
+          return false;
+        } else if (modifier === 'DOWN') {
+          log.todo('[HOME] Nest Thermostat Modifier DOWN NYI');
+          return false;
+        }
+        nest.setTemperature(id, mode, temperature);
+        return true;
+      } catch (ex) {
+        log.exception('[HOME] Failed to set Nest thermostat', ex);
+        return false;
+      }
+    }
+    log.warn('[HOME] Nest thermostat command failed, Nest not ready.');
+    return false;
   }
 
   /*****************************************************************************
@@ -690,6 +628,36 @@ function Home(config, fb) {
   function shutdownHue() {
     log.log('[HOME] Shutting down Hue.');
     hue = null;
+  }
+
+  function setHueScene(sceneId) {
+    log.log('[HOME] setHueScene: ' + sceneId);
+    if (hue) {
+      try {
+        hue.activateScene(sceneId);
+        return true;
+      } catch (ex) {
+        log.exception('[HOME] Hue scene failed', ex);
+        return false;
+      }
+    }
+    log.warn('[HOME] Hue scene failed, Hue not ready.');
+    return false;
+  }
+
+  function setHueLights(lights, lightState) {
+    log.log('[HOME] setHueLights');
+    if (hue) {
+      try {
+        hue.setLightState(lights, lightState);
+        return true;
+      } catch (ex) {
+        log.exception('[HOME] Hue lights failed', ex);
+        return false;
+      }
+    }
+    log.warn('[HOME] Hue lights failed, Hue not ready.');
+    return false;
   }
 
   /*****************************************************************************
