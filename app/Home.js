@@ -122,13 +122,42 @@ function Home(config, fb) {
         setHueLights(cmd.lights, scene);
       });
     }
+    if (command.hasOwnProperty('zWave')) {
+      cmds = command.zWave;
+      if (Array.isArray(cmds) === false) {
+        cmds = [cmds];
+      }
+      cmds.forEach(function(cmd) {
+        var turnOn = cmd.state;
+        if (modifier === 'OFF') {
+          turnOn = false;
+        }
+        setZWaveSwitch(cmd.id, turnOn);
+      });
+    }
     if (command.hasOwnProperty('nestThermostat')) {
       cmds = command.nestThermostat;
       if (Array.isArray(cmds) === false) {
         cmds = [cmds];
       }
       cmds.forEach(function(cmd) {
-        setNestThermostat(cmd.id, cmd.mode, cmd.temperature, modifier);
+        var thermostat = _self.state.nest.devices.thermostats[cmd.id];
+        var mode = thermostat.hvac_mode;
+        var temperature = thermostat.target_temperature_f;
+        if (cmd.mode) {
+          mode = cmd.mode;
+        }
+        if (cmd.temperature) {
+          temperature = cmd.temperature;
+        }
+        if (modifier === 'OFF') {
+          mode = 'off';
+        } else if (modifier === 'UP') {
+          temperature += 1;
+        } else if (modifier === 'DOWN') {
+          temperature -= 1;
+        }
+        setNestThermostat(cmd.id, mode, temperature);
       });
     }
     if (command.hasOwnProperty('harmonyActivity')) {
@@ -485,7 +514,6 @@ function Home(config, fb) {
   function initNest() {
     try {
       nest = new Nest();
-      log.todo('[HOME] Setup Nest Alarms');
     } catch (ex) {
       log.exception('[HOME] Unable to initialize Nest', ex);
       shutdownNest();
@@ -503,16 +531,11 @@ function Home(config, fb) {
         fbSet('state/nest', data);
       });
       nest.on('alarm', function(kind, protect) {
-        // TODO
-        var msg = '[HOME] Nest Alarm NYI!!';
-        msg += ' kind: ' + JSON.stringify(kind);
-        msg += ' protect: ' + JSON.stringify(protect);
+        var msg = '[HOME] Nest Alarm - ';
+        msg += 'kind: ' + JSON.stringify(kind);
+        msg += 'protect: ' + JSON.stringify(protect);
         log.warn(msg);
-        var cmd = {
-          sound: 'sounds/bell.mp3',
-          forceSound: true
-        };
-        _self.executeCommand(cmd);
+        _self.executeCommandByName('NEST_ALARM', null, 'NEST_ALARM');
       });
       nest.on('ready', function(data) {
         nest.enableListener();
@@ -544,20 +567,10 @@ function Home(config, fb) {
     return false;
   }
 
-  function setNestThermostat(id, mode, temperature, modifier) {
-    log.todo('[HOME] setNestThermostat');
-    return false;
+  function setNestThermostat(id, mode, temperature) {
+    log.log('[HOME] setNestThermostat: ' + id + ' ' + mode + ' ' + temperature);
     if (nest) {
       try {
-        if (modifier === 'OFF') {
-          mode = 'off';
-        } else if (modifier === 'UP') {
-          log.todo('[HOME] Nest Thermostat Modifier UP NYI');
-          return false;
-        } else if (modifier === 'DOWN') {
-          log.todo('[HOME] Nest Thermostat Modifier DOWN NYI');
-          return false;
-        }
         nest.setTemperature(id, mode, temperature);
         return true;
       } catch (ex) {
@@ -642,7 +655,7 @@ function Home(config, fb) {
   }
 
   function setHueLights(lights, lightState) {
-    log.log('[HOME] setHueLights');
+    log.log('[HOME] setHueLights' + lights + ' ' + JSON.stringify(lightState));
     if (hue) {
       try {
         hue.setLightState(lights, lightState);
@@ -793,6 +806,21 @@ function Home(config, fb) {
     }
     zwave = null;
     fbSet('state/zwave');
+  }
+
+  function setZWaveSwitch(id, newState) {
+    log.log('[HOME] setZWaveSwitch: ' + id + ' ' + newState);
+    if (zwave) {
+      try {
+        zwave.setNodeBinary(id, newState);
+        return true;
+      } catch (ex) {
+        log.exception('[HOME] ZWave Switch change failed.', ex);
+        return false;
+      }
+    }
+    log.warn('[HOME] ZWave switch failed, ZWave not ready.');
+    return false;
   }
 
   /*****************************************************************************

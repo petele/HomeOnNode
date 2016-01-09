@@ -266,9 +266,11 @@ function Nest() {
     /* jshint -W106 */
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
     var state = {
-      target_temperature_f: temperature,
       mode: mode
     };
+    if (mode !== 'off') {
+      state.target_temperature_f = temperature;
+    }
     // jscs:enable
     /* jshint +W106 */
     return setThermostat(thermostat, state);
