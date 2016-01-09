@@ -80,8 +80,8 @@ function HTTPServer(config, home, fb) {
       body = JSON.parse(body);
     }
     var sender = '[HTTP ' + req.ip + ']';
-    var result = home.executeCommandByName(body.cmdName, body.modifier, sender);
-    res.send(result);
+    home.executeCommandByName(body.cmdName, body.modifier, sender);
+    res.send('OK');
   });
 
   exp.post('/execute', function(req, res) {
@@ -90,14 +90,14 @@ function HTTPServer(config, home, fb) {
       body = JSON.parse(body);
     }
     var sender = '[HTTP ' + req.ip + ']';
-    var result = home.executeCommand(body, sender);
-    res.send(result);
+    home.executeCommand(body, sender);
+    res.send('OK');
   });
 
   exp.post('/doorbell', function(req, res) {
     var sender = '[HTTP ' + req.ip + ']';
-    var result = home.ringDoorbell(sender);
-    res.send(result);
+    home.ringDoorbell(sender);
+    res.send('OK');
   });
 
   exp.use(function(req, res) {
