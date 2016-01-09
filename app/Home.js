@@ -119,7 +119,6 @@ function Home(config, fb) {
         } else {
           scene = getLightSceneByName(cmd.receipeName);
         }
-        console.log('here', cmd.lights, scene);
         setHueLights(cmd.lights, scene);
       });
     }
@@ -463,7 +462,7 @@ function Home(config, fb) {
   }
 
   function sendHarmonyKey(harmonyKey) {
-    log.log('[HOME] sendHarmonyKey: ' + harmonyKey);
+    log.log('[HOME] sendHarmonyKey: ' + JSON.stringify(harmonyKey));
     if (harmony) {
       try {
         harmony.sendCommand(harmonyKey);
