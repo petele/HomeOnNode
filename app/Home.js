@@ -85,11 +85,12 @@ function Home(config, fb) {
 
   this.executeCommand = function(command, source) {
     var modifier = command.modifier;
-    var msg = '[HOME] executeCommand received from: ' + source;
+    var msg = '[HOME] executeCommand ';
     msg += '. [' + Object.keys(command) + ']';
     if (modifier) {
       msg += ' (' + modifier + ')';
     }
+    msg += ' received from: ' + source;
     log.log(msg);
     var cmds;
     if (command.hasOwnProperty('state')) {
@@ -533,7 +534,7 @@ function Home(config, fb) {
     log.log('[HOME] enableNestCam: ' + enabled);
     if (nest) {
       try {
-        if (enabled === true) {
+        if (enabled === 'YES') {
           nest.enableCamera();
           return true;
         }
