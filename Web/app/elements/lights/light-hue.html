@@ -46,8 +46,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             scene = this.scene;
           }
           var cmd = {
-            hueLight: this.light.key,
-            modifier: scene
+            hueCommand: {
+              lights: this.light.key,
+              receipeName: scene
+            }
           };
           app.sendCommand(cmd);
         }

@@ -16,7 +16,6 @@ log.setLogFileName('./start.log');
 log.setFileLogging(true);
 
 function sendCommand(command, path) {
-  path = path || '/execute/name';
   var uri = {
     'host': config.controller.ip,
     'port': config.controller.port,
@@ -29,7 +28,8 @@ function sendCommand(command, path) {
   try {
     log.http('REQ', command);
     webRequest.request(uri, command, function(resp) {
-      log.http('RESP', JSON.stringify(resp));
+      // console.log('xxx', resp.status);
+      // log.http('RESP', resp);
     });
   } catch (ex) {
     log.exception('[sendCommand] Failed', ex);
@@ -80,13 +80,14 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
         if (exitApp) {
           exit('SIGINT', 0);
         } else {
-          var cmdName = config.keypad.keys[key];
-          if (cmdName) {
-            var cmd = {
-              cmdName: cmdName,
-              modifier: modifier
-            };
-            sendCommand(cmd);
+          var cmd = config.keypad.keys[key];
+          if (cmd) {
+            cmd.modifier = modifier;
+            var path = '/execute';
+            if (cmd.hasOwnProperty('cmdName')) {
+              path = '/execute/name';
+            }
+            sendCommand(cmd, path);
           } else {
             log.warn('[HOME] Unknown key pressed: ' + key);
           }

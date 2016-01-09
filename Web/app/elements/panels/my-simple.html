@@ -77,7 +77,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       .current-temp {
-        @apply(--paper-font-display2);
+        @apply(--paper-font-display1);
+        margin-right: 12px;
       }
 
       .weatherIcon {
@@ -361,19 +362,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.$.ibState.toggleAttribute('loading', true);
         },
         toggleDnD: function() {
-          var modifier = null;
+          var newState = 'ON';
           if (this.state.doNotDisturb === true) {
-            modifier = 'OFF';
+            newState = 'OFF';
           }
-          app.sendCommand({cmdName: 'DO_NOT_DISTURB', modifier: modifier});
+          app.sendCommand({doNotDisturb: newState});
           this.$.ibDnD.toggleAttribute('loading', true);
         },
         toggleNest: function() {
-          var modifier = null;
+          var newState = 'ON';
           if (this.state.nestCam === 'ON') {
-            modifier = 'OFF';
+            newState = 'OFF';
           }
-          app.sendCommand({cmdName: 'DROPCAM', modifier: modifier});
+          app.sendCommand({nestCam: newState});
           this.$.ibNest.toggleAttribute('loading', true);
         },
         tapHVAC: function() {

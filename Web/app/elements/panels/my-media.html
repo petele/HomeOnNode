@@ -84,7 +84,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var self = this;
             this.commands.forEach(function(item, index) {
               var path = 'commands.' + index + '.isOn';
-              if (item.harmony === self.currentActivity) {
+              if (item.harmonyActivity === self.currentActivity) {
                 self.set(path, true);
               } else if (item.isOn === true) {
                 self.set(path, false);

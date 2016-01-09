@@ -42,9 +42,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           } else {
             scene = this.scene;
           }
+          var key = this.group.key;
+          if (parseInt(key, 10) !== 0) {
+            key = key * -1;
+          }
           var cmd = {
-            hueGroup: this.group.key,
-            modifier: scene
+            hueCommand: {
+              lights: key,
+              receipeName: scene
+            }
           };
           app.sendCommand(cmd);
         }
