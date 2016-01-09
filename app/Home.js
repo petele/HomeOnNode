@@ -117,8 +117,9 @@ function Home(config, fb) {
         } else if (cmd.lightState) {
           scene = cmd.lightState;
         } else {
-          scene = getLightSceneByName(cmd.lightStateName);
+          scene = getLightSceneByName(cmd.receipeName);
         }
+        console.log('here', cmd.lights, scene);
         setHueLights(cmd.lights, scene);
       });
     }
@@ -206,15 +207,10 @@ function Home(config, fb) {
     log.log('[HOME] setDoNotDisturb: ' + val);
     if (val === 'ON') {
       fbSet('state/doNotDisturb', true);
-      log.log('[HOME] Do not disturb: enabled');
-      return true;
-    } else if (val === 'OFF') {
-      fbSet('state/doNotDisturb', false);
-      log.log('[HOME] Do not disturb: disabled');
       return true;
     }
-    log.error('[HOME] Unknown doNotDisturb state: ' + val);
-    return false;
+    fbSet('state/doNotDisturb', false);
+    return true;
   }
 
   function setState(newState) {
@@ -534,7 +530,7 @@ function Home(config, fb) {
     log.log('[HOME] enableNestCam: ' + enabled);
     if (nest) {
       try {
-        if (enabled === 'YES') {
+        if (enabled === 'ON') {
           nest.enableCamera();
           return true;
         }
