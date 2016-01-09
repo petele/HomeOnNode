@@ -21,6 +21,9 @@ function Hue(key, ip) {
 
   this.setLightState = function(lights, cmd, callback) {
     if (hueBridge) {
+      if (Array.isArray(lights) === false) {
+        lights = [lights];
+      }
       lights.forEach(function(light) {
         var result;
         var msg;

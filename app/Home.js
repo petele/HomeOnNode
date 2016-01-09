@@ -86,7 +86,7 @@ function Home(config, fb) {
   this.executeCommand = function(command, source) {
     var modifier = command.modifier;
     var msg = '[HOME] executeCommand ';
-    msg += '. [' + Object.keys(command) + ']';
+    msg += '[' + Object.keys(command) + ']';
     if (modifier) {
       msg += ' (' + modifier + ')';
     }
