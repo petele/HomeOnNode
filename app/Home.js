@@ -655,7 +655,7 @@ function Home(config, fb) {
   }
 
   function setHueLights(lights, lightState) {
-    log.log('[HOME] setHueLights' + lights + ' ' + JSON.stringify(lightState));
+    log.log('[HOME] setHueLights ' + lights + ' ' + JSON.stringify(lightState));
     if (hue) {
       try {
         hue.setLightState(lights, lightState);

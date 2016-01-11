@@ -5,12 +5,10 @@ var Firebase = require('firebase');
 var log = require('./SystemLog');
 
 function printLogs(path) {
-  fb.child(path).orderByChild('date').limitToLast(100).on('value',
+  fb.child(path).orderByChild('date').limitToLast(100).on('child_added',
     function(snapshot) {
-      snapshot.forEach(function(item) {
-        var msg = item.val();
-        log.printLogObj(msg);
-      });
+      var msg = snapshot.val();
+      log.printLogObj(msg);
     }
   );
 }

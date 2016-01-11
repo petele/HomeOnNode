@@ -81,7 +81,7 @@ function HTTPServer(config, home, fb) {
     }
     var sender = '[HTTP ' + req.ip + ']';
     home.executeCommandByName(body.cmdName, body.modifier, sender);
-    res.send('OK');
+    res.send({result: 'done'});
   });
 
   exp.post('/execute', function(req, res) {
@@ -91,13 +91,13 @@ function HTTPServer(config, home, fb) {
     }
     var sender = '[HTTP ' + req.ip + ']';
     home.executeCommand(body, sender);
-    res.send('OK');
+    res.send({result: 'done'});
   });
 
   exp.post('/doorbell', function(req, res) {
     var sender = '[HTTP ' + req.ip + ']';
     home.ringDoorbell(sender);
-    res.send('OK');
+    res.send({result: 'done'});
   });
 
   exp.use(function(req, res) {
