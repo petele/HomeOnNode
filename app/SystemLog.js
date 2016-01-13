@@ -87,6 +87,8 @@ function printLogObj(logObj) {
     levelColor = colors.green;
   } else if (level === 'TODO') {
     levelColor = colors.cyan;
+  } else if (level === 'DEBUG') {
+    levelColor = colors.gray;
   }
   var strLine = logObj.date_ + ' | ' + levelColor(formattedLevel) + ' | ';
   if (fullColor === true) {

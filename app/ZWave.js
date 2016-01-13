@@ -145,12 +145,12 @@ function ZWave(ozwConfig) {
   }
 
   function nodeEvent(nodeId, value) {
-    log.debug('[ZWAVE] nodeEventR node[' + nodeId + ']');
+    // log.debug('[ZWAVE] nodeEventR node[' + nodeId + ']');
     var debouncer = _debouncers[nodeId];
     if (!debouncer) {
       debouncer = debounce(function(nodeId, value) {
-        log.debug('[ZWAVE] nodeEvent node[' + nodeId + ']');
-        log.debug('  ' + JSON.stringify(value));
+        var msg = '[ZWAVE] nodeEvent node[' + nodeId + ']=' + value;
+        log.debug(msg);
         _self.emit('node_event', nodeId, value);
       }, 500);
       _debouncers[nodeId] = debouncer;
@@ -182,19 +182,16 @@ function ZWave(ozwConfig) {
   }
 
   function valueAdded(nodeId, comClass, value) {
-    log.debug('[ZWAVE] valueAdded');
     setNodeValue(nodeId, comClass, value);
     emitChange('node_value_change', value);
   }
 
   function valueChanged(nodeId, comClass, value) {
-    log.debug('[ZWAVE] valueChanged');
     setNodeValue(nodeId, comClass, value);
     emitChange('node_value_change', value);
   }
 
   function valueRefreshed(nodeId, comClass, value) {
-    log.debug('[ZWAVE] valueRefreshed');
     setNodeValue(nodeId, comClass, value);
     emitChange('node_value_refresh', value);
   }
@@ -220,9 +217,6 @@ function ZWave(ozwConfig) {
   }
 
   function valueRemoved(nodeId, comClass, index) {
-    var msg = '[ZWAVE] valueRemoved nodeId[' + nodeId + ']';
-    msg += '[0x' + comClass.toString(16) + '][' + index + ']';
-    log.debug(msg);
     try {
       /* jshint ignore:start */
       // jscs:disable requireDotNotation
@@ -271,6 +265,7 @@ function ZWave(ozwConfig) {
       kind = 'message complete';
     } else if (notif === 1) {
       kind = 'timeout';
+      log.error('[ZWAVE] handleNotification: timeout for node[' + nodeId + ']');
     } else if (notif === 2) {
       kind = 'no operation';
     } else if (notif === 3) {
@@ -279,10 +274,11 @@ function ZWave(ozwConfig) {
       kind = 'asleep';
     } else if (notif === 5) {
       kind = 'dead';
+      log.error('[ZWAVE] handleNotification: dead for node[' + nodeId + ']');
     } else if (notif === 6) {
       kind = 'alive';
     }
-    log.debug('[ZWAVE] Notification: Node[' + nodeId + '] ' + kind);
+    // log.debug('[ZWAVE] Notification: Node[' + nodeId + '] ' + kind);
   }
 
 
@@ -311,10 +307,15 @@ function ZWave(ozwConfig) {
     }
 
     if (emit === true) {
-      log.debug('[ZWAVE] emitChange: ' + JSON.stringify(info));
+      var msg = '[ZWAVE] ' + eventName + ' for node[' + info.node_id + ']';
+      msg += ' ' + info.label + '=' + info.value;
+      if (info.units) {
+        msg += info.units;
+      }
+      log.debug(msg);
       _self.emit(eventName, info.node_id, info);
     } else {
-      log.log('[ZWAVE] change not emitted: ' + JSON.stringify(info));
+      log.log('[ZWAVE] emitChange ignored for: ' + JSON.stringify(info));
     }
     // jscs:enable
     /* jshint +W106 */
@@ -337,8 +338,8 @@ function ZWave(ozwConfig) {
   }
 
   function updateNodeInfo(nodeId, nodeInfo) {
-    log.debug('[ZWAVE] updateNodeInfo node[' + nodeId + ']');
-    log.debug('  ' + JSON.stringify(nodeInfo));
+    // log.debug('[ZWAVE] updateNodeInfo node[' + nodeId + ']');
+    // log.debug('  ' + JSON.stringify(nodeInfo));
     _nodes[nodeId].manufacturer = nodeInfo.manufacturer;
     _nodes[nodeId].manufacturerId = nodeInfo.manufacturerid;
     _nodes[nodeId].product = nodeInfo.product;
@@ -583,7 +584,7 @@ function ZWave(ozwConfig) {
 
   this.isReady = function() {
     var result = checkIfReady(false);
-    log.debug('[ZWAVE] isReady: ' + result);
+    // log.debug('[ZWAVE] isReady: ' + result);
     return result;
   };
 

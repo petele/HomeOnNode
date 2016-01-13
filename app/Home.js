@@ -777,7 +777,6 @@ function Home(config, fb) {
         var nodeName = config.zwave[nodeId].label || nodeId;
         path = 'state/sensor/' + nodeName + '/' + path;
         fbSet(path, value);
-        log.log('[HOME] ZWave - [' + path + '] = ' + value.value);
       } catch (ex) {
         log.exception('[HOME] Error in saveNodeValue', ex);
       }
@@ -787,9 +786,9 @@ function Home(config, fb) {
   }
 
   function zwaveTimerTick() {
-    //log.debug('[HOME] ZWave Timer Tick');
-    var nodes = zwave.getNode();
-    fbSet('state/zwave/nodes', nodes);
+    // log.debug('[HOME] ZWave Timer Tick');
+    // var nodes = zwave.getNode();
+    // fbSet('state/zwave/nodes', nodes);
   }
 
   function shutdownZWave() {
