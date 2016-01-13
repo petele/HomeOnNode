@@ -176,6 +176,7 @@ function Hue(key, ip) {
   this.activateScene = function(sceneId, callback) {
     if (hueBridge) {
       try {
+        log.log('[HUE] activateScene: ' + sceneId);
         return hueBridge.activateScene(sceneId, callback);
       } catch (ex) {
         log.exception('[HUE] Could not activate scene.', ex);

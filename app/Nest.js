@@ -143,7 +143,9 @@ function Nest() {
         return false;
       }
       var fbPath = 'devices/thermostats/' + thermostat;
-      log.log('[NEST] Set thermostat ' + thermostat + ' to ' + state);
+      var msg = '[NEST] setThermostat (' + thermostat + '): ';
+      msg += JSON.stringify(state);
+      log.log(msg);
       _fbNest.child(fbPath).set(state, function(err) {
         onSetComplete(fbPath, err);
       });
@@ -164,6 +166,7 @@ function Nest() {
         }
       }
       var path = 'devices/cameras/' + cameraId + '/is_streaming';
+      log.log('[NEST] enableCamera (' + cameraId + '): ' + state);
       _fbNest.child(path).set(state, function(err) {
         onSetComplete(path, err);
       });

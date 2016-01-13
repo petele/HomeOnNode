@@ -221,19 +221,23 @@ function Harmony(uuid, ip) {
   this.setActivityByName = function(activityName) {
     var activityId = _activitiesByName[activityName];
     if (activityId) {
-      return _self.setActivityById(activityId);
+      return _self.setActivityById(activityId, activityName);
     } else {
       log.error('[HARMONY] Unable to find activity named: ' + activityName);
       return {'error': 'Activity name not found.'};
     }
   };
 
-  this.setActivityById = function(activityID) {
+  this.setActivityById = function(activityID, activityName) {
     if (client === undefined) {
       _self.emit('error', 'Client not connected.');
       return {'error': 'Client not connected'};
     } else {
-      log.log('[HARMONY] setActivity to: ' + activityID);
+      var msg = '[HARMONY] setActivity to: ' + activityID;
+      if (activityName) {
+        msg += ' (' + activityName + ')';
+      }
+      log.log(msg);
       var cmdText = 'activityId=' + activityID.toString();
       cmdText += ':timestamp=' + Date.now();
       var cmd = new XMPP.Stanza.Iq({'id': _uuid, 'type': 'get'})
@@ -251,6 +255,7 @@ function Harmony(uuid, ip) {
       _self.emit('error', 'Client not connected.');
       return {'error': 'Client not connected'};
     } else {
+      log.log('[HARMONY] sendCommand: ' + cmd.command);
       cmd = JSON.stringify(cmd);
       cmd = cmd.replace(/:/g, '::');
       var cmdText = 'action=' + cmd + ':status=press';
@@ -260,7 +265,7 @@ function Harmony(uuid, ip) {
           mime: 'vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'
         }).t(cmdText);
       client.send(cmdStanza);
-      return;
+      return {'action': 'sendCommand', 'command': cmd};
     }
   };
 

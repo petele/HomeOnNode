@@ -232,7 +232,7 @@ function Home(config, fb) {
   }
 
   function setDoNotDisturb(val) {
-    log.log('[HOME] setDoNotDisturb: ' + val);
+    log.debug('[HOME] setDoNotDisturb: ' + val);
     if (val === 'ON') {
       fbSet('state/doNotDisturb', true);
       return true;
@@ -242,7 +242,7 @@ function Home(config, fb) {
   }
 
   function setState(newState) {
-    log.log('[HOME] setState: ' + newState);
+    log.debug('[HOME] setState: ' + newState);
     if (armingTimer) {
       clearTimeout(armingTimer);
       armingTimer = null;
@@ -280,7 +280,7 @@ function Home(config, fb) {
   }
 
   function playSound(file, force) {
-    log.log('[HOME] playSound: ' + file + ' ' + force);
+    log.debug('[HOME] playSound: ' + file + ' ' + force);
     if (_self.state.doNotDisturb === false || force === true) {
       setTimeout(function() {
         var cmd = 'mplayer ';
@@ -290,7 +290,6 @@ function Home(config, fb) {
             log.exception('[HOME] PlaySound Error', error);
           }
         });
-        log.debug('[HOME] PlaySound: ' + file);
       }, 1);
     }
   }
@@ -476,7 +475,7 @@ function Home(config, fb) {
   }
 
   function setHarmonyActivity(activityName) {
-    log.log('[HOME] setHarmonyActivity: ' + activityName);
+    log.debug('[HOME] setHarmonyActivity: ' + activityName);
     if (harmony) {
       try {
         harmony.setActivityByName(activityName);
@@ -491,7 +490,7 @@ function Home(config, fb) {
   }
 
   function sendHarmonyKey(harmonyKey) {
-    log.log('[HOME] sendHarmonyKey: ' + JSON.stringify(harmonyKey));
+    log.debug('[HOME] sendHarmonyKey: ' + JSON.stringify(harmonyKey));
     if (harmony) {
       try {
         harmony.sendCommand(harmonyKey);
@@ -549,7 +548,7 @@ function Home(config, fb) {
   }
 
   function enableNestCam(enabled) {
-    log.log('[HOME] enableNestCam: ' + enabled);
+    log.debug('[HOME] enableNestCam: ' + enabled);
     if (nest) {
       try {
         if (enabled === 'ON') {
@@ -568,7 +567,7 @@ function Home(config, fb) {
   }
 
   function setNestThermostat(id, mode, temperature) {
-    log.log('[HOME] setNestThermostat: ' + id + ' ' + mode + ' ' + temperature);
+    log.debug('[HOME] setNestThermostat: ' + id + ' ' + mode + ' ' + temperature);
     if (nest) {
       try {
         nest.setTemperature(id, mode, temperature);
@@ -640,7 +639,7 @@ function Home(config, fb) {
   }
 
   function setHueScene(sceneId) {
-    log.log('[HOME] setHueScene: ' + sceneId);
+    log.debug('[HOME] setHueScene: ' + sceneId);
     if (hue) {
       try {
         hue.activateScene(sceneId);
@@ -655,7 +654,7 @@ function Home(config, fb) {
   }
 
   function setHueLights(lights, lightState) {
-    log.log('[HOME] setHueLights ' + lights + ' ' + JSON.stringify(lightState));
+    log.debug('[HOME] setHueLights ' + lights + ' ' + JSON.stringify(lightState));
     if (hue) {
       try {
         hue.setLightState(lights, lightState);
@@ -778,7 +777,7 @@ function Home(config, fb) {
         var nodeName = config.zwave[nodeId].label || nodeId;
         path = 'state/sensor/' + nodeName + '/' + path;
         fbSet(path, value);
-        log.log('[HOME] ZWave - saveNodeValue: ' + path + ': ' + value.value);
+        log.log('[HOME] ZWave - [' + path + '] = ' + value.value);
       } catch (ex) {
         log.exception('[HOME] Error in saveNodeValue', ex);
       }
@@ -809,7 +808,7 @@ function Home(config, fb) {
   }
 
   function setZWaveSwitch(id, newState) {
-    log.log('[HOME] setZWaveSwitch: ' + id + ' ' + newState);
+    log.debug('[HOME] setZWaveSwitch: ' + id + ' ' + newState);
     if (zwave) {
       try {
         zwave.setNodeBinary(id, newState);

@@ -158,8 +158,11 @@ function exception(message, ex) {
 }
 
 function debug(message) {
+  var logObj = generateLog('DEBUG', message);
   if (_logDebug === true) {
-    saveLog(generateLog('DEBUG', message));
+    saveLog(logObj);
+  } else {
+    printLogObj(logObj);
   }
 }
 
