@@ -93,7 +93,7 @@ function Harmony(uuid, ip) {
 
   function handleOnline(connection) {
     log.log('[HARMONY] Online.');
-    log.debug('[HARMONY] Connection string: ' + JSON.stringify(connection));
+    // log.debug('[HARMONY] Connection string: ' + JSON.stringify(connection));
     _self.getConfig();
     _self.getActivity();
     keepAlive();
@@ -107,7 +107,7 @@ function Harmony(uuid, ip) {
         result = child.children.join('');
         result = JSON.parse(result);
         handleConfig(result);
-        log.debug('[HARMONY] Ready.');
+        // log.debug('[HARMONY] Ready.');
         _self.emit('ready', result);
       } else if (child.attrs.mime === 'vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity') {
         result = child.children.join('');
@@ -126,9 +126,9 @@ function Harmony(uuid, ip) {
           } // if
         } // for
       } else if (child.attrs.type === 'connect.stateDigest?notify') {
-        log.debug('[HARMONY] State digest notification.');
+        // log.debug('[HARMONY] State digest notification.');
       } else {
-        log.debug('[HARMONY] Unhandled response. <' + child.name + ' ... />');
+        // log.debug('[HARMONY] Unhandled response. <' + child.name + ' ... />');
       } // End of IF statements
     } // There is at least one child
   } // End of function
@@ -175,7 +175,7 @@ function Harmony(uuid, ip) {
   }
 
   function handleConfig(harmonyConfig) {
-    log.debug('[HARMONY] Config: ' + JSON.stringify(harmonyConfig));
+    // log.debug('[HARMONY] Config: ' + JSON.stringify(harmonyConfig));
     var activities = harmonyConfig.activity;
     _activitiesById = {};
     _activitiesByName = {};

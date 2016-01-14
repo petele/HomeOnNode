@@ -309,8 +309,6 @@ function ZWave(ozwConfig) {
 
     if (emit === true) {
       _self.emit(eventName, info.node_id, info);
-    } else {
-      log.log('[ZWAVE] emitChange ignored for: ' + JSON.stringify(info));
     }
     // jscs:enable
     /* jshint +W106 */
