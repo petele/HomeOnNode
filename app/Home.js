@@ -427,7 +427,7 @@ function Home(config, fb) {
     try {
       presence.shutdown();
     } catch (ex) {
-      log.debug('[HOME] Error attempting to shut down Presence.');
+      log.warn('[HOME] Error attempting to shut down Presence.');
     }
     var fbPresPath = 'config/HomeOnNode/presence/people';
     fb.child(fbPresPath).off();
@@ -469,13 +469,12 @@ function Home(config, fb) {
     try {
       harmony.close();
     } catch (ex) {
-      log.debug('[HOME] Error attempting to shut down Harmony.');
+      log.warn('[HOME] Error attempting to shut down Harmony.');
     }
     harmony = null;
   }
 
   function setHarmonyActivity(activityName) {
-    log.debug('[HOME] setHarmonyActivity: ' + activityName);
     if (harmony) {
       try {
         harmony.setActivityByName(activityName);
@@ -490,7 +489,6 @@ function Home(config, fb) {
   }
 
   function sendHarmonyKey(harmonyKey) {
-    log.debug('[HOME] sendHarmonyKey: ' + JSON.stringify(harmonyKey));
     if (harmony) {
       try {
         harmony.sendCommand(harmonyKey);
@@ -526,7 +524,6 @@ function Home(config, fb) {
         shutdownNest();
       });
       nest.on('change', function(data) {
-        log.debug('[HOME] Nest changed');
         fbSet('state/nest', data);
       });
       nest.on('alarm', function(kind, protect) {
@@ -548,7 +545,6 @@ function Home(config, fb) {
   }
 
   function enableNestCam(enabled) {
-    log.debug('[HOME] enableNestCam: ' + enabled);
     if (nest) {
       try {
         if (enabled === 'ON') {
@@ -567,7 +563,6 @@ function Home(config, fb) {
   }
 
   function setNestThermostat(id, mode, temperature) {
-    log.debug('[HOME] setNestThermostat: ' + id + ' ' + mode + ' ' + temperature);
     if (nest) {
       try {
         nest.setTemperature(id, mode, temperature);
@@ -639,7 +634,6 @@ function Home(config, fb) {
   }
 
   function setHueScene(sceneId) {
-    log.debug('[HOME] setHueScene: ' + sceneId);
     if (hue) {
       try {
         hue.activateScene(sceneId);
@@ -654,7 +648,6 @@ function Home(config, fb) {
   }
 
   function setHueLights(lights, lightState) {
-    log.debug('[HOME] setHueLights ' + lights + ' ' + JSON.stringify(lightState));
     if (hue) {
       try {
         hue.setLightState(lights, lightState);
@@ -800,14 +793,13 @@ function Home(config, fb) {
     try {
       zwave.disconnect();
     } catch (ex) {
-      log.debug('[HOME] Error attempting to shut down Harmony.');
+      log.warn('[HOME] Error attempting to shut down Harmony.');
     }
     zwave = null;
     fbSet('state/zwave');
   }
 
   function setZWaveSwitch(id, newState) {
-    log.debug('[HOME] setZWaveSwitch: ' + id + ' ' + newState);
     if (zwave) {
       try {
         zwave.setNodeBinary(id, newState);

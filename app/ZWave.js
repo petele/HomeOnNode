@@ -149,7 +149,7 @@ function ZWave(ozwConfig) {
     var debouncer = _debouncers[nodeId];
     if (!debouncer) {
       debouncer = debounce(function(nodeId, value) {
-        var msg = '[ZWAVE] nodeEvent node[' + nodeId + ']=' + value;
+        var msg = '[ZWAVE] nodeEvent node[' + nodeId + ']: ' + value;
         log.debug(msg);
         _self.emit('node_event', nodeId, value);
       }, 500);
@@ -197,12 +197,13 @@ function ZWave(ozwConfig) {
   }
 
   function setNodeValue(nodeId, comClass, value) {
-    var msg = '[ZWAVE] setNodeValue nodeId[' + nodeId + ']';
-    msg += '[0x' + comClass.toString(16) + ']';
-    msg += '[' + value.index + ']';
-    log.debug(msg);
-    log.debug('  ' + JSON.stringify(value));
     try {
+      var msg = '[ZWAVE] setNodeValue for node[' + nodeId + ']';
+      msg += ' ' + value.label + ': ' + value.value;
+      if (value.units) {
+        msg += value.units;
+      }
+      log.debug(msg);
       /* jshint -W069 */
       // jscs:disable requireDotNotation
       if (!_nodes[nodeId]['classes'][comClass]) {
@@ -265,7 +266,7 @@ function ZWave(ozwConfig) {
       kind = 'message complete';
     } else if (notif === 1) {
       kind = 'timeout';
-      log.error('[ZWAVE] handleNotification: timeout for node[' + nodeId + ']');
+      log.warn('[ZWAVE] handleNotification: timeout for node[' + nodeId + ']');
     } else if (notif === 2) {
       kind = 'no operation';
     } else if (notif === 3) {
@@ -307,12 +308,6 @@ function ZWave(ozwConfig) {
     }
 
     if (emit === true) {
-      var msg = '[ZWAVE] ' + eventName + ' for node[' + info.node_id + ']';
-      msg += ' ' + info.label + '=' + info.value;
-      if (info.units) {
-        msg += info.units;
-      }
-      log.debug(msg);
       _self.emit(eventName, info.node_id, info);
     } else {
       log.log('[ZWAVE] emitChange ignored for: ' + JSON.stringify(info));
