@@ -82,14 +82,13 @@ function printLogObj(logObj) {
     levelColor = colors.yellow;
     fullColor = true;
   } else if (level === 'INFO') {
-    levelColor = colors.blue;
+    levelColor = colors.cyan;
   } else if (level === 'INIT' || level === 'START') {
     levelColor = colors.green;
   } else if (level === 'TODO') {
-    levelColor = colors.cyan;
+    levelColor = colors.magenta;
   } else if (level === 'DEBUG') {
-    levelColor = colors.dim;
-    fullColor = true;
+    levelColor = colors.blue;
   }
   var strLine = logObj.date_ + ' | ' + levelColor(formattedLevel) + ' | ';
   if (fullColor === true) {
