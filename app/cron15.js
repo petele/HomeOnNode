@@ -3,7 +3,7 @@
 'use strict';
 
 var cronJob = function() {
-  log.log('[CRON-15]');
+  log.debug('[CRON] (15)');
 
   if (home.state.systemState === 'AWAY') {
   	var allOff = {

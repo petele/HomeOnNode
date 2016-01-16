@@ -166,6 +166,9 @@ function Home(config, fb) {
     if (command.hasOwnProperty('harmonyKey')) {
       sendHarmonyKey(command.harmonyKey);
     }
+    if (command.hasOwnProperty('refreshHarmonyConfig')) {
+      refreshHarmonyConfig();
+    }
     if (command.hasOwnProperty('nestCam')) {
       var enabled = command.nestCam;
       if (modifier === 'OFF') {
@@ -451,6 +454,7 @@ function Home(config, fb) {
 
     if (harmony) {
       harmony.on('ready', function(config) {
+        fbSet('state/harmonyConfig', config);
       });
       harmony.on('activity', function(activity) {
         fbSet('state/harmony', activity);
@@ -472,6 +476,20 @@ function Home(config, fb) {
       log.warn('[HOME] Error attempting to shut down Harmony.');
     }
     harmony = null;
+  }
+
+  function refreshHarmonyConfig() {
+    if (harmony) {
+      try {
+        harmony.getConfig();
+        return true;
+      } catch (ex) {
+        log.exception('[HOME] Harmony refreshHarmonyConfig failed.', ex);
+        return false;
+      }
+    }
+    log.warn('[HOME] Harmony refreshHarmonyConfig failed, Harmony not ready');
+    return false;
   }
 
   function setHarmonyActivity(activityName) {
