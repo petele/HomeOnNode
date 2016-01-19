@@ -111,7 +111,8 @@ function Sonos() {
           log.exception(msg + 'Unable to retreive device description.', err);
         }
         if (description) {
-          _self.speakerInfo[host] = description;
+          description.deviceList = {};
+          _self.speakerInfo[host].description = description;
         }
       });
       speaker.getCurrentState(function(err, state) {
@@ -168,7 +169,7 @@ function Sonos() {
       var host = keys[i];
       var speakerInfo = _self.speakerInfo[host];
       if (speakerInfo) {
-        if (speakerInfo.roomName === roomName) {
+        if (speakerInfo.description.roomName === roomName) {
           var speaker = _speakers[host];
           return speaker;
         }

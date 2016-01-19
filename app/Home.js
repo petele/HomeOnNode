@@ -30,6 +30,7 @@ function Home(config, fb) {
 
   var armingTimer;
   var zwaveTimer;
+  var sonosTimer;
 
   /*****************************************************************************
    *
@@ -734,9 +735,18 @@ function Home(config, fb) {
       sonos.shutdown();
       return;
     }
+
+    sonosTimer = setInterval(function() {
+      var speakerInfo = sonos.speakerInfo;
+      fbSet('state/sonos', speakerInfo);
+    }, 2500);
   }
 
   function shutdownSonos() {
+    if (sonosTimer) {
+      clearInterval(sonosTimer);
+      sonosTimer = null;
+    }
     if (sonos) {
       sonos.shutdown();
     }
