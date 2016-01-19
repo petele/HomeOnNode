@@ -57,7 +57,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         setup: function() {
           var self = this;
-          var path = 'state/nest/structures/' + window.structureId;
+          var path = 'state/nest/structures/' + window.nestStructureId;
           path += '/thermostats';
           app.fbRoot.child(path).on('value', function(snapshot) {
             var thermostats = snapshot.val();
