@@ -194,6 +194,8 @@ function Home(config, fb) {
             sonos.stopRoom(cmd.roomName);
           } else if (cmd.name === 'VOLUME_SET') {
             sonos.setVolume(cmd.roomName, cmd.volume, cmd.incrementBy);
+          } else {
+            log.warn('[HOME] Unknown Sonos command: ' + JSON.stringify(cmd));
           }
         });
       } else {
@@ -736,6 +738,9 @@ function Home(config, fb) {
       return;
     }
 
+    // TODO add check, if Playbar is playing and Harmony is Off, switch
+    // Harmony to Sonos
+
     // sonosTimer = setInterval(function() {
     //   var speakerInfo = sonos.speakerInfo;
     //   fbSet('state/sonos', speakerInfo);
@@ -776,7 +781,7 @@ function Home(config, fb) {
       });
       zwave.on('ready', function(nodes) {
         fbSet('state/zwave/nodes', nodes);
-        zwaveTimer = setInterval(zwaveTimerTick, 30000);
+        // zwaveTimer = setInterval(zwaveTimerTick, 30000);
       });
       zwave.on('node_event', zwaveEvent);
       zwave.on('node_value_change', zwaveSaveNodeValue);
@@ -851,11 +856,11 @@ function Home(config, fb) {
     }
   }
 
-  function zwaveTimerTick() {
-    // log.debug('[HOME] ZWave Timer Tick');
-    // var nodes = zwave.getNode();
-    // fbSet('state/zwave/nodes', nodes);
-  }
+  // function zwaveTimerTick() {
+  //   log.debug('[HOME] ZWave Timer Tick');
+  //   var nodes = zwave.getNode();
+  //   fbSet('state/zwave/nodes', nodes);
+  // }
 
   function shutdownZWave() {
     log.log('[HOME] Shutting down ZWave.');
