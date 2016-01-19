@@ -736,10 +736,10 @@ function Home(config, fb) {
       return;
     }
 
-    sonosTimer = setInterval(function() {
-      var speakerInfo = sonos.speakerInfo;
-      fbSet('state/sonos', speakerInfo);
-    }, 2500);
+    // sonosTimer = setInterval(function() {
+    //   var speakerInfo = sonos.speakerInfo;
+    //   fbSet('state/sonos', speakerInfo);
+    // }, 2500);
   }
 
   function shutdownSonos() {
