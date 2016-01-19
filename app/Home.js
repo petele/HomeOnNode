@@ -15,6 +15,7 @@ var Hue = require('./Hue');
 var Presence = require('./Presence');
 var Nest = require('./Nest');
 var ZWave = require('./ZWave');
+var Sonos = require('./Sonos');
 
 function Home(config, fb) {
   this.state = {};
@@ -25,6 +26,7 @@ function Home(config, fb) {
   var harmony;
   var zwave;
   var presence;
+  var sonos;
 
   var armingTimer;
   var zwaveTimer;
@@ -175,6 +177,27 @@ function Home(config, fb) {
         enabled = 'OFF';
       }
       enableNestCam(enabled);
+    }
+    if (command.hasOwnProperty('sonos')) {
+      if (sonos) {
+        cmds = command.sonos;
+        if (Array.isArray(cmds) === false) {
+          cmds = [cmds];
+        }
+        cmds.forEach(function(cmd) {
+          if (cmd.name === 'PLAY_URI') {
+            sonos.playURI(cmd.roomName, cmd.uri, cmd.volume);
+          } else if (cmd.name === 'STOP_ALL') {
+            sonos.stopAll();
+          } else if (cmd.name === 'STOP_ROOM') {
+            sonos.stopRoom(cmd.roomName);
+          } else if (cmd.name === 'VOLUME_SET') {
+            sonos.setVolume(cmd.roomName, cmd.volume, cmd.incrementBy);
+          }
+        });
+      } else {
+        log.error('[HOME] Sonos command failed, Sonos unavailable.');
+      }
     }
     if (command.hasOwnProperty('sound')) {
       playSound(command.sound, command.soundForce);
@@ -699,6 +722,28 @@ function Home(config, fb) {
 
   /*****************************************************************************
    *
+   * Sonos - Initialization & Shut Down
+   *
+   ****************************************************************************/
+
+  function initSonos() {
+    try {
+      sonos = new Sonos();
+    } catch (ex) {
+      log.exception('[HOME] Unable to initialize Sonos', ex);
+      sonos.shutdown();
+      return;
+    }
+  }
+
+  function shutdownSonos() {
+    if (sonos) {
+      sonos.shutdown();
+    }
+  }
+
+  /*****************************************************************************
+   *
    * ZWave - Initialization, Shut Down & Event handlers
    *
    ****************************************************************************/
@@ -869,6 +914,7 @@ function Home(config, fb) {
     initZWave();
     initNest();
     initHue();
+    initSonos();
     initHarmony();
     initPresence();
     initWeather();
@@ -883,6 +929,7 @@ function Home(config, fb) {
     shutdownHarmony();
     shutdownHue();
     shutdownNest();
+    shutdownSonos();
     shutdownZWave();
     shutdownPresence();
   };
