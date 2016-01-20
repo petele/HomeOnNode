@@ -188,7 +188,7 @@ function Sonos() {
 
   this.getFavorites = function() {
     return _favorites;
-  }
+  };
 
   init();
 }
