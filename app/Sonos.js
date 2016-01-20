@@ -10,15 +10,24 @@ function Sonos() {
   var _sonos;
   var _favorites = {};
 
+  var _logger = {
+    info: function(arg) {
+      log.log('[SONOS] ' + arg);
+    },
+    error: function(arg) {
+      log.error('[SONOS] ' + arg);
+    },
+    debug: function(arg) {
+      log.debug('[SONOS] ' + arg);
+    }
+  };
+
   function init() {
     log.init('[SONOS] Init start.');
     process.on('SIGINT', handleSigInt);
-    _sonos = new SonosDiscovery({});
+    _sonos = new SonosDiscovery({log: _logger});
     _sonos.on('transport-state', transportStateChange);
     _sonos.on('favorites', favoritesChanged);
-    _sonos.getAnyPlayer().getFavorites(function(favorites) {
-      _favorites = favorites;
-    });
     log.init('[SONOS] Init complete.');
   }
 
@@ -60,7 +69,6 @@ function Sonos() {
    * Internal help functions
    *
    ****************************************************************************/
-
 
 
 
