@@ -70,7 +70,19 @@ function Sonos() {
    *
    ****************************************************************************/
 
-
+  function getPlayer(roomName) {
+    if (_sonos) {
+      var speaker = _sonos.getPlayer(roomName);
+      if (speaker) {
+        return speaker;
+      }
+      speaker = _sonos.getAnyPlayer();
+      if (speaker) {
+        return speaker;
+      }
+    }
+    return null;
+  }
 
 
   /*****************************************************************************
@@ -97,7 +109,7 @@ function Sonos() {
 
   this.play = function(roomName) {
     if (_sonos) {
-      var speaker = _sonos.getPlayer(roomName);
+      var speaker = getPlayer(roomName);
       if (speaker) {
         speaker.play(function(err, result) {
           if (err) {
@@ -118,7 +130,7 @@ function Sonos() {
 
   this.pause = function(roomName) {
     if (_sonos) {
-      var speaker = _sonos.getPlayer(roomName);
+      var speaker = getPlayer(roomName);
       if (speaker) {
         speaker.pause(function(err, result) {
           if (err) {
@@ -139,7 +151,7 @@ function Sonos() {
 
   this.next = function(roomName) {
     if (_sonos) {
-      var speaker = _sonos.getPlayer(roomName);
+      var speaker = getPlayer(roomName);
       if (speaker) {
         speaker.next(function(err, result) {
           if (err) {
@@ -155,19 +167,6 @@ function Sonos() {
       return false;
     }
     log.error('[SONOS] next failed, Sonos unavilable.');
-    return false;
-  };
-
-  this.stopAll = function() {
-    if (_sonos) {
-      var speaker = _sonos.getPlayer('Living Room') || _sonos.getAnyPlayer();
-      if (speaker) {
-        speaker.pause();
-        return true;
-      }
-      log.error('[SONOS] stopAll failed, no speakers found.');
-    }
-    log.error('[SONOS] stopAll failed, Sonos unavilable.');
     return false;
   };
 

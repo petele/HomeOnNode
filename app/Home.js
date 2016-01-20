@@ -189,9 +189,11 @@ function Home(config, fb) {
           if (cmd.name === 'PRESET') {
             sonos.applyPreset(cmd.preset);
           } else if (cmd.name === 'PAUSE') {
-            sonos.stopAll();
-          } else if (cmd.name === 'STOP_ROOM') {
-            sonos.pause();
+            sonos.pause(cmd.roomName);
+          } else if (cmd.name === 'NEXT') {
+            sonos.next(cmd.roomName);
+          } else if (cmd.name === 'PLAY') {
+            sonos.play(cmd.roomName);
           } else {
             log.warn('[HOME] Unknown Sonos command: ' + JSON.stringify(cmd));
           }
