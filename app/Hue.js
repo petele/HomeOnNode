@@ -32,9 +32,19 @@ function Hue(key, ip) {
         try {
           if (light <= 0) {
             light = Math.abs(light);
-            result = hueBridge.setGroupLightState(light, cmd);
+            result = hueBridge.setGroupLightState(light, cmd,
+              function(err, lights) {
+                if (err) {
+                  log.error(msg + ' ' + JSON.stringify(lights));
+                }
+              }
+            );
           } else {
-            result = hueBridge.setLightState(light, cmd);
+            result = hueBridge.setLightState(light, cmd, function(err, lights) {
+              if (err) {
+                log.error(msg + ' ' + JSON.stringify(lights));
+              }
+            });
           }
           log.log(msg);
         } catch (ex) {
@@ -176,8 +186,16 @@ function Hue(key, ip) {
   this.activateScene = function(sceneId, callback) {
     if (hueBridge) {
       try {
-        log.log('[HUE] activateScene: ' + sceneId);
-        return hueBridge.activateScene(sceneId, callback);
+        var msg = '[HUE] activateScene: ' + sceneId;
+        log.log(msg);
+        return hueBridge.activateScene(sceneId, function(err, result) {
+          if (err) {
+            log.error(msg + ' ' + JSON.stringify(result));
+          }
+          if (callback) {
+            callback(err, result);
+          }
+        });
       } catch (ex) {
         log.exception('[HUE] Could not activate scene.', ex);
         if (callback) {

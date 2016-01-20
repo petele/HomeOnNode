@@ -744,14 +744,13 @@ function Home(config, fb) {
       sonos.on('transport-state', function(transportState) {
         fbSet('state/sonos/state', transportState);
         try {
-          if ((_self.state.harmony) && 
+          if ((_self.state.harmony) &&
               (_self.state.harmony.id === '-1') &&
               (transportState.state.zoneState === 'PLAYING')) {
             setHarmonyActivity('Sonos');
           }
         } catch (ex) {
           log.exception('[HOME] Unable to update zone state.', ex);
-          console.log('xxx', ex);
         }
       });
       sonos.on('topology-change', function(zones) {

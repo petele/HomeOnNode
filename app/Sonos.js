@@ -12,13 +12,16 @@ function Sonos() {
 
   var _logger = {
     info: function(arg) {
-      log.debug('[SONOS*] ' + arg);
+      var args  = Array.prototype.slice.call(arguments);
+      log.debug('[SONOS*] ' + args.join(' '));
     },
     error: function(arg) {
-      log.error('[SONOS*] ' + arg);
+      var args  = Array.prototype.slice.call(arguments);
+      log.error('[SONOS*] ' + args.join(' '));
     },
     debug: function(arg) {
-      log.debug('[SONOS*] ' + arg);
+      var args  = Array.prototype.slice.call(arguments);
+      log.debug('[SONOS*] ' + args.join(' '));
     }
   };
 
@@ -92,6 +95,18 @@ function Sonos() {
     return null;
   }
 
+  function genericResponseHandler(apiName, success, response) {
+    var msg = '[SONOS] ' + apiName;
+    if (response) {
+      msg += ': ' + response;
+    }
+    if (success) {
+      log.debug(msg);
+    } else {
+      log.error(msg);
+    }
+  }
+
 
   /*****************************************************************************
    *
@@ -101,13 +116,8 @@ function Sonos() {
 
   this.applyPreset = function(preset) {
     if (_sonos) {
-      _sonos.applyPreset(preset, function(err, response) {
-        if (err) {
-          log.error('[SONOS] applyPreset error: ' + err);
-        }
-        if (response) {
-          log.debug('[SONOS] applyPreset: ' + response);
-        }
+      _sonos.applyPreset(preset, function(success, response) {
+        genericResponseHandler('applyPreset', success, response);
       });
       return true;
     }
@@ -119,13 +129,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.play(function(err, result) {
-          if (err) {
-            log.error('[SONOS] play failed: ' + err);
-          }
-          if (result) {
-            log.debug('[SONOS] play: ' + result);
-          }
+        speaker.play(function(success, response) {
+          genericResponseHandler('play', success, response);
         });
         return true;
       }
@@ -140,13 +145,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.pause(function(err, result) {
-          if (err) {
-            log.error('[SONOS] pause failed: ' + err);
-          }
-          if (result) {
-            log.debug('[SONOS] pause: ' + result);
-          }
+        speaker.pause(function(success, response) {
+          genericResponseHandler('pause', success, response);
         });
         return true;
       }
@@ -161,13 +161,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.nextTrack(function(err, result) {
-          if (err) {
-            log.error('[SONOS] next failed: ' + err);
-          }
-          if (result) {
-            log.debug('[SONOS] next: ' + result);
-          }
+        speaker.nextTrack(function(success, response) {
+          genericResponseHandler('nextTrack', success, response);
         });
         return true;
       }

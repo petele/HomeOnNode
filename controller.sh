@@ -8,6 +8,10 @@ node appController.js
 echo ""
 echo "HomeOnNode exited."
 
+mplayer sounds/bell.mp3
+mplayer sounds/bell.mp3
+mplayer sounds/bell.mp3
+
 # read -n 1 -p "Automatic reboot in 5 seconds, press any key to cancel." -s -t 5 srb
 # if [ $? -ge 1 ]; then
 #   echo -e "\nAutomatic reboot!"
