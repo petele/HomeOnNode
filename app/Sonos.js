@@ -3,7 +3,7 @@
 var log = require('./SystemLog');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
-var SonosDiscovery = require('./node-sonos-discovery/lib/sonos.js');
+var SonosDiscovery = require('./sonos-discovery/lib/sonos.js');
 
 function Sonos() {
   var _self = this;
