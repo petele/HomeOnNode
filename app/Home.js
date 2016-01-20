@@ -754,6 +754,12 @@ function Home(config, fb) {
           console.log('xxx', ex);
         }
       });
+      sonos.on('topology-change', function(zones) {
+        fbSet('state/sonos/zones', zones);
+      });
+      sonos.on('favorites', function(favorites) {
+        fbSet('state/sonos/favorites', favorites);
+      });
     }
   }
 

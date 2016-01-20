@@ -12,13 +12,13 @@ function Sonos() {
 
   var _logger = {
     info: function(arg) {
-      log.log('[SONOS] ' + arg);
+      log.debug('[SONOS*] ' + arg);
     },
     error: function(arg) {
-      log.error('[SONOS] ' + arg);
+      log.error('[SONOS*] ' + arg);
     },
     debug: function(arg) {
-      log.debug('[SONOS] ' + arg);
+      log.debug('[SONOS*] ' + arg);
     }
   };
 
@@ -26,8 +26,9 @@ function Sonos() {
     log.init('[SONOS] Init start.');
     process.on('SIGINT', handleSigInt);
     _sonos = new SonosDiscovery({log: _logger});
-    _sonos.on('transport-state', transportStateChange);
+    _sonos.on('transport-state', transportStateChanged);
     _sonos.on('favorites', favoritesChanged);
+    _sonos.on('topology-change', topologyChanged);
     log.init('[SONOS] Init complete.');
   }
 
@@ -55,13 +56,17 @@ function Sonos() {
     _self.shutdown();
   }
 
-  function transportStateChange(transportState) {
+  function transportStateChanged(transportState) {
     _self.emit('transport-state', transportState);
   }
 
   function favoritesChanged(favorites) {
     _favorites = favorites;
     _self.emit('favorites', favorites);
+  }
+
+  function topologyChanged(zones) {
+    _self.emit('topology-changed', zones);
   }
 
   /*****************************************************************************
