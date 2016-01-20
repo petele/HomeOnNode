@@ -191,6 +191,8 @@ function Hue(key, ip) {
         return hueBridge.activateScene(sceneId, function(err, result) {
           if (err) {
             log.error(msg + ' ' + JSON.stringify(result));
+          } else {
+            log.debug(msg + ' ' + JSON.stringify(result));
           }
           if (callback) {
             callback(err, result);
