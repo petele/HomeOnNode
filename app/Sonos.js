@@ -72,7 +72,10 @@ function Sonos() {
 
   function getPlayer(roomName) {
     if (_sonos) {
-      var speaker = _sonos.getPlayer(roomName);
+      var speaker;
+      if (roomName) {
+        speaker = _sonos.getPlayer(roomName);
+      }
       if (speaker) {
         return speaker;
       }
