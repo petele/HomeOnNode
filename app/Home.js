@@ -186,14 +186,12 @@ function Home(config, fb) {
           cmds = [cmds];
         }
         cmds.forEach(function(cmd) {
-          if (cmd.name === 'PLAY_URI') {
-            sonos.playURI(cmd.roomName, cmd.uri, cmd.volume);
-          } else if (cmd.name === 'STOP_ALL') {
+          if (cmd.name === 'PRESET') {
+            sonos.applyPreset(cmd.preset);
+          } else if (cmd.name === 'PAUSE') {
             sonos.stopAll();
           } else if (cmd.name === 'STOP_ROOM') {
-            sonos.stopRoom(cmd.roomName);
-          } else if (cmd.name === 'VOLUME_SET') {
-            sonos.setVolume(cmd.roomName, cmd.volume, cmd.incrementBy);
+            sonos.pause();
           } else {
             log.warn('[HOME] Unknown Sonos command: ' + JSON.stringify(cmd));
           }
@@ -734,17 +732,21 @@ function Home(config, fb) {
       sonos = new Sonos();
     } catch (ex) {
       log.exception('[HOME] Unable to initialize Sonos', ex);
-      sonos.shutdown();
+      if (sonos) {
+        sonos.shutdown();
+      }
       return;
+    }
+
+    if (sonos) {
+      sonos.on('transport-state', function(transportState) {
+        fbSet('state/sonos/state', transportState);
+      });
+
     }
 
     // TODO add check, if Playbar is playing and Harmony is Off, switch
     // Harmony to Sonos
-
-    // sonosTimer = setInterval(function() {
-    //   var speakerInfo = sonos.speakerInfo;
-    //   fbSet('state/sonos', speakerInfo);
-    // }, 2500);
   }
 
   function shutdownSonos() {
