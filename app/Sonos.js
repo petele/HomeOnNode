@@ -156,7 +156,7 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.next(function(err, result) {
+        speaker.nextTrack(function(err, result) {
           if (err) {
             log.error('[SONOS] next failed: ' + err);
           }

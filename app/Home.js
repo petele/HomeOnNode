@@ -743,12 +743,16 @@ function Home(config, fb) {
     if (sonos) {
       sonos.on('transport-state', function(transportState) {
         fbSet('state/sonos/state', transportState);
+        try {
+          if ((_self.state.harmony.id === -1) && 
+              (transportState.state.zoneState === 'PLAYING')) {
+            setHarmonyActivity('Sonos');
+          }
+        } catch (ex) {
+          log.warn('[HOME] Unable to update zone state.');
+        }
       });
-
     }
-
-    // TODO add check, if Playbar is playing and Harmony is Off, switch
-    // Harmony to Sonos
   }
 
   function shutdownSonos() {
