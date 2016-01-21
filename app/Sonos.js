@@ -192,6 +192,40 @@ function Sonos() {
     return false;
   };
 
+  this.volumeDown = function(roomName) {
+    if (_sonos) {
+      var speaker = getPlayer(roomName);
+      if (speaker) {
+        speaker.setVolume('-2', function(success, response) {
+          genericResponseHandler('volumeDown', success, response);
+        });
+        log.todo('[SONOS] volumeDown not yet implemented.');
+        return true;
+      }
+      log.error('[SONOS] volumeDown failed, unable to find speaker.');
+      return false;
+    }
+    log.error('[SONOS] volumeDown failed, Sonos unavilable.');
+    return false;
+  };
+
+  this.volumeUp = function(roomName) {
+    if (_sonos) {
+      var speaker = getPlayer(roomName);
+      if (speaker) {
+        speaker.setVolume('+2', function(success, response) {
+          genericResponseHandler('volumeUp', success, response);
+        });
+        log.todo('[SONOS] volumeUp not yet implemented.');
+        return true;
+      }
+      log.error('[SONOS] volumeUp failed, unable to find speaker.');
+      return false;
+    }
+    log.error('[SONOS] volumeUp failed, Sonos unavilable.');
+    return false;
+  };
+
   this.getZones = function() {
     if (_sonos) {
       return _sonos.getZones();
