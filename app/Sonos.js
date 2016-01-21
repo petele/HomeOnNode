@@ -85,18 +85,21 @@ function Sonos() {
         speaker = _sonos.getPlayer(roomName);
       }
       if (speaker) {
+        log.debug('[SONOS] getPlayer: ' + speaker.roomName);
         return speaker;
       }
       speaker = _sonos.getAnyPlayer();
       if (speaker) {
+        log.debug('[SONOS] getPlayer: ' + speaker.roomName);
         return speaker;
       }
     }
+    log.error('[SONOS] getPlayer failed, no speakers found.');
     return null;
   }
 
   function genericResponseHandler(apiName, success, response) {
-    var msg = '[SONOS] ' + apiName;
+    var msg = '[SONOS] genericResponseHandler - ' + apiName;
     if (response) {
       msg += ': ' + response;
     }
@@ -170,6 +173,22 @@ function Sonos() {
       return false;
     }
     log.error('[SONOS] next failed, Sonos unavilable.');
+    return false;
+  };
+
+  this.previous = function(roomName) {
+    if (_sonos) {
+      var speaker = getPlayer(roomName);
+      if (speaker) {
+        speaker.previousTrack(function(success, response) {
+          genericResponseHandler('previousTrack', success, response);
+        });
+        return true;
+      }
+      log.error('[SONOS] previous failed, unable to find speaker.');
+      return false;
+    }
+    log.error('[SONOS] previous failed, Sonos unavilable.');
     return false;
   };
 

@@ -190,6 +190,8 @@ function Home(config, fb) {
             sonos.next(cmd.roomName);
           } else if (cmd.name === 'PLAY') {
             sonos.play(cmd.roomName);
+          } else if (cmd.name === 'PREVIOUS') {
+            sonos.previous(cmd.roomName);
           } else {
             log.warn('[HOME] Unknown Sonos command: ' + JSON.stringify(cmd));
           }
