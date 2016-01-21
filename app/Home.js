@@ -144,24 +144,20 @@ function Home(config, fb) {
         cmds = [cmds];
       }
       cmds.forEach(function(cmd) {
-        var thermostat = _self.state.nest.devices.thermostats[cmd.id];
-        var mode = thermostat.hvac_mode;
-        var temperature = thermostat.target_temperature_f;
-        if (cmd.mode) {
-          mode = cmd.mode;
+        if (modifier) {
+          adjustNestThermostat(cmd.roomId, modifier);
+        } else {
+          setNestThermostat(cmd.roomId, cmd.mode, cmd.temperature);
         }
-        if (cmd.temperature) {
-          temperature = cmd.temperature;
-        }
-        if (modifier === 'OFF') {
-          mode = 'off';
-        } else if (modifier === 'UP') {
-          temperature += 1;
-        } else if (modifier === 'DOWN') {
-          temperature -= 1;
-        }
-        setNestThermostat(cmd.id, mode, temperature);
       });
+    }
+    if (command.hasOwnProperty('nestETA')) {
+      cmds = command.nestETA;
+      if (modifier === 'OFF') {
+        setNestETA(cmds.tripId, 0);
+      } else {
+        setNestETA(cmds.tripId, cmds.etaInMinutes);
+      }
     }
     if (command.hasOwnProperty('harmonyActivity')) {
       setHarmonyActivity(command.harmonyActivity);
@@ -606,19 +602,89 @@ function Home(config, fb) {
     return false;
   }
 
-  function setNestThermostat(id, mode, temperature) {
+  function setNestETA(tripId, etaInMinutes) {
     if (nest) {
       try {
-        nest.setTemperature(id, mode, temperature);
+        var etaBegin;
+        var etaEnd;
+        if (etaInMinutes === 0) {
+          etaBegin = 0;
+          etaEnd = 0;
+        } else {
+          etaBegin = moment().add(etaInMinutes, 'm').toISOString();
+          etaEnd = moment().add(etaInMinutes, 'm').add(30, 'm').toISOString();
+        }
+        if (!tripId) {
+          tripId = 'defaultTripName';
+        }
+        nest.setETA(tripId, etaBegin, etaEnd);
+        fbSet('state/nestETA', etaBegin);
         return true;
       } catch (ex) {
-        log.exception('[HOME] Failed to set Nest thermostat', ex);
+        log.exception('[HOME] Error setting Nest ETA', ex);
         return false;
       }
     }
-    log.warn('[HOME] Nest thermostat command failed, Nest not ready.');
+    log.warn('[HOME] Unable to set Nest ETA, Nest not ready.');
     return false;
   }
+
+  function adjustNestThermostat(roomId, modifier) {
+    if (nest) {
+      try {
+        var id = config.hvac.thermostats[roomId];
+        if (id) {
+          var thermostat = _self.state.nest.devices.thermostats[id];
+          /* jshint -W106 */
+          // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+          var mode = thermostat.hvac_mode;
+          var temperature = thermostat.target_temperature_f;
+          // jscs:enable
+          /* jshint +W106 */
+          if (modifier === 'UP') {
+            temperature = temperature + 1;
+          } else if (modifier === 'DOWN') {
+            temperature = temperature - 1;
+          } else if (modifier === 'OFF') {
+            mode = 'off';
+          }
+          return nest.setTemperature(id, mode, temperature);
+        }
+        log.error('[HOME] setNestThermostat failed, thermostat not found');
+        return false;
+      } catch (ex) {
+        log.exception('[HOME] adjustNestThermostat failed', ex);
+        return false;
+      }
+    }
+    log.log('[HOME] adjustNestThermostat failed, Nest unavailable.');
+    return false;
+  }
+
+  function setNestThermostat(roomId, mode, temperature) {
+    if (nest) {
+      try {
+        var id = config.hvac.thermostats[roomId];
+        if (id) {
+          if (!mode) {
+            mode = config.hvac.mode;
+          }
+          if (!temperature) {
+            temperature = config.hvac.targetTemperature;
+          }
+          return nest.setTemperature(id, mode, temperature);
+        }
+        log.error('[HOME] setNestThermostat failed, thermostat not found');
+        return false;
+      } catch (ex) {
+        log.exception('[HOME] setNestThermostat failed', ex);
+        return false;
+      }
+    }
+    log.log('[HOME] setNestThermostat failed, Nest unavailable.');
+    return false;
+  }
+
 
   /*****************************************************************************
    *

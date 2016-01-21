@@ -30,6 +30,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.actionCommands = [];
           this.mediaCommands = [];
           this.mediaKeyCommands = [];
+          this.etaCommands = [];
           var initialDelay = 500;
           this.async(function() {
             this.setupGroups();  
@@ -91,6 +92,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               var newActions = [];
               var newMedia = [];
               var newMediaKey = [];
+              var newETAs = [];
               keys.forEach(function(key) {
                 var command = commands[key];
                 command.key = key;
@@ -100,11 +102,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   newMedia.push(command);
                 } else if (command.kind === 'mediaKey') {
                   newMediaKey.push(command);
+                } else if (command.kind === 'eta') {
+                  newETAs.push(command);
                 }
               });
               self.set('actionCommands', newActions);
               self.set('mediaCommands', newMedia);
               self.set('mediaKeyCommands', newMediaKey);
+              self.set('etaCommands', newETAs);
             }
           );
         },
@@ -122,6 +127,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             notify: true
           },
           actionCommands: {
+            type: Array,
+            notify: true
+          },
+          etaCommands: {
             type: Array,
             notify: true
           },

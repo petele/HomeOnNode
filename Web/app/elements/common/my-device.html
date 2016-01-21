@@ -124,9 +124,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           msg += action + ' ' + this.deviceId;
           dialog.message = msg;
           var self = this;
-          dialog.onConfirm = function(value) {
-            console.log('nc', self, value);
-            self.set(value, true);
+          dialog.onConfirm = function() {
+            var path = 'devices/' + self.deviceId + '/' + action;
+            console.log('[sendDeviceCommand]', path);
+            app.fbRoot.child(path).set(true, function(err) {
+              if (err) {
+                console.error('[sendDeviceCommand]', err);
+              }
+            });
           };
           dialog.open();
         },

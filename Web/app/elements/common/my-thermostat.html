@@ -95,11 +95,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       paper-icon-button.right {
         margin-right: -12px;
       }
+
+      .leafIcon {
+        color: var(--paper-green-500);
+      }
     </style>
     <paper-material>
       <div class="layout horizontal">
         <div class="flex">[[nestData.name]]</div>
-        <iron-icon hidden$="[[!nestData.has_leaf]]" icon="star"></iron-icon>
+        <iron-icon class="leafIcon" hidden$="[[!nestData.has_leaf]]" icon="my-icons:leaf"></iron-icon>
       </div>
       <div class="layout horizontal">
         <div class='thermostat-container'>
@@ -125,7 +129,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </paper-icon-button>
             <paper-input disabled$="[[isOff]]" no-label-float on-change="changeTemp"
               value="{{targetTemp}}" type="number" min="[[minTemp]]" max="[[maxTemp]]"
-              class="flex" autofocus="false">
+              class="flex">
             </paper-input>
             <paper-icon-button disabled$="[[isOff]]" icon="expand-less" class="right" on-tap="increaseTargetTemp">
             </paper-icon-button>
@@ -179,7 +183,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.hvacMode = data.hvac_mode;
           this.targetTemp = data.target_temperature_f;
           if (state === 'off') {
-            newColor = 'var(--paper-grey-400)';
+            newColor = 'var(--paper-grey-900)';
           } else if (state === 'heating') {
             newColor = 'var(--paper-red-300)';
           } else if (state === 'cooling') {

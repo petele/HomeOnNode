@@ -179,6 +179,8 @@ function Nest() {
   function onSetComplete(path, err) {
     if (err) {
       log.exception('[NEST] ' + err.message + ' at path: ' + path, err);
+    } else {
+      log.debug('[NEST] setComplete: ' + path);
     }
   }
 
@@ -262,6 +264,36 @@ function Nest() {
 
   this.setHome = function() {
     return setHomeAway('home');
+  };
+
+  this.setETA = function(tripId, etaBegin, etaEnd) {
+    if (checkIfReady(true)) {
+      var devices = _self.getDevices();
+      var structureId = devices.structureId;
+      if (_nestData.structures[structureId].away !== 'away') {
+        log.warn('[NEST] Unable to set Nest ETA, not in AWAY mode.');
+        return false;
+      }
+      if (etaBegin === 0) {
+        log.log('[NEST] cancelled Nest ETA for trip ' + tripId);
+      } else {
+        log.log('[NEST] set ETA for ' + tripId + ' to ' + etaBegin);
+      }
+      /* jshint -W106 */
+      // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+      var etaObj = {
+        trip_id: tripId,
+        estimated_arrival_window_begin: etaBegin,
+        estimated_arrival_window_end: etaEnd
+      };
+      // jscs:enable
+      /* jshint +W106 */
+      var path = 'structures/' + structureId + '/eta';
+      _fbNest.child(path).set(etaObj, function(err) {
+        onSetComplete(path, err);
+      });
+    }
+    return false;
   };
 
   this.setTemperature = function(thermostat, mode, temperature) {

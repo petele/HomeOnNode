@@ -13,11 +13,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles"></style>
     <style>
-      div {
-        @apply(--layout-horizontal);
-        @apply(--layout-justified);
-        @apply(--layout-wrap);
-      }
+      
       paper-material {
         background-color: white;
       }
@@ -37,9 +33,44 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       action-button {
         margin: 0;
       }
+      .buttonContainer {
+        @apply(--layout-horizontal);
+        @apply(--layout-justified);
+        @apply(--layout-wrap);
+      }
+
+      .nowplaying {
+        @apply(--layout-horizontal);
+        margin-bottom: 2em;
+      }
+      .nowplaying-title {
+        font-size: 1.5em;
+      }
+      .nowplaying-icon {
+        width: 80px;
+        height: 80px;
+        background-color: var(--paper-grey-200);
+        margin-right: 12px;
+      }
     </style>
     <paper-material>
-      <div>
+      <div class="nowplaying">
+        <div class="nowplaying-icon">
+        </div>
+        <div>
+          <div class="nowplaying-title">[[nowplayingTitle]]</div>
+          <div class="nowplaying-artist-album">[[nowplayingArtistAlbum]]</div>
+          <div class="nowplaying-controls">
+            <paper-icon-button icon="av:volume-down"></paper-icon-button>
+            <paper-icon-button icon="av:skip-previous"></paper-icon-button>
+            <paper-icon-button hidden$="[[isPlaying]]" icon="av:play-arrow"></paper-icon-button>
+            <paper-icon-button hidden$="[[!isPlaying]]" icon="av:pause"></paper-icon-button>
+            <paper-icon-button icon="av:skip-next"></paper-icon-button>
+            <paper-icon-button icon="av:volume-up"></paper-icon-button>
+          </div>
+        </div>
+      </div>
+      <div class="buttonContainer">
         <template is="dom-repeat" items="[[commands]]">
           <action-button on-tap="tapAction" on="[[item.isOn]]" class="abGrow">
             [[item.label]]
@@ -47,11 +78,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </template>
       </div>
       <div>
-        <template is="dom-repeat" items="[[mediaKeys]]">
-          <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
-            [[item.label]]
-          </action-button>
-        </template>
+        <h3>Sonos</h3>
+        <div class="buttonContainer">
+          <template is="dom-repeat" items="[[mediaKeys]]">
+            <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
+              [[item.label]]
+            </action-button>
+          </template>
+        </div>
       </div>
     </paper-material>
 
@@ -64,6 +98,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-media',
         ready: function() {
+          this.nowplayingTitle = '';
+          this.nowplayingArtistAlbum = '';
+          this.isPlaying = false;
           var randomDelay = Math.floor(Math.random() * 3000 + 1000);
           this.async(function() {
             this.setup();
@@ -74,6 +111,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           app.fbRoot.child('state/harmony/label').on('value', function(snapshot) {
             self.currentActivity = snapshot.val();
           });
+          app.fbRoot.child('state/sonos/state/state').on('value', 
+            function(snapshot) {
+              var data = snapshot.val();
+              self.set('nowplayingTitle', data.currentTrack.title);
+              var secondary = data.currentTrack.artist;
+              if (data.currentTrack.album) {
+                secondary += ' - ' + data.currentTrack.album;
+              }
+              self.set('nowplayingArtistAlbum', secondary);
+              if (data.playerState === 'PLAYING') {
+                self.set('isPlaying', true);
+              } else {
+                self.set('isPlaying', false);
+              }
+            }
+          );
         },
         observers: [
           'dataChange(currentActivity)',

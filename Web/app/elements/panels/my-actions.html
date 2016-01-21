@@ -58,6 +58,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </template>
         </div>
       </div>
+      <div>
+        <h3>Nest ETA</h3>
+        <div hidden$="![[eta]]">ETA Set for <span>[[eta]]</span></div>
+        <div class="buttonContainer">
+          <template is="dom-repeat" items="[[etas]]">
+            <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
+              [[item.label]]
+            </action-button>
+          </template>
+        </div>
+      </div>
     </paper-material>
   </template>
 
