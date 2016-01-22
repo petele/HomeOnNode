@@ -42,24 +42,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: inline-block;
         width: 50%;
       }
-      .icon {
-        display: inline-block;
-        width: 1em;
-        height: 1em;
-        border-radius: 100%;
-      }
       .online { 
         color: var(--paper-green-500);
-        background-color: var(--paper-green-500);
       }
       .offline { 
         color: var(--paper-red-500);
-        background-color: var(--paper-red-500);
       }
       .stale {
         color: var(--paper-red-500);
       }
-      h2 span:nth-of-type(2) {
+      h2 iron-icon {
         float: right;
       }
     </style>
@@ -68,7 +60,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <paper-material elevation="1">
       <h2>
         <span>[[deviceId]]</span>
-        <span class$="[[isOnline(item.online)]]"></span>
+        <iron-icon icon="[[getIcon(item.online)]]" class$="[[isOnline(item.online)]]">
+        </iron-icon>
       </h2>
       <template is="dom-if" if="[[item.host]]">
       <div>
@@ -119,14 +112,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var action = event.srcElement.getAttribute('action');
           var dialog = window.app.confirmDialog;
           dialog.title = 'Confirm';
-          dialog.action = 'item.' + action;
+          dialog.action = 'devices/' + this.deviceId + '/' + action;
           var msg = 'Are you sure you want to ';
           msg += action + ' ' + this.deviceId;
           dialog.message = msg;
-          var self = this;
-          dialog.onConfirm = function() {
-            var path = 'devices/' + self.deviceId + '/' + action;
-            console.log('[sendDeviceCommand]', path);
+          dialog.onConfirm = function(path) {
             app.fbRoot.child(path).set(true, function(err) {
               if (err) {
                 console.error('[sendDeviceCommand]', err);
@@ -145,10 +135,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return '';
         },
         isOnline: function(value) {
-          if (value === true) {
-            return 'icon online';
+          if (value) {
+            return 'online';
           }
-          return 'icon offline';
+          return 'offline';
+        },
+        getIcon: function(value) {
+          if (value === true) {
+            return 'cloud';
+          }
+          return 'cloud-off';
         }
       });
     })();

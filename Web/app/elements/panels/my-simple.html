@@ -184,26 +184,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <div class="pollen" hidden>[[weather.today.pollen]]</div>
           </div>
         </div>
-        <!-- <div>
-          [[weather.now.summary]]
-        </div>
-        <div class="layout horizontal">
-          <div class="flex">
-            <iron-icon class="weatherIcon" src="[[weather.now.icon]]"></iron-icon>    
-          </div>
-          <div class="curTemp flex">
-            <span>[[weather.now.temperature]]</span><sup>&deg;F</sup>
-          </div>
-        </div>
-        <div class="layout horizontal">
-          <div class="flex">
-            [[weather.today.summary]]
-          </div>
-          <div>
-            [[weather.today.high]]<sup>&deg;F</sup> <span class="secondary">High</span> <br>
-            [[weather.today.low]]<sup>&deg;F</sup> <span class="secondary">Low</span>
-          </div>
-        </div> -->
         <div class="buttons">
           <paper-button dialog-dismiss>Close</paper-button>
         </div>
@@ -276,7 +256,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             self.$.ibDnD.setAttribute('color', color);
             self.$.ibDnD.toggleAttribute('loading', false);
           });
-          fbRoot.child('state/sensor/LIVINGROOM/temperature/value').on('value', 
+          var lrThermoPath = 'state/nest/devices/thermostats/';
+          lrThermoPath += 'dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1';
+          lrThermoPath += '/ambient_temperature_f';
+          fbRoot.child(lrThermoPath).on('value', 
             function(snapshot) {
               var val = Math.round(snapshot.val());
               val += 'F';
