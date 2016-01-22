@@ -199,7 +199,6 @@ function Sonos() {
         speaker.setVolume('-2', function(success, response) {
           genericResponseHandler('volumeDown', success, response);
         });
-        log.todo('[SONOS] volumeDown not yet implemented.');
         return true;
       }
       log.error('[SONOS] volumeDown failed, unable to find speaker.');
@@ -216,7 +215,6 @@ function Sonos() {
         speaker.setVolume('+2', function(success, response) {
           genericResponseHandler('volumeUp', success, response);
         });
-        log.todo('[SONOS] volumeUp not yet implemented.');
         return true;
       }
       log.error('[SONOS] volumeUp failed, unable to find speaker.');

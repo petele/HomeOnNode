@@ -95,15 +95,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               var newETAs = [];
               keys.forEach(function(key) {
                 var command = commands[key];
-                command.key = key;
-                if (command.kind === 'action') {
-                  newActions.push(command);
-                } else if (command.kind === 'media') {
-                  newMedia.push(command);
-                } else if (command.kind === 'mediaKey') {
-                  newMediaKey.push(command);
-                } else if (command.kind === 'eta') {
-                  newETAs.push(command);
+                if (command.label) {
+                  command.key = key;
+                  if (command.kind === 'action') {
+                    newActions.push(command);
+                  } else if (command.kind === 'media') {
+                    newMedia.push(command);
+                  } else if (command.kind === 'mediaKey') {
+                    newMediaKey.push(command);
+                  } else if (command.kind === 'eta') {
+                    newETAs.push(command);
+                  }
                 }
               });
               self.set('actionCommands', newActions);

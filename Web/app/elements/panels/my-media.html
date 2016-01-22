@@ -47,26 +47,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         font-size: 1.5em;
       }
       .nowplaying-icon {
-        width: 80px;
-        height: 80px;
+        --iron-icon-height: 85px;
+        --iron-icon-width: 85px;
+        width: 85px;
+        height: 85px;
         background-color: var(--paper-grey-200);
         margin-right: 12px;
       }
     </style>
     <paper-material>
       <div class="nowplaying">
-        <div class="nowplaying-icon">
-        </div>
+        <iron-icon class="nowplaying-icon" src="[[nowplayingIcon]]">
+        </iron-icon>
         <div>
           <div class="nowplaying-title">[[nowplayingTitle]]</div>
           <div class="nowplaying-artist-album">[[nowplayingArtistAlbum]]</div>
           <div class="nowplaying-controls">
-            <paper-icon-button icon="av:volume-down"></paper-icon-button>
-            <paper-icon-button icon="av:skip-previous"></paper-icon-button>
-            <paper-icon-button hidden$="[[isPlaying]]" icon="av:play-arrow"></paper-icon-button>
-            <paper-icon-button hidden$="[[!isPlaying]]" icon="av:pause"></paper-icon-button>
-            <paper-icon-button icon="av:skip-next"></paper-icon-button>
-            <paper-icon-button icon="av:volume-up"></paper-icon-button>
+            <paper-icon-button icon="av:volume-down" on-tap="volDown">
+            </paper-icon-button>
+            <paper-icon-button icon="av:skip-previous" on-tap="skipPrevious">
+            </paper-icon-button>
+            <paper-icon-button hidden$="[[isPlaying]]" icon="av:play-arrow" on-tap="sonosPlay">
+            </paper-icon-button>
+            <paper-icon-button hidden$="[[!isPlaying]]" icon="av:pause" on-tap="sonosPause">
+            </paper-icon-button>
+            <paper-icon-button icon="av:skip-next" on-tap="skipNext">
+            </paper-icon-button>
+            <paper-icon-button icon="av:volume-up" on-tap="volUp">
+            </paper-icon-button>
           </div>
         </div>
       </div>
@@ -125,6 +133,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               } else {
                 self.set('isPlaying', false);
               }
+              // state/sonos/state/state/currentTrack/absoluteAlbumArtURI
+              var icon = data.currentTrack.absoluteAlbumArtURI;
+              self.set('nowplayingIcon', icon);
             }
           );
         },
@@ -148,6 +159,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         tapAction: function(event) {
           var action = event.model.item;
           app.sendCommand({cmdName: action.key});
+        },
+        volDown: function() {
+          app.sendCommand({cmdName: 'SONOS_VOL_DOWN'});
+        },
+        volUp: function() {
+          app.sendCommand({cmdName: 'SONOS_VOL_UP'});
+        },
+        skipPrevious: function() {
+          app.sendCommand({cmdName: 'SONOS_PREVIOUS'});
+        },
+        skipNext: function() {
+          app.sendCommand({cmdName: 'SONOS_NEXT'});
+        },
+        sonosPlay: function() {
+          app.sendCommand({cmdName: 'SONOS_PLAY'});
+        },
+        sonosPause: function() {
+          app.sendCommand({cmdName: 'SONOS_PAUSE'});
         }
       });
     })();
