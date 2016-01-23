@@ -98,15 +98,15 @@ function Sonos() {
     return null;
   }
 
-  function genericResponseHandler(apiName, success, response) {
+  function genericResponseHandler(apiName, error, response) {
     var msg = '[SONOS] genericResponseHandler - ' + apiName;
     if (response) {
-      msg += ': ' + response;
+      msg += ': ' + JSON.stringify(response);
     }
-    if (success) {
-      log.debug(msg);
-    } else {
+    if (error) {
       log.error(msg);
+    } else {
+      log.debug(msg);
     }
   }
 
