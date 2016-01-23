@@ -101,7 +101,12 @@ function Sonos() {
   function genericResponseHandler(apiName, error, response) {
     var msg = '[SONOS] genericResponseHandler - ' + apiName;
     if (response) {
-      msg += ': ' + JSON.stringify(response);
+      try {
+        msg += ': ' + JSON.stringify(response);
+      } catch (ex) {
+        log.exception('[SONOS] Unable to stringify response', ex);
+        msg += ': ' + response;
+      }
     }
     if (error) {
       log.error(msg);
