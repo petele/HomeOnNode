@@ -6,6 +6,7 @@ var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
 var webRequest = require('./webRequest');
 var Gpio = require('onoff').Gpio;
+var exec = require('child_process').exec;
 
 var APP_NAME = 'REMOTE';
 var fb;
@@ -31,6 +32,16 @@ function sendDoorbell() {
     });
   } catch (ex) {
     log.exception('[sendDoorbell] Failed', ex);
+    if (fb) {
+      var cmd = {
+        cmdName: 'RUN_ON_DOORBELL'
+      };
+      fb.child('commands').push(cmd, function(err) {
+        log.error('[sendDoorbell] FB send failed, rebooting!');
+        var cmd = 'sudo reboot';
+        exec(cmd, function(error, stdout, stderr) {});
+      });
+    }
   }
 }
 
