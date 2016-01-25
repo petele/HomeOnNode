@@ -639,10 +639,28 @@ function Home(config, fb) {
     return false;
   }
 
+  function getNestThermostatId(roomId) {
+    try {
+      if (roomId) {
+        var id = config.hvac.thermostats[roomId];
+        if (id) {
+          return id;
+        }
+        return roomId;
+      } else {
+        log.error('[HOME] getNestThermostatId failed, no roomId provided.');
+        return null;
+      }
+    } catch (ex) {
+      log.exception('[HOME] getNestThermostatId failed.', ex);
+      return null;
+    }
+  }
+
   function adjustNestThermostat(roomId, modifier) {
     if (nest) {
       try {
-        var id = config.hvac.thermostats[roomId];
+        var id = getNestThermostatId(roomId);
         if (id) {
           var thermostat = _self.state.nest.devices.thermostats[id];
           /* jshint -W106 */
@@ -674,7 +692,7 @@ function Home(config, fb) {
   function setNestThermostat(roomId, mode, temperature) {
     if (nest) {
       try {
-        var id = config.hvac.thermostats[roomId];
+        var id = getNestThermostatId(roomId);
         if (id) {
           if (!mode) {
             mode = config.hvac.mode;
