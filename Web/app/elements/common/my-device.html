@@ -117,6 +117,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           msg += action + ' ' + this.deviceId;
           dialog.message = msg;
           dialog.onConfirm = function(path) {
+            path = path.replace('common/', '');
             console.log('reset', path);
             app.fbRoot.child(path).set(true, function(err) {
               if (err) {
