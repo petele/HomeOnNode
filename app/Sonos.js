@@ -17,7 +17,7 @@ function Sonos() {
     },
     error: function(arg) {
       var args  = Array.prototype.slice.call(arguments);
-      log.error('[SONOS*] ' + args.join(' '));
+      log.debug('[SONOS*] ERROR: ' + args.join(' '));
     },
     debug: function(arg) {
       var args  = Array.prototype.slice.call(arguments);
