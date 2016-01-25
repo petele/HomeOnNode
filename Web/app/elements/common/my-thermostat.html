@@ -117,7 +117,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <div class="layout vertical flex">
           <paper-dropdown-menu disabled$="[[!isReady]]">
             <paper-listbox class="dropdown-content" attr-for-selected="mode" 
-              selected="{{hvacMode}}" on-iron-select="changeMode">
+              selected="{{hvacMode}}" on-iron-select="updateNest">
               <paper-item mode="off">Off</paper-item>
               <paper-item mode="heat-cool">Auto</paper-item>
               <paper-item mode="heat">Heat</paper-item>
@@ -127,7 +127,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <div class="layout horizontal">
             <paper-icon-button disabled$="[[isOff]]" icon="expand-more" class="left" on-tap="decreaseTargetTemp">
             </paper-icon-button>
-            <paper-input disabled$="[[isOff]]" no-label-float on-change="changeTemp"
+            <paper-input disabled$="[[isOff]]" no-label-float on-change="updateNest"
               value="{{targetTemp}}" type="number" min="[[minTemp]]" max="[[maxTemp]]"
               class="flex">
             </paper-input>
@@ -152,7 +152,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-thermostat',
         ready: function() {
-          this.minTemp = 64;
+          this.minTemp = 60;
           this.maxTemp = 85;
           this.targetTemp = null;
           this.hvacMode = null;
@@ -195,27 +195,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.hvacStateLabel = state;
           }
         },
-        changeMode: function() {
-          app.lastInput = Date.now();
-          this.isOff = this.hvacMode  === 'off' ? true : false;
-          if (this.hvacMode !== this.nestData.hvac_mode) {
-            var command = {
-              nestThermostat: this.key,
-              mode: this.hvacMode
-            };
-            app.sendCommand(command);
-          }
-        },
-        changeTemp: function() {
+        updateNest: function() {
           app.lastInput = Date.now();
           this.targetTemp = parseInt(this.targetTemp, 10);
-          var belowMax = this.targetTemp < this.maxTemp;
-          var aboveMin = this.targetTemp > this.minTemp;
+          this.isOff = this.hvacMode  === 'off' ? true : false;
+          var belowMax = this.targetTemp <= this.maxTemp;
+          var aboveMin = this.targetTemp >= this.minTemp;
+          var modeChanged = this.hvacMode !== this.nestData.hvac_mode;
           var hasChanged = this.targetTemp !== this.nestData.target_temperature_f;
-          if (belowMax && aboveMin && hasChanged) {
+          if ((belowMax && aboveMin && hasChanged) || (modeChanged)) {
             var command = {
-              nestThermostat: this.key,
-              temperature: this.targetTemp
+              nestThermostat: [{
+                roomId: this.key,
+                temperature: this.targetTemp,
+                mode: this.hvacMode
+              }]
             };
             app.sendCommand(command);
           } else {
@@ -225,11 +219,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         increaseTargetTemp: function() {
           this.targetTemp = this.targetTemp + 1;
-          this.changeTemp();
+          this.updateNest();
         },
         decreaseTargetTemp: function() {
           this.targetTemp = this.targetTemp - 1;
-          this.changeTemp();
+          this.updateNest();
         }
       });
       /* jshint +W106 */
