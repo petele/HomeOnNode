@@ -144,6 +144,7 @@ function Home(config, fb) {
         cmds = [cmds];
       }
       cmds.forEach(function(cmd) {
+        log.debug('XXXX', JSON.stringify(cmd));
         if (modifier) {
           adjustNestThermostat(cmd.roomId, modifier);
         } else {
