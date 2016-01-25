@@ -138,7 +138,7 @@ function Nest() {
 
   function setThermostat(thermostat, state) {
     if (checkIfReady(true)) {
-      if (_thermostatModes.indexOf(state.mode) === -1) {
+      if (_thermostatModes.indexOf(state.hvac_mode) === -1) {
         log.error('[NEST] Set thermostat: invalid state.');
         return false;
       }
@@ -319,7 +319,7 @@ function Nest() {
       target_temperature_f: target,
       target_temperature_high_f: hi,
       target_temperature_low_f: lo,
-      mode: mode
+      hvac_mode: mode
     };
     // jscs:enable
     /* jshint +W106 */
