@@ -138,7 +138,7 @@ function Nest() {
 
   function setThermostat(thermostat, state) {
     if (checkIfReady(true)) {
-      if (_thermostatModes.indexOf(state) === -1) {
+      if (_thermostatModes.indexOf(state.mode) === -1) {
         log.error('[NEST] Set thermostat: invalid state.');
         return false;
       }
