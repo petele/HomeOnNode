@@ -166,11 +166,17 @@ function Nest() {
         }
       }
       var path = 'devices/cameras/' + cameraId + '/is_streaming';
-      log.log('[NEST] enableCamera (' + cameraId + '): ' + state);
+      var cameraName = cameraId;
+      try {
+        cameraName = _nestData.devices.cameras[cameraId].name;
+      } catch (ex) {
+        var exMsg = '[NEST] Unable to get Camera name for cameraId:' + cameraId;
+        log.exception(exMsg, ex);
+      }
+      log.log('[NEST] setCameraStreamingState (' + cameraName + '): ' + state);
       _fbNest.child(path).set(state, function(err) {
         onSetComplete(path, err);
       });
-      log.log('[NEST] Setting NestCam streaming: ' + state.toString());
       return true;
     }
     return false;

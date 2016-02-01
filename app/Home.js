@@ -723,6 +723,7 @@ function Home(config, fb) {
   function initHue() {
     try {
       hue = new Hue(Keys.hueBridge.key);
+      _self.state.lastHueStateToggle = 'not_set';
     } catch (ex) {
       log.exception('[HOME] Unable to initialize Hue', ex);
       shutdownHue();
@@ -754,9 +755,14 @@ function Home(config, fb) {
         log.error('[HOME] Invalid Hue Sensor type for Away Toggler.');
         return;
       }
+      if (_self.state.lastHueStateToggle === sensor.state.lastupdated) {
+        log.error('[HOME] hueAwayToggle already fired for this event.');
+        return;
+      }
+      _self.state.lastHueStateToggle = sensor.state.lastupdated;
       if (sensor.state.flag === true) {
         hue.setSensorFlag(sensorId, false);
-        log.log('[HOME] State change triggered by Hue');
+        log.log('[HOME] State change triggered by hueAwayToggle');
         if (_self.state.systemState === 'HOME') {
           setState('ARMED');
         } else {
@@ -910,8 +916,11 @@ function Home(config, fb) {
         var doorState = value === 255 ? 'OPEN' : 'CLOSED';
         handleDoorEvent(deviceName, doorState, device.updateState);
       } else if (device.kind === 'MOTION') {
-        var cmdName = 'MOTION_' + deviceName;
-        _self.executeCommandByName(cmdName, null, deviceName);
+        // Only fire motion events when system is in AWAY mode
+        if (_self.state.systemState !== 'HOME') {
+          var cmdName = 'MOTION_' + deviceName;
+          _self.executeCommandByName(cmdName, null, deviceName);
+        }
       } else {
         log.warn('[HOME] Unknown ZWave device kind: ' + nodeId);
       }

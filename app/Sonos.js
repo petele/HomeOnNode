@@ -5,6 +5,8 @@ var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var SonosDiscovery = require('./sonos-discovery/lib/sonos.js');
 
+// Based on https://github.com/jishi/node-sonos-discovery
+
 function Sonos() {
   var _self = this;
   var _sonos;
@@ -104,7 +106,8 @@ function Sonos() {
       try {
         msg += ': ' + JSON.stringify(response);
       } catch (ex) {
-        log.exception('[SONOS] Unable to stringify response', ex);
+        var exMsg = '[SONOS] Unable to stringify response: ' + response;
+        log.exception(exMsg, ex);
         msg += ': ' + response;
       }
     }
