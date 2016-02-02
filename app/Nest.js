@@ -97,6 +97,8 @@ function Nest() {
     protects.forEach(function(key) {
       var path = 'devices/smoke_co_alarms/' + key;
       var alarmName = _nestData.devices.smoke_co_alarms[key].name;
+      var msg = '[NEST] Registering for alarms from: ';
+      log.log(msg + alarmName);
       _fbNest.child(path + '/co_alarm_state').on('value', function(snap) {
         if (snap.val() !== 'ok') {
           log.log('[NEST] CO ALARM');
@@ -142,8 +144,15 @@ function Nest() {
         log.error('[NEST] Set thermostat: invalid state.');
         return false;
       }
+      var thermostatName = thermostat;
+      try {
+        thermostatName = _nestData.devices.thermostats[thermostat].name;
+      } catch (ex) {
+        var exMsg = '[NEST] Unable to get Thermostat name for thermostatId: ';
+        log.exception(exMsg + thermostat, ex);
+      }
       var fbPath = 'devices/thermostats/' + thermostat;
-      var msg = '[NEST] setThermostat (' + thermostat + '): ';
+      var msg = '[NEST] setThermostat (' + thermostatName + '): ';
       msg += JSON.stringify(state);
       log.log(msg);
       _fbNest.child(fbPath).set(state, function(err) {
