@@ -752,13 +752,9 @@ function Home(config, fb) {
     log.log('[HOME] State changed by hueAwayToggle');
     hue.setSensorFlag(config.hueAwaySensorToggleId, false);
     if (_self.state.systemState === 'HOME') {
-      // TODO: Finish this
-      log.log('[HOME] Should set state to ARMED');
-      // setState('ARMED');
+      setState('ARMED');
     } else {
-      // TODO: Finish this
-      log.log('[HOME] Should set state to HOME');
-      // setState('HOME');
+      setState('HOME');
     }
   }
 

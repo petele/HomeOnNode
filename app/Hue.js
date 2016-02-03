@@ -183,14 +183,16 @@ function Hue(key, ip, awaySensorId) {
         };
         var body = {flag: val};
         webRequest.request(uri, JSON.stringify(body), function(resp) {
-          var msg = '[HUE] setSensorFlag(' + id + ') to ' + val + ' - ';
-          msg += JSON.stringify(resp);
-          log.debug(msg);
+          // var msg = '[HUE] setSensorFlag(' + id + ') to ' + val + ' - ';
+          // msg += JSON.stringify(resp);
+          // log.debug(msg);
         });
-        self.hueSensors[id].state = {
-          flag: val,
-          lastupdated: new Date().toJSON().substring(0, 19)
-        };
+        if (self.hueSensors && self.hueSensors[id]) {
+          self.hueSensors[id].state = {
+            flag: val,
+            lastupdated: new Date().toJSON().substring(0, 19)
+          };
+        }
       } catch (ex) {
         log.exception('[HUE] Unable to set sensor', ex);
       }
@@ -247,21 +249,21 @@ function Hue(key, ip, awaySensorId) {
             var msg = '[HUE] monitorHue.awaySensor: ';
             var sensor = hueState.sensors[awaySensor.id];
             if (sensor.modelid === 'awayToggler') {
-              if (!awaySensor.lastUpdated || !awaySensor.lastValue) {
+              if (!awaySensor.lastUpdated) {
                 awaySensor.lastUpdated = sensor.state.lastupdated;
                 awaySensor.lastValue = sensor.state.flag;
-                log.debug(msg + 'setup - ' + JSON.stringify(awaySensor));
               } else {
                 if ((awaySensor.lastUpdated !== sensor.state.lastupdated) &&
-                    (awaySensor.lastValue !== sensor.state.flag) &&
-                    (sensor.state.flag === true)) {
+                    (awaySensor.lastValue !== sensor.state.flag)) {
                   awaySensor.lastUpdated = sensor.state.lastupdated;
                   awaySensor.lastValue = sensor.state.flag;
-                  log.debug(msg + 'changed - ' + JSON.stringify(awaySensor));
-                  self.emit('awayToggle', awaySensor);
-                } else {
-                  log.debug(msg + 'nc - ' + JSON.stringify(awaySensor) + ' // ' + JSON.stringify(sensor.state));
+                  if (sensor.state.flag === true) {
+                    self.emit('awayToggle', awaySensor);
+                  }
                 }
+              }
+              if (sensor.state.flag === true) {
+                self.setSensorFlag(awaySensor.id, false);
               }
             } else {
               log.error('[HUE] Away Sensor is not an awayToggler');
