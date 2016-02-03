@@ -722,8 +722,7 @@ function Home(config, fb) {
 
   function initHue() {
     try {
-      hue = new Hue(Keys.hueBridge.key);
-      _self.state.lastHueStateToggle = 'not_set';
+      hue = new Hue(Keys.hueBridge.key, null, config.hueAwaySensorToggleId);
     } catch (ex) {
       log.exception('[HOME] Unable to initialize Hue', ex);
       shutdownHue();
@@ -737,7 +736,9 @@ function Home(config, fb) {
       });
       hue.on('change', function(hueState) {
         fbSet('state/hue', hueState);
-        hueAwayToggle(hueState.sensors);
+      });
+      hue.on('awayToggle', function(sensorState) {
+        hueAwayToggle(sensorState);
       });
       hue.on('ready', function() {
       });
@@ -747,28 +748,17 @@ function Home(config, fb) {
     }
   }
 
-  function hueAwayToggle(sensors) {
-    var sensorId = config.hueAwaySensorToggleId;
-    if (sensorId && sensors && sensors[sensorId]) {
-      var sensor = sensors[sensorId];
-      if (sensor.modelid !== 'awayToggler') {
-        log.error('[HOME] Invalid Hue Sensor type for Away Toggler.');
-        return;
-      }
-      if (_self.state.lastHueStateToggle === sensor.state.lastupdated) {
-        log.error('[HOME] hueAwayToggle already fired for this event.');
-        return;
-      }
-      _self.state.lastHueStateToggle = sensor.state.lastupdated;
-      if (sensor.state.flag === true) {
-        hue.setSensorFlag(sensorId, false);
-        log.log('[HOME] State change triggered by hueAwayToggle');
-        if (_self.state.systemState === 'HOME') {
-          setState('ARMED');
-        } else {
-          setState('HOME');
-        }
-      }
+  function hueAwayToggle(sensorState) {
+    log.log('[HOME] State changed by hueAwayToggle');
+    hue.setSensorFlag(config.hueAwaySensorToggleId, false);
+    if (_self.state.systemState === 'HOME') {
+      // TODO: Finish this
+      log.log('[HOME] Should set state to ARMED');
+      // setState('ARMED');
+    } else {
+      // TODO: Finish this
+      log.log('[HOME] Should set state to HOME');
+      // setState('HOME');
     }
   }
 
