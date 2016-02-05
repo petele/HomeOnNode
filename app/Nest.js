@@ -59,7 +59,7 @@ function Nest() {
 
   this.login = function(accessToken) {
     log.init('[NEST]');
-    _fbNest = new Firebase('wss://developer-api.nest.com');
+    _fbNest = new Firebase('https://developer-api.nest.com');
     _fbNest.authWithCustomToken(accessToken, function(err, token) {
       if (err) {
         _self.emit('authError', err);
@@ -67,7 +67,7 @@ function Nest() {
       } else {
         _authExpiresAt = token.expires;
         _isReady = true;
-        log.debug('[NEST] Authentication completed successfully.');
+        log.log('[NEST] Authentication completed successfully.');
         _self.getStatus(function() {
           log.log('[NEST] Ready.');
           initAlarmEvents();
@@ -79,6 +79,20 @@ function Nest() {
             _self.emit('authError');
           }
         });
+      }
+    });
+    _fbNest.child('.info/connected').on('value', function(snapshot) {
+      if (snapshot.val() === true) {
+        log.log('[NEST] Connected to Nest backend.');
+      } else {
+        log.warn('[NEST] No connection to Nest backend.');
+      }
+    });
+    _fbNest.onAuth(function(authData) {
+      if (authData) {
+        log.log('[NEST] Authentication completed successfully. (onAuth)');
+      } else {
+        log.warn('[NEST] Authentication for Nest lost');
       }
     });
   };
