@@ -7,16 +7,16 @@ var Keys = require('./Keys').keys;
 var webRequest = require('./webRequest');
 var Gpio = require('onoff').Gpio;
 var exec = require('child_process').exec;
+var GCMPush = require('./GCMPush');
 
 var APP_NAME = 'REMOTE';
 var fb;
 var pin;
 var config;
+var gcmPush;
 var lastPushed = 0;
 var lastValue = 1;
 var minTime = 3000;
-
-var registrationIds = [];
 
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
@@ -45,24 +45,8 @@ function sendDoorbell() {
       });
     }
   }
-  try {
-    if (registrationIds.length > 0) {
-      var gcmUri = {
-        host: 'android.googleapis.com',
-        path: '/gcm/send',
-        secure: true,
-        method: 'POST',
-        authorization: 'key=' + Keys.gcm.apiKey
-      };
-      var body = {
-        registration_ids: registrationIds
-      };
-      webRequest.request(gcmUri, JSON.stringify(body), function(resp) {
-        log.http('RESP', JSON.stringify(resp));
-      });
-    }
-  } catch (ex) {
-    log.exception('[sendDoorbell] GCM Failed', ex);
+  if (gcmPush) {
+    gcmPush.send();
   }
 }
 
@@ -99,10 +83,7 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
       }
     });
 
-    fb.child('pushSubscribers').on('value', function(snapshot) {
-      var keys = Object.keys(snapshot.val());
-      registrationIds = keys;
-    });
+    gcmPush = new GCMPush(fb);
 
     if (config.doorbellPin) {
       pin = new Gpio(config.doorbellPin, 'in', 'both');

@@ -12,6 +12,7 @@ var _logFileDefault = './logs/rpi-system.log';
 var _logFile = _logFileDefault;
 var _fbRef = null;
 var _logDebug = false;
+var _verbose = true;
 
 function setFirebase(fbRef) {
   if (fbRef) {
@@ -40,6 +41,16 @@ function setLogFileName(filename) {
   } else {
     _logFile = _logFileDefault;
     warn('[LOGGER] Log filename not provided, using default');
+  }
+}
+
+function setVerbose(verbose) {
+  if (verbose === true) {
+    _verbose = true;
+    log('[LOGGER] Logger verbose: TRUE');
+  } else {
+    _verbose = false;
+    log('[LOGGER] Logger verbose: FALSE');
   }
 }
 
@@ -160,11 +171,13 @@ function exception(message, ex) {
 }
 
 function debug(message) {
-  var logObj = generateLog('DEBUG', message);
-  if (_logDebug === true) {
-    saveLog(logObj);
-  } else {
-    printLogObj(logObj);
+  if (_verbose) {
+    var logObj = generateLog('DEBUG', message);
+    if (_logDebug === true) {
+      saveLog(logObj);
+    } else {
+      printLogObj(logObj);
+    }
   }
 }
 
@@ -228,6 +241,7 @@ function cleanLogs(path, maxAgeDays) {
 
 exports.cleanLogs = cleanLogs;
 exports.setFirebase = setFirebase;
+exports.setVerbose = setVerbose;
 exports.setLogFileName = setLogFileName;
 exports.setFileLogging = setFileLogging;
 exports.setDebug = setDebug;

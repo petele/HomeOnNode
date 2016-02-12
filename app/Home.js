@@ -16,6 +16,7 @@ var Presence = require('./Presence');
 var Nest = require('./Nest');
 var ZWave = require('./ZWave');
 var Sonos = require('./Sonos');
+var GCMPush = require('./GCMPush');
 
 function Home(config, fb) {
   this.state = {};
@@ -27,6 +28,7 @@ function Home(config, fb) {
   var zwave;
   var presence;
   var sonos;
+  var gcmPush;
 
   var armingTimer;
   var zwaveTimer;
@@ -206,6 +208,11 @@ function Home(config, fb) {
         });
       } else {
         log.error('[HOME] Sonos command failed, Sonos unavailable.');
+      }
+    }
+    if (command.hasOwnProperty('sendNotification')) {
+      if (gcmPush) {
+        gcmPush.send();
       }
     }
     if (command.hasOwnProperty('sound')) {
@@ -1029,6 +1036,7 @@ function Home(config, fb) {
       log.log('[HOME] Config file updated.');
       fs.writeFile('config.json', JSON.stringify(config, null, 2));
     });
+    gcmPush = new GCMPush(fb);
     initNotifications();
     initZWave();
     initNest();

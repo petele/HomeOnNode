@@ -1,36 +1,25 @@
 'use strict';
 
+var GCMPush = require('../app/GCMPush');
 var Keys = require('../app/Keys').keys;
 var Firebase = require('../app/node_modules/firebase');
-var webRequest = require('../app/webRequest');
 var log = require('../app/SystemLog');
 
-var fb;
-
 function init() {
+  log.setVerbose(false);
   var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com';
-  fb = new Firebase(fbURL);
+  var fb = new Firebase(fbURL);
   fb.authWithCustomToken(Keys.firebase.key, function(error) {
-    if(error) {
-
+    if (error) {
+      log.exception('[FB] Authentication error', error);
+      process.exit(1);
     } else {
-      fb.child('pushSubscribers').on('value', function(snapshot) {
-      var keys = Object.keys(snapshot.val());
-      var gcmUri = {
-        host: 'android.googleapis.com',
-        path: '/gcm/send',
-        secure: true,
-        method: 'POST',
-        authorization: 'key=' + Keys.gcm.apiKey
-      };
-      var body = {
-        registration_ids: keys
-      };
-      webRequest.request(gcmUri, JSON.stringify(body), function(resp) {
-        log.http('RESP', JSON.stringify(resp));
-        process.exit(0);
+      var gcmPush = new GCMPush(fb);
+      gcmPush.on('ready', function() {
+        gcmPush.send(function() {
+          process.exit(0);
+        });
       });
-    });
     }
   });
 }
