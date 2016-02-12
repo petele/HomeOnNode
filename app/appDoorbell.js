@@ -5,7 +5,7 @@ var log = require('./SystemLog');
 var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
 var webRequest = require('./webRequest');
-// var Gpio = require('onoff').Gpio;
+var Gpio = require('onoff').Gpio;
 var exec = require('child_process').exec;
 
 var APP_NAME = 'REMOTE';
@@ -102,29 +102,27 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     fb.child('pushSubscribers').on('value', function(snapshot) {
       var keys = Object.keys(snapshot.val());
       registrationIds = keys;
-      console.log('keys', keys);
-      sendDoorbell();
     });
 
     if (config.doorbellPin) {
-      // pin = new Gpio(config.doorbellPin, 'in', 'both');
-      // pin.watch(function(error, value) {
-      //   var now = Date.now();
-      //   var hasChanged = value !== lastValue ? true : false;
-      //   var timeOK = now > lastPushed + minTime ? true : false;
-      //   lastValue = value;
-      //   if (hasChanged && timeOK && value === 0) {
-      //     log.log('[DOORBELL] Ding-dong');
-      //     lastPushed = now;
-      //     sendDoorbell();
-      //   } else {
-      //     var msg = '[DOORBELL] Debounced.';
-      //     msg += ' value=' + value;
-      //     msg += ' hasChanged=' + hasChanged;
-      //     msg += ' timeOK=' + timeOK;
-      //     log.log(msg);
-      //   }
-      // });
+      pin = new Gpio(config.doorbellPin, 'in', 'both');
+      pin.watch(function(error, value) {
+        var now = Date.now();
+        var hasChanged = value !== lastValue ? true : false;
+        var timeOK = now > lastPushed + minTime ? true : false;
+        lastValue = value;
+        if (hasChanged && timeOK && value === 0) {
+          log.log('[DOORBELL] Ding-dong');
+          lastPushed = now;
+          sendDoorbell();
+        } else {
+          var msg = '[DOORBELL] Debounced.';
+          msg += ' value=' + value;
+          msg += ' hasChanged=' + hasChanged;
+          msg += ' timeOK=' + timeOK;
+          log.log(msg);
+        }
+      });
     }
   }
 });
