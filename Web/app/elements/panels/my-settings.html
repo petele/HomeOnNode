@@ -33,7 +33,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <paper-material>
       <h2>Settings</h2>
 
-
+      <paper-toggle-button id="showNotifications" on-change="notificationChange">
+        Notifications
+      </paper-toggle-button>
 
     </paper-material>
 
@@ -52,6 +54,61 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           //   var page = pages[i];
           //   console.log(i, page.getAttribute('name'));
           // }
+          var self = this;
+          navigator.serviceWorker.getRegistration().then(function(reg) {
+            reg.pushManager.getSubscription().then(function(sub) {
+              if (sub) {
+                self.$.showNotifications.checked = true;
+                console.log('has sub', sub);
+              } else {
+                self.$.showNotifications.checked = false;
+                console.log('no sub');
+              }
+            });
+          }).catch(function(error) {
+            console.log('Error getting subscription state', error);
+          });
+        },
+        notificationChange: function() {
+          if (this.$.showNotifications.checked) {
+            this.subscribe();
+          } else {
+            this.unsubscribe();
+          }
+        },
+        subscribe: function() {
+          navigator.serviceWorker.getRegistration().then(function(reg) {
+            reg.pushManager.subscribe({
+              userVisibleOnly: true
+            }).then(function(sub) {
+              var startAt = sub.endpoint.lastIndexOf('/');
+              if (startAt >= 0) {
+                startAt += 1;
+                var subscriptionId = sub.endpoint.substr(startAt);
+                var path = 'pushSubscribers/' + subscriptionId;
+                var device = {
+                  subscriptionId: subscriptionId,
+                  date: Date.now(),
+                  userAgent: navigator.userAgent
+                };
+                app.fbRoot.child(path).set(device);
+                console.log('subscribed!');
+              }
+            });
+          }).catch(function(error) {
+            console.log('Unable to subscribe', error);
+          });
+        },
+        unsubscribe: function() {
+          navigator.serviceWorker.getRegistration().then(function(reg) {
+            reg.pushManager.getSubscription().then(function(sub) {
+              if (sub) {
+                sub.unsubscribe().then(function() {
+                  console.log('unsubscribed!');
+                });
+              }
+            });
+          });
         }
       });
     })();
