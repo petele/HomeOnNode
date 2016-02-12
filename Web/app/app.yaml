@@ -56,6 +56,11 @@ handlers:
   upload: sw-import.js
   secure: always
 
+- url: /sw-notifications.js
+  static_files: sw-notifications.js
+  upload: sw-notifications.js
+  secure: always
+
 - url: /cache-config.json
   static_files: cache-config.json
   upload: cache-config.json

@@ -28,6 +28,7 @@ function init() {
       };
       webRequest.request(gcmUri, JSON.stringify(body), function(resp) {
         log.http('RESP', JSON.stringify(resp));
+        process.exit(0);
       });
     });
     }
