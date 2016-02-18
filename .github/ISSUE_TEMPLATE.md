@@ -6,6 +6,6 @@
 
 ### Steps to verify
 
-[ ] Santa
-[ ] Easter bunny
-[ ] Tooth fairy
+- [ ] Santa
+- [ ] Easter bunny
+- [ ] Tooth fairy
