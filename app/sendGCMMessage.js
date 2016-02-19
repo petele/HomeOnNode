@@ -2,7 +2,7 @@
 
 var GCMPush = require('./GCMPush');
 var Keys = require('./Keys').keys;
-var Firebase = require('Firebase');
+var Firebase = require('firebase');
 var log = require('./SystemLog');
 
 function init() {
