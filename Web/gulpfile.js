@@ -225,7 +225,8 @@ gulp.task('cache-config', function(callback) {
   var dir = dist();
   var config = {
     cacheId: packageJson.name || path.basename(__dirname),
-    disabled: false
+    disabled: false,
+    generatedAt: Date.now()
   };
 
   glob([
@@ -240,7 +241,7 @@ gulp.task('cache-config', function(callback) {
       config.precache = files;
 
       var md5 = crypto.createHash('md5');
-      md5.update(JSON.stringify(config.precache));
+      md5.update(JSON.stringify(config));
       config.precacheFingerprint = md5.digest('hex');
 
       var configPath = path.join(dir, 'cache-config.json');
