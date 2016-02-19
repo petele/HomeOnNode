@@ -23,7 +23,10 @@ var glob = require('glob-all');
 var historyApiFallback = require('connect-history-api-fallback');
 var packageJson = require('./package.json');
 var crypto = require('crypto');
+var replace = require('gulp-replace');
 // var ghPages = require('gulp-gh-pages');
+
+var myVersion = 'x1';
 
 var AUTOPREFIXER_BROWSERS = [
   'ie >= 10',
@@ -89,6 +92,8 @@ var optimizeHtmlTask = function(src, dest) {
       empty: true,
       spare: true
     })))
+    .pipe($.if('*.html', replace(/@LAST_UPDATED@/g, new Date().toISOString())))
+    .pipe($.if('*.html', replace(/@VERSION@/g, myVersion)))
     // Output files
     .pipe(gulp.dest(dest))
     .pipe($.size({
@@ -137,10 +142,22 @@ gulp.task('copy', function() {
   var app = gulp.src([
     'app/*',
     '!app/test',
-    '!app/cache-config.json'
+    '!app/cache-config.json',
+    '!app/index.html',
+    '!app/sw-import.js'
   ], {
     dot: true
   }).pipe(gulp.dest(dist()));
+
+  var index = gulp.src(['app/*.html'])
+    .pipe(replace(/@VERSION@/g, myVersion))
+    .pipe(replace(/@LAST_UPDATED@/g, new Date().toISOString()))
+    .pipe(gulp.dest(dist()));
+
+  var swImport = gulp.src(['app/sw-import.js'])
+    .pipe(replace(/@VERSION@/g, myVersion))
+    .pipe(replace(/@LAST_UPDATED@/g, new Date().toISOString()))
+    .pipe(gulp.dest(dist()));
 
   var bower = gulp.src([
     'bower_components/**/*'
@@ -162,7 +179,7 @@ gulp.task('copy', function() {
     .pipe($.rename('elements.vulcanized.html'))
     .pipe(gulp.dest(dist('elements')));
 
-  return merge(app, bower, elements, vulcanized, swBootstrap, swToolbox)
+  return merge(app, index, swImport, bower, elements, vulcanized, swBootstrap, swToolbox)
     .pipe($.size({
       title: 'copy'
     }));
@@ -212,8 +229,10 @@ gulp.task('cache-config', function(callback) {
   };
 
   glob([
+    'favicon.ico',
     'bower_components/webcomponentsjs/webcomponents-lite.min.js',
-    '{elements,styles,images}/**/*.*'],
+    '{styles,images}/**/*.*',
+    'elements/elements.vulcanized.html'],
     {cwd: dir}, function(error, files) {
     if (error) {
       callback(error);

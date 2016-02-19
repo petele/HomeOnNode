@@ -7,5 +7,7 @@ Code distributed by Google as part of the polymer project is also
 subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
 */
 
+/* Last Updated: @LAST_UPDATED@ */
+
 importScripts('bower_components/platinum-sw/service-worker.js');
 importScripts('sw-notifications.js');

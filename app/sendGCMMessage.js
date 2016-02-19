@@ -1,12 +1,12 @@
 'use strict';
 
-var GCMPush = require('../app/GCMPush');
-var Keys = require('../app/Keys').keys;
-var Firebase = require('../app/node_modules/firebase');
-var log = require('../app/SystemLog');
+var GCMPush = require('./GCMPush');
+var Keys = require('./Keys').keys;
+var Firebase = require('Firebase');
+var log = require('./SystemLog');
 
 function init() {
-  log.setVerbose(false);
+  log.setVerbose(true);
   var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com';
   var fb = new Firebase(fbURL);
   fb.authWithCustomToken(Keys.firebase.key, function(error) {

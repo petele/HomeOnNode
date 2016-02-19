@@ -65,9 +65,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         showDialog: function() {
           this.$.offlineDialog.open();
+          document.title = 'OFFLINE - HomeOnNode';
         },
         hideDialog: function() {
           this.$.offlineDialog.close();
+          document.title = 'HomeOnNode';
         }
       });
     })();

@@ -60,6 +60,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         <!-- Drawer Content -->
         <left-nav selected="{{page}}"></left-nav>
+        <div class="version-info">
+          Version: @VERSION@ <br>
+          Last Updated: @LAST_UPDATED@
+        </div>
       </paper-header-panel>
 
       <!-- Main Area -->
@@ -110,8 +114,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <my-devices name="devices">
             </my-devices>
 
-            <my-scenes name="scenes" lights="[[hueLights]]">
-            </my-scenes>
+            <!-- 
+              <my-scenes name="scenes" lights="[[hueLights]]">
+              </my-scenes>
+            -->
 
             <my-logs name="presence" path="logs/presence" title="Presence">
             </my-logs>
