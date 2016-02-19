@@ -304,7 +304,6 @@ function Hue(key, ip, awaySensorId) {
       log.log('[HUE] Ready.');
       self.emit('ready');
       monitorHue();
-      log.todo('[HUE] Add functionality to check for bridge update & apply');
     }
   }
 

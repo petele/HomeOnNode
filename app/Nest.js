@@ -88,18 +88,11 @@ function Nest() {
         log.log('[NEST] Connected to Nest backend.');
         if (_disconnectedTimer) {
           clearTimeout(_disconnectedTimer);
+          _disconnectedTimer = null;
         }
       } else {
         log.warn('[NEST] No connection to Nest backend.');
         _disconnectedTimer = setTimeout(disconnectTimeExceeded, 60 * 5 * 1000);
-      }
-    });
-    _fbNest.onAuth(function(authData) {
-      if (authData) {
-        log.log('[NEST] Authentication completed successfully. (onAuth)');
-      } else {
-        log.error('[NEST] Authentication for Nest lost');
-        _isReady = false;
       }
     });
   };

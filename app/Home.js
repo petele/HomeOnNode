@@ -874,7 +874,6 @@ function Home(config, fb) {
   function initZWave() {
     try {
       zwave = new ZWave();
-      log.todo('[HOME] Setup ZWave Timer');
     } catch (ex) {
       log.exception('[HOME] Unable to initialize ZWave', ex);
       shutdownZWave();
