@@ -148,6 +148,9 @@ function Nest() {
 
   function checkIfReady(throwError, alreadyHasData) {
     if (_isReady === true && _fbNest) {
+      if (_disconnectedTimer) {
+        log.warn('[NEST] Attempting to send command while disconnected.');
+      }
       if (alreadyHasData === false) {
         return true;
       } else if (_nestData) {

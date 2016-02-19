@@ -149,15 +149,15 @@ function Harmony(uuid, ip) {
   }
 
   function handleConnect(connection) {
-    log.debug('[HARMONY] Connected.');
+    log.log('[HARMONY] Connected.');
   }
 
   function handleReconnect() {
-    log.debug('[HARMONY] Reconnected.');
+    log.log('[HARMONY] Reconnected.');
   }
 
   function handleDisconnect() {
-    log.debug('[HARMONY] Disconnected.');
+    log.warn('[HARMONY] Disconnected.');
   }
 
   function keepAlive() {
