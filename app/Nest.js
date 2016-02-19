@@ -13,6 +13,7 @@ function Nest() {
   var _authExpiresAt;
   var _nestData;
   var _thermostatModes = ['heat', 'cool', 'heat-cool', 'off'];
+  var _disconnectedTimer = null;
 
   /*****************************************************************************
    *
@@ -68,6 +69,7 @@ function Nest() {
         _authExpiresAt = token.expires;
         _isReady = true;
         log.log('[NEST] Authentication completed successfully.');
+        log.debug('[NEST] Authentication expires at ' + _authExpiresAt);
         _self.getStatus(function() {
           log.log('[NEST] Ready.');
           initAlarmEvents();
@@ -84,15 +86,20 @@ function Nest() {
     _fbNest.child('.info/connected').on('value', function(snapshot) {
       if (snapshot.val() === true) {
         log.log('[NEST] Connected to Nest backend.');
+        if (_disconnectedTimer) {
+          clearTimeout(_disconnectedTimer);
+        }
       } else {
         log.warn('[NEST] No connection to Nest backend.');
+        _disconnectedTimer = setTimeout(disconnectTimeExceeded, 60 * 5 * 1000);
       }
     });
     _fbNest.onAuth(function(authData) {
       if (authData) {
         log.log('[NEST] Authentication completed successfully. (onAuth)');
       } else {
-        log.warn('[NEST] Authentication for Nest lost');
+        log.error('[NEST] Authentication for Nest lost');
+        _isReady = false;
       }
     });
   };
@@ -103,6 +110,10 @@ function Nest() {
    *
    ****************************************************************************/
 
+  function disconnectTimeExceeded() {
+    log.error('[NEST] Disconnect timeout exceeded!');
+    _isReady = false;
+  }
 
   function initAlarmEvents() {
     /* jshint -W106 */

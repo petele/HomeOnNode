@@ -161,17 +161,17 @@ function Harmony(uuid, ip) {
   }
 
   function keepAlive() {
-    if (client !== undefined) {
+    if (client) {
       var cmd = new XMPP.Stanza.Iq({'id': _uuid});
       client.send(cmd);
+      setTimeout(function() {
+        if (reconnect) {
+          keepAlive();
+        }
+      }, 15 * 1000);
     } else {
-      log.warn('[HARMONY] No client available! Eeep!');
+      log.error('[HARMONY] No client available! Eeep!');
     }
-    setTimeout(function() {
-      if (reconnect) {
-        keepAlive();
-      }
-    }, 15 * 1000);
   }
 
   function handleConfig(harmonyConfig) {
@@ -186,7 +186,7 @@ function Harmony(uuid, ip) {
   }
 
   this.getConfig = function() {
-    if (client === undefined) {
+    if (!client) {
       _self.emit('error', 'Client not connected.');
       return {'error': 'Client not connected'};
     } else {
@@ -202,7 +202,7 @@ function Harmony(uuid, ip) {
   };
 
   this.getActivity = function(callback) {
-    if (client === undefined) {
+    if (!client) {
       _self.emit('error', 'Client not connected.');
       return {'error': 'Client not connected'};
     } else {
@@ -229,7 +229,7 @@ function Harmony(uuid, ip) {
   };
 
   this.setActivityById = function(activityID, activityName) {
-    if (client === undefined) {
+    if (!client) {
       _self.emit('error', 'Client not connected.');
       return {'error': 'Client not connected'};
     } else {
@@ -251,7 +251,7 @@ function Harmony(uuid, ip) {
   };
 
   this.sendCommand = function(cmd) {
-    if (client === undefined) {
+    if (!client) {
       _self.emit('error', 'Client not connected.');
       return {'error': 'Client not connected'};
     } else {
