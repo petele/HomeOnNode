@@ -77,7 +77,7 @@ function HTTPServer(config, home, fb) {
   exp.post('/execute/state/:state', function(req, res) {
     var state = req.params.state;
     state = state.toUpperCase();
-    if (state === 'AWAY' || state === 'HOME') {
+    if (state === 'AWAY' || state === 'HOME' || state === 'ARMED') {
       var sender = '[HTTP ' + req.ip + ']';
       home.executeCommand({state: state}, sender);
       res.send({result: 'done'});

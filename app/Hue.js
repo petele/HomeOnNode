@@ -21,7 +21,7 @@ function Hue(key, ip, awaySensorId) {
   this.hueSensors = null;
   this.hueScenes = null;
   this.refreshInterval = 1;
-  this.defaultRefreshInterval = 2000;
+  this.defaultRefreshInterval = 6000;
   var self = this;
 
   this.setLightState = function(lights, cmd, callback) {
