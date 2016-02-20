@@ -74,6 +74,18 @@ function HTTPServer(config, home, fb) {
     res.send(home.state);
   });
 
+  exp.post('/execute/state/:state', function(req, res) {
+    var state = req.params.state;
+    state = state.toUpperCase();
+    if (state === 'AWAY' || state === 'HOME') {
+      var sender = '[HTTP ' + req.ip + ']';
+      home.executeCommand({state: state}, sender);
+      res.send({result: 'done'});
+    } else {
+      res.send({result: 'failed', error: 'unknown state'});
+    }
+  });
+
   exp.post('/execute/name', function(req, res) {
     var body = req.body;
     if (typeof body === 'string') {
