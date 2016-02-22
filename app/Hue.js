@@ -5,23 +5,17 @@ var util = require('util');
 var diff = require('deep-diff').diff;
 var hueApi = require('node-hue-api');
 var log = require('./SystemLog');
-var webRequest = require('./webRequest');
 
-function Hue(key, ip, awaySensorId) {
+function Hue(key, ip) {
   var bridgeKey = key;
   var bridgeIP = ip;
   var hueBridge;
-  var awaySensor = {
-    id: awaySensorId,
-    lastUpdated: null,
-    lastValue: null
-  };
   this.hueLights = null;
   this.hueGroups = null;
   this.hueSensors = null;
   this.hueScenes = null;
   this.refreshInterval = 1;
-  this.defaultRefreshInterval = 6000;
+  this.defaultRefreshInterval = 10000;
   var self = this;
 
   this.setLightState = function(lights, cmd, callback) {
@@ -173,32 +167,6 @@ function Hue(key, ip, awaySensorId) {
     }
   };
 
-  this.setSensorFlag = function(id, val) {
-    if (hueBridge) {
-      try {
-        var uri = {
-          host: bridgeIP,
-          path: '/api/' + bridgeKey + '/sensors/' + id + '/state',
-          method: 'PUT'
-        };
-        var body = {flag: val};
-        webRequest.request(uri, JSON.stringify(body), function(resp) {
-          // var msg = '[HUE] setSensorFlag(' + id + ') to ' + val + ' - ';
-          // msg += JSON.stringify(resp);
-          // log.debug(msg);
-        });
-        if (self.hueSensors && self.hueSensors[id]) {
-          self.hueSensors[id].state = {
-            flag: val,
-            lastupdated: new Date().toJSON().substring(0, 19)
-          };
-        }
-      } catch (ex) {
-        log.exception('[HUE] Unable to set sensor', ex);
-      }
-    }
-  };
-
   this.activateScene = function(sceneId, tryAgain) {
     if (hueBridge) {
       try {
@@ -228,7 +196,7 @@ function Hue(key, ip, awaySensorId) {
         if (err) {
           log.exception('[HUE] Unable to retrieve light state.', err);
           if (self.refreshInterval < self.defaultRefreshInterval * 20) {
-            self.refreshInterval += 3000;
+            self.refreshInterval += 5000;
           } else {
             log.error('[HUE] Exceeded maximum timeout, throwing error.');
             self.emit('error', '[monitorHue] timeout_exceeded');
@@ -244,33 +212,6 @@ function Hue(key, ip, awaySensorId) {
             self.hueSensors = hueState.sensors;
             self.hueScenes = hueState.scenes;
             self.emit('change', hueState);
-          }
-          if (awaySensor.id) {
-            var msg = '[HUE] monitorHue.awaySensor: ';
-            var sensor = hueState.sensors[awaySensor.id];
-            if (sensor.modelid === 'awayToggler') {
-              if (!awaySensor.lastUpdated) {
-                awaySensor.lastUpdated = sensor.state.lastupdated;
-                awaySensor.lastValue = sensor.state.flag;
-              } else {
-                if ((awaySensor.lastUpdated !== sensor.state.lastupdated) &&
-                    (awaySensor.lastValue !== sensor.state.flag)) {
-                  awaySensor.lastUpdated = sensor.state.lastupdated;
-                  awaySensor.lastValue = sensor.state.flag;
-                  if (sensor.state.flag === true) {
-                    self.emit('awayToggle', awaySensor);
-                  }
-                }
-              }
-              if (sensor.state.flag === true) {
-                self.setSensorFlag(awaySensor.id, false);
-              }
-            } else {
-              log.error('[HUE] Away Sensor is not an awayToggler');
-              awaySensor.id = null;
-              awaySensor.lastUpdated = null;
-              awaySensor.lastValue = null;
-            }
           }
           self.refreshInterval = self.defaultRefreshInterval;
         }

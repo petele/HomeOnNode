@@ -46,10 +46,8 @@ function HTTPServer(config, home, fb) {
   });
 
   exp.get('/logs/', function(req, res) {
-    res.sendFile(path.join(__dirname, '/logs/rpi-system.log'));
+    res.sendFile(path.join(__dirname, '/start.log'));
   });
-
-  exp.use('/logs/', express.static(path.join(__dirname, 'logs')));
 
   exp.post('/shutdown', function(req, res) {
     var body = req.body;
@@ -80,8 +78,10 @@ function HTTPServer(config, home, fb) {
     if (state === 'AWAY' || state === 'HOME' || state === 'ARMED') {
       var sender = '[HTTP ' + req.ip + ']';
       home.executeCommand({state: state}, sender);
+      res.status(202);
       res.send({result: 'done'});
     } else {
+      res.status(400);
       res.send({result: 'failed', error: 'unknown state'});
     }
   });

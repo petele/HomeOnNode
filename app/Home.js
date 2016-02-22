@@ -98,9 +98,6 @@ function Home(config, fb) {
     msg += ' received from: ' + source;
     log.log(msg);
     var cmds;
-    if (command.hasOwnProperty('state')) {
-      setState(command.state);
-    }
     if (command.hasOwnProperty('hueScene')) {
       var scenes = command.hueScene;
       if (Array.isArray(scenes) === false) {
@@ -224,6 +221,9 @@ function Home(config, fb) {
       } else {
         setDoNotDisturb('ON');
       }
+    }
+    if (command.hasOwnProperty('state')) {
+      setState(command.state);
     }
   };
 
@@ -729,7 +729,7 @@ function Home(config, fb) {
 
   function initHue() {
     try {
-      hue = new Hue(Keys.hueBridge.key, null, config.hueAwaySensorToggleId);
+      hue = new Hue(Keys.hueBridge.key, null);
     } catch (ex) {
       log.exception('[HOME] Unable to initialize Hue', ex);
       shutdownHue();
@@ -744,24 +744,11 @@ function Home(config, fb) {
       hue.on('change', function(hueState) {
         fbSet('state/hue', hueState);
       });
-      hue.on('awayToggle', function(sensorState) {
-        hueAwayToggle(sensorState);
-      });
       hue.on('ready', function() {
       });
       hue.on('error', function(err) {
         log.error('[HOME] Hue error occured.' + JSON.stringify(err));
       });
-    }
-  }
-
-  function hueAwayToggle(sensorState) {
-    log.log('[HOME] State changed by hueAwayToggle');
-    hue.setSensorFlag(config.hueAwaySensorToggleId, false);
-    if (_self.state.systemState === 'HOME') {
-      setState('ARMED');
-    } else {
-      setState('HOME');
     }
   }
 
@@ -965,12 +952,6 @@ function Home(config, fb) {
       log.error('[HOME] ZWave - no valueId for saveNodeValue');
     }
   }
-
-  // function zwaveTimerTick() {
-  //   log.debug('[HOME] ZWave Timer Tick');
-  //   var nodes = zwave.getNode();
-  //   fbSet('state/zwave/nodes', nodes);
-  // }
 
   function shutdownZWave() {
     log.log('[HOME] Shutting down ZWave.');
