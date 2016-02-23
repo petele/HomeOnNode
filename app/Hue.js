@@ -3,249 +3,326 @@
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var diff = require('deep-diff').diff;
-var hueApi = require('node-hue-api');
 var log = require('./SystemLog');
+var webRequest = require('./webRequest');
+var http = require('http');
 
-function Hue(key, ip) {
-  var bridgeKey = key;
-  var bridgeIP = ip;
-  var hueBridge;
-  this.hueLights = null;
-  this.hueGroups = null;
-  this.hueSensors = null;
-  this.hueScenes = null;
-  this.refreshInterval = 1;
-  this.defaultRefreshInterval = 10000;
+function Hue(key, bridgeIP) {
+  this.lights = {};
+  this.config = {};
+  var ready = false;
+  var requestTimeout = 7 * 1000;
+  var lightRefreshInterval = 3 * 1000;
+  var lightRefreshIntervalDefault = 3 * 1000;
+  var configRefreshInterval = 7 * 60 * 1000;
+  var configRefreshIntervalDefault = 7 * 60 * 1000;
   var self = this;
 
-  this.setLightState = function(lights, cmd, callback) {
-    if (hueBridge) {
+  this.setLights = function(lights, cmd, callback) {
+    if (checkIfReady()) {
       if (Array.isArray(lights) === false) {
         lights = [lights];
       }
       lights.forEach(function(light) {
-        var result;
-        var msg;
-        msg = '[HUE] Light: [id] Set to: ' + JSON.stringify(cmd);
-        msg = msg.replace('[id]', light);
-        try {
-          if (light <= 0) {
-            light = Math.abs(light);
-            result = hueBridge.setGroupLightState(light, cmd,
-              function(err, lights) {
-                if (err) {
-                  var errMsg = msg + ' ' + JSON.stringify(err) + ' ';
-                  errMsg += JSON.stringify(lights);
-                  log.error(errMsg);
-                }
-              }
-            );
-          } else {
-            result = hueBridge.setLightState(light, cmd, function(err, lights) {
-              if (err) {
-                var errMsg = msg + ' ' + JSON.stringify(err) + ' ';
-                errMsg += JSON.stringify(lights);
-                log.error(errMsg);
-              }
-            });
-          }
-          log.log(msg);
-        } catch (ex) {
-          log.exception(msg, ex);
-          self.emit('error', ex);
+        var reqPath;
+        if (light <= 0) {
+          reqPath = '/groups/' + Math.abs(light) + '/action';
+        } else {
+          reqPath = '/lights/' + light + '/state';
         }
-        if (result === false) {
-          msg = '[HUE] Error setting light [' + light + '] state to ';
-          msg += JSON.stringify(cmd);
-          log.error(msg);
-        }
+        var msg = '[HUE] ' + reqPath + ' to ' + JSON.stringify(cmd);
+        log.log(msg);
+        self.makeHueRequest(reqPath, 'PUT', cmd, true, callback);
       });
+      return true;
     }
+    return false;
   };
 
-  this.getGroups = function(callback) {
-    if (hueBridge) {
-      try {
-        hueBridge.groups(callback);
-      } catch (ex) {
-        log.exception('[HUE] Unable to get groups.', ex);
-        if (callback) {
-          callback(ex, null);
-        }
-      }
+  this.setScene = function(sceneId, callback) {
+    if (checkIfReady()) {
+      var reqPath = '/groups/0/action';
+      var cmd = {scene: sceneId};
+      var msg = '[HUE] ' + reqPath + ' to ' + JSON.stringify(cmd);
+      log.log(msg);
+      self.makeHueRequest(reqPath, 'PUT', cmd, true, callback);
+      return true;
     }
+    return false;
   };
 
-  this.getGroup = function(id, callback) {
-    if (hueBridge) {
-      try {
-        hueBridge.getGroup(id, callback);
-      } catch (ex) {
-        log.exception('[HUE] Unable to get group id:' + id, ex);
-        if (callback) {
-          callback(ex, null);
+  this.createScene = function(name, lights, callback) {
+    if (checkIfReady()) {
+      var reqPath = '/scenes/';
+      var body = {
+        name: name,
+        lights: lights,
+        appdata: {
+          HomeOnNode: true
         }
-      }
+      };
+      self.makeHueRequest(reqPath, 'POST', body, false, callback);
+      return true;
     }
+    return false;
   };
 
-  this.createGroup = function(label, lights, callback) {
-    if (hueBridge) {
-      try {
-        hueBridge.createGroup(label, lights, callback);
-      } catch (ex) {
-        log.exception('[HUE] Unable to create group', ex);
-        if (callback) {
-          callback(ex, null);
-        }
-      }
+  this.deleteScene = function(id, callback) {
+    if (checkIfReady()) {
+      self.makeHueRequest('/scenes/' + id, 'DELETE', null, false, callback);
+      return true;
     }
+    return false;
   };
 
-  this.updateGroup = function(id, label, lights, callback) {
-    if (hueBridge) {
-      try {
-        hueBridge.updateGroup(id, label, lights, callback);
-      } catch (ex) {
-        log.exception('[HUE] Unable to update group', ex);
-        if (callback) {
-          callback(ex, null);
-        }
-      }
+  this.createGroup = function(name, lights, callback) {
+    if (checkIfReady()) {
+      var body = {
+        name: name,
+        lights: lights
+      };
+      self.makeHueRequest('/groups', 'POST', body, false, callback);
+      return true;
     }
+    return false;
   };
 
   this.deleteGroup = function(id, callback) {
-    if (hueBridge) {
-      try {
-        hueBridge.deleteGroup(id, callback);
-      } catch (ex) {
-        log.exception('[HUE] Unable to delete group', ex);
-        if (callback) {
-          callback(ex, null);
-        }
-      }
+    if (checkIfReady()) {
+      self.makeHueRequest('/groups/' + id, 'DELETE', null, false, callback);
+      return true;
     }
+    return false;
   };
 
-  this.searchForNewLights = function(callback) {
-    if (hueBridge) {
-      try {
-        hueBridge.searchForNewLights(callback);
-      } catch (ex) {
-        log.exception('[HUE] Unable to search for new lights', ex);
-        if (callback) {
-          callback(ex, false);
-        }
-      }
+  function checkIfReady() {
+    if (ready) {
+      return true;
     }
-  };
-
-  this.getNewLights = function(callback) {
-    if (hueBridge) {
-      try {
-        hueBridge.newLights(callback);
-      } catch (ex) {
-        log.exception('[HUE] Could not return new lights', ex);
-        if (callback) {
-          callback(ex, null);
-        }
-      }
-    }
-  };
-
-  this.setLightName = function(id, label, callback) {
-    if (hueBridge) {
-      try {
-        hueBridge.setLightName(id, label, callback);
-      } catch (ex) {
-        log.exception('[HUE] Could not set light name', ex);
-        if (callback) {
-          callback(ex, null);
-        }
-      }
-    }
-  };
-
-  this.activateScene = function(sceneId, tryAgain) {
-    if (hueBridge) {
-      try {
-        var msg = '[HUE] activateScene: ' + sceneId;
-        log.log(msg);
-        return hueBridge.activateScene(sceneId, function(err, result) {
-          if (err) {
-            var errMsg = msg + ' ' + JSON.stringify(err) + ' ';
-            errMsg += JSON.stringify(result);
-            log.error(errMsg);
-            if (tryAgain !== false) {
-              self.activateScene(sceneId, false);
-            }
-          } else {
-            log.debug(msg + ' ' + JSON.stringify(result));
-          }
-        });
-      } catch (ex) {
-        log.exception('[HUE] Could not activate scene.', ex);
-      }
-    }
-  };
-
-  function monitorHue() {
-    setTimeout(function() {
-      hueBridge.getFullState(function(err, hueState) {
-        if (err) {
-          log.exception('[HUE] Unable to retrieve light state.', err);
-          if (self.refreshInterval < self.defaultRefreshInterval * 20) {
-            self.refreshInterval += 5000;
-          } else {
-            log.error('[HUE] Exceeded maximum timeout, throwing error.');
-            self.emit('error', '[monitorHue] timeout_exceeded');
-          }
-        } else {
-          var diffLights = diff(self.hueLights, hueState.lights);
-          var diffGroups = diff(self.hueGroups, hueState.groups);
-          var diffSensors = diff(self.hueSensors, hueState.sensors);
-          var diffScenes = diff(self.hueScenes, hueState.scenes);
-          if (diffLights || diffGroups || diffSensors || diffScenes) {
-            self.hueLights = hueState.lights;
-            self.hueGroups = hueState.groups;
-            self.hueSensors = hueState.sensors;
-            self.hueScenes = hueState.scenes;
-            self.emit('change', hueState);
-          }
-          self.refreshInterval = self.defaultRefreshInterval;
-        }
-        monitorHue();
-      });
-    }, self.refreshInterval);
+    log.error('[HUE] Hue not ready.');
+    return false;
   }
 
-  function init() {
-    if (bridgeIP === null || bridgeIP === undefined) {
-      log.init('[HUE] No bridge IP set, starting search.');
-      hueApi.nupnpSearch(function(err, result) {
-        if (err) {
-          log.exception('[HUE] Error searching for Hue Bridge', err);
-          self.emit('error');
-        } else if (result.length === 0) {
-          log.error('[HUE] No Hue bridges found.');
-          self.emit('no_hubs_found');
-        } else {
-          if (result.length > 1) {
-            log.warn('[HUE] Multiple bridges found, will use the first.');
+  function monitorLights() {
+    setTimeout(function() {
+      getLights(function(error, lights) {
+        if (error) {
+          var msg = '[HUE] Unable to retrieve light state';
+          if (lightRefreshInterval < 5 * 60 * 1000) {
+            log.error(msg);
+            lightRefreshInterval += 5000;
+          } else {
+            log.exception(msg, error);
+            self.emit('error', 'monitor_lights_failed');
           }
-          log.debug('[HUE] Bridge found: ' + JSON.stringify(result[0]));
-          bridgeIP = result[0].ipaddress;
-          init();
+        } else {
+          if (diff(self.lights, lights)) {
+            self.lights = lights;
+            self.emit('change', lights);
+            lightRefreshInterval = lightRefreshIntervalDefault;
+          }
+        }
+        monitorLights();
+      });
+    }, lightRefreshInterval);
+  }
+
+  function monitorConfig() {
+    setTimeout(function() {
+      getConfig(function(error, config) {
+        if (error) {
+          var msg = '[HUE] Unable to retrieve config';
+          if (configRefreshInterval < 10 * 60 * 1000) {
+            log.error(msg);
+            configRefreshInterval += 5000;
+          } else {
+            log.exception(msg, error);
+            self.emit('error', 'monitor_config_failed');
+          }
+        } else {
+          self.config = config;
+          self.emit('config', config);
+          configRefreshInterval = configRefreshIntervalDefault;
+        }
+        monitorConfig();
+      });
+    }, configRefreshInterval);
+  }
+
+  function getLights(callback) {
+    var reqPath = '/lights';
+    self.makeHueRequest(reqPath, 'GET', null, false, callback);
+  }
+
+  function getConfig(callback) {
+    var reqPath = '';
+    self.makeHueRequest(reqPath, 'GET', null, false, callback);
+  }
+
+  function findHub(callback) {
+    if (bridgeIP) {
+      callback();
+      return;
+    }
+    log.log('[HUE] Searching for Hue Hub.');
+    var npnpURI = {
+      host: 'www.meethue.com',
+      path: '/api/nupnp',
+      secure: true,
+      method: 'GET'
+    };
+    webRequest.request(npnpURI, null, function(resp) {
+      if (Array.isArray(resp) === true && resp.length >= 1) {
+        var bridge = resp[0];
+        bridgeIP = bridge.internalipaddress;
+        log.log('[HUE] Bridge found at ' + bridgeIP);
+        callback();
+      } else {
+        log.error('[HUE] No bridges found, will try again in 2 minutes.');
+        self.emit('no_bridge');
+        setTimeout(function() {
+          findHub();
+        }, 2 * 60 * 1000);
+      }
+    });
+  }
+
+  this.makeHueRequest = function(requestPath, method, body, retry, callback) {
+    // log.debug('[HUE.request] ' + method + ' ' + requestPath + ' ' + retry);
+    var uri = {
+      host: bridgeIP,
+      path: '/api/' + key + requestPath,
+      method: method,
+      headers: {}
+    };
+    if (body && typeof body === 'object') {
+      body = JSON.stringify(body);
+    }
+    if (body) {
+      uri.headers['Content-Type'] = 'application/json';
+      uri.headers['Content-Length'] = body.length;
+    }
+
+    function logErrorInResponse(error) {
+      var msg = '[HUE.response] Error in response: ';
+      msg += JSON.stringify(error);
+      log.error(msg);
+    }
+
+    function handleResponse(response) {
+      var result = '';
+      response.setEncoding('utf8');
+      response.on('data', function(chunk) {
+        result += chunk;
+      });
+      response.on('end', function() {
+        // var msg = '[HUE.response] ' + method + ' ' + requestPath;
+        // log.debug(msg + ' ' + response.statusCode);
+        var jsonResult = null;
+        var errors = [];
+
+        // Verify status code is 200
+        if (response.statusCode !== 200) {
+          var scErr = {
+            message: 'Status code error',
+            expected: 200,
+            actual: response.statusCode
+          };
+          logErrorInResponse(scErr);
+          errors.push(scErr);
+        }
+
+        // Attempt to convert response to JSON object
+        try {
+          jsonResult = JSON.parse(result);
+        } catch (ex) {
+          var jsonErr = {
+            message: 'Unable to JSONify response',
+            exception: ex,
+            actualResponse: result
+          };
+          log.error('[HUE.response] Unable to JSONify response');
+          errors.push(jsonErr);
+        }
+
+        // Check if response has an error object
+        if (typeof jsonResult === 'object' && jsonResult.error) {
+          logErrorInResponse(jsonResult.error);
+          errors.push(jsonResult.error);
+        }
+
+        // Check if response array has any errors
+        if (Array.isArray(jsonResult)) {
+          var hasErrors = false;
+          jsonResult.forEach(function(r) {
+            if (r.error) {
+              hasErrors = true;
+              logErrorInResponse(r.error);
+            }
+          });
+          if (hasErrors) {
+            errors = errors.concat(jsonResult);
+          }
+        }
+
+        if (errors.length > 0 && retry) {
+          self.makeHueRequest(requestPath, method, body, false, callback);
+        } else if (errors.length > 0) {
+          if (callback) {
+            callback(errors, null);
+          }
+        } else {
+          if (callback) {
+            callback(null, jsonResult);
+          }
         }
       });
-    } else {
-      log.init('[HUE] on IP: ' + bridgeIP);
-      hueBridge = hueApi.HueApi(bridgeIP, bridgeKey);
-      log.log('[HUE] Ready.');
-      self.emit('ready');
-      monitorHue();
     }
+
+    var request = http.request(uri, handleResponse);
+    request.on('error', function(error) {
+      log.exception('[HUE.request] Request error', error);
+      if (retry) {
+        self.makeHueRequest(requestPath, method, body, false, callback);
+      } else if (callback) {
+        callback(error, null);
+      }
+    });
+    request.setTimeout(requestTimeout, function() {
+      log.error('[HUE.request] Request timeout exceeded');
+      request.abort();
+      if (retry) {
+        self.makeHueRequest(requestPath, method, body, false, callback);
+      } else if (callback) {
+        callback('timeout_exceeded', null);
+      }
+    });
+    if (body) {
+      request.write(body);
+    }
+    request.end();
+  };
+
+  function init() {
+    findHub(function() {
+      log.debug('[HUE] Getting initial config.');
+      getConfig(function(error, config) {
+        if (config && config.config) {
+          log.log('[HUE] Ready.');
+          self.config = config;
+          ready = true;
+          self.emit('ready', config);
+          monitorConfig();
+          monitorLights();
+        } else {
+          log.error('[HUE] Init failed, will retry in 2 minutes.');
+          bridgeIP = null;
+          setTimeout(function() {
+            init();
+          }, 2 * 60 * 1000);
+        }
+      });
+    });
   }
 
   init();

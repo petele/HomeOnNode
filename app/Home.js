@@ -737,14 +737,14 @@ function Home(config, fb) {
     }
 
     if (hue) {
-      hue.on('no_hubs_found', function() {
-        log.error('[HOME] No Hue Hubs found.');
-        shutdownHue();
+      hue.on('config', function(config) {
+        fbSet('state/hue', config);
       });
-      hue.on('change', function(hueState) {
-        fbSet('state/hue', hueState);
+      hue.on('change', function(lights) {
+        fbSet('state/hue/lights', lights);
       });
-      hue.on('ready', function() {
+      hue.on('ready', function(config) {
+        fbSet('state/hue', config);
       });
       hue.on('error', function(err) {
         log.error('[HOME] Hue error occured.' + JSON.stringify(err));
@@ -760,8 +760,7 @@ function Home(config, fb) {
   function setHueScene(sceneId) {
     if (hue) {
       try {
-        hue.activateScene(sceneId);
-        return true;
+        return hue.setScene(sceneId);
       } catch (ex) {
         log.exception('[HOME] Hue scene failed', ex);
         return false;
@@ -774,8 +773,7 @@ function Home(config, fb) {
   function setHueLights(lights, lightState) {
     if (hue) {
       try {
-        hue.setLightState(lights, lightState);
-        return true;
+        return hue.setLights(lights, lightState);
       } catch (ex) {
         log.exception('[HOME] Hue lights failed', ex);
         return false;

@@ -1,21 +1,17 @@
 'use strict';
 
 var Keys = require('../app/Keys').keys;
-var wr = require('../app/webRequest');
-var log = require('../app/SystemLog');
-log.setLogfile(null);
-log.setDebug(false);
+var Hue = require('../app/Hue');
 
-function handleResponse(result) {
-  console.log(result);
-}
+var hubIP = '10.0.0.210';
+var hue = new Hue(Keys.hueBridge.key, hubIP);
 
-// var dimmerName = 'Bedroom';
-// var dimmerId = 6;
-// var lights = [
-//   '/groups/6/action',
-//   '/groups/8/action'
-// ];
+var dimmerName = 'Bedroom';
+var dimmerId = 6;
+var lights = [
+  '/groups/6/action',
+  '/groups/8/action'
+];
 
 // var dimmerName = 'Kitchen';
 // var dimmerId = 7;
@@ -219,35 +215,21 @@ lights.forEach(function(light) {
   buttonDown3.actions.push(actionDown3);
 });
 
-var hubIP = '10.0.0.210';
-var basePath = '/api/' + Keys.hueBridge.key + '/rules';
-var uri = {
-  host: hubIP,
-  path: basePath,
-  method: 'POST'
-};
+function sendRequest(index) {
+  var button = buttons[index];
+  if (button) {
+    hue.makeHueRequest('/rules', 'POST', button, false, function(err, result) {
+      if (err) {
+        console.log('ERROR', index, err);
+        return;
+      }
+      console.log('OK', index, JSON.stringify(result));
+      sendRequest(index + 1);
+    });
+  }
+}
 
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(buttonOn), handleResponse);
-}, 1);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(buttonUp0), handleResponse);
-}, 150);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(buttonUp1), handleResponse);
-}, 300);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(buttonUp3), handleResponse);
-}, 450);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(buttonDown0), handleResponse);
-}, 600);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(buttonDown1), handleResponse);
-}, 750);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(buttonDown3), handleResponse);
-}, 900);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(buttonOff), handleResponse);
-}, 1050);
+var buttons = [buttonOn, buttonUp0, buttonUp1, buttonUp3, buttonDown0,
+  buttonDown1, buttonDown3, buttonOff];
+
+sendRequest(0);

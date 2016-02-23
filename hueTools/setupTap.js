@@ -1,14 +1,10 @@
 'use strict';
 
 var Keys = require('../app/Keys').keys;
-var wr = require('../app/webRequest');
-var log = require('../app/SystemLog');
-log.setLogfile(null);
-log.setDebug(false);
+var Hue = require('../app/Hue');
 
-function handleResponse(result) {
-  console.log(result);
-}
+var hubIP = '10.0.0.210';
+var hue = new Hue(Keys.hueBridge.key, hubIP);
 
 var tapName = 'Scene';
 var tapId = 10;
@@ -103,23 +99,20 @@ var button4 = {
   actions: action4
 };
 
-var hubIP = '10.0.0.210';
-var basePath = '/api/' + Keys.hueBridge.key + '/rules';
-var uri = {
-  host: hubIP,
-  path: basePath,
-  method: 'POST'
-};
+function sendRequest(index) {
+  var button = buttons[index];
+  if (button) {
+    hue.makeHueRequest('/rules', 'POST', button, false, function(err, result) {
+      if (err) {
+        console.log('ERROR', index, err);
+        return;
+      }
+      console.log('OK', index, JSON.stringify(result));
+      sendRequest(index + 1);
+    });
+  }
+}
 
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(button1), handleResponse);
-}, 1);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(button2), handleResponse);
-}, 150);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(button3), handleResponse);
-}, 300);
-setTimeout(function() {
-  wr.request(uri, JSON.stringify(button4), handleResponse);
-}, 450);
+var buttons = [button1, button2, button3, button4];
+
+sendRequest(0);
