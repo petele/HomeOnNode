@@ -12,6 +12,7 @@ function Hue(key, bridgeIP) {
   this.config = {};
   var ready = false;
   var requestTimeout = 7 * 1000;
+  var groupRefreshInterval = 3 * 1000;
   var lightRefreshInterval = 3 * 1000;
   var lightRefreshIntervalDefault = 3 * 1000;
   var configRefreshInterval = 7 * 60 * 1000;
@@ -118,13 +119,37 @@ function Hue(key, bridgeIP) {
         } else {
           if (diff(self.lights, lights)) {
             self.lights = lights;
-            self.emit('change', lights);
+            self.emit('change_lights', lights);
             lightRefreshInterval = lightRefreshIntervalDefault;
           }
         }
         monitorLights();
       });
-    }, lightRefreshInterval);
+    }, lightRefreshInterval + Math.floor(Math.random() * 1000));
+  }
+
+  function monitorGroups() {
+    setTimeout(function() {
+      getGroups(function(error, groups) {
+        if (error) {
+          var msg = '[HUE] Unable to retrieve light groups';
+          if (groupRefreshInterval < 5 * 60 * 1000) {
+            log.error(msg);
+            groupRefreshInterval += 5000;
+          } else {
+            log.exception(msg, error);
+            self.emit('error', 'monitor_lights_failed');
+          }
+        } else {
+          if (diff(self.groups, groups)) {
+            self.groups = groups;
+            self.emit('change_groups', groups);
+            groupRefreshInterval = lightRefreshIntervalDefault;
+          }
+        }
+        monitorGroups();
+      });
+    }, groupRefreshInterval + Math.floor(Math.random() * 1000));
   }
 
   function monitorConfig() {
@@ -146,7 +171,12 @@ function Hue(key, bridgeIP) {
         }
         monitorConfig();
       });
-    }, configRefreshInterval);
+    }, configRefreshInterval + Math.floor(Math.random() * 10000));
+  }
+
+  function getGroups(callback) {
+    var reqPath = '/groups';
+    self.makeHueRequest(reqPath, 'GET', null, false, callback);
   }
 
   function getLights(callback) {
@@ -314,6 +344,7 @@ function Hue(key, bridgeIP) {
           self.emit('ready', config);
           monitorConfig();
           monitorLights();
+          monitorGroups();
         } else {
           log.error('[HUE] Init failed, will retry in 2 minutes.');
           bridgeIP = null;

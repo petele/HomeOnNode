@@ -740,8 +740,11 @@ function Home(config, fb) {
       hue.on('config', function(config) {
         fbSet('state/hue', config);
       });
-      hue.on('change', function(lights) {
+      hue.on('change_lights', function(lights) {
         fbSet('state/hue/lights', lights);
+      });
+      hue.on('change_groups', function(groups) {
+        fbSet('state/hue/groups', groups);
       });
       hue.on('ready', function(config) {
         fbSet('state/hue', config);
