@@ -9,14 +9,12 @@ var http = require('http');
 
 function Hue(key, bridgeIP) {
   this.lights = {};
+  this.groups = {};
   this.config = {};
   var ready = false;
   var requestTimeout = 7 * 1000;
-  var groupRefreshInterval = 3 * 1000;
-  var lightRefreshInterval = 3 * 1000;
-  var lightRefreshIntervalDefault = 3 * 1000;
+  var refreshInterval = 10 * 1000;
   var configRefreshInterval = 7 * 60 * 1000;
-  var configRefreshIntervalDefault = 7 * 60 * 1000;
   var self = this;
 
   this.setLights = function(lights, cmd, callback) {
@@ -33,7 +31,15 @@ function Hue(key, bridgeIP) {
         }
         var msg = '[HUE] ' + reqPath + ' to ' + JSON.stringify(cmd);
         log.log(msg);
-        self.makeHueRequest(reqPath, 'PUT', cmd, true, callback);
+        self.makeHueRequest(reqPath, 'PUT', cmd, true, function(error, result) {
+          if (!error) {
+            updateLights();
+            updateGroups();
+          }
+          if (callback) {
+            callback(error, result);
+          }
+        });
       });
       return true;
     }
@@ -46,7 +52,15 @@ function Hue(key, bridgeIP) {
       var cmd = {scene: sceneId};
       var msg = '[HUE] ' + reqPath + ' to ' + JSON.stringify(cmd);
       log.log(msg);
-      self.makeHueRequest(reqPath, 'PUT', cmd, true, callback);
+      self.makeHueRequest(reqPath, 'PUT', cmd, true, function(error, result) {
+        if (!error) {
+          updateLights();
+          updateGroups();
+        }
+        if (callback) {
+          callback(error, result);
+        }
+      });
       return true;
     }
     return false;
@@ -106,87 +120,74 @@ function Hue(key, bridgeIP) {
 
   function monitorLights() {
     setTimeout(function() {
-      getLights(function(error, lights) {
-        if (error) {
-          var msg = '[HUE] Unable to retrieve light state';
-          if (lightRefreshInterval < 5 * 60 * 1000) {
-            log.error(msg);
-            lightRefreshInterval += 5000;
-          } else {
-            log.exception(msg, error);
-            self.emit('error', 'monitor_lights_failed');
-          }
-        } else {
-          if (diff(self.lights, lights)) {
-            self.lights = lights;
-            self.emit('change_lights', lights);
-            lightRefreshInterval = lightRefreshIntervalDefault;
-          }
-        }
+      updateLights(function() {
         monitorLights();
       });
-    }, lightRefreshInterval + Math.floor(Math.random() * 1000));
+    }, refreshInterval + Math.floor(Math.random() * 825));
   }
 
   function monitorGroups() {
     setTimeout(function() {
-      getGroups(function(error, groups) {
-        if (error) {
-          var msg = '[HUE] Unable to retrieve light groups';
-          if (groupRefreshInterval < 5 * 60 * 1000) {
-            log.error(msg);
-            groupRefreshInterval += 5000;
-          } else {
-            log.exception(msg, error);
-            self.emit('error', 'monitor_lights_failed');
-          }
-        } else {
-          if (diff(self.groups, groups)) {
-            self.groups = groups;
-            self.emit('change_groups', groups);
-            groupRefreshInterval = lightRefreshIntervalDefault;
-          }
-        }
+      updateGroups(function() {
         monitorGroups();
       });
-    }, groupRefreshInterval + Math.floor(Math.random() * 1000));
+    }, refreshInterval + Math.floor(Math.random() * 1250));
   }
 
   function monitorConfig() {
     setTimeout(function() {
-      getConfig(function(error, config) {
-        if (error) {
-          var msg = '[HUE] Unable to retrieve config';
-          if (configRefreshInterval < 10 * 60 * 1000) {
-            log.error(msg);
-            configRefreshInterval += 5000;
-          } else {
-            log.exception(msg, error);
-            self.emit('error', 'monitor_config_failed');
-          }
-        } else {
-          self.config = config;
-          self.emit('config', config);
-          configRefreshInterval = configRefreshIntervalDefault;
-        }
+      updateConfig(function() {
         monitorConfig();
       });
     }, configRefreshInterval + Math.floor(Math.random() * 10000));
   }
 
-  function getGroups(callback) {
+  function updateGroups(callback) {
     var reqPath = '/groups';
-    self.makeHueRequest(reqPath, 'GET', null, false, callback);
+    self.makeHueRequest(reqPath, 'GET', null, false, function(error, groups) {
+      if (error) {
+        var msg = '[HUE] Unable to retrieve light groups';
+        log.exception(msg, error);
+      } else if (diff(self.groups, groups)) {
+        self.groups = groups;
+        self.emit('change_groups', groups);
+      }
+      if (callback) {
+        callback(error, groups);
+      }
+    });
   }
 
-  function getLights(callback) {
+  function updateLights(callback) {
     var reqPath = '/lights';
-    self.makeHueRequest(reqPath, 'GET', null, false, callback);
+    self.makeHueRequest(reqPath, 'GET', null, false, function(error, lights) {
+      if (error) {
+        var msg = '[HUE] Unable to retrieve lights';
+        log.exception(msg, error);
+      } else if (diff(self.lights, lights)) {
+        self.lights = lights;
+        self.emit('change_lights', lights);
+      }
+      if (callback) {
+        callback(error, lights);
+      }
+    });
   }
 
-  function getConfig(callback) {
+  function updateConfig(callback) {
     var reqPath = '';
-    self.makeHueRequest(reqPath, 'GET', null, false, callback);
+    self.makeHueRequest(reqPath, 'GET', null, false, function(error, config) {
+      if (error) {
+        var msg = '[HUE] Unable to retrieve config';
+        log.exception(msg, error);
+      } else {
+        self.config = config;
+        self.emit('config', config);
+      }
+      if (callback) {
+        callback(error, config);
+      }
+    });
   }
 
   function findHub(callback) {
@@ -336,10 +337,9 @@ function Hue(key, bridgeIP) {
   function init() {
     findHub(function() {
       log.debug('[HUE] Getting initial config.');
-      getConfig(function(error, config) {
+      updateConfig(function(error, config) {
         if (config && config.config) {
           log.log('[HUE] Ready.');
-          self.config = config;
           ready = true;
           self.emit('ready', config);
           monitorConfig();
