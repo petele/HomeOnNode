@@ -256,13 +256,19 @@ function Hue(key, bridgeIP) {
 
   this.makeHueRequest = function(requestPath, method, body, retry, callback) {
     self.requestsInProgress += 1;
-    log.debug('[HUE.request] Requests in progress: ' + self.requestsInProgress);
+    if (self.requestsInProgress >= 5) {
+      var warnMsg = '[HUE] Excessive requests in progress: ';
+      warnMsg += ' ' + self.requestsInProgress;
+      log.warn(warnMsg);
+    }
+    // log.debug('[HUE.request] Requests in progress: ' + self.requestsInProgress);
     // log.debug('[HUE.request] ' + method + ' ' + requestPath + ' ' + retry);
     var uri = {
       host: bridgeIP,
       path: '/api/' + key + requestPath,
       method: method,
-      headers: {}
+      headers: {},
+      agent: false
     };
     if (body && typeof body === 'object') {
       body = JSON.stringify(body);
