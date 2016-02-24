@@ -316,7 +316,7 @@ function Hue(key, bridgeIP) {
         }
 
         // Check if response has an error object
-        if (typeof jsonResult === 'object' && jsonResult.error) {
+        if (jsonResult && typeof jsonResult === 'object' && jsonResult.error) {
           logErrorInResponse(jsonResult.error);
           errors.push(jsonResult.error);
         }
