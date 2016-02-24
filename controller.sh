@@ -2,6 +2,11 @@
 
 cd app
 
+echo ""
+echo "Starting Forever in the background..."
+forever start -l logs/forever.log -o logs/forever-out.log -e logs/forever-err.log appMonitor.js
+
+echo ""
 node getConfig.js HomeOnNode
 echo ""
 node appController.js
@@ -14,10 +19,3 @@ mplayer sounds/bell.mp3 > /dev/null
 mplayer sounds/bell.mp3 > /dev/null
 mplayer sounds/bell.mp3 > /dev/null
 
-# read -n 1 -p "Automatic reboot in 5 seconds, press any key to cancel." -s -t 5 srb
-# if [ $? -ge 1 ]; then
-#   echo -e "\nAutomatic reboot!"
-#   sudo reboot
-#   exit
-# fi
-# echo -e "\nAutomatic reboot cancelled."

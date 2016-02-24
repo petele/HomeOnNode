@@ -15,6 +15,10 @@
 1. `sudo dpkg -i node_latest_armhf.deb`
 1. `rm node_latest_armhf.deb`
 
+### Install Forever
+
+1. `[sudo] npm install forever -g`
+
 ### Install Z-Wave
 
 1. Follow instructions from [OpenZWaveShared](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md)

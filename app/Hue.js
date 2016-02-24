@@ -7,14 +7,23 @@ var log = require('./SystemLog');
 var webRequest = require('./webRequest');
 var http = require('http');
 
+// Consider adding queue to API to ensure we don't over extend
+
 function Hue(key, bridgeIP) {
   this.lights = {};
   this.groups = {};
   this.config = {};
+  var requestsInProgress = 0;
   var ready = false;
-  var requestTimeout = 7 * 1000;
-  var refreshInterval = 10 * 1000;
-  var configRefreshInterval = 7 * 60 * 1000;
+  var requestTimeout = 3 * 1000;
+  var defaultRefreshInterval = 10 * 1000;
+  var lightRefreshInterval = defaultRefreshInterval;
+  var groupRefreshInterval = defaultRefreshInterval;
+  var maxRefreshInterval = 5 * 60 * 1000;
+  var defaultConfigRefreshInterval = 7 * 60 * 1000;
+  var configRefreshInterval = defaultConfigRefreshInterval;
+  var maxConfigRefreshInterval = 10 * 60 * 1000;
+  var defaultBackoff = 5 * 1000;
   var self = this;
 
   this.setLights = function(lights, cmd, callback) {
@@ -120,26 +129,53 @@ function Hue(key, bridgeIP) {
 
   function monitorLights() {
     setTimeout(function() {
-      updateLights(function() {
+      updateLights(function(error, result) {
+        if (error && lightRefreshInterval < maxRefreshInterval) {
+          lightRefreshInterval += defaultBackoff;
+          lightRefreshInterval += Math.floor(Math.random() * 5000);
+        } else if (error) {
+          // nothing
+        } else {
+          lightRefreshInterval = defaultRefreshInterval;
+          lightRefreshInterval += Math.floor(Math.random() * 750);
+        }
         monitorLights();
       });
-    }, refreshInterval + Math.floor(Math.random() * 825));
+    }, lightRefreshInterval);
   }
 
   function monitorGroups() {
     setTimeout(function() {
-      updateGroups(function() {
+      updateGroups(function(error, result) {
+        if (error && groupRefreshInterval < maxRefreshInterval) {
+          groupRefreshInterval += defaultBackoff;
+          groupRefreshInterval += Math.floor(Math.random() * 5000);
+        } else if (error) {
+          // nothing
+        } else {
+          groupRefreshInterval = defaultRefreshInterval;
+          groupRefreshInterval += Math.floor(Math.random() * 2000);
+        }
         monitorGroups();
       });
-    }, refreshInterval + Math.floor(Math.random() * 1250));
+    }, groupRefreshInterval);
   }
 
   function monitorConfig() {
     setTimeout(function() {
-      updateConfig(function() {
+      updateConfig(function(error, result) {
+        if (error && configRefreshInterval < maxConfigRefreshInterval) {
+          configRefreshInterval += defaultBackoff;
+          configRefreshInterval += Math.floor(Math.random() * 10000);
+        } else if (error) {
+          // nothing
+        } else {
+          configRefreshInterval = defaultConfigRefreshInterval;
+          configRefreshInterval += Math.floor(Math.random() * 15000);
+        }
         monitorConfig();
       });
-    }, configRefreshInterval + Math.floor(Math.random() * 10000));
+    }, configRefreshInterval);
   }
 
   function updateGroups(callback) {
@@ -219,6 +255,8 @@ function Hue(key, bridgeIP) {
   }
 
   this.makeHueRequest = function(requestPath, method, body, retry, callback) {
+    self.requestInProgress += 1;
+    log.debug('[HUE.request] Requests in progress: ' + self.requestsInProgress);
     // log.debug('[HUE.request] ' + method + ' ' + requestPath + ' ' + retry);
     var uri = {
       host: bridgeIP,
@@ -247,6 +285,7 @@ function Hue(key, bridgeIP) {
         result += chunk;
       });
       response.on('end', function() {
+        self.requestInProgress -= 1;
         // var msg = '[HUE.response] ' + method + ' ' + requestPath;
         // log.debug(msg + ' ' + response.statusCode);
         var jsonResult = null;
@@ -312,6 +351,7 @@ function Hue(key, bridgeIP) {
 
     var request = http.request(uri, handleResponse);
     request.on('error', function(error) {
+      self.requestInProgress -= 1;
       log.exception('[HUE.request] Request error', error);
       if (retry) {
         self.makeHueRequest(requestPath, method, body, false, callback);
@@ -320,8 +360,9 @@ function Hue(key, bridgeIP) {
       }
     });
     request.setTimeout(requestTimeout, function() {
-      log.error('[HUE.request] Request timeout exceeded');
+      log.error('[HUE.request] Request timeout exceeded, aborting.');
       request.abort();
+      self.requestInProgress -= 1;
       if (retry) {
         self.makeHueRequest(requestPath, method, body, false, callback);
       } else if (callback) {
