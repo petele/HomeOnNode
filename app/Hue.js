@@ -13,7 +13,7 @@ function Hue(key, bridgeIP) {
   this.lights = {};
   this.groups = {};
   this.config = {};
-  var requestsInProgress = 0;
+  this.requestsInProgress = 0;
   var ready = false;
   var requestTimeout = 3 * 1000;
   var defaultRefreshInterval = 10 * 1000;
@@ -255,7 +255,7 @@ function Hue(key, bridgeIP) {
   }
 
   this.makeHueRequest = function(requestPath, method, body, retry, callback) {
-    self.requestInProgress += 1;
+    self.requestsInProgress += 1;
     log.debug('[HUE.request] Requests in progress: ' + self.requestsInProgress);
     // log.debug('[HUE.request] ' + method + ' ' + requestPath + ' ' + retry);
     var uri = {
@@ -285,7 +285,7 @@ function Hue(key, bridgeIP) {
         result += chunk;
       });
       response.on('end', function() {
-        self.requestInProgress -= 1;
+        self.requestsInProgress -= 1;
         // var msg = '[HUE.response] ' + method + ' ' + requestPath;
         // log.debug(msg + ' ' + response.statusCode);
         var jsonResult = null;
@@ -351,7 +351,7 @@ function Hue(key, bridgeIP) {
 
     var request = http.request(uri, handleResponse);
     request.on('error', function(error) {
-      self.requestInProgress -= 1;
+      self.requestsInProgress -= 1;
       log.exception('[HUE.request] Request error', error);
       if (retry) {
         self.makeHueRequest(requestPath, method, body, false, callback);
@@ -362,7 +362,7 @@ function Hue(key, bridgeIP) {
     request.setTimeout(requestTimeout, function() {
       log.error('[HUE.request] Request timeout exceeded, aborting.');
       request.abort();
-      self.requestInProgress -= 1;
+      self.requestsInProgress -= 1;
       if (retry) {
         self.makeHueRequest(requestPath, method, body, false, callback);
       } else if (callback) {
