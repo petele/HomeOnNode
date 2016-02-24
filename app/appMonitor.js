@@ -22,7 +22,7 @@ fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
 });
 
 function fbReady() {
-  fbNode = fb.child('devices/' + deviceName + '/host');
+  fbNode = fb.child('monitor/' + deviceName);
   fb.child('.info/connected').on('value', function(snapshot) {
     if (snapshot.val() === true) {
       log.log('Connected.');
