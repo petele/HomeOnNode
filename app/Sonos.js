@@ -112,7 +112,7 @@ function Sonos() {
       }
     }
     if (error) {
-      log.error(msg);
+      log.error(msg + ' -- ' + error.toString());
     } else {
       log.debug(msg);
     }
@@ -127,8 +127,8 @@ function Sonos() {
 
   this.applyPreset = function(preset) {
     if (_sonos) {
-      _sonos.applyPreset(preset, function(success, response) {
-        genericResponseHandler('applyPreset', success, response);
+      _sonos.applyPreset(preset, function(error, response) {
+        genericResponseHandler('applyPreset', error, response);
       });
       return true;
     }
@@ -140,8 +140,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.play(function(success, response) {
-          genericResponseHandler('play', success, response);
+        speaker.play(function(error, response) {
+          genericResponseHandler('play', error, response);
         });
         return true;
       }
@@ -156,8 +156,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.pause(function(success, response) {
-          genericResponseHandler('pause', success, response);
+        speaker.pause(function(error, response) {
+          genericResponseHandler('pause', error, response);
         });
         return true;
       }
@@ -172,8 +172,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.nextTrack(function(success, response) {
-          genericResponseHandler('nextTrack', success, response);
+        speaker.nextTrack(function(error, response) {
+          genericResponseHandler('nextTrack', error, response);
         });
         return true;
       }
@@ -188,8 +188,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.previousTrack(function(success, response) {
-          genericResponseHandler('previousTrack', success, response);
+        speaker.previousTrack(function(error, response) {
+          genericResponseHandler('previousTrack', error, response);
         });
         return true;
       }
@@ -204,8 +204,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.setVolume('-2', function(success, response) {
-          genericResponseHandler('volumeDown', success, response);
+        speaker.setVolume('-2', function(error, response) {
+          genericResponseHandler('volumeDown', error, response);
         });
         return true;
       }
@@ -220,8 +220,8 @@ function Sonos() {
     if (_sonos) {
       var speaker = getPlayer(roomName);
       if (speaker) {
-        speaker.setVolume('+2', function(success, response) {
-          genericResponseHandler('volumeUp', success, response);
+        speaker.setVolume('+2', function(error, response) {
+          genericResponseHandler('volumeUp', error, response);
         });
         return true;
       }
