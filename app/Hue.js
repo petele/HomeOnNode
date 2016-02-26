@@ -231,7 +231,12 @@ function Hue(key, bridgeIP) {
       return;
     }
     log.log('[HUE] Searching for Hue Hub.');
-    request('https://www.meethue.com/api/nupnp', function(err, resp, body) {
+     var nupnp = {
+      url: 'https://www.meethue.com/api/nupnp',
+      method: 'GET',
+      json: true
+    };
+    request(nupnp, function(err, resp, body) {
       if (err) {
         log.exception('[HUE] NUPNP Search failed', err);
       } else if (resp && resp.statusCode !== 200) {
@@ -265,8 +270,7 @@ function Hue(key, bridgeIP) {
     }
 
     var requestOptions = {
-      baseURL: 'http://' + bridgeIP + '/api/' + key,
-      uri: requestPath,
+      uri: 'http://' + bridgeIP + '/api/' + key + requestPath,
       method: method,
       json: true,
       timeout: requestTimeout
