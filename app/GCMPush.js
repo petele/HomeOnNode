@@ -4,16 +4,16 @@ var EventEmitter = require('events').EventEmitter;
 var Keys = require('./Keys').keys;
 var util = require('util');
 var log = require('./SystemLog');
-var webRequest = require('./webRequest');
+var request = require('request');
 
 function GCMPush(fb) {
   var _fb = fb;
   var _subscribers = [];
-  var _gcmUri = {
-    host: 'android.googleapis.com',
-    path: '/gcm/send',
-    secure: true,
-    method: 'POST'
+  var _gcmReq = {
+    url: 'https://android.googleapis.com/gcm/send',
+    method: 'POST',
+    headers: {},
+    json: true
   };
   var _self = this;
   var _sentReady = false;
@@ -27,7 +27,7 @@ function GCMPush(fb) {
   function init() {
     log.init('[GCMPush] Init');
     if (Keys.gcm) {
-      _gcmUri.authorization = 'key=' + Keys.gcm.apiKey;
+      _gcmReq.headers.Authorization = 'key=' + Keys.gcm.apiKey;
     } else {
       log.error('[GCMPush] Key not set, unable to send messages.');
       return;
@@ -63,7 +63,7 @@ function GCMPush(fb) {
     if (message) {
       log.warn('[GCMPush] Message not supported, sending empty message');
     }
-    if (!_gcmUri.authorization) {
+    if (!_gcmReq.headers.Authorization) {
       log.error('[GCMPush] No authorization available, aborting.');
       return {error: true, message: 'No authorization'};
     }
@@ -73,36 +73,28 @@ function GCMPush(fb) {
     }
     /* jshint -W106 */
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    var body = {
-      registration_ids: _subscribers
-    };
+    _gcmReq.body = {registration_ids: _subscribers};
     // jscs:enable
     /* jshint +W106 */
     var msg = '[GCMPush] Sending message to ' + _subscribers.length;
     msg += ' devices';
     log.debug(msg);
-    try {
-      body = JSON.stringify(body);
-      webRequest.request(_gcmUri, body, function(resp) {
-        if (resp.failure || resp.error) {
-          msg = '[GCMPush] Error sending some messages: ';
-          msg += JSON.stringify(resp);
-          log.error(msg);
-        } else {
-          log.log('[GCMPush] Sent (' + resp.success + ') messages.');
-        }
-        if (callback) {
-          callback(resp);
-        }
-      });
-      return true;
-    } catch (ex) {
-      log.exception('[GCMPush] Exception occured while trying to push.', ex);
-      if (callback) {
-        callback({error: true, exception: ex});
+    request(_gcmReq, function(error, response, body) {
+      if (error) {
+        log.exception('[GCMPush] Failed', error);
+      } else if (response && response.statusCode !== 200) {
+        log.error('[GCMPush] Status code error (' + response.statusCode + ')');
+      } else if (body.failure || body.error) {
+        msg = '[GCMPush] Error sending some messages: ' + JSON.stringify(body);
+        log.error(msg);
+      } else {
+        log.log('[GCMPush] Sent (' + body.success + ') messages.');
       }
-      return false;
-    }
+      if (callback) {
+        callback(body);
+      }
+    });
+    return true;
   };
 
   init();
