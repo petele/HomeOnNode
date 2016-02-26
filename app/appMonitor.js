@@ -1,14 +1,15 @@
 'use strict';
 
-var Keys = require('./Keys').keys;
+var os = require('os');
 var Firebase = require('firebase');
-var log = require('./SystemLog');
 var exec = require('child_process').exec;
+var Keys = require('./Keys').keys;
+var log = require('./SystemLog');
 
-var deviceName = 'HomeOnNode';
 var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com/';
 var fb = new Firebase(fbURL);
 var fbNode;
+var deviceName = os.hostname();
 
 log.appStart(deviceName);
 
@@ -22,6 +23,7 @@ fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
 });
 
 function fbReady() {
+  
   fbNode = fb.child('monitor/' + deviceName);
   fb.child('.info/connected').on('value', function(snapshot) {
     if (snapshot.val() === true) {
