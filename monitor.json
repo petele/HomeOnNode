@@ -1,0 +1,7 @@
+{
+  "uid": "appMonitor",
+  "append": true,
+  "sourceDir": "/home/pi/HomeOnNode/app/",
+  "workingDir": "/home/pi/HomeOnNode/app/",
+  "script": "appMonitor.js"
+}
