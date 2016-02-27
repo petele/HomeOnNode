@@ -273,7 +273,8 @@ function Hue(key, bridgeIP) {
       uri: 'http://' + bridgeIP + '/api/' + key + requestPath,
       method: method,
       json: true,
-      timeout: requestTimeout
+      timeout: requestTimeout,
+      agentOptions: { keepAlive: true, maxSockets: 2 }
     };
     if (body) {
       requestOptions.body = body;
