@@ -1,10 +1,10 @@
 'use strict';
 
 var fs = require('fs');
+var request = require('request');
 var log = require('./SystemLog');
 var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
-var webRequest = require('./webRequest');
 
 var Keypad = require('./Keypad');
 
@@ -16,24 +16,22 @@ log.setLogFileName('./start.log');
 log.setFileLogging(true);
 
 function sendCommand(command, path) {
-  var uri = {
-    'host': config.controller.ip,
-    'port': config.controller.port,
-    'path': path,
-    'method': 'POST'
+  var url = 'http://' + config.controller.ip + ':' + config.controller.port;
+  url += path;
+  var cmd = {
+    uri: url,
+    method: 'POST',
+    json: true,
+    body: command
   };
-  if (typeof command === 'object') {
-    command = JSON.stringify(command);
-  }
-  try {
-    log.http('REQ', command);
-    webRequest.request(uri, command, function(resp) {
-      // console.log('xxx', resp.status);
-      // log.http('RESP', resp);
-    });
-  } catch (ex) {
-    log.exception('[sendCommand] Failed', ex);
-  }
+  log.http('REQ', JSON.stringify(command));
+  request(cmd, function(error, response, body) {
+    if (error) {
+      log.exception('[sendCommand] Failed', error);
+    } else {
+      log.log('[sendCommand] ' + JSON.stringify(body));
+    }
+  });
 }
 
 fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
