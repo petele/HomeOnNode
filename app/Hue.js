@@ -304,7 +304,7 @@ function Hue(key, bridgeIP) {
         body.forEach(function(item) {
           if (item.error) {
             hasErrors = true;
-            log.error(msg + 'Response error: ' + item);
+            log.error(msg + 'Response error: ' + JSON.stringify(item));
           }
         });
         if (hasErrors) {
@@ -322,133 +322,6 @@ function Hue(key, bridgeIP) {
       }
     });
   };
-
-  // this.makeHueRequest = function(requestPath, method, body, retry, callback) {
-  //   self.requestsInProgress += 1;
-  //   if (self.requestsInProgress >= 5) {
-  //     var warnMsg = '[HUE] Excessive requests in progress: ';
-  //     warnMsg += ' ' + self.requestsInProgress;
-  //     log.warn(warnMsg);
-  //   }
-  //   // log.debug('[HUE.request] Requests in progress: ' + self.requestsInProgress);
-  //   // log.debug('[HUE.request] ' + method + ' ' + requestPath + ' ' + retry);
-  //   var uri = {
-  //     host: bridgeIP,
-  //     path: '/api/' + key + requestPath,
-  //     method: method,
-  //     headers: {},
-  //     agent: false
-  //   };
-  //   if (body && typeof body === 'object') {
-  //     body = JSON.stringify(body);
-  //   }
-  //   if (body) {
-  //     uri.headers['Content-Type'] = 'application/json';
-  //     uri.headers['Content-Length'] = body.length;
-  //   }
-
-  //   function logErrorInResponse(error) {
-  //     var msg = '[HUE.response] Error in response: ';
-  //     msg += JSON.stringify(error);
-  //     log.error(msg);
-  //   }
-
-  //   function handleResponse(response) {
-  //     var result = '';
-  //     response.setEncoding('utf8');
-  //     response.on('data', function(chunk) {
-  //       result += chunk;
-  //     });
-  //     response.on('end', function() {
-  //       self.requestsInProgress -= 1;
-  //       // var msg = '[HUE.response] ' + method + ' ' + requestPath;
-  //       // log.debug(msg + ' ' + response.statusCode);
-  //       var jsonResult = null;
-  //       var errors = [];
-
-  //       // Verify status code is 200
-  //       if (response.statusCode !== 200) {
-  //         var scErr = {
-  //           message: 'Status code error',
-  //           expected: 200,
-  //           actual: response.statusCode
-  //         };
-  //         logErrorInResponse(scErr);
-  //         errors.push(scErr);
-  //       }
-
-  //       // Attempt to convert response to JSON object
-  //       try {
-  //         jsonResult = JSON.parse(result);
-  //       } catch (ex) {
-  //         var jsonErr = {
-  //           message: 'Unable to JSONify response',
-  //           exception: ex,
-  //           actualResponse: result
-  //         };
-  //         log.error('[HUE.response] Unable to JSONify response');
-  //         errors.push(jsonErr);
-  //       }
-
-  //       // Check if response has an error object
-  //       if (jsonResult && typeof jsonResult === 'object' && jsonResult.error) {
-  //         logErrorInResponse(jsonResult.error);
-  //         errors.push(jsonResult.error);
-  //       }
-
-  //       // Check if response array has any errors
-  //       if (Array.isArray(jsonResult)) {
-  //         var hasErrors = false;
-  //         jsonResult.forEach(function(r) {
-  //           if (r.error) {
-  //             hasErrors = true;
-  //             logErrorInResponse(r.error);
-  //           }
-  //         });
-  //         if (hasErrors) {
-  //           errors = errors.concat(jsonResult);
-  //         }
-  //       }
-
-  //       if (errors.length > 0 && retry) {
-  //         self.makeHueRequest(requestPath, method, body, false, callback);
-  //       } else if (errors.length > 0) {
-  //         if (callback) {
-  //           callback(errors, null);
-  //         }
-  //       } else {
-  //         if (callback) {
-  //           callback(null, jsonResult);
-  //         }
-  //       }
-  //     });
-  //   }
-
-  //   var request = http.request(uri, handleResponse);
-  //   request.on('error', function(error) {
-  //     self.requestsInProgress -= 1;
-  //     log.exception('[HUE.request] Request error', error);
-  //     if (retry) {
-  //       self.makeHueRequest(requestPath, method, body, false, callback);
-  //     } else if (callback) {
-  //       callback(error, null);
-  //     }
-  //   });
-  //   request.setTimeout(requestTimeout, function() {
-  //     log.error('[HUE.request] Request timeout exceeded, aborting.');
-  //     request.abort();
-  //     self.requestsInProgress -= 1;
-  //     if (retry) {
-  //       self.makeHueRequest(requestPath, method, body, false, callback);
-  //     } else if (callback) {
-  //       callback('timeout_exceeded', null);
-  //     }
-  //   });
-  //   if (body) {
-  //     request.write(body);
-  //   }
-  //   request.end();
-  // };
 
   function init() {
     findHub(function() {
