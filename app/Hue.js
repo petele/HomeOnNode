@@ -278,7 +278,7 @@ function Hue(key, bridgeIP) {
     if (body) {
       requestOptions.body = body;
     }
-    request(requestOptions, function(error, response, body) {
+    request(requestOptions, function(error, response, respBody) {
       self.requestsInProgress -= 1;
       var msg = '[HUE] makeHueRequest ';
       var errors = [];
@@ -295,20 +295,20 @@ function Hue(key, bridgeIP) {
         log.error(msg + 'Invalid content type: ' + contentType);
         errors.push({contentType: contentType});
       }
-      if (body && body.error) {
-        log.error(msg + 'Response error: ' + body);
-        errors.push(body.error);
+      if (respBody && respBody.error) {
+        log.error(msg + 'Response error: ' + respBody);
+        errors.push(respBody.error);
       }
-      if (body && Array.isArray(body)) {
+      if (respBody && Array.isArray(respBody)) {
         var hasErrors = false;
-        body.forEach(function(item) {
+        respBody.forEach(function(item) {
           if (item.error) {
             hasErrors = true;
             log.error(msg + 'Response error: ' + JSON.stringify(item));
           }
         });
         if (hasErrors) {
-          errors = errors.concat(body);
+          errors = errors.concat(respBody);
         }
       }
 
@@ -318,7 +318,7 @@ function Hue(key, bridgeIP) {
         if (errors.length === 0) {
           errors = null;
         }
-        callback(errors, body);
+        callback(errors, respBody);
       }
     });
   };

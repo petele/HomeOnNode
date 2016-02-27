@@ -15,3 +15,4 @@ bower_components
 /app/config.json
 /app/zwconfig/
 /open-zwave/
+/app/start.log
