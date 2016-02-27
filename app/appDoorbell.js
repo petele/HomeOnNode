@@ -1,13 +1,13 @@
 'use strict';
 
 var fs = require('fs');
+var Gpio = require('onoff').Gpio;
+var exec = require('child_process').exec;
+var request = require('request');
+var GCMPush = require('./GCMPush');
 var log = require('./SystemLog');
 var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
-var webRequest = require('./webRequest');
-var Gpio = require('onoff').Gpio;
-var exec = require('child_process').exec;
-var GCMPush = require('./GCMPush');
 
 var APP_NAME = 'REMOTE';
 var fb;
@@ -22,29 +22,25 @@ log.setLogFileName('./start.log');
 log.setFileLogging(true);
 
 function sendDoorbell() {
-  var uri = {
-    host: config.controller.ip,
-    port: config.controller.port,
-    path: '/doorbell',
-    method: 'POST'
+  var url = 'http://' + config.controller.ip + ':' + config.controller.port;
+  url += '/doorbell';
+  var ring = {
+    url: url,
+    method: 'POST',
+    json: true
   };
-  try {
-    webRequest.request(uri, null, function(resp) {
-      log.http('RESP', JSON.stringify(resp));
-    });
-  } catch (ex) {
-    log.exception('[sendDoorbell] Failed', ex);
-    if (fb) {
-      var cmd = {
-        cmdName: 'RUN_ON_DOORBELL'
-      };
-      fb.child('commands').push(cmd, function(err) {
-        log.error('[sendDoorbell] FB send failed, rebooting!');
-        var cmd = 'sudo reboot';
-        exec(cmd, function(error, stdout, stderr) {});
-      });
+  request(ring, function(error, response, body) {
+    if (error) {
+      log.exception('[sendDoorbell] Failed', error);
+      if (fb) {
+        fb.child('commands').send({cmdName: 'RUN_ON_DOORBELL'}, function(err) {
+          log.exception('[sendDoorbell] Double fail!', err);
+          var cmd = 'sudo reboot';
+          exec(cmd, function() {});
+        });
+      }
     }
-  }
+  });
   if (gcmPush) {
     gcmPush.send();
   }
