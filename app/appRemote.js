@@ -5,7 +5,6 @@ var request = require('request');
 var log = require('./SystemLog');
 var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
-
 var Keypad = require('./Keypad');
 
 var APP_NAME = 'REMOTE';
