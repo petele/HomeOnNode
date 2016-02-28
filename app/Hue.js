@@ -274,7 +274,7 @@ function Hue(key, bridgeIP) {
       method: method,
       json: true,
       timeout: requestTimeout,
-      agentOptions: { keepAlive: true, maxSockets: 2 }
+      agentOptions: { keepAlive: false, maxSockets: 2 }
     };
     if (body) {
       requestOptions.body = body;
