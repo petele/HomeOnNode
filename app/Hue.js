@@ -14,7 +14,7 @@ function Hue(key, bridgeIP) {
   this.config = {};
   this.requestsInProgress = 0;
   var ready = false;
-  var requestTimeout = 3 * 1000;
+  var requestTimeout = 5 * 1000;
   var defaultRefreshInterval = 10 * 1000;
   var lightRefreshInterval = defaultRefreshInterval;
   var groupRefreshInterval = defaultRefreshInterval;
@@ -129,11 +129,15 @@ function Hue(key, bridgeIP) {
   function monitorLights() {
     setTimeout(function() {
       updateLights(function(error, result) {
+        var tempMsg;
         if (error && lightRefreshInterval < maxRefreshInterval) {
           lightRefreshInterval += defaultBackoff;
           lightRefreshInterval += Math.floor(Math.random() * 5000);
+          tempMsg = Math.floor(lightRefreshInterval / 1000).toString();
+          log.warn('[HUE] monitorLights backing off to ' + tempMsg);
         } else if (error) {
-          // nothing
+          tempMsg = Math.floor(lightRefreshInterval / 1000).toString();
+          log.warn('[HUE] monitorLights backoff maxed at ' + tempMsg);
         } else {
           lightRefreshInterval = defaultRefreshInterval;
           lightRefreshInterval += Math.floor(Math.random() * 750);
@@ -146,11 +150,15 @@ function Hue(key, bridgeIP) {
   function monitorGroups() {
     setTimeout(function() {
       updateGroups(function(error, result) {
+        var tempMsg;
         if (error && groupRefreshInterval < maxRefreshInterval) {
           groupRefreshInterval += defaultBackoff;
           groupRefreshInterval += Math.floor(Math.random() * 5000);
+          tempMsg = Math.floor(groupRefreshInterval / 1000).toString();
+          log.warn('[HUE] monitorGroups backing off to ' + tempMsg);
         } else if (error) {
-          // nothing
+          tempMsg = Math.floor(groupRefreshInterval / 1000).toString();
+          log.warn('[HUE] monitorGroups backoff maxed at ' + tempMsg);
         } else {
           groupRefreshInterval = defaultRefreshInterval;
           groupRefreshInterval += Math.floor(Math.random() * 2000);
@@ -163,11 +171,15 @@ function Hue(key, bridgeIP) {
   function monitorConfig() {
     setTimeout(function() {
       updateConfig(function(error, result) {
+        var tempMsg;
         if (error && configRefreshInterval < maxConfigRefreshInterval) {
           configRefreshInterval += defaultBackoff;
           configRefreshInterval += Math.floor(Math.random() * 10000);
+          tempMsg = Math.floor(configRefreshInterval / 1000).toString();
+          log.warn('[HUE] monitorConfig backing off to ' + tempMsg);
         } else if (error) {
-          // nothing
+          tempMsg = Math.floor(configRefreshInterval / 1000).toString();
+          log.warn('[HUE] monitorConfig backoff maxed at ' + tempMsg);
         } else {
           configRefreshInterval = defaultConfigRefreshInterval;
           configRefreshInterval += Math.floor(Math.random() * 15000);
@@ -231,7 +243,7 @@ function Hue(key, bridgeIP) {
       return;
     }
     log.log('[HUE] Searching for Hue Hub.');
-     var nupnp = {
+    var nupnp = {
       url: 'https://www.meethue.com/api/nupnp',
       method: 'GET',
       json: true
@@ -274,14 +286,14 @@ function Hue(key, bridgeIP) {
       method: method,
       json: true,
       timeout: requestTimeout,
-      agentOptions: { keepAlive: false, maxSockets: 2 }
+      agentOptions: {keepAlive: false, maxSockets: 2}
     };
     if (body) {
       requestOptions.body = body;
     }
     request(requestOptions, function(error, response, respBody) {
       self.requestsInProgress -= 1;
-      var msg = '[HUE] makeHueRequest ';
+      var msg = '[HUE] makeHueRequest (' + requestPath + ') ';
       var errors = [];
       if (error) {
         log.exception(msg + 'Error', error);
@@ -314,6 +326,7 @@ function Hue(key, bridgeIP) {
       }
 
       if (errors.length > 0 && retry) {
+        console.warn(msg + ' - will retry');
         self.makeHueRequest(requestPath, method, body, false, callback);
       } else if (callback) {
         if (errors.length === 0) {
