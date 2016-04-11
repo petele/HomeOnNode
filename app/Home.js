@@ -209,7 +209,7 @@ function Home(config, fb) {
     }
     if (command.hasOwnProperty('sendNotification')) {
       if (gcmPush) {
-        gcmPush.send();
+        gcmPush.sendMessage(command.sendNotification);
       }
     }
     if (command.hasOwnProperty('sound')) {

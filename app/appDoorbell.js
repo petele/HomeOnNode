@@ -21,6 +21,12 @@ var minTime = 3000;
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
 
+var gcmMessage = {
+  title: 'Door Bell',
+  body: 'There\'s someone at the door.',
+  tag: 'doorbell'
+};
+
 function sendDoorbell() {
   var url = 'http://' + config.controller.ip + ':' + config.controller.port;
   url += '/doorbell';
@@ -42,7 +48,7 @@ function sendDoorbell() {
     }
   });
   if (gcmPush) {
-    gcmPush.send();
+    gcmPush.sendMessage(gcmMessage);
   }
 }
 

@@ -5,6 +5,12 @@ var Keys = require('./Keys').keys;
 var Firebase = require('firebase');
 var log = require('./SystemLog');
 
+var gcmMessage = {
+  title: 'HomeOnNode',
+  body: 'Boom, something unexpected happened :(',
+  tag: 'unexpected'
+};
+
 function init() {
   log.setVerbose(true);
   var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com';
@@ -16,12 +22,13 @@ function init() {
     } else {
       var gcmPush = new GCMPush(fb);
       gcmPush.on('ready', function() {
-        gcmPush.send(function() {
-          process.exit(0);
-        });
+        gcmPush.sendMessage(gcmMessage);
       });
     }
   });
 }
 
 init();
+setTimeout(function() {
+  process.exit(0);
+}, 3000);
