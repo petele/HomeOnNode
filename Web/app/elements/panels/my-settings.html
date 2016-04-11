@@ -48,12 +48,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'my-settings',
         ready: function() {
-          // var dom = Polymer.dom(this);
-          // var pages = dom.parentNode.children;
-          // for (var i = 0; i < pages.length; i++) {
-          //   var page = pages[i];
-          //   console.log(i, page.getAttribute('name'));
-          // }
           var self = this;
           navigator.serviceWorker.getRegistration().then(function(reg) {
             reg.pushManager.getSubscription().then(function(sub) {
@@ -81,18 +75,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             reg.pushManager.subscribe({
               userVisibleOnly: true
             }).then(function(sub) {
-              var startAt = sub.endpoint.lastIndexOf('/');
-              if (startAt >= 0) {
-                startAt += 1;
-                var subscriptionId = sub.endpoint.substr(startAt);
-                var path = 'pushSubscribers/' + subscriptionId;
-                var device = {
-                  subscriptionId: subscriptionId,
+              if (sub) {
+                var subObj = {
                   date: Date.now(),
-                  userAgent: navigator.userAgent
+                  userAgent: navigator.userAgent,
+                  subscriptionInfo: sub
                 };
-                app.fbRoot.child(path).set(device);
-                console.log('subscribed!');
+                app.fbRoot.child('pushSubscribers').push(subObj);
               }
             });
           }).catch(function(error) {
