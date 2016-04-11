@@ -2,10 +2,10 @@
 
 self.addEventListener('push', function(event) {
   console.log('Push message', event);
-  var notTitle = 'HomeOnNode';
-  var notBody = 'Something happened!';
-  var notIcon = 'images/athome-192.png';
-  var notTag = 'my-tag';
+  var title = 'HomeOnNode';
+  var notBody = 'An unknown event has occured, Eep!';
+  var notIcon = '/images/athome-192.png';
+  var notTag = 'unknown';
   if (event.data) {
     var data = {};
     try {
@@ -13,13 +13,21 @@ self.addEventListener('push', function(event) {
     } catch (ex) {
       console.log('Push Event Listener failed:', ex);
     }
-    notTitle = data.title || 'HomeOnNode';
-    notBody = data.body || 'Something happened!';
-    notIcon = data.icon || 'images/athome-192.png';
-    notTag = data.tag || 'my-tag';
+    if (data.title) {
+      title = data.title;
+    }
+    if (data.body) {
+      notBody = data.body;
+    }
+    if (data.icon) {
+      notIcon = data.icon;
+    }
+    if (data.tag) {
+      notTag = data.tag;
+    }
   }
   event.waitUntil(
-    self.registration.showNotification(notTitle, {
+    self.registration.showNotification(title, {
       body: notBody,
       icon: notIcon,
       tag: notTag

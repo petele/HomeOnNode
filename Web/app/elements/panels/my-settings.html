@@ -79,8 +79,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 var subObj = {
                   date: Date.now(),
                   userAgent: navigator.userAgent,
-                  subscriptionInfo: sub
+                  subscriptionInfo: JSON.parse(JSON.stringify(sub))
                 };
+                console.log('subObj', subObj);
                 app.fbRoot.child('pushSubscribers').push(subObj);
               }
             });
