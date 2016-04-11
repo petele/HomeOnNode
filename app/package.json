@@ -21,8 +21,8 @@
     "noble": "^0.3.9",
     "node-xmpp-client": "1.0.0-alpha20",
     "openzwave-shared": "^1.1.4",
-    "request": "^2.69.0"
+    "request": "^2.69.0",
+    "web-push-encryption": "^1.0.0"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }
