@@ -2,22 +2,22 @@
 
 ### Update/Upgrade system
 
-1. `sudo apt-get -y update`
-1. `sudo apt-get -y upgrade`
+1. `sudo apt-get -y update && sudo apt-get -y upgrade`
 
 ### Install Required Packages
 
 `sudo apt-get -y install alsa-utils mpg321 mplayer git-core lynx netatalk python-setuptools python-dev python-rpi.gpio bluetooth bluez libbluetooth-dev libcap2-bin libudev-dev libusb-1.0-0-dev libpcap-dev cups foomatic-db foomatic-db-engine`
 
-### Install Node 0.12
+### Update/Install Node
 
+1. Remove old version: `sudo apt-get remove nodejs`
 1. `wget http://node-arm.herokuapp.com/node_latest_armhf.deb`
 1. `sudo dpkg -i node_latest_armhf.deb`
 1. `rm node_latest_armhf.deb`
 
 ### Install Forever
 
-1. `[sudo] npm install forever -g`
+1. `sudo npm install forever -g`
 
 ### Install Z-Wave
 
