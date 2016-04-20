@@ -150,6 +150,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <action-button class="flex" on-tap="tapMorning" no-toggle="true">
             Morning
           </action-button>
+          <action-button class="flex" on-tap="tapAwake" no-toggle="true">
+            Awake
+          </action-button>
           <action-button class="flex" on-tap="tapSleep" no-toggle="true">
             Sleep
           </action-button>  
@@ -332,6 +335,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         tapMorning: function() {
           app.sendCommand({cmdName: 'ACTION_MORNING'});
+        },
+        tapAwake: function() {
+          app.sendCommand({cmdName: 'ACTION_AWAKE'});
         },
         tapSleep: function() {
           app.sendCommand({cmdName: 'ACTION_SLEEP'});
