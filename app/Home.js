@@ -137,7 +137,10 @@ function Home(config, fb) {
         setZWaveSwitch(cmd.id, turnOn);
       });
     }
-    if (command.hasOwnProperty('nestThermostat')) {
+    if (command.hasOwnProperty('nestAutoThermostat')) {
+      var target = command.nestAutoThermostat;
+      setNestAutoThermostat(target);
+    } else if (command.hasOwnProperty('nestThermostat')) {
       cmds = command.nestThermostat;
       if (Array.isArray(cmds) === false) {
         cmds = [cmds];
@@ -647,19 +650,24 @@ function Home(config, fb) {
   }
 
   function getNestThermostatId(roomId) {
+    var msg = '[HOME] getNestThermostatId failed, ';
     try {
-      if (roomId) {
+      if (roomId.indexOf('devices/thermostats/') === 0) {
         var id = config.hvac.thermostats[roomId];
         if (id) {
           return id;
+        } else {
+
+          log.error(msg + 'roomId (' + roomId + ') not found.');
+          return null;
         }
+      } else if (roomId) {
         return roomId;
-      } else {
-        log.error('[HOME] getNestThermostatId failed, no roomId provided.');
-        return null;
       }
+      log.error(msg + 'no roomId provided.');
+      return null;
     } catch (ex) {
-      log.exception('[HOME] getNestThermostatId failed.', ex);
+      log.exception(msg, ex);
       return null;
     }
   }
@@ -696,27 +704,53 @@ function Home(config, fb) {
     return false;
   }
 
+  function setNestAutoThermostat(target) {
+    var msg = '[HOME] setNestAutoThermostat failed, ';
+    if (nest) {
+      var cmds = config.hvac.auto[target];
+      if (cmds) {
+        log.debug('[HOME] setNestAutoThermostat to ' + target);
+        var keys = Object.keys(cmds);
+        keys.forEach(function(key) {
+          var cmd = cmds[key];
+          var thermostatId = config.hvac.thermostats[key];
+          if (thermostatId && cmd) {
+            nest.setTemperature(thermostatId, cmd.mode, cmd.temperature);
+          } else {
+            log.warn(msg + 'invalid thermostatId or cmd: ' + thermostatId);
+          }
+        });
+        return true;
+      } else {
+        log.log(msg + 'invalid target (' + target + ')');
+        return false;
+      }
+    }
+    log.log(msg + 'Nest unavailable.');
+    return false;
+  }
+
   function setNestThermostat(roomId, mode, temperature) {
+    var msg = '[HOME] setNestThermostat failed, ';
     if (nest) {
       try {
         var id = getNestThermostatId(roomId);
         if (id) {
-          if (!mode) {
-            mode = config.hvac.mode;
+          if (mode && temperature) {
+            return nest.setTemperature(id, mode, temperature);
+          } else {
+            log.error(msg + 'invalid mode or temperature');
+            return false;
           }
-          if (!temperature) {
-            temperature = config.hvac.targetTemperature;
-          }
-          return nest.setTemperature(id, mode, temperature);
         }
-        log.error('[HOME] setNestThermostat failed, thermostat not found');
+        log.error(msg + 'thermostat not found');
         return false;
       } catch (ex) {
-        log.exception('[HOME] setNestThermostat failed', ex);
+        log.exception(msg, ex);
         return false;
       }
     }
-    log.log('[HOME] setNestThermostat failed, Nest unavailable.');
+    log.log(msg + 'Nest unavailable.');
     return false;
   }
 
