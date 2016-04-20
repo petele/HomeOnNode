@@ -49,15 +49,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         is: 'my-settings',
         ready: function() {
           var self = this;
+          this.gcmKey = localStorage.getItem('fbGCMKey');
           navigator.serviceWorker.getRegistration().then(function(reg) {
             reg.pushManager.getSubscription().then(function(sub) {
-              if (sub) {
-                self.$.showNotifications.checked = true;
-                console.log('has sub', sub);
-              } else {
-                self.$.showNotifications.checked = false;
-                console.log('no sub');
-              }
+              self.updateSubscription(sub);
             });
           }).catch(function(error) {
             console.log('Error getting subscription state', error);
@@ -70,31 +65,56 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.unsubscribe();
           }
         },
+        updateSubscription: function(sub) {
+          var self = this;
+          var path = 'pushSubscribers';
+          if (sub) {
+            try {
+              var subObj = {
+                date: Date.now(),
+                userAgent: navigator.userAgent,
+                subscriptionInfo: JSON.parse(JSON.stringify(sub))
+              };
+              if (self.gcmKey) {
+                path += '/' + self.gcmKey;
+                app.fbRoot.child(path).set(subObj);
+              } else {
+                var k = app.fbRoot.child('pushSubscribers').push(subObj);
+                self.gcmKey = k.key();  
+                localStorage.setItem('fbGCMKey', self.gcmKey);
+              }
+              self.$.showNotifications.checked = true;
+            } catch (ex) {
+              console.error('GCM Setup failed', ex);
+            }
+          } else {
+            if (self.gcmKey) {
+              path += '/' + self.gcmKey;
+              app.fbRoot.child(path).remove();
+            }
+            localStorage.removeItem('fbGCMKey');
+            self.$.showNotifications.checked = false;
+          }
+        },
         subscribe: function() {
+          var self = this;
           navigator.serviceWorker.getRegistration().then(function(reg) {
             reg.pushManager.subscribe({
               userVisibleOnly: true
             }).then(function(sub) {
-              if (sub) {
-                var subObj = {
-                  date: Date.now(),
-                  userAgent: navigator.userAgent,
-                  subscriptionInfo: JSON.parse(JSON.stringify(sub))
-                };
-                console.log('subObj', subObj);
-                app.fbRoot.child('pushSubscribers').push(subObj);
-              }
+              self.updateSubscription(sub);
             });
           }).catch(function(error) {
             console.log('Unable to subscribe', error);
           });
         },
         unsubscribe: function() {
+          var self = this;
           navigator.serviceWorker.getRegistration().then(function(reg) {
             reg.pushManager.getSubscription().then(function(sub) {
               if (sub) {
                 sub.unsubscribe().then(function() {
-                  console.log('unsubscribed!');
+                  self.updateSubscription();
                 });
               }
             });
