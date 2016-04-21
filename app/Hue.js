@@ -281,12 +281,13 @@ function Hue(key, bridgeIP) {
       log.warn(warnMsg);
     }
 
+    // agentOptions: {keepAlive: false, maxSockets: 2}
     var requestOptions = {
       uri: 'http://' + bridgeIP + '/api/' + key + requestPath,
       method: method,
       json: true,
       timeout: requestTimeout,
-      agentOptions: {keepAlive: false, maxSockets: 2}
+      agent: false
     };
     if (body) {
       requestOptions.body = body;
