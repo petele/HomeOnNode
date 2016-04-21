@@ -73,9 +73,6 @@ function init() {
         var cmd = null;
         try {
           cmd = snapshot.val();
-          var x = '[APP] newCommand: ';
-          x += JSON.stringify(cmd);
-          log.log(x);
           if (cmd.hasOwnProperty('cmdName')) {
             home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
           } else {

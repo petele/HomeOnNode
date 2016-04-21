@@ -204,14 +204,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var modeChanged = this.hvacMode !== this.nestData.hvac_mode;
           var hasChanged = this.targetTemp !== this.nestData.target_temperature_f;
           if ((belowMax && aboveMin && hasChanged) || (modeChanged)) {
-            var command = {
-              nestThermostat: [{
-                roomId: this.key,
-                temperature: this.targetTemp,
-                mode: this.hvacMode
-              }]
-            };
-            app.sendCommand(command);
+            // var command = {
+            //   nestThermostat: [{
+            //     roomId: this.key,
+            //     temperature: this.targetTemp,
+            //     mode: this.hvacMode
+            //   }]
+            // };
+            // app.sendCommand(command);
           } else {
             this.targetTemp = this.nestData.target_temperature_f;
           }
