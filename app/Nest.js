@@ -387,7 +387,7 @@ function Nest() {
         setThermostatMode(nestThermostat, mode, temperature);
         return true;
       } else if (mode === 'off') {
-        log.warn(msg + '(already off, no action required.)');
+        log.warn(msg + '. (already off, no action required.)');
         return true;
       } else if (nestThermostat.hvac_mode !== 'off') {
         log.log(msg);
