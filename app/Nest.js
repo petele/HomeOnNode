@@ -366,30 +366,37 @@ function Nest() {
         return false;
       }
       msg += ' in ' + nestThermostat.name;
+      if (temperature >= 55 && temperature <= 85) {
+        if (mode !== 'off') {
+          msg += ' to ' + temperature.toString() + '°F';
+        }
+      } else {
+        log.error(msg + '. Error: temperature out of range: ' + temperature);
+        return false;
+      }
       if (!mode) {
         log.error(msg + '. Error: no mode provided.');
         return false;
       }
-      msg += ' to ' + mode;
-      if (temperature <= 55 || temperature >= 85) {
-        log.error(msg + '. Error: temperature out of range: ' + temperature);
-        return false;
-      }
-      msg += ' to ' + temperature.toString() + '°F';
-      log.log(msg);
+      msg += ' [' + mode + ']';
 
       /* jshint -W106 */
       // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
       if (mode !== nestThermostat.hvac_mode) {
+        log.log(msg);
         setThermostatMode(nestThermostat, mode, temperature);
         return true;
+      } else if (mode === 'off') {
+        log.warn(msg + '(already off, no action required.)');
+        return true;
       } else if (nestThermostat.hvac_mode !== 'off') {
+        log.log(msg);
         setThermostatTemp(nestThermostat, temperature);
         return true;
       }
       // jscs:enable
       /* jshint +W106 */
-      log.warn(msg + ' mystery! ' + mode + '//' + temperature);
+      log.warn(msg + ' -- Unhandled Event! (' + mode + '/' + temperature + ')');
       return false;
     }
     return false;
