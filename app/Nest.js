@@ -12,7 +12,7 @@ function Nest() {
   var _self = this;
   var _authExpiresAt;
   var _nestData;
-  var _thermostatModes = ['heat', 'cool', 'heat-cool', 'off'];
+  var _thermostatModes = ['heat', 'cool', 'off'];
   var _disconnectedTimer = null;
 
   /*****************************************************************************
@@ -159,30 +159,100 @@ function Nest() {
     }
   }
 
-  function setThermostat(thermostat, state) {
+  function setThermostatMode(thermostat, newMode, newTemp) {
+    /* jshint -W106 */
+    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+    var msg = '[NEST] setThermostatMode (' + thermostat.name + ') to: ';
+    msg += newMode;
+    if (_thermostatModes.indexOf(newMode) === -1) {
+      log.error(msg + 'failed. Invalid mode (' + newMode + ')');
+      return false;
+    }
+    log.log(msg);
+    var path = 'devices/thermostats/' + thermostat.device_id + '/hvac_mode';
+    _fbNest.child(path).set(newMode, function(err) {
+      if (err) {
+        log.exception(msg, err);
+      } else {
+        log.debug(msg + ' - success');
+        if (newMode !== 'off') {
+          setThermostatTemp(thermostat, newTemp);
+        }
+      }
+    });
+    // jscs:enable
+    /* jshint +W106 */
+  }
+
+  function setThermostatTemp(thermostat, newTemp) {
+    /* jshint -W106 */
+    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+    var msg = '[NEST] setThermostatTemp (' + thermostat.name + ') to: ';
+    msg += newTemp + '°F';
+    log.log(msg);
+    var path = 'devices/thermostats/' + thermostat.device_id;
+    path += '/target_temperature_f';
+    _fbNest.child(path).set(newTemp, function(err) {
+      if (err) {
+        log.exception(msg, err);
+      } else {
+        log.debug(msg + ' - success');
+      }
+    });
+    // jscs:enable
+    /* jshint +W106 */
+  }
+
+  function setThermostat(thermostatId, mode, targetTemperature) {
+    var msg = '[NEST] setThermostat: ';
     if (checkIfReady(true)) {
-      if (_thermostatModes.indexOf(state.hvac_mode) === -1) {
-        log.error('[NEST] Set thermostat: invalid state.');
+      var nestThermostat = _nestData.devices.thermostats[thermostatId];
+      if (!nestThermostat) {
+        log.error(msg + 'could not find thermostat (' + thermostatId + ')');
         return false;
       }
-      var thermostatName = thermostat;
-      try {
-        thermostatName = _nestData.devices.thermostats[thermostat].name;
-      } catch (ex) {
-        var exMsg = '[NEST] Unable to get Thermostat name for thermostatId: ';
-        log.exception(exMsg + thermostat, ex);
+
+      /* jshint -W106 */
+      // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+      if (mode !== nestThermostat.hvac_mode) {
+        setThermostatMode(nestThermostat, mode, targetTemperature);
+        return true;
+      } else if (nestThermostat.hvac_mode !== 'off') {
+        setThermostatTemp(nestThermostat, targetTemperature);
+        return true;
       }
-      var fbPath = 'devices/thermostats/' + thermostat;
-      var msg = '[NEST] setThermostat (' + thermostatName + '): ';
-      msg += JSON.stringify(state);
-      log.log(msg);
-      _fbNest.child(fbPath).set(state, function(err) {
-        onSetComplete(fbPath, err);
-      });
-      return true;
+      // jscs:enable
+      /* jshint +W106 */
+      log.error(msg + ' mystery! ' + mode + '//' + targetTemperature);
+      return false;
     }
     return false;
   }
+
+  // function xxsetThermostat(thermostat, state) {
+  //   if (checkIfReady(true)) {
+  //     if (_thermostatModes.indexOf(state.hvac_mode) === -1) {
+  //       log.error('[NEST] Set thermostat: invalid state.');
+  //       return false;
+  //     }
+  //     var thermostatName = thermostat;
+  //     try {
+  //       thermostatName = _nestData.devices.thermostats[thermostat].name;
+  //     } catch (ex) {
+  //       var exMsg = '[NEST] Unable to get Thermostat name for thermostatId: ';
+  //       log.exception(exMsg + thermostat, ex);
+  //     }
+  //     var fbPath = 'devices/thermostats/' + thermostat;
+  //     var msg = '[NEST] setThermostat (' + thermostatName + '): ';
+  //     msg += JSON.stringify(state);
+  //     log.log(msg);
+  //     _fbNest.child(fbPath).set(state, function(err) {
+  //       onSetComplete(fbPath, err);
+  //     });
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
   function setCameraStreamingState(cameraId, state) {
     if (checkIfReady(true)) {
@@ -333,34 +403,29 @@ function Nest() {
   };
 
   this.setTemperature = function(thermostat, mode, temperature) {
-    mode = mode || 'heat-cool';
-    /* jshint -W106 */
-    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    var state = {
-      hvac_mode: mode
-    };
-    if (mode !== 'off') {
-      state.target_temperature_f = temperature;
+    if (thermostat && mode && temperature) {
+      return setThermostat(thermostat, mode, temperature);
+    } else {
+      var params = '**' + thermostat + '//' + mode + '//' + temperature + '**';
+      log.error('[NEST] setTemperature missing parameters: ' + params);
+      return false;
     }
-    // jscs:enable
-    /* jshint +W106 */
-    return setThermostat(thermostat, state);
   };
 
-  this.setTemperatureRange = function(thermostat, target, hi, lo, mode) {
-    mode = mode || 'heat-cool';
-    /* jshint -W106 */
-    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    var state = {
-      target_temperature_f: target,
-      target_temperature_high_f: hi,
-      target_temperature_low_f: lo,
-      hvac_mode: mode
-    };
-    // jscs:enable
-    /* jshint +W106 */
-    return setThermostat(thermostat, state);
-  };
+  // this.setTemperatureRange = function(thermostat, target, hi, lo, mode) {
+  //   mode = mode || 'heat-cool';
+  //   /* jshint -W106 */
+  //   // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+  //   var state = {
+  //     target_temperature_f: target,
+  //     target_temperature_high_f: hi,
+  //     target_temperature_low_f: lo,
+  //     hvac_mode: mode
+  //   };
+  //   // jscs:enable
+  //   /* jshint +W106 */
+  //   return setThermostat(thermostat, state);
+  // };
 
 }
 
