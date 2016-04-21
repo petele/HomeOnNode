@@ -162,13 +162,13 @@ function Nest() {
   function setThermostatMode(thermostat, newMode, newTemp) {
     /* jshint -W106 */
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    var msg = '[NEST] setThermostatMode (' + thermostat.name + ') to: ';
+    var msg = '[NEST] setThermostatMode in ' + thermostat.name + ' to: ';
     msg += newMode;
     if (_thermostatModes.indexOf(newMode) === -1) {
       log.error(msg + 'failed. Invalid mode (' + newMode + ')');
       return false;
     }
-    log.log(msg);
+    log.debug(msg);
     var path = 'devices/thermostats/' + thermostat.device_id + '/hvac_mode';
     _fbNest.child(path).set(newMode, function(err) {
       if (err) {
@@ -182,14 +182,15 @@ function Nest() {
     });
     // jscs:enable
     /* jshint +W106 */
+    return true;
   }
 
   function setThermostatTemp(thermostat, newTemp) {
     /* jshint -W106 */
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    var msg = '[NEST] setThermostatTemp (' + thermostat.name + ') to: ';
+    var msg = '[NEST] setThermostatTemp in ' + thermostat.name + ' to: ';
     msg += newTemp + '°F';
-    log.log(msg);
+    log.debug(msg);
     var path = 'devices/thermostats/' + thermostat.device_id;
     path += '/target_temperature_f';
     _fbNest.child(path).set(newTemp, function(err) {
@@ -201,58 +202,8 @@ function Nest() {
     });
     // jscs:enable
     /* jshint +W106 */
+    return true;
   }
-
-  function setThermostat(thermostatId, mode, targetTemperature) {
-    var msg = '[NEST] setThermostat: ';
-    if (checkIfReady(true)) {
-      var nestThermostat = _nestData.devices.thermostats[thermostatId];
-      if (!nestThermostat) {
-        log.error(msg + 'could not find thermostat (' + thermostatId + ')');
-        return false;
-      }
-
-      /* jshint -W106 */
-      // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-      if (mode !== nestThermostat.hvac_mode) {
-        setThermostatMode(nestThermostat, mode, targetTemperature);
-        return true;
-      } else if (nestThermostat.hvac_mode !== 'off') {
-        setThermostatTemp(nestThermostat, targetTemperature);
-        return true;
-      }
-      // jscs:enable
-      /* jshint +W106 */
-      log.error(msg + ' mystery! ' + mode + '//' + targetTemperature);
-      return false;
-    }
-    return false;
-  }
-
-  // function xxsetThermostat(thermostat, state) {
-  //   if (checkIfReady(true)) {
-  //     if (_thermostatModes.indexOf(state.hvac_mode) === -1) {
-  //       log.error('[NEST] Set thermostat: invalid state.');
-  //       return false;
-  //     }
-  //     var thermostatName = thermostat;
-  //     try {
-  //       thermostatName = _nestData.devices.thermostats[thermostat].name;
-  //     } catch (ex) {
-  //       var exMsg = '[NEST] Unable to get Thermostat name for thermostatId: ';
-  //       log.exception(exMsg + thermostat, ex);
-  //     }
-  //     var fbPath = 'devices/thermostats/' + thermostat;
-  //     var msg = '[NEST] setThermostat (' + thermostatName + '): ';
-  //     msg += JSON.stringify(state);
-  //     log.log(msg);
-  //     _fbNest.child(fbPath).set(state, function(err) {
-  //       onSetComplete(fbPath, err);
-  //     });
-  //     return true;
-  //   }
-  //   return false;
-  // }
 
   function setCameraStreamingState(cameraId, state) {
     if (checkIfReady(true)) {
@@ -402,30 +353,47 @@ function Nest() {
     return false;
   };
 
-  this.setTemperature = function(thermostat, mode, temperature) {
-    if (thermostat && mode && temperature) {
-      return setThermostat(thermostat, mode, temperature);
-    } else {
-      var params = '**' + thermostat + '//' + mode + '//' + temperature + '**';
-      log.error('[NEST] setTemperature missing parameters: ' + params);
+  this.setTemperature = function(thermostatId, mode, temperature) {
+    var msg = '[NEST] setTemperature';
+    if (checkIfReady(true)) {
+      if (!thermostatId) {
+        log.error(msg + ' no thermostatId provided.');
+        return false;
+      }
+      var nestThermostat = _nestData.devices.thermostats[thermostatId];
+      if (!nestThermostat) {
+        log.error(msg + ' could not find thermostat (' + thermostatId + ')');
+        return false;
+      }
+      msg += ' in ' + nestThermostat.name;
+      if (!mode) {
+        log.error(msg + '. Error: no mode provided.');
+        return false;
+      }
+      msg += ' to ' + mode;
+      if (temperature <= 55 || temperature >= 85) {
+        log.error(msg + '. Error: temperature out of range: ' + temperature);
+        return false;
+      }
+      msg += ' to ' + temperature.toString() + '°F';
+      log.log(msg);
+
+      /* jshint -W106 */
+      // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+      if (mode !== nestThermostat.hvac_mode) {
+        setThermostatMode(nestThermostat, mode, temperature);
+        return true;
+      } else if (nestThermostat.hvac_mode !== 'off') {
+        setThermostatTemp(nestThermostat, temperature);
+        return true;
+      }
+      // jscs:enable
+      /* jshint +W106 */
+      log.warn(msg + ' mystery! ' + mode + '//' + temperature);
       return false;
     }
+    return false;
   };
-
-  // this.setTemperatureRange = function(thermostat, target, hi, lo, mode) {
-  //   mode = mode || 'heat-cool';
-  //   /* jshint -W106 */
-  //   // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-  //   var state = {
-  //     target_temperature_f: target,
-  //     target_temperature_high_f: hi,
-  //     target_temperature_low_f: lo,
-  //     hvac_mode: mode
-  //   };
-  //   // jscs:enable
-  //   /* jshint +W106 */
-  //   return setThermostat(thermostat, state);
-  // };
 
 }
 
