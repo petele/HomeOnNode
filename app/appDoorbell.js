@@ -8,6 +8,7 @@ var GCMPush = require('./GCMPush');
 var log = require('./SystemLog');
 var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
+var moment = require('moment');
 
 var APP_NAME = 'REMOTE';
 var fb;
@@ -20,12 +21,6 @@ var minTime = 3000;
 
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
-
-var gcmMessage = {
-  title: 'Door Bell',
-  body: 'There\'s someone at the door.',
-  tag: 'doorbell'
-};
 
 function sendDoorbell() {
   var url = 'http://' + config.controller.ip + ':' + config.controller.port;
@@ -48,6 +43,14 @@ function sendDoorbell() {
     }
   });
   if (gcmPush) {
+    var body = 'The doorbell rang at ';
+    body += moment().format('h:mm a (ddd MMM Mo)');
+    var gcmMessage = {
+      title: 'Door Bell',
+      body: body,
+      tag: 'doorbell',
+      id: 'doorbell-' + Date.now()
+    };
     gcmPush.sendMessage(gcmMessage);
   }
 }
