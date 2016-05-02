@@ -34,7 +34,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <h2>Settings</h2>
 
       <paper-toggle-button id="showNotifications" on-change="notificationChange">
-        Notifications
+        Notifications (<span>{{gcmKey}}</span>)
       </paper-toggle-button>
 
     </paper-material>
@@ -94,6 +94,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
             localStorage.removeItem('fbGCMKey');
             self.$.showNotifications.checked = false;
+            self.gcmKey = null;
           }
         },
         subscribe: function() {
