@@ -68,7 +68,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </template>
 
       <template is="dom-repeat" items="[[logs]]">
-        <paper-item>
+        <paper-item on-tap="logItemTap">
           <paper-item-body two-line>
             <div>[[item.message]]</div>
             <div secondary>
@@ -81,7 +81,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </paper-item>
       </template>
     </paper-material>
-
   </template>
 
   <script>
@@ -121,24 +120,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var self = this;
           if (this.path) {
             app.fbRoot.child(this.path)
-              .orderByChild('date')
               .limitToLast(this.max)
-              .on('value', function(snapshot) {
-                snapshot.forEach(function(item) {
-                  self.unshift('logs', item.val());
-                });
+              .on('child_added', function(snapshot) {
+                var logItem = snapshot.val();
+                logItem.key = snapshot.key();
+                self.unshift('logs', logItem);
+                if (self.logs.length > self.max) {
+                  self.logs.pop();
+                }
               });
           }
-          setInterval(function() {
-            var len = self.logs.length;
-            if (len > self.max) {
-              self.logs = self.logs.splice(0, self.max);
-            }
-          }, 5000);
         },
         formatDate: function(value) {
           return moment(value).format('M/D/YY, h:mm:ss a');
         },
+        logItemTap: function(event) {
+          var logItem = event.model.item;
+          console.log('logItemTap', logItem);
+        }
       });
     })();
   </script>
