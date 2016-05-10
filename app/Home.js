@@ -7,6 +7,7 @@ var log = require('./SystemLog');
 var Keys = require('./Keys').keys;
 var version = require('./version');
 var moment = require('moment');
+var request = require('request');
 var fs = require('fs');
 
 var Firebase = require('firebase');
@@ -398,15 +399,48 @@ function Home(config, fb) {
    ****************************************************************************/
 
   function initWeather() {
-    var url = 'https://publicdata-weather.firebaseio.com/';
-    url += config.fbWeatherCity;
-    var weatherRef = new Firebase(url);
-    weatherRef.child('currently').on('value', function(snapshot) {
-      fbSet('state/weather/now', snapshot.val());
-    });
-    weatherRef.child('daily/data/0').on('value', function(snapshot) {
-      fbSet('state/weather/today', snapshot.val());
-    });
+    if (config.weatherLatLong && Keys.forecastIO && Keys.forecastIO.key) {
+      var url = 'https://api.forecast.io/forecast/';
+      url += Keys.forecastIO.key + '/';
+      url += config.weatherLatLong;
+      request(url, function(error, response, body) {
+        if (error || response.statusCode !== 200) {
+          var msg = '[WEATHER] Forecast.IO API - ';
+          if (response.statusCode !== 200) {
+            log.error(msg + 'Returned statusCode: ' + response.statusCode);
+            log.debug('[WEATHER] Response: ' + body);
+            return;
+          }
+          log.exception(msg + 'Request failed!', error);
+          return;
+        }
+        var forecast;
+        try {
+          forecast = JSON.parse(body);
+        } catch (ex) {
+          log.exception('[WEATHER] Unable to parse weather response', ex);
+          return;
+        }
+        if (forecast) {
+          if (forecast.currently) {
+            fbSet('state/weather/now', forecast.currently);
+          } else {
+            log.error('[WEATHER] Could not find current forecast.');
+          }
+          if (forecast.daily && forecast.daily.data[0]) {
+            fbSet('state/weather/today', forecast.daily.data[0]);
+          } else {
+            log.error('[WEATHER] Could not find daily forecast.');
+          }
+        } else {
+          log.error('[WEATHER] Could not find forecast!');
+        }
+      });
+    } else {
+      log.warn('[WEATHER] Missing key, expected Lat/Lon & API Key');
+    }
+    var interval = 5 * 60 * 1000;
+    setTimeout(initWeather, interval);
   }
 
   /*****************************************************************************
