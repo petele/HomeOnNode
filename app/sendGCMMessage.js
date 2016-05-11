@@ -4,12 +4,12 @@ var GCMPush = require('./GCMPush');
 var Keys = require('./Keys').keys;
 var Firebase = require('firebase');
 var log = require('./SystemLog');
-var moment = require('moment');
 
 var gcmMessage = {
-  title: 'HomeOnNode',
-  body: 'Boom! Something unexpected happened',
-  tag: 'unexpected'
+  title: 'HomeOnNode - Eep!',
+  body: 'Something unexpected happened at',
+  tag: 'HoN-unexpected',
+  appendTime: true
 };
 
 function init() {
@@ -22,8 +22,6 @@ function init() {
       process.exit(1);
     } else {
       var gcmPush = new GCMPush(fb);
-      gcmMessage.id = 'unexpected-' + Date.now();
-      gcmMessage.body += ' at ' + moment().format('h:mm a (ddd MMM Mo)');
       gcmPush.on('ready', function() {
         gcmPush.sendMessage(gcmMessage);
       });
