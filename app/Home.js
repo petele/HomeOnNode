@@ -399,6 +399,7 @@ function Home(config, fb) {
    ****************************************************************************/
 
   function initWeather() {
+    log.debug('[HOME] Updating weather.');
     if (config.weatherLatLong && Keys.forecastIO && Keys.forecastIO.key) {
       var url = 'https://api.forecast.io/forecast/';
       url += Keys.forecastIO.key + '/';
