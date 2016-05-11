@@ -5,6 +5,7 @@ var Keys = require('./Keys').keys;
 var util = require('util');
 var log = require('./SystemLog');
 var webpush = require('web-push-encryption');
+var moment = require('moment');
 
 function GCMPush(fb) {
   var _fb = fb;
@@ -34,6 +35,17 @@ function GCMPush(fb) {
   this.sendMessage = function(message) {
     var msg;
     if (message && typeof message === 'object') {
+      var now = Date.now();
+      message.sentAt = now;
+      if (!message.tag) {
+        message.tag = 'HoN-generic';
+      }
+      if (!message.id) {
+        message.id = 'HoN-' + now;
+      }
+      if (message.appendTime) {
+        message.body += ' ' + moment().format('h:mm a (ddd MMM Mo)');
+      }
       message = JSON.stringify(message);
       _fb.child('pushSubscribers').once('value', function(snapshot) {
         log.log('[GCMPush] Sending notifications...');
