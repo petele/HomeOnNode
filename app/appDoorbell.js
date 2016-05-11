@@ -43,13 +43,11 @@ function sendDoorbell() {
     }
   });
   if (gcmPush) {
-    var body = 'The doorbell rang at ';
-    body += moment().format('h:mm a (ddd MMM Mo)');
     var gcmMessage = {
       title: 'Door Bell',
-      body: body,
-      tag: 'doorbell',
-      id: 'doorbell-' + Date.now()
+      body: 'The doorbell rang at',
+      tag: 'HoN-doorbell',
+      appendTime: true
     };
     gcmPush.sendMessage(gcmMessage);
   }
