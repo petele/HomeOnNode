@@ -138,9 +138,13 @@ function Home(config, fb) {
         setZWaveSwitch(cmd.id, turnOn);
       });
     }
-    if (command.hasOwnProperty('nestAutoThermostat')) {
-      var target = command.nestAutoThermostat;
-      setNestAutoThermostat(target);
+    if (command.hasOwnProperty('nestThermostatAuto')) {
+      var timeOfDay = command.nestThermostatAuto;
+      if (timeOfDay === 'OFF') {
+        setNestThermostatOff();
+      } else {
+        setNestThermostatAuto(timeOfDay);
+      }
     } else if (command.hasOwnProperty('nestThermostat')) {
       cmds = command.nestThermostat;
       if (Array.isArray(cmds) === false) {
@@ -739,32 +743,6 @@ function Home(config, fb) {
     return false;
   }
 
-  function setNestAutoThermostat(target) {
-    var msg = '[HOME] setNestAutoThermostat failed, ';
-    if (nest) {
-      var cmds = config.hvac.auto[target];
-      if (cmds) {
-        log.debug('[HOME] setNestAutoThermostat to ' + target);
-        var keys = Object.keys(cmds);
-        keys.forEach(function(key) {
-          var cmd = cmds[key];
-          var thermostatId = config.hvac.thermostats[key];
-          if (thermostatId && cmd) {
-            nest.setTemperature(thermostatId, cmd.mode, cmd.temperature);
-          } else {
-            log.warn(msg + 'invalid thermostatId or cmd: ' + thermostatId);
-          }
-        });
-        return true;
-      } else {
-        log.log(msg + 'invalid target (' + target + ')');
-        return false;
-      }
-    }
-    log.log(msg + 'Nest unavailable.');
-    return false;
-  }
-
   function setNestThermostat(roomId, mode, temperature) {
     var msg = '[HOME] setNestThermostat failed, ';
     if (nest) {
@@ -789,6 +767,44 @@ function Home(config, fb) {
     return false;
   }
 
+  function setNestThermostatAuto(timeOfDay) {
+    var msg = '[HOME] setNestThermostatAuto failed, ';
+    var hvacMode = config.hvac.defaultMode;
+    var hvacCmd = timeOfDay + '_' + hvacMode;
+    hvacCmd = hvacCmd.toUpperCase();
+    var rooms = config.hvac.auto[hvacCmd];
+    if (!rooms) {
+      log.error(msg + 'Params failed: ' + hvacCmd);
+      return false;
+    }
+    if (!nest) {
+      log.error(msg + 'Nest not ready.');
+      return false;
+    }
+    var keys = Object.keys(rooms);
+    keys.forEach(function(key) {
+      var temperature = rooms[key];
+      var thermostatId = config.hvac.thermostats[key];
+      if (temperature && thermostatId) {
+        nest.setTemperature(thermostatId, hvacMode, temperature);
+      }
+    });
+    return true;
+  }
+
+  function setNestThermostatOff() {
+    if (!nest) {
+      var msg = '[HOME] setNestThermostatOff failed, ';
+      log.error(msg + 'Nest not ready.');
+      return false;
+    }
+    var keys = Object.keys(config.hvac.thermostats);
+    keys.forEach(function(key) {
+      var thermostatId = config.hvac.thermostats[key];
+      nest.setTemperature(thermostatId, 'off', 70);
+    });
+    return true;
+  }
 
   /*****************************************************************************
    *
