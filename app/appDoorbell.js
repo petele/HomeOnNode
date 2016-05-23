@@ -8,7 +8,6 @@ var GCMPush = require('./GCMPush');
 var log = require('./SystemLog');
 var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
-var moment = require('moment');
 
 var APP_NAME = 'REMOTE';
 var fb;
@@ -35,9 +34,13 @@ function sendDoorbell() {
       log.exception('[sendDoorbell] Failed', error);
       if (fb) {
         fb.child('commands').send({cmdName: 'RUN_ON_DOORBELL'}, function(err) {
-          log.exception('[sendDoorbell] Double fail!', err);
-          var cmd = 'sudo reboot';
-          exec(cmd, function() {});
+          if (err) {
+            log.exception('[sendDoorbell] Double fail!', err);
+            var cmd = 'sudo reboot';
+            exec(cmd, function() {});
+          } else {
+            log.warn('[sendDoorbell] Worked via Firebase');
+          }
         });
       }
     }
