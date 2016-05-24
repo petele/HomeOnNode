@@ -409,14 +409,20 @@ function Home(config, fb) {
       url += Keys.forecastIO.key + '/';
       url += config.weatherLatLong;
       request(url, function(error, response, body) {
-        if (error || response.statusCode !== 200) {
+        if (error || !response || response.statusCode !== 200) {
           var msg = '[WEATHER] Forecast.IO API - ';
-          if (response.statusCode !== 200) {
+          if (error) {
+            log.exception(msg + 'Error', error);
+            return;
+          } else if (!response) {
+            log.error(msg + 'No response!');
+            return;
+          } else if (response.statusCode !== 200) {
             log.error(msg + 'Returned statusCode: ' + response.statusCode);
             log.debug('[WEATHER] Response: ' + body);
             return;
           }
-          log.exception(msg + 'Request failed!', error);
+          log.exception(msg + 'Unknown Error');
           return;
         }
         var forecast;
