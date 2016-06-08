@@ -1,19 +1,31 @@
 'use strict';
 
 var Keys = require('../app/Keys').keys;
-var Hue = require('../app/Hue');
+var request = require('request');
 
-var hubIP = '10.0.0.210';
-var hue = new Hue(Keys.hueBridge.key, hubIP);
+var body = {
+  name: '',
+  lights: [],
+  recycle: false,
+  appdata: {data: 'HomeOnNode', version: 1},
+  transitiontime: 250
+};
 
-function handleResponse(err, result) {
-  if (err) {
-    console.error('ERROR', err);
-  } else {
-    console.log('OK', result);
+var reqOpt = {
+  url: 'http://192.168.1.210/api/' + Keys.hueBridge.key + '/scenes/',
+  method: 'POST',
+  json: true,
+  body: body
+};
+
+request(reqOpt, function(error, response, body) {
+  if (error) {
+    console.log('ERROR', error);
+    return;
   }
-}
-
-var lights = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21];
-var sceneName = 'Watch TV';
-hue.createScene(sceneName, lights, handleResponse);
+  if (body && body[0] && body[0].success) {
+    console.log('Success', body[0].success.address);
+  } else {
+    console.log('Odd?', body);
+  }
+});
