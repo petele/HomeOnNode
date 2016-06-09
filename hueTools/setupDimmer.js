@@ -3,14 +3,13 @@
 var Keys = require('../app/Keys').keys;
 var Hue = require('../app/Hue');
 
-var hubIP = '10.0.0.210';
+var hubIP = '192.168.1.206';
 var hue = new Hue(Keys.hueBridge.key, hubIP);
 
-var dimmerName = 'Bedroom';
-var dimmerId = 6;
+var dimmerId = 17;
+var dimmerName = 'Bedside';
 var lights = [
-  '/groups/6/action',
-  '/groups/8/action'
+  '/groups/7/action'
 ];
 
 // var dimmerName = 'Kitchen';
@@ -167,7 +166,7 @@ var buttonDown3 = {
 lights.forEach(function(light) {
   var actionOn = {
     address: light,
-    body: {on: true, bri: 254},
+    body: {on: true, bri: 140, xy: [0.6126, 0.3667]},
     method: 'PUT'
   };
   var actionOff = {
@@ -226,6 +225,8 @@ function sendRequest(index) {
       console.log('OK', index, JSON.stringify(result));
       sendRequest(index + 1);
     });
+  } else {
+    process.exit();
   }
 }
 
