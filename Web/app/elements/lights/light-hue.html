@@ -37,18 +37,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         },
         hueTap: function() {
-          var scene = '';
-          if (this.scene === '_TOGGLE_' && this.light.state.on === true) {
-            scene = 'OFF';
-          } else if (this.scene === '_TOGGLE_' && this.light.state.on === false) {
-            scene = 'DEFAULT';
+          var lightState = {};
+          if (this.cmd.on === '_TOGGLE_') {
+            if (this.light.state.on === true) {
+              lightState.on = false;
+            } else {
+              lightState.on = true;
+            }
           } else {
-            scene = this.scene;
+            if (this.cmd.on === 'OFF') {
+              lightState.on = false;
+            } else {
+              lightState = this.cmd;
+              lightState.on = true;
+            }
           }
           var cmd = {
             hueCommand: {
               lights: this.light.key,
-              receipeName: scene
+              lightState: lightState
             }
           };
           app.sendCommand(cmd);

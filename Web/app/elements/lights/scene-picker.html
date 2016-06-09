@@ -13,17 +13,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles"></style>
     <style>
+      div {
+        @apply(--layout-horizontal);
+        @apply(--layout-justified);
+        /*@apply(--layout-wrap);*/
+      }
+      paper-dropdown-menu {
+        width: 31%;
+      }
     </style>
-      <firebase-document id="fbLightScenes" data="{{lightScenesObj}}"
-       location="https://petele-at-home.firebaseio.com/config/HomeOnNode/lightScenes">
-      </firebase-document>
-      <paper-dropdown-menu label="Lights">
-        <paper-menu class="dropdown-content" selected="0"  on-iron-select="pete">
-          <template is="dom-repeat" items="[[lightScenes]]">
-            <paper-item key="[[item.key]]">[[item.label]]</paper-item>
+    <firebase-collection id="fbLightScenes" data="{{lightScenesObj}}"
+      order-by-child="label"
+      location="https://petele-at-home.firebaseio.com/config/HomeOnNode/lightRecipes">
+    </firebase-collection>
+    <div>
+      <paper-dropdown-menu id="pdmState" label="State">
+        <paper-menu class="dropdown-content" selected="0"  on-iron-select="setPower">
+          <paper-item key="_TOGGLE_">Toggle</paper-item>
+          <paper-item key="ON">On</paper-item>
+          <paper-item key="OFF">Off</paper-item>
+        </paper-menu>
+      </paper-dropdown-menu>
+      <paper-dropdown-menu id="pdmColor" label="Color">
+        <paper-menu class="dropdown-content" selected="0"  on-iron-select="setColor">
+          <paper-item>Default</paper-item>
+          <template is="dom-repeat" items="[[lightScenesObj]]">
+            <paper-item value="[[item.cmd]]">[[item.label]]</paper-item>
           </template>
         </paper-menu>
       </paper-dropdown-menu>
+      <paper-dropdown-menu id="pdmBri" label="Brightness">
+        <paper-menu class="dropdown-content" selected="0"  on-iron-select="setBrightness">
+          <paper-item key="100">100%</paper-item>
+          <paper-item key="80">80%</paper-item>
+          <paper-item key="60">60%</paper-item>
+          <paper-item key="50">50%</paper-item>
+          <paper-item key="40">40%</paper-item>
+          <paper-item key="20">20%</paper-item>
+          <paper-item key="10">10%</paper-item>
+        </paper-menu>
+      </paper-dropdown-menu>
+    </div>
   </template>
 
   <script>
@@ -33,34 +63,49 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       Polymer({
         is: 'scene-picker',
         ready: function() {
-          //this.selected =
-          this.lightScenes = [];
+          this.cmd = {};
+          this.on = false;
+          this.bri = 50;
         },
-        observers: [
-          'sceneObjChange(lightScenesObj)'
-        ],
         properties: {
-          selected: {
-            type: String,
+          cmd: {
+            type: Object,
             notify: true
           }
         },
-        sceneObjChange: function(scenes) {
-          var lightScenes = [
-            {key: '_TOGGLE_', label: 'Toggle'}
-          ];
-          var keys = Object.keys(scenes);
-          keys.forEach(function(key) {
-            var scene = scenes[key];
-            if (scene.label) {
-              scene.key = key;
-              lightScenes.push(scene);
-            }
-          });
-          this.lightScenes = lightScenes;
+        setPower: function(event) {
+          var value = event.detail.item.getAttribute('key');
+          if (value === 'ON') {
+            this.$.pdmColor.disabled = false;
+            this.$.pdmBri.disabled = false;
+            this.cmd.on = true;
+          } else {
+            this.$.pdmColor.disabled = true;
+            this.$.pdmBri.disabled = true;
+          }
+          if (value === 'OFF') {
+            this.cmd.on = false;
+          }
+          this.cmd.on = value;
+          this.on = value;
         },
-        pete: function(event) {
-          this.selected = event.detail.item.key;
+        setColor: function(event) {
+          var value = event.detail.item.value;
+          if (value) {
+            value = JSON.parse(value);
+          } else {
+            value = {ct: 320};
+          }
+          value.on = this.on;
+          value.bri = this.bri;
+          this.cmd = value;
+        },
+        setBrightness: function(event) {
+          var value = event.detail.item.getAttribute('key');
+          value = parseInt(value, 10);
+          value = Math.floor((value / 100) * 254);
+          this.cmd.bri = value;
+          this.bri = value;
         }
       });
     })();

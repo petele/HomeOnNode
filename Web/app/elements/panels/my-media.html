@@ -40,9 +40,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <paper-material>
+    <firebase-collection id="fbHarmonyActivities" data="{{harmonyActivities}}"
+      order-by-child="id"
+      location="https://petele-at-home.firebaseio.com/state/harmonyConfig/activity">
+    </firebase-collection>
       <sonos-controller></sonos-controller>
       <div class="buttonContainer">
-        <template is="dom-repeat" items="[[commands]]">
+        <template is="dom-repeat" items="[[harmonyActivities]]">
           <action-button on-tap="tapAction" on="[[item.isOn]]" class="abGrow">
             [[item.label]]
           </action-button>
@@ -50,10 +54,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
       <div>
         <h3>Sonos</h3>
+        <firebase-collection id="fbSonosFavorites" data="{{sonosFavorites}}"
+          order-by-child="id"
+          location="https://petele-at-home.firebaseio.com/state/sonos/favorites">
+        </firebase-collection>
         <div class="buttonContainer">
           <template is="dom-repeat" items="[[mediaKeys]]">
             <action-button on-tap="tapAction" no-toggle="true" class="abGrow">
               [[item.label]]
+            </action-button>
+          </template>
+          <template is="dom-repeat" items="[[sonosFavorites]]">
+          <action-button on-tap="playSonosFav" no-toggle="true" class="abGrow">
+              [[item.title]]
             </action-button>
           </template>
         </div>
@@ -75,31 +88,40 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }, randomDelay);
         },
         setup: function() {
-          var self = this;
-          app.fbRoot.child('state/harmony/label').on('value', function(snapshot) {
-            self.currentActivity = snapshot.val();
-          });
+          // var self = this;
+          // app.fbRoot.child('state/harmony').on('value', function(snapshot) {
+          //   var currentActivity = snapshot.val();
+          //   self.harmonyActivities.forEach(function(activity, index) {
+          //     var path = 'harmonyActivities.' + index + '.isOn';
+          //     if (activity.id === currentActivity.id) {
+          //       self.set(path, true);
+          //     } else {
+          //       self.set(path, false);
+          //     }
+          //   });
+          // });
         },
-        observers: [
-          'dataChange(currentActivity)',
-          'dataChange(commands)'
-        ],
-        dataChange: function() {
-          if (this.commands) {
-            var self = this;
-            this.commands.forEach(function(item, index) {
-              var path = 'commands.' + index + '.isOn';
-              if (item.harmonyActivity === self.currentActivity) {
-                self.set(path, true);
-              } else if (item.isOn === true) {
-                self.set(path, false);
+        playSonosFav: function(event) {
+          var fav = event.model.item;
+          var cmd = {
+            sonos: {
+              name: 'PRESET',
+              preset: {
+                pauseOthers: true,
+                uri: fav.uri,
+                players: [
+                  {roomName: 'Living Room', volume: 30},
+                  {roomName: 'Bedroom', volume: 30},
+                  {roomName: 'Bathroom', volume: 20}
+                ]
               }
-            });
-          }
+            }
+          };
+          app.sendCommand(cmd);
         },
         tapAction: function(event) {
-          var action = event.model.item;
-          app.sendCommand({cmdName: action.key});
+          var action = event.model.item.label;
+          app.sendCommand({harmonyActivity: action});
         }
       });
     })();

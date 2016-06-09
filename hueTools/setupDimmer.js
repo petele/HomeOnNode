@@ -12,45 +12,6 @@ var lights = [
   '/groups/7/action'
 ];
 
-// var dimmerName = 'Kitchen';
-// var dimmerId = 7;
-// var lights = [
-//   '/groups/2/action',
-//   '/lights/17/state'
-// ];
-
-// var dimmerName = 'Living Room';
-// var dimmerId = 8;
-// var lights = [
-//   '/groups/3/action',
-//   '/groups/4/action'
-// ];
-
-// var dimmerName = 'Front Hall';
-// var dimmerId = 12;
-// var lights = [
-//   '/groups/1/action'
-// ];
-
-// var dimmerName = 'Living Room - Rear';
-// var dimmerId = 13;
-// var lights = [
-//   '/groups/3/action',
-//   '/groups/4/action'
-// ];
-
-// var dimmerName = 'Front Door';
-// var dimmerId = 14;
-// var lights = [
-//   '/groups/1/action'
-// ];
-
-// var dimmerName = 'Bedside';
-// var dimmerId = 15;
-// var lights = [
-//   '/groups/7/action'
-// ];
-
 var buttonOn = {
   name: dimmerName + ' - ON',
   conditions: [
@@ -58,6 +19,20 @@ var buttonOn = {
       address: '/sensors/' + dimmerId + '/state/buttonevent',
       operator: 'eq',
       value: '1000'
+    }, {
+      address: '/sensors/' + dimmerId + '/state/lastupdated',
+      operator: 'dx'
+    }
+  ],
+  actions: []
+};
+var buttonOnLong = {
+  name: dimmerName + ' - ON Long',
+  conditions: [
+    {
+      address: '/sensors/' + dimmerId + '/state/buttonevent',
+      operator: 'eq',
+      value: '1003'
     }, {
       address: '/sensors/' + dimmerId + '/state/lastupdated',
       operator: 'dx'
@@ -166,7 +141,12 @@ var buttonDown3 = {
 lights.forEach(function(light) {
   var actionOn = {
     address: light,
-    body: {on: true, bri: 140, xy: [0.6126, 0.3667]},
+    body: {on: true},
+    method: 'PUT'
+  };
+  var actionOnLong = {
+    address: light,
+    body: {on: true, ct: 320},
     method: 'PUT'
   };
   var actionOff = {
@@ -205,6 +185,7 @@ lights.forEach(function(light) {
     method: 'PUT'
   };
   buttonOn.actions.push(actionOn);
+  buttonOnLong.actions.push(actionOnLong);
   buttonOff.actions.push(actionOff);
   buttonUp0.actions.push(actionUp0);
   buttonUp1.actions.push(actionUp1);
@@ -230,7 +211,7 @@ function sendRequest(index) {
   }
 }
 
-var buttons = [buttonOn, buttonUp0, buttonUp1, buttonUp3, buttonDown0,
-  buttonDown1, buttonDown3, buttonOff];
+var buttons = [buttonOn, buttonOnLong, buttonUp0, buttonUp1, buttonUp3, 
+  buttonDown0, buttonDown1, buttonDown3, buttonOff];
 
 sendRequest(0);

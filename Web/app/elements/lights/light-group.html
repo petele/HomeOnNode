@@ -20,7 +20,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin: 0;
       }
     </style>
-    <action-button on="[[group.action.on]]" on-tap="hueTap">
+    <action-button on="[[group.state.all_on]]" on-tap="hueTap">
       [[group.name]]
     </action-button>
   </template>
@@ -34,13 +34,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ready: function() {
         },
         hueTap: function() {
-          var scene = '';
-          if (this.scene === '_TOGGLE_' && this.group.action.on === true) {
-            scene = 'OFF';
-          } else if (this.scene === '_TOGGLE_' && this.group.action.on === false) {
-            scene = 'DEFAULT';
+          var lightState = {};
+          if (this.cmd.on === '_TOGGLE_') {
+            /* jshint -W106 */
+            // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
+            if (this.group.state && this.group.state.all_on === true) {
+              lightState.on = false;
+            } else {
+              lightState.on = true;
+            }
+            // jscs:enable
+            /* jshint +W106 */
           } else {
-            scene = this.scene;
+            if (this.cmd.on === 'OFF') {
+              lightState.on = false;
+            } else {
+              lightState = this.cmd;
+              lightState.on = true;
+            }
           }
           var key = this.group.key;
           if (parseInt(key, 10) !== 0) {
@@ -49,9 +60,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           var cmd = {
             hueCommand: {
               lights: key,
-              receipeName: scene
+              lightState: lightState
             }
           };
+          // console.log('set', lightState, cmd);
           app.sendCommand(cmd);
         }
       });

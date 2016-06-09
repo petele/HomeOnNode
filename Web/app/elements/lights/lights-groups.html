@@ -20,10 +20,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <div>
-      <light-group group="[[groupZero]]" scene="[[scene]]" class="abGrow">
+      <light-group group="[[groupZero]]" cmd="[[cmd]]" scene="[[scene]]" class="abGrow">
       </light-group>
        <template is="dom-repeat" items="[[groups]]">
-        <light-group group="[[item]]" scene="[[scene]]" class="abGrow">
+        <light-group group="[[item]]" cmd="[[cmd]]" class="abGrow">
         </light-group>
       </template>
     </div>
