@@ -62,15 +62,18 @@ function Sonos() {
   }
 
   function transportStateChanged(transportState) {
+    log.debug('[SONOS] transportStateChanged');
     _self.emit('transport-state', transportState);
   }
 
   function favoritesChanged(favorites) {
+    log.debug('[SONOS] favoritesChanged');
     _favorites = favorites;
     _self.emit('favorites', favorites);
   }
 
   function topologyChanged(zones) {
+    log.debug('[SONOS] topologyChanged');
     _self.emit('topology-changed', zones);
   }
 

@@ -914,6 +914,7 @@ function Home(config, fb) {
 
     if (sonos) {
       sonos.on('transport-state', function(transportState) {
+        log.debug('[HOME] sonosTransportState');
         fbSet('state/sonos/state', transportState);
         try {
           if ((_self.state.harmony) &&
@@ -926,9 +927,11 @@ function Home(config, fb) {
         }
       });
       sonos.on('topology-change', function(zones) {
+        log.debug('[HOME] sonosTopologyChange');
         fbSet('state/sonos/zones', zones);
       });
       sonos.on('favorites', function(favorites) {
+        log.debug('[HOME] sonosFavorites');
         fbSet('state/sonos/favorites', favorites);
       });
     }
