@@ -31,13 +31,9 @@ function Sonos() {
     log.init('[SONOS] Init start.');
     process.on('SIGINT', handleSigInt);
     _sonos = new SonosDiscovery({log: _logger});
-    setTimeout(function() {
-      log.log('[SONOS] Registering for events');
-      _sonos.on('transport-state', transportStateChanged);
-      _sonos.on('favorites', favoritesChanged);
-      _sonos.on('topology-change', topologyChanged);
-    }, 5000);
-    
+    _sonos.on('transport-state', transportStateChanged);
+    _sonos.on('favorites', favoritesChanged);
+    _sonos.on('topology-change', topologyChanged);
     log.init('[SONOS] Init complete.');
   }
 
@@ -66,18 +62,15 @@ function Sonos() {
   }
 
   function transportStateChanged(transportState) {
-    log.debug('[SONOS] transportStateChanged');
     _self.emit('transport-state', transportState);
   }
 
   function favoritesChanged(favorites) {
-    log.debug('[SONOS] favoritesChanged');
     _favorites = favorites;
     _self.emit('favorites', favorites);
   }
 
   function topologyChanged(zones) {
-    log.debug('[SONOS] topologyChanged');
     _self.emit('topology-changed', zones);
   }
 
