@@ -73,6 +73,7 @@ function Nest() {
         _self.getStatus(function() {
           log.log('[NEST] Ready.');
           initAlarmEvents();
+          monitorThermostats();
           _self.emit('ready');
         });
         _fbNest.onAuth(function(authToken) {
@@ -134,6 +135,25 @@ function Nest() {
     /* jshint +W106 */
   }
 
+  function monitorThermostats() {
+    var thermostats = getKeys(_nestData.devices.thermostats);
+    thermostats.forEach(function(key) {
+      log.debug('[NEST] Registering for thermostat online events for: ' + key);
+      var path = 'devices/thermostats/' + key + '/is_online';
+      _fbNest.child(path).on('value', function(snapshot) {
+        var isOnline = snapshot.val();
+        var thermostatName = _nestData.devices.thermostats[key].name;
+        var msg = '[NEST] ' + thermostatName + ' thermostat isOnline: ';
+        msg += isOnline.toString();
+        if (isOnline === true) {
+          log.log(msg);
+        } else {
+          log.warn(msg);
+        }
+      });
+    });
+  }
+
   function getKeys(data) {
     var keys = Object.keys(data);
     return keys;
@@ -165,8 +185,11 @@ function Nest() {
     var msg = '[NEST] setThermostatMode in ' + thermostat.name + ' to: ';
     msg += newMode;
     if (_thermostatModes.indexOf(newMode) === -1) {
-      log.error(msg + 'failed. Invalid mode (' + newMode + ')');
+      log.error(msg + ' failed. Invalid mode (' + newMode + ')');
       return false;
+    }
+    if (thermostat.is_online !== false) {
+      log.warn(msg + ' may fail, thermostat may be offline.');
     }
     log.debug(msg);
     var path = 'devices/thermostats/' + thermostat.device_id + '/hvac_mode';
@@ -190,6 +213,9 @@ function Nest() {
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
     var msg = '[NEST] setThermostatTemp in ' + thermostat.name + ' to: ';
     msg += newTemp + '°F';
+    if (thermostat.is_online !== false) {
+      log.warn(msg + ' may fail, thermostat may be offline.');
+    }
     log.debug(msg);
     var path = 'devices/thermostats/' + thermostat.device_id;
     path += '/target_temperature_f';
