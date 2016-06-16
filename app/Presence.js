@@ -14,6 +14,8 @@ function Presence() {
   var self = this;
   var nobleStarted = false;
   var status = {};
+  var flicUUID;
+  var lastFlic = 0;
   var numPresent = 0;
   var intervalID;
   var timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
@@ -60,7 +62,21 @@ function Presence() {
     }
   }
 
+  function sawFlic(peripheral) {
+    var flicTimeout = 1000 * 10;
+    var now = Date.now();
+    if (now > lastFlic + flicTimeout) {
+      lastFlic = now;
+      log.log('[PRESENCE] Flic AWAY button pushed.');
+      self.emit('flic_away');
+    }
+  }
+
   function sawPerson(peripheral) {
+    if (peripheral.uuid === flicUUID) {
+      sawFlic(peripheral);
+      return;
+    }
     var person = status[peripheral.uuid];
     if (person && person.track === true) {
       var now = Date.now();
@@ -100,6 +116,11 @@ function Presence() {
       noble.startScanning([], true);
     }
   }
+
+  this.setFlicAway = function(uuid) {
+    log.log('[PRESENCE] Set Flic Away UUID: ' + uuid);
+    flicUUID = uuid;
+  };
 
   this.addPerson = function(newPerson) {
     try {

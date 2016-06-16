@@ -475,6 +475,14 @@ function Home(config, fb) {
       presence.on('error', function(err) {
         log.exception('[HOME] Presence error', err);
       });
+      var fbPresFlicPath = 'config/HomeOnNode/presence/FlicAway';
+      fb.child(fbPresFlicPath).on('value', function(snapshot) {
+        presence.setFlicAway(snapshot.val());
+      });
+      presence.on('flic_away', function() {
+        log.log('[HOME] !!!!! SET AWAY TRUE!!! IT WORKED!');
+        // setState('ARMED');
+      });
       presence.on('change', function(person, present, who) {
         var presenceLog = {
           level: 'INFO',
@@ -915,15 +923,6 @@ function Home(config, fb) {
     if (sonos) {
       sonos.on('transport-state', function(transportState) {
         fbSet('state/sonos/state', transportState);
-        // try {
-        //   if ((_self.state.harmony) &&
-        //       (_self.state.harmony.id === '-1') &&
-        //       (transportState.state.zoneState === 'PLAYING')) {
-        //     setHarmonyActivity('Sonos');
-        //   }
-        // } catch (ex) {
-        //   log.exception('[HOME] Unable to update zone state.', ex);
-        // }
       });
       sonos.on('topology-change', function(zones) {
         fbSet('state/sonos/zones', zones);
