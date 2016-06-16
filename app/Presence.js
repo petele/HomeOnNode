@@ -63,13 +63,19 @@ function Presence() {
   }
 
   function sawFlic(peripheral) {
-    var flicTimeout = 1000 * 60;
     var now = Date.now();
-    if (now > lastFlic + flicTimeout) {
-      lastFlic = now;
+    if (now - lastFlic < 750) {
+      lastFlic = now + (30 * 1000);
       log.log('[PRESENCE] Flic AWAY button pushed: ' + peripheral.uuid);
       self.emit('flic_away');
     }
+    // var flicTimeout = 1000 * 60;
+    // var now = Date.now();
+    // if (now > lastFlic + flicTimeout) {
+    //   lastFlic = now;
+    //   log.log('[PRESENCE] Flic AWAY button pushed: ' + peripheral.uuid);
+    //   self.emit('flic_away');
+    // }
   }
 
   function sawPerson(peripheral) {
@@ -119,6 +125,7 @@ function Presence() {
 
   this.setFlicAway = function(uuid) {
     log.log('[PRESENCE] Set Flic Away UUID: ' + uuid);
+    lastFlic = Date.now() + (60 * 1000);
     flicUUID = uuid;
   };
 
