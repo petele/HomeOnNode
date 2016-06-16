@@ -63,11 +63,11 @@ function Presence() {
   }
 
   function sawFlic(peripheral) {
-    var flicTimeout = 1000 * 10;
+    var flicTimeout = 1000 * 60;
     var now = Date.now();
     if (now > lastFlic + flicTimeout) {
       lastFlic = now;
-      log.log('[PRESENCE] Flic AWAY button pushed.');
+      log.log('[PRESENCE] Flic AWAY button pushed: ' + peripheral.uuid);
       self.emit('flic_away');
     }
   }
