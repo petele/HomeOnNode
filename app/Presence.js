@@ -86,7 +86,7 @@ function Presence() {
   }
 
   function sawPerson(peripheral) {
-    if (peripheral.uuid === flicUUID) {
+    if (flicUUID && peripheral.uuid === flicUUID) {
       sawFlic(peripheral);
       return;
     }

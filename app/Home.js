@@ -480,8 +480,7 @@ function Home(config, fb) {
         presence.setFlicAway(snapshot.val());
       });
       presence.on('flic_away', function() {
-        log.log('[HOME] !!!!! SET AWAY TRUE!!! IT WORKED!');
-        // setState('ARMED');
+        _self.executeCommand({state: 'ARMED'}, 'Flic');
       });
       presence.on('change', function(person, present, who) {
         var presenceLog = {
@@ -551,14 +550,27 @@ function Home(config, fb) {
       harmony.on('ready', function(config) {
         fbSet('state/harmonyConfig', config);
       });
-      harmony.on('activity', function(activity) {
-        fbSet('state/harmony', activity);
-        log.log('[HOME] Harmony activity is: ' + JSON.stringify(activity));
-      });
+      harmony.on('activity', updateHarmonyActivity);
       harmony.on('no_hubs_found', shutdownHarmony);
       harmony.on('connection_failed', shutdownHarmony);
       harmony.on('error', function(err) {
         log.exception('[HOME] Harmony error occured.', err);
+      });
+    }
+  }
+
+  function updateHarmonyActivity(newActivity) {
+    log.log('[HOME] Harmony activity is: ' + JSON.stringify(newActivity));
+    fbSet('state/harmony', newActivity);
+    if (_self.state.harmonyConfig && _self.state.harmonyConfig.activity) {
+      var activityPath = 'state/harmonyConfig/activity/[I]/isOn';
+      var activities = _self.state.harmonyConfig.activity;
+      activities.forEach(function(activity, i) {
+        var isOn = false;
+        if (activity.id === newActivity.id) {
+          isOn = false;
+        }
+        fbSet(activityPath.replace('[I]', i), isOn);
       });
     }
   }
