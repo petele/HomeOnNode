@@ -77,7 +77,7 @@ function Presence() {
       var msg = '[PRESENCE] Flic ';
       msg += timeSinceLastFlic + ' ';
       msg += now + ' ';
-      msg += timeSinceLastFlic;
+      msg += lastFlic;
       log.debug(msg);
     }
     lastFlic = now;
@@ -130,7 +130,6 @@ function Presence() {
 
   this.setFlicAway = function(uuid) {
     log.log('[PRESENCE] Set Flic Away UUID: ' + uuid);
-    lastFlic = Date.now() + (60 * 1000);
     flicUUID = uuid;
   };
 
