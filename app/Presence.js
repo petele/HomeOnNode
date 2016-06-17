@@ -15,7 +15,7 @@ function Presence() {
   var nobleStarted = false;
   var status = {};
   var flicUUID;
-  var lastFlic = 0;
+  var lastFlics = [];
   var flicPushed = false;
   var numPresent = 0;
   var intervalID;
@@ -64,23 +64,25 @@ function Presence() {
   }
 
   function sawFlic(peripheral) {
+    var TIMES_FLIC_HIT = 4;
     var now = Date.now();
-    var timeSinceLastFlic = Math.abs(now - lastFlic);
-    if (timeSinceLastFlic < 100 && lastFlic !== 0 && !flicPushed) {
-      flicPushed = true;
-      setTimeout(function() {
-        log.debug('[PRESENCE] flicPushed: ' + flicPushed + ' reset');
-        flicPushed = false;
-      }, 60000);
-      log.log('[PRESENCE] Flic AWAY button pushed: ' + peripheral.uuid);
-      self.emit('flic_away');
-      var msg = '[PRESENCE] Flic ';
-      msg += timeSinceLastFlic + ' ';
-      msg += now + ' ';
-      msg += lastFlic;
-      log.debug(msg);
+    lastFlics.unshift(now);
+    if (lastFlics[TIMES_FLIC_HIT - 1]) {
+      var timeSinceLastFlic = now - lastFlics[TIMES_FLIC_HIT - 1];
+      if (timeSinceLastFlic < 250 && flicPushed !== true) {
+        flicPushed = true;
+        setTimeout(function() {
+          flicPushed = false;
+        }, 45000);
+        var msg = '[PRESENCE] Flic Button Pushed: ';
+        msg += timeSinceLastFlic + ' ';
+        msg += moment(now).format(timeFormat) + ' ';
+        msg += lastFlics;
+        log.debug(msg);
+        self.emit('flic_away');
+      }
     }
-    lastFlic = now;
+    lastFlics = lastFlics.slice(0, TIMES_FLIC_HIT - 1);
   }
 
   function sawPerson(peripheral) {
