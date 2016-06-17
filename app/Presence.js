@@ -63,20 +63,25 @@ function Presence() {
     }
   }
 
-function sawFlic(peripheral) {
-  var now = Date.now();
-  var timeSinceLastFlic = Math.abs(now - lastFlic);
-  if (timeSinceLastFlic < 100 && lastFlic !== 0 && !flicPushed) {
-    flicPushed = true;
-    setTimeout(function() {
-      flicPushed = false;
-      console.log('ready again');
-    }, 60000);
-    log.log('[PRESENCE] Flic AWAY button pushed: ' + peripheral.uuid);
-    self.emit('flic_away');
+  function sawFlic(peripheral) {
+    var now = Date.now();
+    var timeSinceLastFlic = Math.abs(now - lastFlic);
+    if (timeSinceLastFlic < 100 && lastFlic !== 0 && !flicPushed) {
+      flicPushed = true;
+      setTimeout(function() {
+        log.debug('[PRESENCE] flicPushed: ' + flicPushed + ' reset');
+        flicPushed = false;
+      }, 60000);
+      log.log('[PRESENCE] Flic AWAY button pushed: ' + peripheral.uuid);
+      self.emit('flic_away');
+      var msg = '[PRESENCE] Flic ';
+      msg += timeSinceLastFlic + ' ';
+      msg += now + ' ';
+      msg += timeSinceLastFlic;
+      log.debug(msg);
+    }
+    lastFlic = now;
   }
-  lastFlic = now;
-}
 
   function sawPerson(peripheral) {
     if (peripheral.uuid === flicUUID) {
