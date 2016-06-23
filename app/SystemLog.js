@@ -19,15 +19,12 @@ var _bootLogs = [];
 function setFirebase(fbRef) {
   if (fbRef) {
     _fbRef = fbRef;
-    log('[LOGGER] Firebase logging enabled.');
-    log('[LOGGER] saveBootLogs: ' + _saveBootLogs);
-    log('[LOGGER] bootLogs: ' + _bootLogs.length);
     _saveBootLogs = false;
     _bootLogs.forEach(function(logObj) {
       _fbRef.child('logs/logs').push(logObj);
     });
     _bootLogs = [];
-    // log('[LOGGER] Firebase logging enabled.');
+    log('[LOGGER] Firebase logging enabled.');
   } else {
     log('[LOGGER] Firebase logging disabled.');
     _fbRef = null;
@@ -76,10 +73,9 @@ function setDebug(debug) {
 
 function setSaveBootLogs(save) {
   if (save === true) {
+    _bootLogs = [];
     _saveBootLogs = true;
-    log('[LOGGER] Save Boot Logs: true');
   } else {
-    log('[LOGGER] Save Boot Logs: false');
     _saveBootLogs = false;
   }
 }

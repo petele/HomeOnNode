@@ -15,7 +15,8 @@ function Sonos() {
   var _logger = {
     stringify: function() {
       var result = '';
-      Array.prototype.slice.call(arguments).forEach(function(arg) {
+      var args = Array.prototype.slice.call(arguments);
+      args.forEach(function(arg) {
         if (typeof arg === 'string') {
           result += arg + ' ';
         } else {
@@ -25,13 +26,40 @@ function Sonos() {
       return result.trim();
     },
     info: function() {
-      log.info('[SONOS*]' + this.stringify(arguments));
+      var result = '';
+      var args = Array.prototype.slice.call(arguments);
+      args.forEach(function(arg) {
+        if (typeof arg === 'string') {
+          result += arg + ' ';
+        } else {
+          result += util.inspect(arg) + ' ';
+        }
+      });
+      log.info('[SONOS*]' + result);
     },
     error: function() {
-      log.error('[SONOS*] ' + this.stringify(arguments));
+      var result = '';
+      var args = Array.prototype.slice.call(arguments);
+      args.forEach(function(arg) {
+        if (typeof arg === 'string') {
+          result += arg + ' ';
+        } else {
+          result += util.inspect(arg) + ' ';
+        }
+      });
+      log.error('[SONOS*] ' + result);
     },
-    debug: function(arg) {
-      log.debug('[SONOS*] ' + this.stringify(arguments));
+    debug: function() {
+      var result = '';
+      var args = Array.prototype.slice.call(arguments);
+      args.forEach(function(arg) {
+        if (typeof arg === 'string') {
+          result += arg + ' ';
+        } else {
+          result += util.inspect(arg) + ' ';
+        }
+      });
+      log.debug('[SONOS*] ' + result);
     }
   };
 
