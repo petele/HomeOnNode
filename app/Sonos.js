@@ -13,17 +13,16 @@ function Sonos() {
   var _favorites = {};
 
   var _logger = {
-    stringify: function() {
+    stringify: function(args) {
       var result = '';
-      var args = Array.prototype.slice.call(arguments);
-      args.forEach(function(arg) {
+      Array.prototype.slice.call(args).forEach(function(arg) {
         if (typeof arg === 'string') {
           result += arg + ' ';
         } else {
           result += util.inspect(arg, {depth: 3}) + ' ';
         }
       });
-      return result.replace(/\n/g, '').trim();
+      return result.replace(/XXXXXXXXX/g, '').trim();
     },
     info: function() {
       log.log('[SONOS*] ' + this.stringify(arguments));
