@@ -18,11 +18,11 @@ var _bootLogs = [];
 
 function setFirebase(fbRef) {
   if (fbRef) {
-    _saveBootLogs = false;
     _fbRef = fbRef;
     log('[LOGGER] Firebase logging enabled.');
     log('[LOGGER] saveBootLogs: ' + _saveBootLogs);
     log('[LOGGER] bootLogs: ' + _bootLogs.length);
+    _saveBootLogs = false;
     _bootLogs.forEach(function(logObj) {
       _fbRef.child('logs/logs').push(logObj);
     });
