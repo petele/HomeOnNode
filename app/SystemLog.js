@@ -74,6 +74,16 @@ function setDebug(debug) {
   }
 }
 
+function setSaveBootLogs(save) {
+  if (save === true) {
+    _saveBootLogs = true;
+    log('[LOGGER] Save Boot Logs: true');
+  } else {
+    log('[LOGGER] Save Boot Logs: false');
+    _saveBootLogs = false;
+  }
+}
+
 function generateLog(level, message, error) {
   var dt = Date.now();
   var dtPretty = moment(dt).format('YYYY-MM-DDTHH:mm:ss.SSS');
@@ -252,7 +262,7 @@ function cleanLogs(path, maxAgeDays) {
   );
 }
 
-exports.saveBootLogs = _saveBootLogs;
+exports.setSaveBootLogs = setSaveBootLogs;
 exports.cleanLogs = cleanLogs;
 exports.setFirebase = setFirebase;
 exports.setVerbose = setVerbose;
