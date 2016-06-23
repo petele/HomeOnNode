@@ -13,17 +13,25 @@ function Sonos() {
   var _favorites = {};
 
   var _logger = {
-    info: function(arg) {
-      var args  = Array.prototype.slice.call(arguments);
-      log.debug('[SONOS*] ' + args.join(' '));
+    stringify: function() {
+      var result = '';
+      Array.prototype.slice.call(arguments).forEach(function(arg) {
+        if (typeof arg === 'string') {
+          result += arg + ' ';
+        } else {
+          result += util.inspect(arg) + ' ';
+        }
+      });
+      return result.trim();
     },
-    error: function(arg) {
-      var args  = Array.prototype.slice.call(arguments);
-      log.debug('[SONOS*] ERROR: ' + args.join(' '));
+    info: function() {
+      log.info('[SONOS*]' + this.stringify(arguments));
+    },
+    error: function() {
+      log.error('[SONOS*] ' + this.stringify(arguments));
     },
     debug: function(arg) {
-      var args  = Array.prototype.slice.call(arguments);
-      log.debug('[SONOS*] ' + args.join(' '));
+      log.debug('[SONOS*] ' + this.stringify(arguments));
     }
   };
 
@@ -104,7 +112,7 @@ function Sonos() {
     var msg = '[SONOS] genericResponseHandler - ' + apiName;
     if (response) {
       try {
-        msg += ': ' + JSON.stringify(response);
+        msg += ': ' + util.inspect(response);
       } catch (ex) {
         var exMsg = '[SONOS] Unable to stringify response: ' + response;
         log.exception(exMsg, ex);
