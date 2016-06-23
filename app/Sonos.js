@@ -20,19 +20,19 @@ function Sonos() {
         if (typeof arg === 'string') {
           result += arg + ' ';
         } else {
-          result += util.inspect(arg) + ' ';
+          result += util.inspect(arg, {depth: 3}) + ' ';
         }
       });
-      return result.trim();
+      return result.replace(/\n/g, '').trim();
     },
     info: function() {
-      log.log('[SONOS*]' + this.stringify(arguments));
+      log.log('[SONOS*] ' + this.stringify(arguments));
     },
     error: function() {
       log.error('[SONOS*] ' + this.stringify(arguments));
     },
     debug: function() {
-      log.debug('[SONOS*] ' + this.stringify(arguments));
+      log.log('[SONOS*] ' + this.stringify(arguments));
     }
   };
 
