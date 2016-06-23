@@ -13,10 +13,17 @@ var _logFile = _logFileDefault;
 var _fbRef = null;
 var _logDebug = false;
 var _verbose = true;
+var _saveBootLogs = false;
+var _bootLogs = [];
 
 function setFirebase(fbRef) {
   if (fbRef) {
+    _saveBootLogs = false;
     _fbRef = fbRef;
+    _bootLogs.forEach(function(logObj) {
+      _fbRef.child('logs/logs').push(logObj);
+    });
+    _bootLogs = [];
     log('[LOGGER] Firebase logging enabled.');
   } else {
     log('[LOGGER] Firebase logging disabled.');
@@ -116,6 +123,9 @@ function printLogObj(logObj) {
 
 function saveLog(logObj) {
   printLogObj(logObj);
+  if (_saveBootLogs) {
+    _bootLogs.push(logObj);
+  }
   if (_fbRef) {
     try {
       _fbRef.child('logs/logs').push(logObj, function(err) {
@@ -239,6 +249,7 @@ function cleanLogs(path, maxAgeDays) {
   );
 }
 
+exports.saveBootLogs = _saveBootLogs;
 exports.cleanLogs = cleanLogs;
 exports.setFirebase = setFirebase;
 exports.setVerbose = setVerbose;

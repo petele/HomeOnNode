@@ -14,6 +14,7 @@ var home;
 var httpServer;
 
 var APP_NAME = 'HomeOnNode';
+log.saveBootLogs(true);
 log.setLogFileName('./start.log');
 log.setFileLogging(true);
 log.appStart(APP_NAME);
