@@ -22,7 +22,7 @@ function Sonos() {
           result += util.inspect(arg, {depth: 3}) + ' ';
         }
       });
-      return result.replace(/XXXXXXXXX/g, '').trim();
+      return result.trim();
     },
     info: function() {
       log.log('[SONOS*] ' + this.stringify(arguments));
@@ -31,7 +31,7 @@ function Sonos() {
       log.error('[SONOS*] ' + this.stringify(arguments));
     },
     debug: function() {
-      log.log('[SONOS*] ' + this.stringify(arguments));
+      log.debug('[SONOS*] ' + this.stringify(arguments));
     }
   };
 
