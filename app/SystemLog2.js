@@ -121,9 +121,11 @@ function generateLog(level, prefix, message, extra) {
     prefix: prefix,
     message: msg,
     rawMessage: message,
-    extra: extra,
     version: gitHead.head
   };
+  if (extra) {
+    result.extra = extra;
+  }
   return result;
 }
 
