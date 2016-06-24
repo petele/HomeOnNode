@@ -61,7 +61,7 @@ function Nest() {
   };
 
   this.login = function(accessToken) {
-    log.init('[NEST]');
+    log.init(LOG_PREFIX, 'Init');
     _fbNest = new Firebase('https://developer-api.nest.com');
     _fbNest.authWithCustomToken(accessToken, function(err, token) {
       if (err) {
