@@ -3,7 +3,7 @@
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var exec = require('child_process').exec;
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var Keys = require('./Keys').keys;
 var version = require('./version');
 var moment = require('moment');
@@ -18,6 +18,8 @@ var Nest = require('./Nest');
 var ZWave = require('./ZWave');
 var Sonos = require('./Sonos');
 var GCMPush = require('./GCMPush');
+
+var LOG_PREFIX = 'HOME';
 
 function Home(config, fb) {
   this.state = {};
@@ -52,11 +54,11 @@ function Home(config, fb) {
           return result.hue;
         }
       } catch (ex) {
-        log.error('[HOME] Error retreiving light scene: ' + sceneName);
+        log.error(LOG_PREFIX, 'Error retreiving light scene: ' + sceneName);
         return defaultScene;
       }
     }
-    log.warn('[HOME] Could not determine light scene: ' + sceneName);
+    log.warn(LOG_PREFIX, 'Could not determine light scene: ' + sceneName);
     return defaultScene;
   }
 
@@ -66,38 +68,38 @@ function Home(config, fb) {
       if (cmdName) {
         _self.executeCommandByName(cmdName, modifier, sender);
       } else {
-        log.warn('[HOME] Unknown key pressed: ' + key);
+        log.warn(LOG_PREFIX, 'Unknown key pressed: ' + key);
       }
     } catch (ex) {
-      log.exception('[HOME] Error handling key entry.', ex);
+      log.exception(LOG_PREFIX, 'Error handling key entry.', ex);
     }
   };
 
   this.executeCommandByName = function(commandName, modifier, source) {
-    var msg = '[HOME] executeCommandByName: ' + commandName;
+    var msg = 'executeCommandByName: ' + commandName;
     if (modifier) {
       msg += ' (' + modifier + ')';
     }
     msg += ' received from: ' + source;
-    log.log(msg);
+    log.log(LOG_PREFIX, msg);
     var command = config.commands[commandName];
     if (command) {
       command.modifier = modifier;
       _self.executeCommand(command, source);
       return;
     }
-    log.warn('[HOME] Command (' + commandName + ') not found.');
+    log.warn(LOG_PREFIX, 'Command (' + commandName + ') not found.');
   };
 
   this.executeCommand = function(command, source) {
     var modifier = command.modifier;
-    var msg = '[HOME] executeCommand ';
+    var msg = 'executeCommand ';
     msg += '[' + Object.keys(command) + ']';
     if (modifier) {
       msg += ' (' + modifier + ')';
     }
     msg += ' received from: ' + source;
-    log.log(msg);
+    log.log(LOG_PREFIX, msg);
     var cmds;
     if (command.hasOwnProperty('hueScene')) {
       var scenes = command.hueScene;
@@ -236,7 +238,7 @@ function Home(config, fb) {
   };
 
   this.ringDoorbell = function(source) {
-    log.log('[HOME] Doorbell');
+    log.log(LOG_PREFIX, 'Doorbell');
     fbSet('state/lastDoorbell', Date.now());
     return _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
   };
@@ -250,7 +252,7 @@ function Home(config, fb) {
   function handleDoorEvent(doorName, doorState, updateState) {
     try {
       if (_self.state.doors[doorName] === doorState) {
-        log.info('[HOME] Door debouncer, door already ' + doorState);
+        log.info(LOG_PREFIX, 'Door debouncer, door already ' + doorState);
         return;
       }
     } catch (ex) {
@@ -267,7 +269,7 @@ function Home(config, fb) {
       date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
     };
     fbPush('logs/doors', doorLogObj);
-    log.log('[HOME] ' + doorName + ' ' + doorState);
+    log.log(LOG_PREFIX, doorName + ' ' + doorState);
     if (updateState === true) {
       if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
         setState('HOME');
@@ -282,7 +284,7 @@ function Home(config, fb) {
   }
 
   function setDoNotDisturb(val) {
-    log.debug('[HOME] setDoNotDisturb: ' + val);
+    log.debug(LOG_PREFIX, 'setDoNotDisturb: ' + val);
     if (val === 'ON') {
       fbSet('state/doNotDisturb', true);
       return true;
@@ -292,7 +294,7 @@ function Home(config, fb) {
   }
 
   function setState(newState) {
-    log.debug('[HOME] setState: ' + newState);
+    log.debug(LOG_PREFIX, 'setState: ' + newState);
     if (armingTimer) {
       clearTimeout(armingTimer);
       armingTimer = null;
@@ -305,7 +307,7 @@ function Home(config, fb) {
       }, armingDelay);
     }
     if (_self.state.systemState === newState) {
-      log.warn('[HOME] State already set to ' + newState);
+      log.warn(LOG_PREFIX, 'State already set to ' + newState);
       return false;
     }
     fbSet('state/systemState', newState);
@@ -330,14 +332,14 @@ function Home(config, fb) {
   }
 
   function playSound(file, force) {
-    log.debug('[HOME] playSound: ' + file + ' ' + force);
+    log.debug(LOG_PREFIX, 'playSound: ' + file + ' ' + force);
     if (_self.state.doNotDisturb === false || force === true) {
       setTimeout(function() {
         var cmd = 'mplayer ';
         cmd += file;
         exec(cmd, function(error, stdout, stderr) {
           if (error) {
-            log.exception('[HOME] PlaySound Error', error);
+            log.exception(LOG_PREFIX, 'PlaySound Error', error);
           }
         });
       }, 1);
@@ -358,12 +360,12 @@ function Home(config, fb) {
     try {
       fbObj.push(value, function(err) {
         if (err) {
-          log.exception('[HOME] Unable to push data to Firebase. (CB)', err);
+          log.exception(LOG_PREFIX, 'Unable to push data to Firebase. (CB)', err);
         }
       });
       fbSetLastUpdated();
     } catch (ex) {
-      log.exception('[HOME] Unable to PUSH data to Firebase. (TC)', ex);
+      log.exception(LOG_PREFIX, 'Unable to PUSH data to Firebase. (TC)', ex);
     }
   }
 
@@ -378,13 +380,13 @@ function Home(config, fb) {
       } else {
         fbObj.set(value, function(err) {
           if (err) {
-            log.exception('[HOME] Set data failed on path: ' + path, err);
+            log.exception(LOG_PREFIX, 'Set data failed on path: ' + path, err);
           }
         });
       }
       fbSetLastUpdated();
     } catch (ex) {
-      log.exception('[HOME] Unable to set data on path: ' + path, ex);
+      log.exception(LOG_PREFIX, 'Unable to set data on path: ' + path, ex);
     }
   }
 
@@ -403,52 +405,52 @@ function Home(config, fb) {
    ****************************************************************************/
 
   function initWeather() {
-    log.debug('[HOME] Updating weather.');
+    log.debug(LOG_PREFIX, 'Updating weather.');
     if (config.weatherLatLong && Keys.forecastIO && Keys.forecastIO.key) {
       var url = 'https://api.forecast.io/forecast/';
       url += Keys.forecastIO.key + '/';
       url += config.weatherLatLong;
       request(url, function(error, response, body) {
         if (error || !response || response.statusCode !== 200) {
-          var msg = '[WEATHER] Forecast.IO API - ';
+          var msg = 'Forecast.IO API - ';
           if (error) {
-            log.exception(msg + 'Error', error);
+            log.exception(LOG_PREFIX, msg + 'Error', error);
             return;
           } else if (!response) {
-            log.error(msg + 'No response!');
+            log.error(LOG_PREFIX, msg + 'No response!');
             return;
           } else if (response.statusCode !== 200) {
-            log.error(msg + 'Returned statusCode: ' + response.statusCode);
-            log.debug('[WEATHER] Response: ' + body);
+            log.error(LOG_PREFIX, msg + 'Returned statusCode: ' + response.statusCode);
+            log.debug('Response: ' + body);
             return;
           }
-          log.exception(msg + 'Unknown Error');
+          log.exception(LOG_PREFIX, msg + 'Unknown Error');
           return;
         }
         var forecast;
         try {
           forecast = JSON.parse(body);
         } catch (ex) {
-          log.exception('[WEATHER] Unable to parse weather response', ex);
+          log.exception(LOG_PREFIX, 'Unable to parse weather response', ex);
           return;
         }
         if (forecast) {
           if (forecast.currently) {
             fbSet('state/weather/now', forecast.currently);
           } else {
-            log.error('[WEATHER] Could not find current forecast.');
+            log.error(LOG_PREFIX, 'Could not find current forecast.');
           }
           if (forecast.daily && forecast.daily.data[0]) {
             fbSet('state/weather/today', forecast.daily.data[0]);
           } else {
-            log.error('[WEATHER] Could not find daily forecast.');
+            log.error(LOG_PREFIX, 'Could not find daily forecast.');
           }
         } else {
-          log.error('[WEATHER] Could not find forecast!');
+          log.error(LOG_PREFIX, 'Could not find forecast!');
         }
       });
     } else {
-      log.warn('[WEATHER] Missing key, expected Lat/Lon & API Key');
+      log.warn(LOG_PREFIX, 'Missing key, expected Lat/Lon & API Key');
     }
     var interval = 5 * 60 * 1000;
     setTimeout(initWeather, interval);
@@ -464,7 +466,7 @@ function Home(config, fb) {
     try {
       presence = new Presence();
     } catch (ex) {
-      log.exception('[HOME] Unable to initialize Presence', ex);
+      log.exception(LOG_PREFIX, 'Unable to initialize Presence', ex);
       shutdownPresence();
       return;
     }
@@ -473,7 +475,7 @@ function Home(config, fb) {
       presence.on('adapterError', shutdownPresence);
       presence.on('presence_unavailable', shutdownPresence);
       presence.on('error', function(err) {
-        log.exception('[HOME] Presence error', err);
+        log.exception(LOG_PREFIX, 'Presence error', err);
       });
       var fbPresFlicPath = 'config/HomeOnNode/presence/FlicAway';
       fb.child(fbPresFlicPath).on('value', function(snapshot) {
@@ -520,11 +522,11 @@ function Home(config, fb) {
   }
 
   function shutdownPresence() {
-    log.log('[HOME] Shutting down Presence.');
+    log.log(LOG_PREFIX, 'Shutting down Presence.');
     try {
       presence.shutdown();
     } catch (ex) {
-      log.warn('[HOME] Error attempting to shut down Presence.');
+      log.warn(LOG_PREFIX, 'Error attempting to shut down Presence.');
     }
     var fbPresPath = 'config/HomeOnNode/presence/people';
     fb.child(fbPresPath).off();
@@ -541,7 +543,7 @@ function Home(config, fb) {
     try {
       harmony = new Harmony(Keys.harmony.key);
     } catch (ex) {
-      log.exception('[HOME] Unable to initialize Harmony', ex);
+      log.exception(LOG_PREFIX, 'Unable to initialize Harmony', ex);
       shutdownHarmony();
       return;
     }
@@ -554,13 +556,13 @@ function Home(config, fb) {
       harmony.on('no_hubs_found', shutdownHarmony);
       harmony.on('connection_failed', shutdownHarmony);
       harmony.on('error', function(err) {
-        log.exception('[HOME] Harmony error occured.', err);
+        log.exception(LOG_PREFIX, 'Harmony error occured.', err);
       });
     }
   }
 
   function updateHarmonyActivity(newActivity) {
-    log.log('[HOME] Harmony activity is: ' + JSON.stringify(newActivity));
+    log.log(LOG_PREFIX, 'Harmony activity is: ' + JSON.stringify(newActivity));
     fbSet('state/harmony', newActivity);
     if (_self.state.harmonyConfig && _self.state.harmonyConfig.activity) {
       var activityPath = 'state/harmonyConfig/activity/[I]/isOn';
@@ -576,11 +578,11 @@ function Home(config, fb) {
   }
 
   function shutdownHarmony() {
-    log.log('[HOME] Shutting down Harmony.');
+    log.log(LOG_PREFIX, 'Shutting down Harmony.');
     try {
       harmony.close();
     } catch (ex) {
-      log.warn('[HOME] Error attempting to shut down Harmony.');
+      log.warn(LOG_PREFIX, 'Error attempting to shut down Harmony.', ex);
     }
     harmony = null;
   }
@@ -591,11 +593,11 @@ function Home(config, fb) {
         harmony.getConfig();
         return true;
       } catch (ex) {
-        log.exception('[HOME] Harmony refreshHarmonyConfig failed.', ex);
+        log.exception(LOG_PREFIX, 'Harmony refreshHarmonyConfig failed.', ex);
         return false;
       }
     }
-    log.warn('[HOME] Harmony refreshHarmonyConfig failed, Harmony not ready');
+    log.warn(LOG_PREFIX, 'Harmony refreshHarmonyConfig failed, Harmony not ready');
     return false;
   }
 
@@ -605,11 +607,11 @@ function Home(config, fb) {
         harmony.setActivityByName(activityName);
         return true;
       } catch (ex) {
-        log.exception('[HOME] Harmony activity failed', ex);
+        log.exception(LOG_PREFIX, 'Harmony activity failed', ex);
         return false;
       }
     }
-    log.warn('[HOME] Harmony activity failed, Harmony not ready.');
+    log.warn(LOG_PREFIX, 'Harmony activity failed, Harmony not ready.');
     return false;
   }
 
@@ -619,11 +621,11 @@ function Home(config, fb) {
         harmony.sendCommand(harmonyKey);
         return true;
       } catch (ex) {
-        log.exception('[HOME] Harmony command failed', ex);
+        log.exception(LOG_PREFIX, 'Harmony command failed', ex);
         return false;
       }
     }
-    log.warn('[HOME] Harmony command failed, Harmony not ready.');
+    log.warn(LOG_PREFIX, 'Harmony command failed, Harmony not ready.');
     return false;
   }
 
@@ -637,7 +639,7 @@ function Home(config, fb) {
     try {
       nest = new Nest();
     } catch (ex) {
-      log.exception('[HOME] Unable to initialize Nest', ex);
+      log.exception(LOG_PREFIX, 'Unable to initialize Nest', ex);
       shutdownNest();
       return;
     }
@@ -645,17 +647,17 @@ function Home(config, fb) {
     if (nest) {
       nest.login(Keys.nest.token);
       nest.on('authError', function(err) {
-        log.exception('[HOME] Nest auth error occured.', err);
+        log.exception(LOG_PREFIX, 'Nest auth error occured.', err);
         shutdownNest();
       });
       nest.on('change', function(data) {
         fbSet('state/nest', data);
       });
       nest.on('alarm', function(kind, protect) {
-        var msg = '[HOME] Nest Alarm - ';
+        var msg = 'Nest Alarm - ';
         msg += 'kind: ' + JSON.stringify(kind);
         msg += 'protect: ' + JSON.stringify(protect);
-        log.warn(msg);
+        log.warn(LOG_PREFIX, msg);
         _self.executeCommandByName('NEST_ALARM', null, 'NEST_ALARM');
       });
       nest.on('ready', function(data) {
@@ -665,7 +667,7 @@ function Home(config, fb) {
   }
 
   function shutdownNest() {
-    log.log('[HOME] Shutting down Nest.');
+    log.log(LOG_PREFIX, 'Shutting down Nest.');
     nest = null;
   }
 
@@ -679,11 +681,11 @@ function Home(config, fb) {
         nest.disableCamera();
         return true;
       } catch (ex) {
-        log.exception('[HOME] Failed to update NestCam', ex);
+        log.exception(LOG_PREFIX, 'Failed to update NestCam', ex);
         return false;
       }
     }
-    log.warn('[HOME] NestCam command failed, Nest not ready.');
+    log.warn(LOG_PREFIX, 'NestCam command failed, Nest not ready.');
     return false;
   }
 
@@ -706,16 +708,16 @@ function Home(config, fb) {
         fbSet('state/nestETA', etaBegin);
         return true;
       } catch (ex) {
-        log.exception('[HOME] Error setting Nest ETA', ex);
+        log.exception(LOG_PREFIX, 'Error setting Nest ETA', ex);
         return false;
       }
     }
-    log.warn('[HOME] Unable to set Nest ETA, Nest not ready.');
+    log.warn(LOG_PREFIX, 'Unable to set Nest ETA, Nest not ready.');
     return false;
   }
 
   function getNestThermostatId(roomId) {
-    var msg = '[HOME] getNestThermostatId failed, ';
+    var msg = 'getNestThermostatId failed, ';
     try {
       if (roomId.indexOf('devices/thermostats/') === 0) {
         var id = config.hvac.thermostats[roomId];
@@ -723,16 +725,16 @@ function Home(config, fb) {
           return id;
         } else {
 
-          log.error(msg + 'roomId (' + roomId + ') not found.');
+          log.error(LOG_PREFIX, msg + 'roomId (' + roomId + ') not found.');
           return null;
         }
       } else if (roomId) {
         return roomId;
       }
-      log.error(msg + 'no roomId provided.');
+      log.error(LOG_PREFIX, msg + 'no roomId provided.');
       return null;
     } catch (ex) {
-      log.exception(msg, ex);
+      log.exception(LOG_PREFIX, msg, ex);
       return null;
     }
   }
@@ -758,19 +760,19 @@ function Home(config, fb) {
           }
           return nest.setTemperature(id, mode, temperature);
         }
-        log.error('[HOME] setNestThermostat failed, thermostat not found');
+        log.error(LOG_PREFIX, 'setNestThermostat failed, thermostat not found');
         return false;
       } catch (ex) {
-        log.exception('[HOME] adjustNestThermostat failed', ex);
+        log.exception(LOG_PREFIX, 'adjustNestThermostat failed', ex);
         return false;
       }
     }
-    log.log('[HOME] adjustNestThermostat failed, Nest unavailable.');
+    log.log(LOG_PREFIX, 'adjustNestThermostat failed, Nest unavailable.');
     return false;
   }
 
   function setNestThermostat(roomId, mode, temperature) {
-    var msg = '[HOME] setNestThermostat failed, ';
+    var msg = 'setNestThermostat failed, ';
     if (nest) {
       try {
         var id = getNestThermostatId(roomId);
@@ -778,33 +780,33 @@ function Home(config, fb) {
           if (mode && temperature) {
             return nest.setTemperature(id, mode, temperature);
           } else {
-            log.error(msg + 'invalid mode or temperature');
+            log.error(LOG_PREFIX, msg + 'invalid mode or temperature');
             return false;
           }
         }
-        log.error(msg + 'thermostat not found');
+        log.error(LOG_PREFIX, msg + 'thermostat not found');
         return false;
       } catch (ex) {
-        log.exception(msg, ex);
+        log.exception(LOG_PREFIX, msg, ex);
         return false;
       }
     }
-    log.log(msg + 'Nest unavailable.');
+    log.log(LOG_PREFIX, msg + 'Nest unavailable.');
     return false;
   }
 
   function setNestThermostatAuto(timeOfDay) {
-    var msg = '[HOME] setNestThermostatAuto failed, ';
+    var msg = 'setNestThermostatAuto failed, ';
     var hvacMode = config.hvac.defaultMode;
     var hvacCmd = timeOfDay + '_' + hvacMode;
     hvacCmd = hvacCmd.toUpperCase();
     var rooms = config.hvac.auto[hvacCmd];
     if (!rooms) {
-      log.error(msg + 'Params failed: ' + hvacCmd);
+      log.error(LOG_PREFIX, msg + 'Params failed: ' + hvacCmd);
       return false;
     }
     if (!nest) {
-      log.error(msg + 'Nest not ready.');
+      log.error(LOG_PREFIX, msg + 'Nest not ready.');
       return false;
     }
     var keys = Object.keys(rooms);
@@ -820,8 +822,8 @@ function Home(config, fb) {
 
   function setNestThermostatOff() {
     if (!nest) {
-      var msg = '[HOME] setNestThermostatOff failed, ';
-      log.error(msg + 'Nest not ready.');
+      var msg = 'setNestThermostatOff failed, ';
+      log.error(LOG_PREFIX, msg + 'Nest not ready.');
       return false;
     }
     var keys = Object.keys(config.hvac.thermostats);
@@ -842,7 +844,7 @@ function Home(config, fb) {
     try {
       hue = new Hue(Keys.hueBridge.key, null);
     } catch (ex) {
-      log.exception('[HOME] Unable to initialize Hue', ex);
+      log.exception(LOG_PREFIX, 'Unable to initialize Hue', ex);
       shutdownHue();
       return;
     }
@@ -861,13 +863,13 @@ function Home(config, fb) {
         fbSet('state/hue', config);
       });
       hue.on('error', function(err) {
-        log.error('[HOME] Hue error occured.' + JSON.stringify(err));
+        log.error(LOG_PREFIX, 'Hue error occured.', err);
       });
     }
   }
 
   function shutdownHue() {
-    log.log('[HOME] Shutting down Hue.');
+    log.log(LOG_PREFIX, 'Shutting down Hue.');
     hue = null;
   }
 
@@ -876,11 +878,11 @@ function Home(config, fb) {
       try {
         return hue.setScene(sceneId);
       } catch (ex) {
-        log.exception('[HOME] Hue scene failed', ex);
+        log.exception(LOG_PREFIX, 'Hue scene failed', ex);
         return false;
       }
     }
-    log.warn('[HOME] Hue scene failed, Hue not ready.');
+    log.warn(LOG_PREFIX, 'Hue scene failed, Hue not ready.');
     return false;
   }
 
@@ -889,11 +891,11 @@ function Home(config, fb) {
       try {
         return hue.setLights(lights, lightState);
       } catch (ex) {
-        log.exception('[HOME] Hue lights failed', ex);
+        log.exception(LOG_PREFIX, 'Hue lights failed', ex);
         return false;
       }
     }
-    log.warn('[HOME] Hue lights failed, Hue not ready.');
+    log.warn(LOG_PREFIX, 'Hue lights failed, Hue not ready.');
     return false;
   }
 
@@ -909,7 +911,7 @@ function Home(config, fb) {
         if (_self.state.systemState === 'HOME') {
           _self.executeCommandByName('NEW_NOTIFICATION', null, 'HOME');
         }
-        log.log('[HOME] New notification received.');
+        log.log(LOG_PREFIX, 'New notification received.');
         snapshot.ref().set(false);
       }
     });
@@ -925,7 +927,7 @@ function Home(config, fb) {
     try {
       sonos = new Sonos();
     } catch (ex) {
-      log.exception('[HOME] Unable to initialize Sonos', ex);
+      log.exception(LOG_PREFIX, 'Unable to initialize Sonos', ex);
       if (sonos) {
         sonos.shutdown();
       }
@@ -936,10 +938,10 @@ function Home(config, fb) {
       sonos.on('transport-state', function(transportState) {
         fbSet('state/sonos/state', transportState);
       });
-      sonos.on('topology-change', function(zones) {
+      sonos.on('topology-changed', function(zones) {
         fbSet('state/sonos/zones', zones);
       });
-      sonos.on('favorites', function(favorites) {
+      sonos.on('favorites-changed', function(favorites) {
         fbSet('state/sonos/favorites', favorites);
       });
     }
@@ -974,7 +976,7 @@ function Home(config, fb) {
       zwave.on('zwave_unavailable', shutdownZWave);
       zwave.on('invalid_network_key', shutdownZWave);
       zwave.on('error', function(err) {
-        log.error('[HOME] ZWave Error: ' + JSON.stringify(err));
+        log.error(LOG_PREFIX, 'ZWave Error', err);
       });
       zwave.on('ready', function(nodes) {
         fbSet('state/zwave/nodes', nodes);
@@ -985,7 +987,7 @@ function Home(config, fb) {
       zwave.on('node_value_refresh', zwaveSaveNodeValue);
       zwave.on('node_value_removed', function(nodeId, info) {
         var msg = '[' + nodeId + '] ' + JSON.stringify(info);
-        log.warn('[HOME] ZWave - nodeValueRemoved: ' + msg);
+        log.warn(LOG_PREFIX, 'ZWave - nodeValueRemoved: ' + msg);
       });
     }
   }
@@ -1004,10 +1006,10 @@ function Home(config, fb) {
           _self.executeCommandByName(cmdName, null, deviceName);
         }
       } else {
-        log.warn('[HOME] Unknown ZWave device kind: ' + nodeId);
+        log.warn(LOG_PREFIX, 'Unknown ZWave device kind: ' + nodeId);
       }
     } else {
-      log.warn('[HOME] Unhandled ZWave Event:' + nodeId + ':' + value);
+      log.warn(LOG_PREFIX, 'Unhandled ZWave Event:' + nodeId + ':' + value);
     }
   }
 
@@ -1049,15 +1051,15 @@ function Home(config, fb) {
         path = 'state/sensor/' + nodeName + '/' + path;
         fbSet(path, value);
       } catch (ex) {
-        log.exception('[HOME] Error in saveNodeValue', ex);
+        log.exception(LOG_PREFIX, 'Error in saveNodeValue', ex);
       }
     } else {
-      log.error('[HOME] ZWave - no valueId for saveNodeValue');
+      log.error(LOG_PREFIX, 'ZWave - no valueId for saveNodeValue');
     }
   }
 
   function shutdownZWave() {
-    log.log('[HOME] Shutting down ZWave.');
+    log.log(LOG_PREFIX, 'Shutting down ZWave.');
     if (zwaveTimer) {
       clearInterval(zwaveTimer);
       zwaveTimer = null;
@@ -1065,7 +1067,7 @@ function Home(config, fb) {
     try {
       zwave.disconnect();
     } catch (ex) {
-      log.warn('[HOME] Error attempting to shut down Harmony.');
+      log.warn(LOG_PREFIX, 'Error attempting to shut down Harmony.');
     }
     zwave = null;
     fbSet('state/zwave');
@@ -1077,11 +1079,11 @@ function Home(config, fb) {
         zwave.setNodeBinary(id, newState);
         return true;
       } catch (ex) {
-        log.exception('[HOME] ZWave Switch change failed.', ex);
+        log.exception(LOG_PREFIX, 'ZWave Switch change failed.', ex);
         return false;
       }
     }
-    log.warn('[HOME] ZWave switch failed, ZWave not ready.');
+    log.warn(LOG_PREFIX, 'ZWave switch failed, ZWave not ready.');
     return false;
   }
 
@@ -1092,7 +1094,7 @@ function Home(config, fb) {
    ****************************************************************************/
 
   function init() {
-    log.init('[HOME] Initializing home.');
+    log.init(LOG_PREFIX, 'Initializing home.');
     var now = Date.now();
     _self.state = {
       doNotDisturb: false,
@@ -1116,7 +1118,7 @@ function Home(config, fb) {
     });
     fb.child('config/HomeOnNode').on('value', function(snapshot) {
       config = snapshot.val();
-      log.log('[HOME] Config file updated.');
+      log.log(LOG_PREFIX, 'Config file updated.');
       fs.writeFile('config.json', JSON.stringify(config, null, 2));
     });
     gcmPush = new GCMPush(fb);
@@ -1129,7 +1131,7 @@ function Home(config, fb) {
     initPresence();
     initWeather();
     setTimeout(function() {
-      log.log('[HOME] Ready');
+      log.log(LOG_PREFIX, 'Ready');
       _self.emit('ready');
     }, 750);
     playSound(config.readySound);

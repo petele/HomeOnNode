@@ -3,9 +3,11 @@
 var EventEmitter = require('events').EventEmitter;
 var Keys = require('./Keys').keys;
 var util = require('util');
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var webpush = require('web-push-encryption');
 var moment = require('moment');
+
+var LOG_PREFIX = 'GCMPush';
 
 function GCMPush(fb) {
   var _fb = fb;
@@ -19,7 +21,7 @@ function GCMPush(fb) {
    ****************************************************************************/
 
   function init() {
-    log.init('[GCMPush] Init');
+    log.init(LOG_PREFIX, 'Init');
     setTimeout(function() {
       _sendReady = true;
       _self.emit('ready');
@@ -48,7 +50,7 @@ function GCMPush(fb) {
       }
       message = JSON.stringify(message);
       _fb.child('pushSubscribers').once('value', function(snapshot) {
-        log.log('[GCMPush] Sending notifications...');
+        log.log(LOG_PREFIX, 'Sending notifications...');
         snapshot.forEach(function(subscriberObj) {
           var subscriber = subscriberObj.val();
           var subscriberKey = subscriberObj.key();
@@ -56,25 +58,25 @@ function GCMPush(fb) {
           if (subscriber.subscriptionInfo.keys) {
             webpush.sendWebPush(message, subscription, Keys.gcm.apiKey)
               .then(function(resp) {
-                msg = '[GCMPush] Message sent to ' + subscriberKey;
+                msg = 'Message sent to ' + subscriberKey;
                 msg += ' - ' + JSON.stringify(resp);
-                log.debug(msg);
+                log.debug(LOG_PREFIX, msg);
               })
               .catch(function(resp) {
-                msg = '[GCMPush] Error sending message to ' + subscriberKey;
+                msg = 'Error sending message to ' + subscriberKey;
                 msg += ' - ' + JSON.stringify(resp);
-                log.warn(msg);
+                log.warn(LOG_PREFIX, msg);
               });
           } else {
-            msg = '[GCMPush] Subscriber (' + subscriberKey + ') had no keys.';
+            msg = 'Subscriber (' + subscriberKey + ') had no keys.';
             msg += ' Removed.';
-            log.warn(msg);
+            log.warn(LOG_PREFIX, msg);
             subscriberObj.ref().remove();
           }
         });
       });
     } else {
-      log.error('[GCMPush] No or invalid message provided. Nothing sent.');
+      log.error(LOG_PREFIX, 'No or invalid message provided. Nothing sent.');
     }
   };
 

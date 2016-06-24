@@ -3,8 +3,10 @@
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var https = require('https');
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var Firebase = require('firebase');
+
+var LOG_PREFIX = 'NEST';
 
 function Nest() {
   var _isReady = false;
@@ -24,7 +26,7 @@ function Nest() {
   this.generatePinURL = function(clientId) {
     var url = 'https://home.nest.com/login/oauth2?client_id=' + clientId;
     url += '&state=' + Math.random();
-    log.debug('[NEST] Pin Request URL: ' + url);
+    log.debug(LOG_PREFIX, 'Pin Request URL: ' + url);
     return url;
   };
 
@@ -54,7 +56,7 @@ function Nest() {
     });
     request.end();
     request.on('error', function(err) {
-      log.exception('[NEST] Error requesting Access Token', err);
+      log.exception(LOG_PREFIX, 'Error requesting Access Token', err);
     });
   };
 
@@ -64,21 +66,21 @@ function Nest() {
     _fbNest.authWithCustomToken(accessToken, function(err, token) {
       if (err) {
         _self.emit('authError', err);
-        log.exception('[NEST] Authentication Error', err);
+        log.exception(LOG_PREFIX, 'Authentication Error', err);
       } else {
         _authExpiresAt = token.expires;
         _isReady = true;
-        log.log('[NEST] Authentication completed successfully.');
-        log.debug('[NEST] Authentication expires at ' + _authExpiresAt);
+        log.log(LOG_PREFIX, 'Authentication completed successfully.');
+        log.debug(LOG_PREFIX, 'Authentication expires at ' + _authExpiresAt);
         _self.getStatus(function() {
-          log.log('[NEST] Ready.');
+          log.log(LOG_PREFIX, 'Ready.');
           initAlarmEvents();
           monitorThermostats();
           _self.emit('ready');
         });
         _fbNest.onAuth(function(authToken) {
           if (!authToken) {
-            log.error('[NEST] Authentication failed.');
+            log.error(LOG_PREFIX, 'Authentication failed.');
             _self.emit('authError');
           }
         });
@@ -86,13 +88,13 @@ function Nest() {
     });
     _fbNest.child('.info/connected').on('value', function(snapshot) {
       if (snapshot.val() === true) {
-        log.log('[NEST] Connected to Nest backend.');
+        log.log(LOG_PREFIX, 'Connected to Nest backend.');
         if (_disconnectedTimer) {
           clearTimeout(_disconnectedTimer);
           _disconnectedTimer = null;
         }
       } else {
-        log.warn('[NEST] No connection to Nest backend.');
+        log.warn(LOG_PREFIX, 'No connection to Nest backend.');
         _disconnectedTimer = setTimeout(disconnectTimeExceeded, 60 * 5 * 1000);
       }
     });
@@ -105,7 +107,7 @@ function Nest() {
    ****************************************************************************/
 
   function disconnectTimeExceeded() {
-    log.error('[NEST] Disconnect timeout exceeded!');
+    log.error(LOG_PREFIX, 'Disconnect timeout exceeded!');
     _isReady = false;
   }
 
@@ -116,17 +118,17 @@ function Nest() {
     protects.forEach(function(key) {
       var path = 'devices/smoke_co_alarms/' + key;
       var alarmName = _nestData.devices.smoke_co_alarms[key].name;
-      var msg = '[NEST] Registering for alarms from: ';
-      log.log(msg + alarmName);
+      var msg = 'Registering for alarms from: ';
+      log.log(LOG_PREFIX, msg + alarmName);
       _fbNest.child(path + '/co_alarm_state').on('value', function(snap) {
         if (snap.val() !== 'ok') {
-          log.log('[NEST] CO ALARM');
+          log.warn(LOG_PREFIX, 'CO ALARM');
           _self.emit('alarm', 'CO', alarmName);
         }
       });
       _fbNest.child(path + '/smoke_alarm_state').on('value', function(snap) {
         if (snap.val() !== 'ok') {
-          log.log('[NEST] SMOKE ALARM');
+          log.warn(LOG_PREFIX, 'SMOKE ALARM');
           _self.emit('alarm', 'SMOKE', alarmName);
         }
       });
@@ -138,17 +140,17 @@ function Nest() {
   function monitorThermostats() {
     var thermostats = getKeys(_nestData.devices.thermostats);
     thermostats.forEach(function(key) {
-      log.debug('[NEST] Registering for thermostat online events for: ' + key);
+      log.debug(LOG_PREFIX, 'Registering for thermostat online events for: ' + key);
       var path = 'devices/thermostats/' + key + '/is_online';
       _fbNest.child(path).on('value', function(snapshot) {
         var isOnline = snapshot.val();
         var thermostatName = _nestData.devices.thermostats[key].name;
-        var msg = '[NEST] ' + thermostatName + ' thermostat isOnline: ';
+        var msg = thermostatName + ' thermostat isOnline: ';
         msg += isOnline.toString();
         if (isOnline === true) {
-          log.log(msg);
+          log.log(LOG_PREFIX, msg);
         } else {
-          log.warn(msg);
+          log.warn(LOG_PREFIX, msg);
         }
       });
     });
@@ -162,7 +164,7 @@ function Nest() {
   function checkIfReady(throwError, alreadyHasData) {
     if (_isReady === true && _fbNest) {
       if (_disconnectedTimer) {
-        log.warn('[NEST] Attempting to send command while disconnected.');
+        log.warn(LOG_PREFIX, 'Attempting to send command while disconnected.');
       }
       if (alreadyHasData === false) {
         return true;
@@ -171,7 +173,7 @@ function Nest() {
       }
       return false;
     } else {
-      log.error('[NEST] Not ready');
+      log.error(LOG_PREFIX, 'Not ready');
       if (throwError === true) {
         _self.emit('error', 'nest not ready');
       }
@@ -182,22 +184,22 @@ function Nest() {
   function setThermostatMode(thermostat, newMode, newTemp) {
     /* jshint -W106 */
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    var msg = '[NEST] setThermostatMode in ' + thermostat.name + ' to: ';
+    var msg = 'setThermostatMode in ' + thermostat.name + ' to: ';
     msg += newMode;
     if (_thermostatModes.indexOf(newMode) === -1) {
-      log.error(msg + ' failed. Invalid mode (' + newMode + ')');
+      log.error(LOG_PREFIX, msg + ' failed. Invalid mode (' + newMode + ')');
       return false;
     }
     if (thermostat.is_online !== false) {
-      log.warn(msg + ' may fail, thermostat may be offline.');
+      log.warn(LOG_PREFIX, msg + ' may fail, thermostat may be offline.');
     }
-    log.debug(msg);
+    log.debug(LOG_PREFIX, msg);
     var path = 'devices/thermostats/' + thermostat.device_id + '/hvac_mode';
     _fbNest.child(path).set(newMode, function(err) {
       if (err) {
-        log.exception(msg, err);
+        log.exception(LOG_PREFIX, msg, err);
       } else {
-        log.debug(msg + ' - success');
+        log.debug(LOG_PREFIX, msg + ' - success');
         if (newMode !== 'off') {
           setThermostatTemp(thermostat, newTemp);
         }
@@ -211,19 +213,19 @@ function Nest() {
   function setThermostatTemp(thermostat, newTemp) {
     /* jshint -W106 */
     // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    var msg = '[NEST] setThermostatTemp in ' + thermostat.name + ' to: ';
+    var msg = 'setThermostatTemp in ' + thermostat.name + ' to: ';
     msg += newTemp + '°F';
     if (thermostat.is_online !== false) {
-      log.warn(msg + ' may fail, thermostat may be offline.');
+      log.warn(LOG_PREFIX, msg + ' may fail, thermostat may be offline.');
     }
-    log.debug(msg);
+    log.debug(LOG_PREFIX, msg);
     var path = 'devices/thermostats/' + thermostat.device_id;
     path += '/target_temperature_f';
     _fbNest.child(path).set(newTemp, function(err) {
       if (err) {
-        log.exception(msg, err);
+        log.exception(LOG_PREFIX, msg, err);
       } else {
-        log.debug(msg + ' - success');
+        log.debug(LOG_PREFIX, msg + ' - success');
       }
     });
     // jscs:enable
@@ -238,7 +240,7 @@ function Nest() {
         if (devices.cameras) {
           cameraId = _self.getDevices().cameras[0];
         } else {
-          log.warn('[NEST] No NestCam found.');
+          log.warn(LOG_PREFIX, 'No NestCam found.');
           return false;
         }
       }
@@ -247,10 +249,10 @@ function Nest() {
       try {
         cameraName = _nestData.devices.cameras[cameraId].name;
       } catch (ex) {
-        var exMsg = '[NEST] Unable to get Camera name for cameraId:' + cameraId;
-        log.exception(exMsg, ex);
+        var exMsg = 'Unable to get Camera name for cameraId:' + cameraId;
+        log.exception(LOG_PREFIX, exMsg, ex);
       }
-      log.log('[NEST] setCameraStreamingState (' + cameraName + '): ' + state);
+      log.log(LOG_PREFIX, 'setCameraStreamingState (' + cameraName + '): ' + state);
       _fbNest.child(path).set(state, function(err) {
         onSetComplete(path, err);
       });
@@ -261,16 +263,16 @@ function Nest() {
 
   function onSetComplete(path, err) {
     if (err) {
-      log.exception('[NEST] ' + err.message + ' at path: ' + path, err);
+      log.exception(LOG_PREFIX, err.message + ' at path: ' + path, err);
     } else {
-      log.debug('[NEST] setComplete: ' + path);
+      log.debug(LOG_PREFIX, 'setComplete: ' + path);
     }
   }
 
   function setHomeAway(state) {
     if (checkIfReady(false)) {
       state = state || 'home';
-      log.log('[NEST] Set home state to: ' + state);
+      log.log(LOG_PREFIX, 'Set home state to: ' + state);
       var devices = _self.getDevices();
       var structureId = devices.structureId;
       var path = 'structures/' + structureId + '/away';
@@ -354,13 +356,13 @@ function Nest() {
       var devices = _self.getDevices();
       var structureId = devices.structureId;
       if (_nestData.structures[structureId].away !== 'away') {
-        log.warn('[NEST] Unable to set Nest ETA, not in AWAY mode.');
+        log.warn(LOG_PREFIX, 'Unable to set Nest ETA, not in AWAY mode.');
         return false;
       }
       if (etaBegin === 0) {
-        log.log('[NEST] cancelled Nest ETA for trip ' + tripId);
+        log.log(LOG_PREFIX, 'cancelled Nest ETA for trip ' + tripId);
       } else {
-        log.log('[NEST] set ETA for ' + tripId + ' to ' + etaBegin);
+        log.log(LOG_PREFIX, 'set ETA for ' + tripId + ' to ' + etaBegin);
       }
       /* jshint -W106 */
       // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
@@ -380,15 +382,15 @@ function Nest() {
   };
 
   this.setTemperature = function(thermostatId, mode, temperature) {
-    var msg = '[NEST] setTemperature';
+    var msg = 'setTemperature';
     if (checkIfReady(true)) {
       if (!thermostatId) {
-        log.error(msg + ' no thermostatId provided.');
+        log.error(LOG_PREFIX, msg + ' no thermostatId provided.');
         return false;
       }
       var nestThermostat = _nestData.devices.thermostats[thermostatId];
       if (!nestThermostat) {
-        log.error(msg + ' could not find thermostat (' + thermostatId + ')');
+        log.error(LOG_PREFIX, msg + ' could not find thermostat (' + thermostatId + ')');
         return false;
       }
       msg += ' in ' + nestThermostat.name;
@@ -397,11 +399,11 @@ function Nest() {
           msg += ' to ' + temperature.toString() + '°F';
         }
       } else {
-        log.error(msg + '. Error: temperature out of range: ' + temperature);
+        log.error(LOG_PREFIX, msg + '. Error: temperature out of range: ' + temperature);
         return false;
       }
       if (!mode) {
-        log.error(msg + '. Error: no mode provided.');
+        log.error(LOG_PREFIX, msg + '. Error: no mode provided.');
         return false;
       }
       msg += ' [' + mode + ']';
@@ -409,20 +411,20 @@ function Nest() {
       /* jshint -W106 */
       // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
       if (mode !== nestThermostat.hvac_mode) {
-        log.log(msg);
+        log.log(LOG_PREFIX, msg);
         setThermostatMode(nestThermostat, mode, temperature);
         return true;
       } else if (mode === 'off') {
-        log.warn(msg + '. (already off, no action required.)');
+        log.warn(LOG_PREFIX, msg + '. (already off, no action required.)');
         return true;
       } else if (nestThermostat.hvac_mode !== 'off') {
-        log.log(msg);
+        log.log(LOG_PREFIX, msg);
         setThermostatTemp(nestThermostat, temperature);
         return true;
       }
       // jscs:enable
       /* jshint +W106 */
-      log.warn(msg + ' -- Unhandled Event! (' + mode + '/' + temperature + ')');
+      log.warn(LOG_PREFIX, msg + ' -- Unhandled Event! (' + mode + '/' + temperature + ')');
       return false;
     }
     return false;

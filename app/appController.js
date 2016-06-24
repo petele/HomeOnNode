@@ -1,7 +1,7 @@
 'use strict';
 
 var fs = require('fs');
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var Home = require('./Home');
 var Keys = require('./Keys').keys;
 var HTTPServer = require('./HTTPServer');
@@ -12,57 +12,37 @@ var config;
 var fb;
 var home;
 var httpServer;
-
+var LOG_PREFIX = 'APP';
 var APP_NAME = 'HomeOnNode';
-log.setSaveBootLogs(true);
-log.setLogFileName('./start.log');
-log.setFileLogging(true);
-log.appStart(APP_NAME);
+var logOpts = {
+  logFileName: './start.log',
+  logToFile: true,
+  logToFirebase: true
+};
+log.appStart(APP_NAME, logOpts);
 
 function init() {
   fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
+  log.setFirebaseRef(fb);
+  log.setOptions({logToFile: false});
 
-  log.log('[APP] Reading local config file.');
+  log.log(LOG_PREFIX, 'Reading local config file.');
   fs.readFile('./config.json', {'encoding': 'utf8'}, function(err, data) {
     if (err) {
-      log.exception('[APP] Error reading local config.json', err);
+      log.exception(LOG_PREFIX, 'Error reading local config.json', err);
       exit('ConfigError', 1);
     } else {
       try {
         config = JSON.parse(data);
       } catch (ex) {
-        log.exception('[APP] Error parsing local config.json ', ex);
+        log.exception(LOG_PREFIX, 'Error parsing local config.json ', ex);
         exit('ConfigError', 1);
       }
-
-      fb.child('config/' + APP_NAME + '/logs').on('value', function(snapshot) {
-        var logSettings = snapshot.val();
-        if (logSettings) {
-          if (logSettings.logLevel === 'DEBUG') {
-            log.setDebug(true);
-          } else {
-            log.setDebug(false);
-          }
-          if (logSettings.toFirebase === true) {
-            log.setFirebase(fb);
-          } else {
-            log.setFirebase(null);
-          }
-          if (logSettings.toFilename) {
-            log.setLogFileName(logSettings.toFilename);
-          }
-          if (logSettings.toFile === true) {
-            log.setFileLogging(true);
-          } else {
-            log.setFileLogging(false);
-          }
-        }
-      });
 
       try {
         home = new Home(config, fb);
       } catch (ex) {
-        log.exception('[APP] Error initializing home modules ', ex);
+        log.exception(LOG_PREFIX, 'Error initializing home modules ', ex);
         exit('HomeInitError', 1);
       }
 
@@ -80,9 +60,9 @@ function init() {
             home.executeCommand(cmd, 'FB');
           }
         } catch (ex) {
-          var msg = '[APP] Unable to execute Firebase Command: ';
+          var msg = 'Unable to execute Firebase Command: ';
           msg += JSON.stringify(cmd);
-          log.exception(msg, ex);
+          log.exception(LOG_PREFIX, msg, ex);
         }
         snapshot.ref().remove();
       });
@@ -96,7 +76,7 @@ function init() {
           }
         });
       } catch (ex) {
-        log.exception('[APP] Error initializing keyboard', ex);
+        log.exception(LOG_PREFIX, 'Error initializing keyboard', ex);
       }
       setInterval(function() {
         loadAndRunJS('cron15.js');
@@ -115,14 +95,14 @@ function exit(sender, exitCode) {
   if (exitCode === undefined) {
     exitCode = 0;
   }
-  log.log('[APP] Starting shutdown process');
-  log.log('[APP] Will exit with error code: ' + String(exitCode));
+  log.log(LOG_PREFIX, 'Starting shutdown process');
+  log.log(LOG_PREFIX, 'Will exit with error code: ' + String(exitCode));
   if (home) {
-    log.log('[APP] Shutting down [HOME]');
+    log.log(LOG_PREFIX, 'Shutting down [HOME]');
     home.shutdown();
   }
   if (httpServer) {
-    log.log('[APP] Shutting down [HTTP]');
+    log.log(LOG_PREFIX, 'Shutting down [HTTP]');
     httpServer.shutdown();
   }
   setTimeout(function() {
@@ -136,20 +116,20 @@ process.on('SIGINT', function() {
 });
 
 function loadAndRunJS(file, callback) {
-  log.debug('[APP] loadAndRunJS (' + file + ')');
+  log.debug(LOG_PREFIX, 'loadAndRunJS (' + file + ')');
   fs.readFile(file, function(err, data) {
     if (err) {
-      log.exception('[APP] loadAndRunJS: Unable to load file.', err);
+      log.exception(LOG_PREFIX, 'loadAndRunJS: Unable to load file.', err);
       if (callback) {
         callback(err, file);
       }
     } else {
       try {
         eval(data.toString());  // jshint ignore:line
-      } catch (exception) {
-        log.exception('[APP] loadAndRunJS: Exception caught on eval.', exception);
+      } catch (ex) {
+        log.exception(LOG_PREFIX, 'loadAndRunJS: Exception caught on eval.', ex);
         if (callback) {
-          callback(exception, file);
+          callback(ex, file);
         }
       }
     }

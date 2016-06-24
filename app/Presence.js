@@ -1,10 +1,12 @@
 'use strict';
 
 var EventEmitter = require('events').EventEmitter;
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var util = require('util');
 var moment = require('moment');
 var noble;
+
+var LOG_PREFIX = 'PRESENCE';
 
 function Presence() {
 
@@ -22,11 +24,11 @@ function Presence() {
   var timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
 
   function emitChange(person) {
-    var msg = '[PRESENCE] [NAME] is [STATE] ([COUNT])';
+    var msg = '[NAME] is [STATE] ([COUNT])';
     msg = msg.replace('[NAME]', person.name);
     msg = msg.replace('[STATE]', person.state);
     msg = msg.replace('[COUNT]', numPresent);
-    log.log(msg);
+    log.log(LOG_PREFIX, msg);
     self.emit('change', person, numPresent, status);
   }
 
@@ -48,7 +50,7 @@ function Presence() {
   }
 
   function startCheckAwayTimer() {
-    log.debug('[PRESENCE] checkAwayTimer started.');
+    log.debug(LOG_PREFIX, 'checkAwayTimer started.');
     if (intervalID) {
       stopCheckAwayTimer();
     }
@@ -56,7 +58,7 @@ function Presence() {
   }
 
   function stopCheckAwayTimer() {
-    log.debug('[PRESENCE] checkAwayTimer stopped.');
+    log.debug(LOG_PREFIX, 'checkAwayTimer stopped.');
     if (intervalID) {
       clearInterval(intervalID);
       intervalID = null;
@@ -74,11 +76,11 @@ function Presence() {
         setTimeout(function() {
           flicPushed = false;
         }, 45000);
-        var msg = '[PRESENCE] Flic Button Pushed: ';
+        var msg = 'Flic Button Pushed: ';
         msg += timeSinceLastFlic + ' ';
         msg += moment(now).format(timeFormat) + ' ';
         msg += lastFlics;
-        log.debug(msg);
+        log.debug(LOG_PREFIX, msg);
         self.emit('flic_away');
       }
     }
@@ -105,22 +107,22 @@ function Presence() {
 
   function startNoble() {
     noble.on('stateChange', function(state) {
-      log.log('[PRESENCE] Noble State Change: ' + state);
+      log.log(LOG_PREFIX, 'Noble State Change: ' + state);
       if (state === 'poweredOn') {
         noble.startScanning([], true);
       } else {
         noble.stopScanning();
         self.emit('adapterError', {'adapterState': state});
-        log.exception('[PRESENCE] Unknown adapter state.', state);
+        log.exception(LOG_PREFIX, 'Unknown adapter state.', state);
       }
     });
     noble.on('scanStart', function() {
-      log.log('[PRESENCE] Noble Scanning Started.');
+      log.log(LOG_PREFIX, 'Noble Scanning Started.');
       nobleStarted = true;
       self.emit('scanStarted', false);
     });
     noble.on('scanStop', function() {
-      log.log('[PRESENCE] Noble Scanning Stopped.');
+      log.log(LOG_PREFIX, 'Noble Scanning Stopped.');
       nobleStarted = false;
       self.emit('scanStopped', false);
     });
@@ -131,7 +133,7 @@ function Presence() {
   }
 
   this.setFlicAway = function(uuid) {
-    log.log('[PRESENCE] Set Flic Away UUID: ' + uuid);
+    log.log(LOG_PREFIX, 'Set Flic Away UUID: ' + uuid);
     flicUUID = uuid;
   };
 
@@ -140,54 +142,54 @@ function Presence() {
       var uuid = newPerson.uuid;
       var person = status[uuid];
       if (person) {
-        log.warn('[PRESENCE] ' + newPerson.name + ' already exists.');
+        log.warn(LOG_PREFIX, newPerson.name + ' already exists.');
         return false;
       }
       status[uuid] = newPerson;
       status[uuid].lastSeen = 0;
       status[uuid].state = AWAY;
-      log.log('[PRESENCE] Added: ' + newPerson.name + ' (' + uuid + ')');
+      log.log(LOG_PREFIX, 'Added: ' + newPerson.name + ' (' + uuid + ')');
       return true;
     } catch (ex) {
-      log.exception('[PRESENCE] Error adding new person.', ex);
+      log.exception(LOG_PREFIX, 'Error adding new person.', ex);
       return false;
     }
   };
 
   // TODO Remove person from status and numPresent! 
   this.removePersonByKey = function(uuid) {
-    log.todo('Remove person from status and numPresent! ');
+    log.todo(LOG_PREFIX, 'Remove person from status and numPresent! ');
     try {
       var person = status[uuid];
       if (person) {
-        log.log('[PRESENCE] Removed: ' + person.name + ' (' + uuid + ')');
+        log.log(LOG_PREFIX, 'Removed: ' + person.name + ' (' + uuid + ')');
         status[uuid] = null;
         return true;
       }
-      log.warn('[PRESENCE] Could not find ' + uuid + ' to remove.');
+      log.warn(LOG_PREFIX, 'Could not find ' + uuid + ' to remove.');
       return false;
     } catch (ex) {
-      log.exception('[PRESENCE] Error removing person', ex);
+      log.exception(LOG_PREFIX, 'Error removing person', ex);
       return false;
     }
   };
 
   // TODO Remove person from numPresent if track==false
   this.updatePerson = function(uPerson) {
-    log.todo('Remove person from numPresent if track==false');
+    log.todo(LOG_PREFIX, 'Remove person from numPresent if track==false');
     try {
       var uuid = uPerson.uuid;
       var person = status[uuid];
       if (person) {
         status[uuid].name = uPerson.name;
         status[uuid].track = uPerson.track;
-        log.log('[PRESENCE] Updated: ' + uPerson.name + ' (' + uuid + ')');
+        log.log(LOG_PREFIX, 'Updated: ' + uPerson.name + ' (' + uuid + ')');
         return true;
       }
-      log.warn('[PRESENCE] Could not find ' + uuid + ' to update.');
+      log.warn(LOG_PREFIX, 'Could not find ' + uuid + ' to update.');
       return false;
     } catch (ex) {
-      log.exception('[PRESENCE] Error updating person.', ex);
+      log.exception(LOG_PREFIX, 'Error updating person.', ex);
       return false;
     }
   };
@@ -198,17 +200,17 @@ function Presence() {
       noble.stopScanning();
     }
     nobleStarted = false;
-    log.log('[PRESENCE] Shut down.');
+    log.log(LOG_PREFIX, 'Shut down.');
   };
 
   function init() {
-    log.init('[PRESENCE]');
+    log.init(LOG_PREFIX, 'Init');
     try {
       noble = require('noble');
       startNoble();
       startCheckAwayTimer();
     } catch (ex) {
-      log.exception('[PRESENCE] Presence initialization error.', ex);
+      log.exception(LOG_PREFIX, 'Presence initialization error.', ex);
       setTimeout(function() {
         self.emit('presence_unavailable');
       }, 100);

@@ -1,11 +1,13 @@
 'use strict';
 
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var SonosDiscovery = require('./sonos-discovery/lib/sonos.js');
 
 // Based on https://github.com/jishi/node-sonos-discovery
+
+var LOG_PREFIX = 'SONOS';
 
 function Sonos() {
   var _self = this;
@@ -25,24 +27,24 @@ function Sonos() {
       return result.trim();
     },
     info: function() {
-      log.log('[SONOS*] ' + this.stringify(arguments));
+      log.log('[SONOS*]',this.stringify(arguments));
     },
     error: function() {
-      log.error('[SONOS*] ' + this.stringify(arguments));
+      log.error('[SONOS*]', this.stringify(arguments));
     },
     debug: function() {
-      log.debug('[SONOS*] ' + this.stringify(arguments));
+      log.debug('[SONOS*]', this.stringify(arguments));
     }
   };
 
   function init() {
-    log.init('[SONOS] Init start.');
+    log.init(LOG_PREFIX, 'Init start.');
     process.on('SIGINT', handleSigInt);
     _sonos = new SonosDiscovery({log: _logger});
     _sonos.on('transport-state', transportStateChanged);
-    _sonos.on('favorites', favoritesChanged);
+    _sonos.on('favorites-change', favoritesChanged);
     _sonos.on('topology-change', topologyChanged);
-    log.init('[SONOS] Init complete.');
+    log.init(LOG_PREFIX, 'Init complete.');
   }
 
   /*****************************************************************************
@@ -52,7 +54,7 @@ function Sonos() {
    ****************************************************************************/
 
   this.shutdown = function() {
-    log.log('[SONOS] Shutting down...');
+    log.log(LOG_PREFIX, 'Shutting down...');
     // TODO
     return true;
   };
@@ -65,7 +67,7 @@ function Sonos() {
    ****************************************************************************/
 
   function handleSigInt() {
-    log.log('[SONOS] SIGINT received.');
+    log.log(LOG_PREFIX, 'SIGINT received.');
     _self.shutdown();
   }
 
@@ -75,7 +77,7 @@ function Sonos() {
 
   function favoritesChanged(favorites) {
     _favorites = favorites;
-    _self.emit('favorites', favorites);
+    _self.emit('favorites-changed', favorites);
   }
 
   function topologyChanged(zones) {
@@ -95,16 +97,16 @@ function Sonos() {
         speaker = _sonos.getPlayer(roomName);
       }
       if (speaker) {
-        log.debug('[SONOS] getPlayer: ' + speaker.roomName);
+        log.debug(LOG_PREFIX, 'getPlayer: ' + speaker.roomName);
         return speaker;
       }
       speaker = _sonos.getAnyPlayer();
       if (speaker) {
-        log.debug('[SONOS] getPlayer: ' + speaker.roomName);
+        log.debug(LOG_PREFIX, 'getPlayer: ' + speaker.roomName);
         return speaker;
       }
     }
-    log.error('[SONOS] getPlayer failed, no speakers found.');
+    log.error(LOG_PREFIX, 'getPlayer failed, no speakers found.');
     return null;
   }
 
@@ -114,15 +116,15 @@ function Sonos() {
       try {
         msg += ': ' + util.inspect(response);
       } catch (ex) {
-        var exMsg = '[SONOS] Unable to stringify response: ' + response;
-        log.exception(exMsg, ex);
+        var exMsg = 'Unable to stringify response: ' + response;
+        log.exception(LOG_PREFIX, exMsg, ex);
         msg += ': ' + response;
       }
     }
     if (error) {
-      log.error(msg + ' -- ' + error.toString());
+      log.error(LOG_PREFIX, msg + ' -- ' + error.toString(), error);
     } else {
-      log.debug(msg);
+      log.debug(LOG_PREFIX, msg);
     }
   }
 
@@ -140,7 +142,7 @@ function Sonos() {
       });
       return true;
     }
-    log.error('[SONOS] applyPreset failed, Sonos unavilable.');
+    log.error(LOG_PREFIX, 'applyPreset failed, Sonos unavilable.');
     return false;
   };
 
@@ -153,10 +155,10 @@ function Sonos() {
         });
         return true;
       }
-      log.error('[SONOS] play failed, unable to find speaker.');
+      log.error(LOG_PREFIX, 'play failed, unable to find speaker.');
       return false;
     }
-    log.error('[SONOS] play failed, Sonos unavilable.');
+    log.error(LOG_PREFIX, 'play failed, Sonos unavilable.');
     return false;
   };
 
@@ -169,10 +171,10 @@ function Sonos() {
         });
         return true;
       }
-      log.error('[SONOS] pause failed, unable to find speaker.');
+      log.error(LOG_PREFIX, 'pause failed, unable to find speaker.');
       return false;
     }
-    log.error('[SONOS] pause failed, Sonos unavilable.');
+    log.error(LOG_PREFIX, 'pause failed, Sonos unavilable.');
     return false;
   };
 
@@ -185,10 +187,10 @@ function Sonos() {
         });
         return true;
       }
-      log.error('[SONOS] next failed, unable to find speaker.');
+      log.error(LOG_PREFIX, 'next failed, unable to find speaker.');
       return false;
     }
-    log.error('[SONOS] next failed, Sonos unavilable.');
+    log.error(LOG_PREFIX, 'next failed, Sonos unavilable.');
     return false;
   };
 
@@ -201,10 +203,10 @@ function Sonos() {
         });
         return true;
       }
-      log.error('[SONOS] previous failed, unable to find speaker.');
+      log.error(LOG_PREFIX, 'previous failed, unable to find speaker.');
       return false;
     }
-    log.error('[SONOS] previous failed, Sonos unavilable.');
+    log.error(LOG_PREFIX, 'previous failed, Sonos unavilable.');
     return false;
   };
 
@@ -217,10 +219,10 @@ function Sonos() {
         });
         return true;
       }
-      log.error('[SONOS] volumeDown failed, unable to find speaker.');
+      log.error(LOG_PREFIX, 'volumeDown failed, unable to find speaker.');
       return false;
     }
-    log.error('[SONOS] volumeDown failed, Sonos unavilable.');
+    log.error(LOG_PREFIX, 'volumeDown failed, Sonos unavilable.');
     return false;
   };
 
@@ -233,10 +235,10 @@ function Sonos() {
         });
         return true;
       }
-      log.error('[SONOS] volumeUp failed, unable to find speaker.');
+      log.error(LOG_PREFIX, 'volumeUp failed, unable to find speaker.');
       return false;
     }
-    log.error('[SONOS] volumeUp failed, Sonos unavilable.');
+    log.error(LOG_PREFIX, 'volumeUp failed, Sonos unavilable.');
     return false;
   };
 
@@ -244,7 +246,7 @@ function Sonos() {
     if (_sonos) {
       return _sonos.getZones();
     }
-    log.error('[SONOS] getZones failed, Sonos unavilable.');
+    log.error(LOG_PREFIX, 'getZones failed, Sonos unavilable.');
     return null;
   };
 

@@ -2,25 +2,24 @@
 
 var os = require('os');
 var Firebase = require('firebase');
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var moment = require('moment');
 var version = require('./version');
 var exec = require('child_process').exec;
 
+var LOG_PREFIX = 'FIREBASE';
+
 function init(fbAppId, key, appName) {
-  log.init('[FIREBASE] ' + fbAppId + ' for ' + appName);
+  log.init(LOG_PREFIX, fbAppId + ' for ' + appName);
   var timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
   var fbURL = 'https://' + fbAppId + '.firebaseio.com/';
   var fb = new Firebase(fbURL);
 
   fb.authWithCustomToken(key, function(error, authToken) {
     if (error) {
-      log.exception('[FIREBASE] Auth failed.', error);
+      log.exception(LOG_PREFIX, 'Firebase auth failed.', error);
     } else {
-      log.log('[FIREBASE] Auth success.');
-      if (authToken) {
-        log.debug('[FIREBASE] Auth Token: ' + JSON.stringify(authToken));
-      }
+      log.log(LOG_PREFIX, 'Firebase auth success.', authToken);
     }
   });
 
@@ -43,10 +42,10 @@ function init(fbAppId, key, appName) {
 
   try {
     var hostname = os.hostname();
-    log.log('[NETWORK] Hostname: ' + hostname);
+    log.log('NETWORK', 'Hostname: ' + hostname);
     def.host.hostname = hostname;
   } catch (ex) {
-    log.exception('[NETWORK] Unable to retrieve hostname.');
+    log.exception('NETWORK', 'Unable to retrieve hostname.', ex);
   }
   try {
     var addresses = [];
@@ -60,23 +59,24 @@ function init(fbAppId, key, appName) {
       }
     }
     if (addresses.length === 0) {
-      log.error('[NETWORK] Whoops, 0 IP addresses returned');
+      log.error('NETWORK', 'Whoops, 0 IP addresses returned');
     } else if (addresses.length === 1) {
       def.host.ipAddress = addresses[0];
-      log.log('[NETWORK] IP address: ' + addresses[0]);
+      log.log('NETWORK', 'IP address: ' + addresses[0]);
     } else {
       def.host.ipAddress = addresses[0];
-      log.log('[NETWORK] Multiple IP addresses returned. Using: ' + addresses[0]);
+      var msg = 'Multiple IP addresses returned. Using: ' + addresses[0];
+      log.log('NETWORK', msg, addresses);
     }
   } catch (ex) {
-    log.exception('[FIREBASE] Unable to get local device IP addresses', ex);
+    log.exception('NETWORK', 'Unable to get local device IP addresses', ex);
   }
 
   fb.child('devices/' + appName).set(def);
 
   fb.child('.info/connected').on('value', function(snapshot) {
     if (snapshot.val() === true) {
-      log.log('[NETWORK] Connected.');
+      log.log(LOG_PREFIX, 'Connected.');
       var now = Date.now();
       var def = {
         heartbeat: now,
@@ -89,7 +89,7 @@ function init(fbAppId, key, appName) {
       fb.child('devices/' + appName + '/shutdownAt')
         .onDisconnect().set(Firebase.ServerValue.TIMESTAMP);
     } else {
-      log.warn('[NETWORK] Disconnected.');
+      log.warn(LOG_PREFIX, 'Disconnected.');
     }
   });
 
@@ -103,7 +103,7 @@ function init(fbAppId, key, appName) {
   fb.child('devices/' + appName + '/restart').on('value', function(snapshot) {
     if (snapshot.val() === true) {
       snapshot.ref().remove();
-      log.appStop('[FIREBASE] Restart requested.');
+      log.appStop(LOG_PREFIX, 'Restart requested via Firebase.');
       var cmd = 'sudo reboot';
       exec(cmd, function(error, stdout, stderr) {});
     }
@@ -112,7 +112,7 @@ function init(fbAppId, key, appName) {
   fb.child('devices/' + appName + '/shutdown').on('value', function(snapshot) {
     if (snapshot.val() === true) {
       snapshot.ref().remove();
-      log.appStop('[FIREBASE] Shutdown requested.');
+      log.appStop(LOG_PREFIX, 'Shutdown requested via Firebase.');
       process.exit(0);
     }
   });

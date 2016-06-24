@@ -2,9 +2,11 @@
 
 var express = require('express');
 var path = require('path');
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var methodOverride = require('method-override');
 var bodyParser = require('body-parser');
+
+var LOG_PREFIX = 'HTTPServer';
 
 function HTTPServer(config, home, fb) {
 
@@ -21,7 +23,7 @@ function HTTPServer(config, home, fb) {
 
   var exp = express();
 
-  log.init('[HTTPServer]');
+  log.init(LOG_PREFIX, 'Init');
   var port = config.httpServerPort || 3000;
   exp.set('port', port);
   exp.use(methodOverride());
@@ -36,7 +38,7 @@ function HTTPServer(config, home, fb) {
       body = JSON.stringify(body);
     }
     if ((body !== '{}') && (body.toString().length > 0)) {
-      log.debug('Body: ' + body);
+      log.debug(LOG_PREFIX, 'Body: ' + body);
     }
     next();
   });
@@ -64,7 +66,7 @@ function HTTPServer(config, home, fb) {
       }, timeout);
     } else {
       res.send({'shutdown': false});
-      log.error('[HTTP] System shutdown attempted, but not confirmed.');
+      log.error(LOG_PREFIX, 'System shutdown attempted, but not confirmed.');
     }
   });
 
@@ -115,19 +117,19 @@ function HTTPServer(config, home, fb) {
   exp.use(function(req, res) {
     res.status(404);
     res.send({error: 'Requested URL not found.'});
-    log.error('[HTTP] File not found: ' + req.path + ' [' + req.ip + ']');
+    log.error(LOG_PREFIX, 'File not found: ' + req.path + ' [' + req.ip + ']');
   });
 
   exp.use(function(err, req, res, next) {
     res.status(err.status || 500);
     res.send({error: err.message});
-    var msg = '[HTTP] Server Error (' + err.status + ') for: ';
+    var msg = 'Server Error (' + err.status + ') for: ';
     msg += req.path + ' [' + req.ip + ']';
-    log.exception(msg, err);
+    log.exception(LOG_PREFIX, msg, err);
   });
 
   server = exp.listen(exp.get('port'), function() {
-    log.log('Express server started on port ' + exp.get('port'));
+    log.log(LOG_PREFIX, 'Express server started on port ' + exp.get('port'));
   });
 }
 

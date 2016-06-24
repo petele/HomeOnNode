@@ -1,10 +1,12 @@
 'use strict';
 
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var keypress = require('keypress');
 
+var LOG_PREFIX = 'KEYPAD';
+
 function listen(modifiers, callback) {
-  log.init('[KEYPAD]');
+  log.init(LOG_PREFIX, 'Init');
   var modifier = null;
   keypress(process.stdin);
 
@@ -49,7 +51,7 @@ function listen(modifiers, callback) {
         modifier = null;
       }
     } catch (ex) {
-      log.exception('[KEYPAD]', ex);
+      log.exception(LOG_PREFIX, 'Exception!', ex);
     }
   });
 
