@@ -115,7 +115,8 @@ function Sonos() {
     if (error) {
       log.error(LOG_PREFIX, msg, error);
     } else {
-      log.debug(LOG_PREFIX, msg, response);
+      // log.debug(LOG_PREFIX, msg, response);
+      log.debug(LOG_PREFIX, msg);
     }
   }
 
