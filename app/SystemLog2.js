@@ -20,6 +20,7 @@ var logLevels = {
   EXTRA: {level: 70, color: colors.blue}
 };
 var _fbRef = null;
+var _fbErrors = 0;
 var _fbLogCache = [];
 var _options = {
   appName: null,
@@ -84,6 +85,7 @@ function setOptions(options) {
 
 function setFirebaseRef(fbRef) {
   if (fbRef) {
+    _fbErrors = 0;
     var logObj = _fbLogCache.shift();
     while (logObj) {
       fbRef.child(FIREBASE_LOG_PATH).push(logObj);
@@ -177,7 +179,15 @@ function printLog(logObj) {
 
 function saveLogToFB(logObj) {
   if (_fbRef) {
-    _fbRef.child(FIREBASE_LOG_PATH).push(logObj);
+    try {
+      _fbRef.child(FIREBASE_LOG_PATH).push(logObj);
+    } catch (ex) {
+      exception('LOGGER', 'Error pushing log item to Firebase', ex);
+      if (_fbErrors++ > 3) {
+        warn('LOGGER', 'Disabling Firebase logging.');
+        _options.logToFirebase = false;
+      }
+    }
   } else {
     _fbLogCache.push(logObj);
     if (_fbLogCache.length > 500) {

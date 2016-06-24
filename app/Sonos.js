@@ -27,13 +27,13 @@ function Sonos() {
       return result.trim();
     },
     info: function() {
-      log.log('[SONOS*]',this.stringify(arguments));
+      log.log('SONOS*',this.stringify(arguments));
     },
     error: function() {
-      log.error('[SONOS*]', this.stringify(arguments));
+      log.error('SONOS*', this.stringify(arguments));
     },
     debug: function() {
-      log.debug('[SONOS*]', this.stringify(arguments));
+      log.debug('SONOS*', this.stringify(arguments));
     }
   };
 
