@@ -111,20 +111,11 @@ function Sonos() {
   }
 
   function genericResponseHandler(apiName, error, response) {
-    var msg = '[SONOS] genericResponseHandler - ' + apiName;
-    if (response) {
-      try {
-        msg += ': ' + util.inspect(response);
-      } catch (ex) {
-        var exMsg = 'Unable to stringify response: ' + response;
-        log.exception(LOG_PREFIX, exMsg, ex);
-        msg += ': ' + response;
-      }
-    }
+    var msg = 'genericResponseHandler - ' + apiName;
     if (error) {
-      log.error(LOG_PREFIX, msg + ' -- ' + error.toString(), error);
+      log.error(LOG_PREFIX, msg, error);
     } else {
-      log.debug(LOG_PREFIX, msg);
+      log.debug(LOG_PREFIX, msg, response);
     }
   }
 
