@@ -5,7 +5,7 @@ var Gpio = require('onoff').Gpio;
 var exec = require('child_process').exec;
 var request = require('request');
 var GCMPush = require('./GCMPush');
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
 
@@ -18,8 +18,11 @@ var lastPushed = 0;
 var lastValue = 1;
 var minTime = 3000;
 
-log.setLogFileName('./start.log');
-log.setFileLogging(true);
+var LOG_PREFIX = 'DOORBELL';
+var logOpts = {
+  logFileName: './logs/system.log',
+  logToFile: true
+};
 
 function sendDoorbell() {
   var url = 'http://' + config.controller.ip + ':' + config.controller.port;
@@ -30,20 +33,24 @@ function sendDoorbell() {
     json: true
   };
   request(ring, function(error, response, body) {
+    var msg = 'Ring Doorbell via ';
     if (error) {
-      log.exception('[sendDoorbell] Failed', error);
+      log.exception(LOG_PREFIX, msg + 'HTTP request failed.', error);
       if (fb) {
         fb.child('commands').send({cmdName: 'RUN_ON_DOORBELL'}, function(err) {
           if (err) {
-            log.exception('[sendDoorbell] Double fail!', err);
+            log.exception(LOG_PREFIX, msg + 'FB failed.', err);
             var cmd = 'sudo reboot';
             exec(cmd, function() {});
+            return;
           } else {
-            log.warn('[sendDoorbell] Worked via Firebase');
+            log.warn(LOG_PREFIX, 'Worked via Firebase');
+            return;
           }
         });
       }
     }
+    log.log(LOG_PREFIX, 'Doorbell rang.');
   });
   if (gcmPush) {
     var gcmMessage = {
@@ -58,36 +65,12 @@ function sendDoorbell() {
 
 fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
   if (err) {
-    log.exception('Unable to open config file.', err);
+    log.exception(LOG_PREFIX, 'Unable to open config file.', err);
   } else {
     config = JSON.parse(data);
     APP_NAME = config.appName;
-    log.appStart(APP_NAME);
+    log.appStart(APP_NAME, logOpts);
     fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
-
-    fb.child('config/' + APP_NAME + '/logs').on('value', function(snapshot) {
-      var logSettings = snapshot.val();
-      if (logSettings) {
-        if (logSettings.logLevel === 'DEBUG') {
-          log.setDebug(true);
-        } else {
-          log.setDebug(false);
-        }
-        if (logSettings.toFirebase === true) {
-          log.setFirebase(fb);
-        } else {
-          log.setFirebase(null);
-        }
-        if (logSettings.toFilename) {
-          log.setLogFileName(logSettings.toFilename);
-        }
-        if (logSettings.toFile === true) {
-          log.setFileLogging(true);
-        } else {
-          log.setFileLogging(false);
-        }
-      }
-    });
 
     gcmPush = new GCMPush(fb);
 
@@ -99,29 +82,33 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
         var timeOK = now > lastPushed + minTime ? true : false;
         lastValue = value;
         if (hasChanged && timeOK && value === 0) {
-          log.log('[DOORBELL] Ding-dong');
+          log.log(LOG_PREFIX, 'Ding-dong');
           lastPushed = now;
           sendDoorbell();
         } else {
-          var msg = '[DOORBELL] Debounced.';
+          var msg = 'Debounced.';
           msg += ' value=' + value;
           msg += ' hasChanged=' + hasChanged;
           msg += ' timeOK=' + timeOK;
-          log.log(msg);
+          log.log(LOG_PREFIX, msg);
         }
       });
     }
   }
 });
 
+setInterval(function() {
+  log.cleanFile(logOpts.logFileName);
+}, 60 * 60 * 24 * 1000);
+
 function exit(sender, exitCode) {
   exitCode = exitCode || 0;
-  log.log('[APP] Starting shutdown process');
-  log.log('[APP] Will exit with error code: ' + String(exitCode));
+  log.log(LOG_PREFIX, 'Starting shutdown process');
+  log.log(LOG_PREFIX, 'Will exit with exit code: ' + String(exitCode));
   if (pin) {
-    log.log('[APP] Unwatching pins');
+    log.log(LOG_PREFIX, 'Unwatching pins');
     pin.unwatchAll();
-    log.log('[APP] Unexporting GPIO');
+    log.log(LOG_PREFIX, 'Unexporting GPIO');
     pin.unexport();
   }
   setTimeout(function() {
