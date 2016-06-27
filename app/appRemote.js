@@ -2,19 +2,22 @@
 
 var fs = require('fs');
 var request = require('request');
-var log = require('./SystemLog');
+var log = require('./SystemLog2');
 var fbHelper = require('./FBHelper');
 var Keys = require('./Keys').keys;
 var Keypad = require('./Keypad');
 
-var APP_NAME = 'REMOTE';
 var fb;
 var config;
-
-log.setLogFileName('./start.log');
-log.setFileLogging(true);
+var cmdId = 0;
+var APP_NAME = 'REMOTE';
+var logOpts = {
+  logFileName: './logs/system.log',
+  logToFile: true
+};
 
 function sendCommand(command, path) {
+  var prefix = 'sendCommand (' + cmdId++ + ')';
   var url = 'http://' + config.controller.ip + ':' + config.controller.port;
   url += path;
   var cmd = {
@@ -23,53 +26,29 @@ function sendCommand(command, path) {
     json: true,
     body: command
   };
-  log.http('REQ', JSON.stringify(command));
+  log.log(prefix, 'Send', command);
   request(cmd, function(error, response, body) {
     if (error) {
-      log.exception('[sendCommand] Failed', error);
+      log.exception(prefix, 'Failed', error);
     } else {
-      log.log('[sendCommand] ' + JSON.stringify(body));
+      log.log(prefix, 'Completed', body);
     }
   });
 }
 
 fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
   if (err) {
-    log.exception('Unable to open config file.', err);
+    log.exception(APP_NAME, 'Unable to open config file.', err);
   } else {
     config = JSON.parse(data);
     APP_NAME = config.appName;
-    log.appStart(APP_NAME);
+    log.appStart(APP_NAME, logOpts);
     fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
     var keypadConfigPath = 'config/' + config.appName + '/keypad';
     fb.child(keypadConfigPath).on('value', function(snapshot) {
-      log.log('[REMOTE] Keypad settings updated.');
+      log.log(APP_NAME, 'Keypad settings updated.');
       config.keypad = snapshot.val();
-    });
-
-    fb.child('config/' + APP_NAME + '/logs').on('value', function(snapshot) {
-      var logSettings = snapshot.val();
-      if (logSettings) {
-        if (logSettings.logLevel === 'DEBUG') {
-          log.setDebug(true);
-        } else {
-          log.setDebug(false);
-        }
-        if (logSettings.toFirebase === true) {
-          log.setFirebase(fb);
-        } else {
-          log.setFirebase(null);
-        }
-        if (logSettings.toFilename) {
-          log.setLogFileName(logSettings.toFilename);
-        }
-        if (logSettings.toFile === true) {
-          log.setFileLogging(true);
-        } else {
-          log.setFileLogging(false);
-        }
-      }
     });
 
     if ((config.keypad) && (config.keypad.enabled === true)) {
@@ -86,7 +65,7 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
             }
             sendCommand(cmd, path);
           } else {
-            log.warn('[HOME] Unknown key pressed: ' + key);
+            log.warn(APP_NAME, 'Unknown key pressed: ' + key);
           }
         }
       });
@@ -96,8 +75,8 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
 
 function exit(sender, exitCode) {
   exitCode = exitCode || 0;
-  log.log('[APP] Starting shutdown process');
-  log.log('[APP] Will exit with error code: ' + String(exitCode));
+  log.log(APP_NAME, 'Starting shutdown process');
+  log.log(APP_NAME, 'Will exit with error code: ' + String(exitCode));
   setTimeout(function() {
     log.appStop(sender);
     process.exit(exitCode);
@@ -107,3 +86,7 @@ function exit(sender, exitCode) {
 process.on('SIGINT', function() {
   exit('SIGINT', 0);
 });
+
+setInterval(function() {
+  log.cleanFile(logOpts.logFileName);
+}, 60 * 60 * 24 * 1000);
