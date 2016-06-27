@@ -2,6 +2,8 @@
 
 var fs = require('fs');
 var util = require('util');
+var path = require('path');
+var zlib = require('zlib');
 var colors = require('colors');
 var gitHead = require('./version');
 var moment = require('moment');
@@ -25,7 +27,7 @@ var _fbLogCache = [];
 var _options = {
   appName: null,
   logToFile: false,
-  logFileName: './logs/rpi-system.log',
+  logFileName: './logs/system.log',
   logToFirebase: false,
   logLevel: {
     console: 90,
@@ -274,6 +276,43 @@ function custom(level, prefix, message, extra) {
   handleLog(logObj);
 }
 
+function cleanFile(logFile) {
+  if (!logFile) {
+    logFile = _options.logFileName;
+  }
+  var msg = 'Cleaning log file: ' + logFile;
+  fs.stat(logFile, function(err, stats) {
+    if (err) {
+      msg += ' - Failed.';
+      exception('LOGGER', msg, err);
+      return;
+    }
+    if (stats) {
+      var exceedsAge = false;
+      var exceedsSize = false;
+      if (stats.size > 250000) {
+        exceedsSize = true;
+      }
+      var oneWeek = moment().subtract(7, 'days');
+      exceedsAge = moment(stats.birthtime).isBefore(oneWeek);
+      if (exceedsAge || exceedsSize) {
+        log('LOGGER', msg);
+        try {
+          var gzip = zlib.createGzip();
+          var inp = fs.createReadStream(logFile);
+          var out = fs.createWriteStream(logFile + '.gz');
+          inp.pipe(gzip).pipe(out);
+          fs.unlinkSync(logFile);
+        } catch (ex) {
+          exception('LOGGER', msg + ' - Failed with exception.', ex);
+        }
+      } else {
+        debug('LOGGER', msg + ' - no action required.');
+      }
+    }
+  });
+}
+
 function cleanLogs(path, maxAgeDays) {
   if (!_fbRef) {
     error('LOGGER', 'Cannot clean logs, Firebase reference not set.');
@@ -316,6 +355,7 @@ exports.http = http;
 exports.todo = todo;
 exports.custom = custom;
 exports.cleanLogs = cleanLogs;
+exports.cleanFile = cleanFile;
 exports.setFirebaseRef = setFirebaseRef;
 exports.setOptions = setOptions;
 exports.version = gitHead.head;
