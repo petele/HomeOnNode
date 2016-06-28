@@ -390,7 +390,8 @@ function Nest() {
       }
       var nestThermostat = _nestData.devices.thermostats[thermostatId];
       if (!nestThermostat) {
-        log.error(LOG_PREFIX, msg + ' could not find thermostat (' + thermostatId + ')');
+        msg += ' could not find thermostat (' + thermostatId + ')';
+        log.error(LOG_PREFIX, msg);
         return false;
       }
       msg += ' in ' + nestThermostat.name;
@@ -399,7 +400,8 @@ function Nest() {
           msg += ' to ' + temperature.toString() + '°F';
         }
       } else {
-        log.error(LOG_PREFIX, msg + '. Error: temperature out of range: ' + temperature);
+        msg += '. Error: temperature out of range: ' + temperature;
+        log.error(LOG_PREFIX, msg);
         return false;
       }
       if (!mode) {
@@ -407,7 +409,6 @@ function Nest() {
         return false;
       }
       msg += ' [' + mode + ']';
-
       /* jshint -W106 */
       // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
       if (mode !== nestThermostat.hvac_mode) {
@@ -424,7 +425,8 @@ function Nest() {
       }
       // jscs:enable
       /* jshint +W106 */
-      log.warn(LOG_PREFIX, msg + ' -- Unhandled Event! (' + mode + '/' + temperature + ')');
+      msg += ' -- Unhandled Event! (' + mode + '/' + temperature + ')';
+      log.warn(LOG_PREFIX, msg);
       return false;
     }
     return false;

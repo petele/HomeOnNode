@@ -159,7 +159,8 @@ function Sonos() {
       var speaker = getPlayer(roomName);
       if (speaker) {
         speaker.pause(function(error, response) {
-          genericResponseHandler('pause', error, response);
+          var msg = 'pause (' + roomName + ')';
+          genericResponseHandler(msg, error, response);
         });
         return true;
       }

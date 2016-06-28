@@ -724,7 +724,6 @@ function Home(config, fb) {
         if (id) {
           return id;
         } else {
-
           log.error(LOG_PREFIX, msg + 'roomId (' + roomId + ') not found.');
           return null;
         }
@@ -740,6 +739,7 @@ function Home(config, fb) {
   }
 
   function adjustNestThermostat(roomId, modifier) {
+    var msg = 'adjustNestThermostat ' + roomId + ': ' + modifier;
     if (nest) {
       try {
         var id = getNestThermostatId(roomId);
@@ -751,19 +751,24 @@ function Home(config, fb) {
           var temperature = thermostat.target_temperature_f;
           // jscs:enable
           /* jshint +W106 */
-          if (modifier === 'UP') {
+          msg += ' (' + id + ') from: ' + mode + ' ' + temperature + 'F ';
+          if (modifier === 'UP' || modifier === 'DIM_UP') {
             temperature = temperature + 1;
-          } else if (modifier === 'DOWN') {
+          } else if (modifier === 'DOWN' || modifier === 'DIM_DOWN') {
             temperature = temperature - 1;
           } else if (modifier === 'OFF') {
             mode = 'off';
           }
+          msg += 'to: ' + mode + ' ' + temperature + 'F';
+          log.debug(LOG_PREFIX, msg);
           return nest.setTemperature(id, mode, temperature);
         }
-        log.error(LOG_PREFIX, 'setNestThermostat failed, thermostat not found');
+        msg += ' failed. Thermostat not found.';
+        log.error(LOG_PREFIX, msg);
         return false;
       } catch (ex) {
-        log.exception(LOG_PREFIX, 'adjustNestThermostat failed', ex);
+        msg += ' failed with exception.';
+        log.exception(LOG_PREFIX, msg, ex);
         return false;
       }
     }

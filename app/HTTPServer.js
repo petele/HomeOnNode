@@ -6,7 +6,7 @@ var log = require('./SystemLog2');
 var methodOverride = require('method-override');
 var bodyParser = require('body-parser');
 
-var LOG_PREFIX = 'HTTPServer';
+var LOG_PREFIX = 'HTTPRequest';
 
 function HTTPServer(config, home, fb) {
 
@@ -32,14 +32,8 @@ function HTTPServer(config, home, fb) {
   exp.use(bodyParser.text());
 
   exp.use(function(req, res, next) {
-    log.http(req.method, req.path + ' [' + req.ip + ']');
-    var body = req.body;
-    if (typeof body === 'object') {
-      body = JSON.stringify(body);
-    }
-    if ((body !== '{}') && (body.toString().length > 0)) {
-      log.debug(LOG_PREFIX, 'Body: ' + body);
-    }
+    var msg = req.method + ' ' + req.path + ' from ' + req.ip;
+    log.debug(LOG_PREFIX, msg, req.body);
     next();
   });
 
