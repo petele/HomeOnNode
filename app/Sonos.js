@@ -158,26 +158,23 @@ function Sonos() {
     if (_sonos) {
       var speakers = [];
       if (roomName) {
-        speakers.push(getPlayer(roomName));
+        speakers.push(roomName);
       } else {
-        speakers = _sonos.getZones();
-      }
-      speakers.forEach(function(speaker) {
-        speaker.pause(function(error, response) {
-          var msg = 'pause (' + speaker.roomName + ')';
-          genericResponseHandler(msg, error, response);
+        _sonos.getZones().forEach(function(zone) {
+          speakers.push(zone.coordinator.roomName);
         });
+      }
+      speakers.forEach(function(rName) {
+        var speaker = getPlayer(rName);
+        // console.log('s', util.inspect(speaker, {depth:3, colors:true}));
+        if (speaker.state.currentState !== 'STOPPED') {
+          speaker.pause(function(error, response) {
+            var msg = 'pause (' + rName + ')';
+            genericResponseHandler(msg, error, response);
+          });        
+        }
       });
       return true;
-      // if (speaker) {
-      //   speaker.pause(function(error, response) {
-      //     var msg = 'pause (' + roomName + ')';
-      //     genericResponseHandler(msg, error, response);
-      //   });
-      //   return true;
-      // }
-      // log.error(LOG_PREFIX, 'pause failed, unable to find speaker.');
-      // return false;
     }
     log.error(LOG_PREFIX, 'pause failed, Sonos unavilable.');
     return false;
