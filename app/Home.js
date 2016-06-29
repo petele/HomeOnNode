@@ -719,19 +719,11 @@ function Home(config, fb) {
   function getNestThermostatId(roomId) {
     var msg = 'getNestThermostatId failed, ';
     try {
-      if (roomId.indexOf('devices/thermostats/') === 0) {
-        var id = config.hvac.thermostats[roomId];
-        if (id) {
-          return id;
-        } else {
-          log.error(LOG_PREFIX, msg + 'roomId (' + roomId + ') not found.');
-          return null;
-        }
-      } else if (roomId) {
-        return roomId;
+      var id = config.hvac.thermostats[roomId];
+      if (id) {
+        return id;
       }
-      log.error(LOG_PREFIX, msg + 'no roomId provided.');
-      return null;
+      log.error(LOG_PREFIX, msg + 'roomId (' + roomId + ') not found.');
     } catch (ex) {
       log.exception(LOG_PREFIX, msg, ex);
       return null;
@@ -744,6 +736,7 @@ function Home(config, fb) {
       try {
         var id = getNestThermostatId(roomId);
         if (id) {
+          msg += ' (' + id + ')';
           var thermostat = _self.state.nest.devices.thermostats[id];
           /* jshint -W106 */
           // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
@@ -751,7 +744,7 @@ function Home(config, fb) {
           var temperature = thermostat.target_temperature_f;
           // jscs:enable
           /* jshint +W106 */
-          msg += ' (' + id + ') from: ' + mode + ' ' + temperature + 'F ';
+          msg += ' from: ' + mode + ' ' + temperature + 'F ';
           if (modifier === 'UP' || modifier === 'DIM_UP') {
             temperature = temperature + 1;
           } else if (modifier === 'DOWN' || modifier === 'DIM_DOWN') {
