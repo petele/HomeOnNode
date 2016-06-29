@@ -744,6 +744,7 @@ function Home(config, fb) {
       try {
         var id = getNestThermostatId(roomId);
         if (id) {
+          msg += ' (' + id + ')';
           var thermostat = _self.state.nest.devices.thermostats[id];
           /* jshint -W106 */
           // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
@@ -751,7 +752,7 @@ function Home(config, fb) {
           var temperature = thermostat.target_temperature_f;
           // jscs:enable
           /* jshint +W106 */
-          msg += ' (' + id + ') from: ' + mode + ' ' + temperature + 'F ';
+          msg += ' from: ' + mode + ' ' + temperature + 'F ';
           if (modifier === 'UP' || modifier === 'DIM_UP') {
             temperature = temperature + 1;
           } else if (modifier === 'DOWN' || modifier === 'DIM_DOWN') {
