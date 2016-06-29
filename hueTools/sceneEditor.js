@@ -31,8 +31,8 @@ commander
   });
 
 commander
-  .command('list')
-  .description('Lists all of the possible scenes')
+  .command('receipies')
+  .description('Lists all of the possible receipies')
   .action(function() {
     readRecipeFile(commander.recipes);
     var keys = Object.keys(recipes);
@@ -41,6 +41,23 @@ commander
       k = k.substring(0, 20);
       log.info(k, JSON.stringify(recipes[key]));
     });
+  });
+
+commander
+  .command('list')
+  .description('Lists all of the current scenes')
+  .action(function() {
+    log.level = 'error';
+    makeRequest('GET', 'scenes/', null, function(sceneList) {
+      log.level = 'info';
+      var keys = Object.keys(sceneList);
+      keys.forEach(function(key) {
+        var k = key + '                            ';
+        k = k.substring(0, 16);
+        log.info(k, '%s (%s)', sceneList[key].name, sceneList[key].lastupdated);
+      });
+    });
+
   });
 
 commander
@@ -224,10 +241,10 @@ function makeRequest(method, path, body, callback) {
   var reqOpt = {
     url: 'http://' + hueIP + '/api/' + Keys.hueBridge.key + '/' + path,
     method: method,
-    timeout: requestTimeout
+    timeout: requestTimeout,
+    json: true
   };
   if (body) {
-    reqOpt.json = true;
     reqOpt.body = body;
   }
   var prefix = method + ' ' + path;

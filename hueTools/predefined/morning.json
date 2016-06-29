@@ -1,0 +1,27 @@
+{ "sceneName": "Morning",
+  "lights": [
+    {"light": 1, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 2, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 3, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 4, "cmdName": "PEACH", "bri": 150},
+    {"light": 5, "cmdName": "PEACH", "bri": 150},
+    {"light": 6, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 7, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 8, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 9, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 10, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 11, "cmdName": "OFF"},
+    {"light": 12, "cmdName": "OFF"},
+    {"light": 13, "cmdName": "OFF"},
+    {"light": 14, "cmdName": "SIENNA", "bri": 200},
+    {"light": 17, "cmdName": "REBECCA_PURPLE", "bri": 254},
+    {"light": 18, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 19, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 20, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 21, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 22, "cmdName": "PURPLE", "bri": 100},
+    {"light": 24, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 25, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 26, "cmdName": "DEFAULT", "bri": 254}
+  ]
+}
