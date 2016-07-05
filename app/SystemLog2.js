@@ -112,6 +112,7 @@ function stringify(obj) {
 function generateLog(level, prefix, message, extra) {
   var now = Date.now();
   var nowPretty = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
+  var levelValue = getLogLevelValueByName(level);
   var msg = '';
   if (prefix) {
     msg += '[' + prefix.toUpperCase() + '] ';
@@ -120,8 +121,9 @@ function generateLog(level, prefix, message, extra) {
   var result = {
     appName: _options.appName,
     date: now,
-    date_: nowPretty,
+    dateFormatted: nowPretty,
     level: level,
+    levelValue: levelValue,
     prefix: prefix,
     message: msg,
     rawMessage: message,
@@ -283,6 +285,11 @@ function cleanFile(logFile) {
   var msg = 'Cleaning log file: ' + logFile;
   fs.stat(logFile, function(err, stats) {
     if (err) {
+      if (err.code === 'ENOENT') {
+        msg += ' - file does not exist.';
+        log('LOGGER', msg);
+        return;
+      }
       msg += ' - Failed.';
       exception('LOGGER', msg, err);
       return;

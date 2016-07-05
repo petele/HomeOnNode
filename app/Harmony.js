@@ -18,6 +18,22 @@ function Harmony(uuid, ip) {
   var _activitiesByName = {};
   var _activitiesById = {};
   var _isSearching = false;
+  var _state = {
+    state: 'PRE_INIT',
+    connected: false,
+    connectedAt: 0,
+    lastPing: 0
+  };
+
+  var COMMAND_PREFIX = 'vnd.logitech.harmony/';
+  var COMMAND_STRINGS = {
+    CONFIG: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?config',
+    ACTIVITY: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?getCurrentActivity',
+    START_ACTIVITY_FINISHED: 'harmony.engine?startActivityFinished',
+    STATE_DIGEST_NOTIFY: 'connect.stateDigest?notify',
+    START_ACTIVITY: 'harmony.engine?startactivity',
+    HOLD_ACTION: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?holdAction'
+  };
 
   function connect() {
     if (_ip) {
@@ -40,8 +56,9 @@ function Harmony(uuid, ip) {
         client.on('reconnect', handleReconnect);
         client.on('disconnect', handleDisconnect);
       } catch (ex) {
+        _state.state = 'connection_failed';
         log.exception(LOG_PREFIX, 'Unable to connect to Harmony Hub', ex);
-        _self.emit('connection_failed', ex);
+        _self.emit(_state.state, ex);
       }
     } else {
       log.debug(LOG_PREFIX, 'No Hub IP set, starting search.');
@@ -53,14 +70,17 @@ function Harmony(uuid, ip) {
     log.init(LOG_PREFIX, 'Searching for Harmony Hub...');
     var discover;
     try {
+      _state.state = 'SEARCHING';
       discover = new HarmonyHubDiscovery(61991);
     } catch (ex) {
+      _state.state = 'SEARCH_FAILED';
       log.exception(LOG_PREFIX, 'Unable to initialize HarmonyHubDiscovery', ex);
       _self.emit('error', ex);
     }
 
     if (discover) {
       discover.on('online', function(hub) {
+        _state.state = 'FOUND_HUB';
         _isSearching = false;
         log.debug(LOG_PREFIX, 'Hub found on IP address: ' + hub.ip);
         _ip = hub.ip;
@@ -72,10 +92,11 @@ function Harmony(uuid, ip) {
       _isSearching = true;
       setTimeout(function() {
         if (_isSearching === true) {
+          _state.state = 'no_hubs_found';
           discover.stop();
           _isSearching = false;
           log.error(LOG_PREFIX, 'Timeout exceeded, no Harmony Hubs found.');
-          _self.emit('no_hubs_found');
+          _self.emit(_state.state);
           discover = null;
         }
       }, 10000);
@@ -88,6 +109,7 @@ function Harmony(uuid, ip) {
   }
 
   function handleError(err) {
+    _state.error = err;
     log.exception(LOG_PREFIX, 'Error reported', err);
     _self.close();
     _self.emit('error', err);
@@ -99,23 +121,28 @@ function Harmony(uuid, ip) {
     _self.getConfig();
     _self.getActivity();
     keepAlive();
+    _state.state = 'ONLINE';
+    _state.connected = true;
+    _state.connectedAt = Date.now();
+    _state.lastPing = Date.now();
   }
 
   function handleStanza(data) {
+    _state.lastPing = Date.now();
     var result;
     if (data.children.length >= 1) {
       var child = data.children[0];
-      if (child.attrs.mime === 'vnd.logitech.harmony/vnd.logitech.harmony.engine?config') {
+      if (child.attrs.mime === COMMAND_STRINGS.CONFIG) {
         result = child.children.join('');
         result = JSON.parse(result);
         handleConfig(result);
         _self.emit('ready', result);
-      } else if (child.attrs.mime === 'vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity') {
+      } else if (child.attrs.mime === COMMAND_STRINGS.ACTIVITY) {
         result = child.children.join('');
         result = result.split('=');
         announceActivity(result[1]);
         _self.currentActivity = result[1];
-      } else if (child.attrs.type === 'harmony.engine?startActivityFinished') {
+      } else if (child.attrs.type === COMMAND_STRINGS.START_ACTIVITY_FINISHED) {
         result = child.children.join('');
         result = result.split(':');
         for (var i = 0; i < result.length; i++) {
@@ -126,7 +153,7 @@ function Harmony(uuid, ip) {
             break;
           } // if
         } // for
-      } else if (child.attrs.type === 'connect.stateDigest?notify') {
+      } else if (child.attrs.type === COMMAND_STRINGS.STATE_DIGEST_NOTIFY) {
         // log.debug(LOG_PREFIX, 'State digest notification.');
       } else {
         // log.debug(LOG_PREFIX, 'Unhandled response. <' + child.name + ' ... />');
@@ -135,6 +162,7 @@ function Harmony(uuid, ip) {
   } // End of function
 
   function announceActivity(activityId) {
+    _state.lastPing = Date.now();
     var activity = {
       id: activityId,
       label: _activitiesById[activityId]
@@ -143,6 +171,7 @@ function Harmony(uuid, ip) {
   }
 
   function handleOffline() {
+    _state.state = 'OFFLINE';
     log.debug(LOG_PREFIX, 'Offline.');
     if (reconnect) {
       connect();
@@ -150,14 +179,17 @@ function Harmony(uuid, ip) {
   }
 
   function handleConnect(connection) {
+    _state.state = 'CONNECTED';
     log.log(LOG_PREFIX, 'Connected.');
   }
 
   function handleReconnect() {
+    _state.state = 'RECONNECTED';
     log.log(LOG_PREFIX, 'Reconnected.');
   }
 
   function handleDisconnect() {
+    _state.state = 'DISCONNECTED';
     log.warn(LOG_PREFIX, 'Disconnected.');
   }
 
@@ -176,6 +208,7 @@ function Harmony(uuid, ip) {
   }
 
   function handleConfig(harmonyConfig) {
+    _state.lastPing = Date.now();
     // log.debug(LOG_PREFIX, 'Config: ' + JSON.stringify(harmonyConfig));
     var activities = harmonyConfig.activity;
     _activitiesById = {};
@@ -186,16 +219,25 @@ function Harmony(uuid, ip) {
     });
   }
 
+  function checkIfReady() {
+    if (client) {
+      return true;
+    }
+    var err = new Error('Client not connected');
+    err.clientState = _state;
+    _self.emit('no_client', err);
+    return false;
+  }
+
   this.getConfig = function() {
-    if (!client) {
-      _self.emit('error', 'Client not connected.');
+    if (checkIfReady() === false) {
       return {'error': 'Client not connected'};
     } else {
       log.debug(LOG_PREFIX, 'getConfig');
       var cmd = new XMPP.Stanza.Iq({'id': _uuid, type: 'get'})
         .c('oa', {
           'xmlns': 'connect.logitech.com',
-          'mime': 'vnd.logitech.harmony/vnd.logitech.harmony.engine?config'
+          'mime': COMMAND_STRINGS.CONFIG
         });
       client.send(cmd);
       return {'action': 'getConfig'};
@@ -203,8 +245,7 @@ function Harmony(uuid, ip) {
   };
 
   this.getActivity = function(callback) {
-    if (!client) {
-      _self.emit('error', 'Client not connected.');
+    if (checkIfReady() === false) {
       return {'error': 'Client not connected'};
     } else {
       log.debug(LOG_PREFIX, 'getActivity.');
@@ -212,7 +253,7 @@ function Harmony(uuid, ip) {
       var cmd = new XMPP.Stanza.Iq({'id': _uuid})
         .c('oa', {
           'xmlns': 'connect.logitech.com',
-          'mime': 'vnd.logitech.harmony/vnd.logitech.harmony.engine?getCurrentActivity'
+          'mime': COMMAND_STRINGS.ACTIVITY
         });
       client.send(cmd);
       return {'action': 'getActivity'};
@@ -230,8 +271,7 @@ function Harmony(uuid, ip) {
   };
 
   this.setActivityById = function(activityID, activityName) {
-    if (!client) {
-      _self.emit('error', 'Client not connected.');
+    if (checkIfReady() === false) {
       return {'error': 'Client not connected'};
     } else {
       var msg = 'setActivity to: ' + activityID;
@@ -244,7 +284,7 @@ function Harmony(uuid, ip) {
       var cmd = new XMPP.Stanza.Iq({'id': _uuid, 'type': 'get'})
         .c('oa', {
           'xmlns': 'connect.logitech.com',
-          'mime': 'harmony.engine?startactivity'
+          'mime': COMMAND_STRINGS.START_ACTIVITY
         }).t(cmdText);
       client.send(cmd);
       return {'action': 'setActivity', 'activityID': activityID};
@@ -252,8 +292,7 @@ function Harmony(uuid, ip) {
   };
 
   this.sendCommand = function(cmd) {
-    if (!client) {
-      _self.emit('error', 'Client not connected.');
+    if (checkIfReady() === false) {
       return {'error': 'Client not connected'};
     } else {
       log.log(LOG_PREFIX, 'sendCommand: ' + cmd.command);
@@ -263,7 +302,7 @@ function Harmony(uuid, ip) {
       var cmdStanza = new XMPP.Stanza.Iq({iq: _uuid, type: 'get'})
         .c('oa', {
           xmlns: 'connect.logitech.com',
-          mime: 'vnd.logitech.harmony/vnd.logitech.harmony.engine?holdAction'
+          mime: COMMAND_STRINGS.HOLD_ACTION
         }).t(cmdText);
       client.send(cmdStanza);
       return {'action': 'sendCommand', 'command': cmd};
@@ -272,6 +311,7 @@ function Harmony(uuid, ip) {
 
   this.close = function() {
     reconnect = false;
+    _state.state = 'CLOSED';
     if (client) {
       log.log(LOG_PREFIX, 'Closing.');
       client.end();

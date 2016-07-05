@@ -555,6 +555,9 @@ function Home(config, fb) {
       harmony.on('activity', updateHarmonyActivity);
       harmony.on('no_hubs_found', shutdownHarmony);
       harmony.on('connection_failed', shutdownHarmony);
+      harmony.on('no_client', function(err) {
+        log.exception(LOG_PREFIX, 'No Harmony client found', err);
+      });
       harmony.on('error', function(err) {
         log.exception(LOG_PREFIX, 'Harmony error occured.', err);
       });
@@ -597,7 +600,7 @@ function Home(config, fb) {
         return false;
       }
     }
-    log.warn(LOG_PREFIX, 'Harmony refreshHarmonyConfig failed, Harmony not ready');
+    log.warn(LOG_PREFIX, 'refreshHarmonyConfig failed, Harmony not ready');
     return false;
   }
 
