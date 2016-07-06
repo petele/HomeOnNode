@@ -59,6 +59,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding-left: 0;
         padding-right: 0;
         border-bottom: 1px solid var(--divider-color);
+        cursor: -webkit-grab;
       }
     </style>
     <span hidden>{{path}}</span>
@@ -75,7 +76,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <template is="dom-if" if="[[item.level]]">
                 <span class$="label [[item.level]]">[[item.level]]</span>
               </template>
-              <span>[[formatDate(item.date)]]<span>
+              <span>[[formatDate(item.date)]]</span>
             </div>
           </paper-item-body>
         </paper-item>
@@ -136,7 +137,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         },
         logItemTap: function(event) {
           var logItem = event.model.item;
-          console.log('logItemTap', logItem);
+          var url = 'https://petele-at-home.firebaseio.com/';
+          url += this.path + '/' + logItem.key;
+          window.open(url);
         }
       });
     })();
