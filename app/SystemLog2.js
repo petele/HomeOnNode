@@ -167,9 +167,11 @@ function handleLog(logObj) {
 function printLog(logObj) {
   var formattedLevel = ('     ' + logObj.level).slice(-5);
   var levelColor = getLogColorByName(logObj.level);
-  var msg = logObj.date_ + ' | ' + levelColor(formattedLevel) + ' | ';
-  msg += logObj.message;
-  console.log(msg);
+  var msg = [];
+  msg.push(logObj.date_ || logObj.dateFormatted);
+  msg.push(levelColor(formattedLevel));
+  msg.push(logObj.message);
+  console.log(msg.join(' | '));
   if (logObj.extra) {
     if (logObj.extra.stack) {
       console.log(logObj.extra.stack);

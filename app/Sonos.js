@@ -15,25 +15,38 @@ function Sonos() {
   var _favorites = {};
 
   var _logger = {
-    stringify: function(args) {
-      var result = '';
-      Array.prototype.slice.call(args).forEach(function(arg) {
-        if (typeof arg === 'string') {
-          result += arg + ' ';
-        } else {
-          result += util.inspect(arg, {depth: 3}) + ' ';
-        }
-      });
-      return result.trim();
+    logIt: function(level, args) {
+      var PREFIX = 'SONOS*';
+      var msg = '';
+      var extras;
+      var argsAsArray = Array.prototype.slice.call(args);
+      if (argsAsArray.length === 0) {
+        msg = 'Blank log message. :(';
+      } else if (argsAsArray.length === 1) {
+        msg = argsAsArray[0];
+      } else if (argsAsArray.length === 2) {
+        msg = argsAsArray[0];
+        extras = argsAsArray[1];
+      } else {
+        msg = argsAsArray.shift();
+        extras = argsAsArray;
+      }
+      if (level === 'LOG') {
+        log.log(PREFIX, msg, extras);
+      } else if (level === 'ERROR') {
+        log.error(PREFIX, msg, extras);
+      } else {
+        log.debug(PREFIX, msg, extras);
+      }
     },
     info: function() {
-      log.log('SONOS*',this.stringify(arguments));
+      this.logIt('LOG', arguments);
     },
     error: function() {
-      log.error('SONOS*', this.stringify(arguments));
+      this.logIt('ERROR', arguments);
     },
     debug: function() {
-      log.debug('SONOS*', this.stringify(arguments));
+      this.logIt('DEBUG', arguments);
     }
   };
 
