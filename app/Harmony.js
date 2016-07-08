@@ -171,6 +171,7 @@ function Harmony(uuid, ip) {
   }
 
   function handleOffline() {
+    _state.connected = false;
     _state.state = 'OFFLINE';
     log.debug(LOG_PREFIX, 'Offline.');
     if (reconnect) {
@@ -312,6 +313,7 @@ function Harmony(uuid, ip) {
   this.close = function() {
     reconnect = false;
     _state.state = 'CLOSED';
+    _state.connected = false;
     if (client) {
       log.log(LOG_PREFIX, 'Closing.');
       client.end();
