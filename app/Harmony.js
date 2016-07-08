@@ -13,17 +13,11 @@ function Harmony(uuid, ip) {
   var _uuid = uuid;
   var client;
   var _self = this;
-  this.currentActivity = -100;
   var reconnect = true;
   var _activitiesByName = {};
   var _activitiesById = {};
   var _isSearching = false;
-  var _state = {
-    state: 'PRE_INIT',
-    connected: false,
-    connectedAt: 0,
-    lastPing: 0
-  };
+  this.currentActivity = -100;
 
   var COMMAND_PREFIX = 'vnd.logitech.harmony/';
   var COMMAND_STRINGS = {
@@ -56,9 +50,8 @@ function Harmony(uuid, ip) {
         client.on('reconnect', handleReconnect);
         client.on('disconnect', handleDisconnect);
       } catch (ex) {
-        _state.state = 'connection_failed';
         log.exception(LOG_PREFIX, 'Unable to connect to Harmony Hub', ex);
-        _self.emit(_state.state, ex);
+        _self.emit('connection_failed', ex);
       }
     } else {
       log.debug(LOG_PREFIX, 'No Hub IP set, starting search.');
@@ -70,17 +63,14 @@ function Harmony(uuid, ip) {
     log.init(LOG_PREFIX, 'Searching for Harmony Hub...');
     var discover;
     try {
-      _state.state = 'SEARCHING';
       discover = new HarmonyHubDiscovery(61991);
     } catch (ex) {
-      _state.state = 'SEARCH_FAILED';
       log.exception(LOG_PREFIX, 'Unable to initialize HarmonyHubDiscovery', ex);
-      _self.emit('error', ex);
+      _self.emit('hub_search_failed', ex);
     }
 
     if (discover) {
       discover.on('online', function(hub) {
-        _state.state = 'FOUND_HUB';
         _isSearching = false;
         log.debug(LOG_PREFIX, 'Hub found on IP address: ' + hub.ip);
         _ip = hub.ip;
@@ -92,11 +82,10 @@ function Harmony(uuid, ip) {
       _isSearching = true;
       setTimeout(function() {
         if (_isSearching === true) {
-          _state.state = 'no_hubs_found';
           discover.stop();
           _isSearching = false;
           log.error(LOG_PREFIX, 'Timeout exceeded, no Harmony Hubs found.');
-          _self.emit(_state.state);
+          _self.emit('no_hubs_found');
           discover = null;
         }
       }, 10000);
@@ -109,9 +98,7 @@ function Harmony(uuid, ip) {
   }
 
   function handleError(err) {
-    _state.error = err;
     log.exception(LOG_PREFIX, 'Error reported', err);
-    _self.close();
     _self.emit('error', err);
   }
 
@@ -121,14 +108,9 @@ function Harmony(uuid, ip) {
     _self.getConfig();
     _self.getActivity();
     keepAlive();
-    _state.state = 'ONLINE';
-    _state.connected = true;
-    _state.connectedAt = Date.now();
-    _state.lastPing = Date.now();
   }
 
   function handleStanza(data) {
-    _state.lastPing = Date.now();
     var result;
     if (data.children.length >= 1) {
       var child = data.children[0];
@@ -162,7 +144,6 @@ function Harmony(uuid, ip) {
   } // End of function
 
   function announceActivity(activityId) {
-    _state.lastPing = Date.now();
     var activity = {
       id: activityId,
       label: _activitiesById[activityId]
@@ -171,8 +152,6 @@ function Harmony(uuid, ip) {
   }
 
   function handleOffline() {
-    _state.connected = false;
-    _state.state = 'OFFLINE';
     log.debug(LOG_PREFIX, 'Offline.');
     if (reconnect) {
       connect();
@@ -180,22 +159,19 @@ function Harmony(uuid, ip) {
   }
 
   function handleConnect(connection) {
-    _state.state = 'CONNECTED';
     log.log(LOG_PREFIX, 'Connected.');
   }
 
   function handleReconnect() {
-    _state.state = 'RECONNECTED';
     log.log(LOG_PREFIX, 'Reconnected.');
   }
 
   function handleDisconnect() {
-    _state.state = 'DISCONNECTED';
     log.warn(LOG_PREFIX, 'Disconnected.');
   }
 
   function keepAlive() {
-    if (client) {
+    if (checkIfReady()) {
       var cmd = new XMPP.Stanza.Iq({'id': _uuid});
       client.send(cmd);
       setTimeout(function() {
@@ -203,14 +179,10 @@ function Harmony(uuid, ip) {
           keepAlive();
         }
       }, 15 * 1000);
-    } else {
-      log.error(LOG_PREFIX, 'No client available! Eeep!');
     }
   }
 
   function handleConfig(harmonyConfig) {
-    _state.lastPing = Date.now();
-    // log.debug(LOG_PREFIX, 'Config: ' + JSON.stringify(harmonyConfig));
     var activities = harmonyConfig.activity;
     _activitiesById = {};
     _activitiesByName = {};
@@ -224,9 +196,7 @@ function Harmony(uuid, ip) {
     if (client) {
       return true;
     }
-    var err = new Error('Client not connected');
-    err.clientState = _state;
-    _self.emit('no_client', err);
+    _self.emit('no_client');
     return false;
   }
 
@@ -312,11 +282,13 @@ function Harmony(uuid, ip) {
 
   this.close = function() {
     reconnect = false;
-    _state.state = 'CLOSED';
-    _state.connected = false;
     if (client) {
       log.log(LOG_PREFIX, 'Closing.');
-      client.end();
+      try {
+        client.end();
+      } catch (ex) {
+        log.exception(LOG_PREFIX, 'Unable to close client.', ex);
+      }
       client = null;
     }
     return {'action': 'close'};

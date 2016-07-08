@@ -544,7 +544,7 @@ function Home(config, fb) {
       harmony = new Harmony(Keys.harmony.key);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize Harmony', ex);
-      shutdownHarmony();
+      resetHarmony();
       return;
     }
 
@@ -553,15 +553,22 @@ function Home(config, fb) {
         fbSet('state/harmonyConfig', config);
       });
       harmony.on('activity', updateHarmonyActivity);
-      harmony.on('no_hubs_found', shutdownHarmony);
-      harmony.on('connection_failed', shutdownHarmony);
-      harmony.on('no_client', function(err) {
-        log.exception(LOG_PREFIX, 'No Harmony client found', err);
-      });
-      harmony.on('error', function(err) {
-        log.exception(LOG_PREFIX, 'Harmony error occured.', err);
-      });
+      harmony.on('connection_failed', resetHarmony);
+      harmony.on('hub_search_failed', resetHarmony);
+      harmony.on('no_hubs_found', resetHarmony);
+      harmony.on('socket_error', function(err) {});
+      harmony.on('error', function(err) {});
+      harmony.on('no_client', resetHarmony);
     }
+  }
+
+  function resetHarmony() {
+    log.log(LOG_PREFIX, 'Harmony failed, will attempt reconnect in 90 seconds.');
+    shutdownHarmony();
+    setTimeout(function() {
+      log.log(LOG_PREFIX, 'Attempting to reconnect to Harmony.');
+      initHarmony();
+    }, 90 * 1000);
   }
 
   function updateHarmonyActivity(newActivity) {
@@ -583,7 +590,9 @@ function Home(config, fb) {
   function shutdownHarmony() {
     log.log(LOG_PREFIX, 'Shutting down Harmony.');
     try {
-      harmony.close();
+      if (harmony) {
+        harmony.close();
+      }
     } catch (ex) {
       log.warn(LOG_PREFIX, 'Error attempting to shut down Harmony.', ex);
     }
