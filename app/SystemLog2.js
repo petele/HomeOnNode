@@ -205,7 +205,8 @@ function saveLogToFB(logObj) {
 
 function saveLogToFile(logObj) {
   if (_options.logFileName) {
-    var msg = logObj.date_ + ' | ' + ('     ' + logObj.level).slice(-5) + ' | ';
+    var msg = logObj.dateFormatted;
+    msg +=  ' | ' + ('     ' + logObj.level).slice(-5) + ' | ';
     msg += logObj.message + '\n';
     if (logObj.extra) {
       if (logObj.extra.stack) {
