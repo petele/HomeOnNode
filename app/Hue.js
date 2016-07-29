@@ -16,7 +16,7 @@ function Hue(key, bridgeIP) {
   this.config = {};
   this.requestsInProgress = 0;
   var ready = false;
-  var requestTimeout = 5 * 1000;
+  var requestTimeout = 15 * 1000;
   var defaultRefreshInterval = 10 * 1000;
   var lightRefreshInterval = defaultRefreshInterval;
   var groupRefreshInterval = defaultRefreshInterval;
