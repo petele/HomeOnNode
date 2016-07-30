@@ -95,7 +95,7 @@ function Nest() {
         }
       } else {
         log.warn(LOG_PREFIX, 'No connection to Nest backend.');
-        _disconnectedTimer = setTimeout(disconnectTimeExceeded, 60 * 5 * 1000);
+        _disconnectedTimer = setTimeout(disconnectTimeExceeded, 30 * 60 * 1000);
       }
     });
   };
