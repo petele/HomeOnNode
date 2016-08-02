@@ -6,6 +6,13 @@ var moment = require('../app/node_modules/moment');
 var log = require('../app/SystemLog2');
 
 var DATE_FORMAT = 'YYYY-MM-DDTHH:mm:ss';
+var PARSE_MASKS = [
+  'YYYY-MM-DDTHH:mm:ss',
+  'YYYY-MM-DDTHH:mm',
+  'YYYY-MM-DDThh:mmA',
+  'THH:mm:ss',
+  'THH:mm',
+  'THH:mm:ss.SSS'];
 var LOG_PREFIX = 'ALARM_CLOCK';
 var alarmList = {};
 
@@ -15,17 +22,17 @@ function updateAlarmEntry(key, alarm) {
     if (alarmList[key]) {
       delete alarmList[key];
     }
-    log.log(LOG_PREFIX, msg + ' DISABLED');
+    log.log(LOG_PREFIX, msg + 'DISABLED');
     return;
   }
   var nextAlarm = getNextAlarm(alarm.scheduledFor);
-  if (nextAlarm.isValid === false) {
-    msg += 'INVALID';
-    log.error(LOG_PREFIX, msg, nextAlarm.creationData());
+  if (nextAlarm.isValid() === false) {
+    msg += 'INVALID ' + nextAlarm.creationData().input;
+    log.error(LOG_PREFIX, msg);
     return;
   }
   if (nextAlarm.isBefore(moment())) {
-    msg += 'DISABLED (In the past: ' + nextAlarm.format(DATE_FORMAT) + ')';
+    msg += 'PASSED (' + nextAlarm.format(DATE_FORMAT) + ')';
     log.warn(LOG_PREFIX, msg);
     return;
   }
@@ -37,8 +44,6 @@ function updateAlarmEntry(key, alarm) {
 function alarmUpdated(fbAlarm) {
   var key = fbAlarm.key();
   var alarm = fbAlarm.val();
-  // var msg = 'alarmUpdated (' + key + ')';
-  // log.debug(LOG_PREFIX, msg);
   updateAlarmEntry(key, alarm);
 }
 
@@ -59,7 +64,7 @@ function getNextAlarm(scheduledFor) {
       return moment.invalid();
     }
     var timeScheduledFor = scheduledFor.substring(scheduledFor.indexOf('T'));
-    result = moment(timeScheduledFor, ['THH:mm', 'THH:mm:ss']);
+    result = moment(timeScheduledFor, PARSE_MASKS, true);
     if (result.isBefore(now) || scheduledDays[today] === '0') {
       for (var i = 1; i <= 7; i++) {
         var pointer = (today + i) % 7;
@@ -72,14 +77,14 @@ function getNextAlarm(scheduledFor) {
   }
 
   if (scheduledFor[0] === 'T') {
-    result = moment(scheduledFor, ['THH:mm', 'THH:mm:ss']);
+    result = moment(scheduledFor, PARSE_MASKS, true);
     if (result.isBefore(now)) {
       result = result.add(1, 'day');
     }
   }
 
   if (!result) {
-    result = moment(scheduledFor, 'YYYY-MM-DDTHH:mm:ss');
+    result = moment(scheduledFor, PARSE_MASKS, true);
   }
   return result;
 }
@@ -103,7 +108,7 @@ function testAlarm(key) {
   if (alarm.scheduledAt.diff(now, 'minutes') <= -5) {
     return false;
   }
-  if (now.isSameOrAfter(alarm.scheduledAt, 'second')) {
+  if (now.isSameOrAfter(alarm.scheduledAt)) {
     fireAlarm(key, alarm);
     return true;
   }
@@ -160,7 +165,7 @@ function addRandomAlarm(when) {
   timeForAlarm = timeForAlarm.milliseconds(0);
   var randAlarm = {
     name: 'Random Alarm: ' + i.toString(),
-    scheduledFor: timeForAlarm.format('THH:mm:ss.SSS'),
+    scheduledFor: timeForAlarm.format(DATE_FORMAT),
     lastFired: 0,
     timesFired: 0,
     enabled: true
