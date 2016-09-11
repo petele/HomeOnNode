@@ -954,7 +954,15 @@ function Home(config, fb) {
       sonos.on('favorites-changed', function(favorites) {
         fbSet('state/sonos/favorites', favorites);
       });
+      getSonosFavorites();
     }
+  }
+
+  function getSonosFavorites() {
+    if (sonos) {
+      sonos.getFavorites();
+    }
+    setTimeout(getSonosFavorites, 8*60*1000);
   }
 
   function shutdownSonos() {
