@@ -140,10 +140,6 @@ function Sonos() {
    *
    ****************************************************************************/
 
-  this.pete = function() {
-    return _sonos;
-  };
-
   this.applyPreset = function(preset) {
     if (_sonos) {
       _sonos.applyPreset(preset, function(error, response) {
@@ -272,9 +268,11 @@ function Sonos() {
   this.getFavorites = function() {
     if (_sonos) {
       var speaker = _sonos.getAnyPlayer();
-      speaker.getFavorites(function(err, favs) {
-        favoritesChanged(favs);
-      });
+      if (speaker) {
+        speaker.getFavorites(function(err, favs) {
+          favoritesChanged(favs);
+        });
+      }
     }
   };
 
