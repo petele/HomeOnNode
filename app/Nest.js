@@ -10,12 +10,14 @@ var LOG_PREFIX = 'NEST';
 
 function Nest() {
   var _isReady = false;
+  var _accessToken;
   var _fbNest;
   var _self = this;
   var _authExpiresAt;
   var _nestData;
   var _thermostatModes = ['heat', 'cool', 'off'];
   var _disconnectedTimer = null;
+  var _connectionLostList = [];
 
   /*****************************************************************************
    *
@@ -62,6 +64,7 @@ function Nest() {
 
   this.login = function(accessToken) {
     log.init(LOG_PREFIX, 'Init');
+    _accessToken = accessToken;
     _fbNest = new Firebase('https://developer-api.nest.com');
     _fbNest.authWithCustomToken(accessToken, function(err, token) {
       if (err) {
@@ -95,7 +98,20 @@ function Nest() {
         }
       } else {
         log.warn(LOG_PREFIX, 'No connection to Nest backend.');
+        var RESET_TIMEOUT = 60 * 60 * 1000;
+        var RESET_AT = 24;
         _disconnectedTimer = setTimeout(disconnectTimeExceeded, 30 * 60 * 1000);
+        var now = Date.now();
+        _connectionLostList.unshift(now);
+        if (_connectionLostList[RESET_AT]) {
+          var timeSinceLastLost = now - _connectionLostList[RESET_AT - 1];
+          if (timeSinceLastLost >  RESET_TIMEOUT) {
+            _self.emit('connectionCycle');
+            _connectionLostList = [];
+            return;
+          }
+          _connectionLostList = _connectionLostList.slice(0, RESET_AT - 1);
+        }
       }
     });
   };

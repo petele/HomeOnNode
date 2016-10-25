@@ -675,6 +675,15 @@ function Home(config, fb) {
       nest.on('ready', function(data) {
         nest.enableListener();
       });
+      nest.on('connectionCycle', function() {
+        var msg = {
+          title: 'HoN Nest Error',
+          body: 'The Nest connection has been cycling',
+          tag: 'HoN-nest-cycle',
+          appendTime: false
+        };
+        gcmPush.sendMessage(msg);
+      });
     }
   }
 
