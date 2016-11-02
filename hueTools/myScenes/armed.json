@@ -26,6 +26,7 @@
     {"light": 23, "command": {"on": false}},
     {"light": 24, "command": {"on": false}},
     {"light": 25, "command": {"on": false}},
-    {"light": 26, "command": {"on": false}}
+    {"light": 26, "command": {"on": false}},
+    {"light": 27, "command": {"on": false}}
   ]
 }

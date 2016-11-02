@@ -25,6 +25,7 @@
     {"light": 23, "cmdName": "AURORA_10", "bri": 50},
     {"light": 24, "cmdName": "AURORA_02", "bri": 50},
     {"light": 25, "cmdName": "AURORA_10", "bri": 250},
-    {"light": 26, "cmdName": "AURORA_03", "bri": 100}
+    {"light": 26, "cmdName": "AURORA_03", "bri": 100},
+    {"light": 27, "cmdName": "AURORA_09", "bri": 100}
   ]
 }

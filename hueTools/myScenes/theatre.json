@@ -11,8 +11,8 @@
     {"light": 9, "cmdName": "OFF"},
     {"light": 10, "cmdName": "OFF"},
     {"light": 11, "cmdName": "RED", "bri": 100},
-    {"light": 12, "cmdName": "RED", "bri": 40},
-    {"light": 13, "cmdName": "OFF"},
+    {"light": 12, "cmdName": "OFF"},
+    {"light": 13, "cmdName": "RED", "bri": 20},
     {"light": 14, "cmdName": "RED", "bri": 40},
     {"light": 15, "cmdName": "RED", "bri": 40},
     {"light": 16, "cmdName": "OFF"},
@@ -23,8 +23,9 @@
     {"light": 21, "cmdName": "OFF"},
     {"light": 22, "cmdName": "RED", "bri": 20},
     {"light": 23, "cmdName": "OFF"},
-    {"light": 24, "cmdName": "RED", "bri": 200},
+    {"light": 24, "cmdName": "RED", "bri": 250},
     {"light": 25, "cmdName": "RED", "bri": 200},
-    {"light": 26, "cmdName": "RED", "bri": 200}
+    {"light": 26, "cmdName": "RED", "bri": 200},
+    {"light": 27, "cmdName": "OFF"}
   ]
 }

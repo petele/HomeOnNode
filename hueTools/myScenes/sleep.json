@@ -25,6 +25,7 @@
     {"light": 23, "cmdName": "OFF"},
     {"light": 24, "cmdName": "RED", "bri": 50},
     {"light": 25, "cmdName": "OFF"},
-    {"light": 26, "cmdName": "OFF"}
+    {"light": 26, "cmdName": "OFF"},
+    {"light": 27, "cmdName": "OFF"}
   ]
 }

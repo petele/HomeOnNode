@@ -69,11 +69,15 @@ commander
     var sceneObj = readSceneFile(filename);
     readRecipeFile(commander.recipes);
     setLights(sceneObj.lights, function(lightList) {
+      var appDataValue = 'HoN';
+      if (sceneObj.showInWebUI) {
+        appDataValue += ',UI';
+      }
       var scene = {
         name: sceneObj.sceneName,
         lights: lightList,
         recycle: false,
-        appdata: {data: 'HomeOnNode', version: 3}
+        appdata: {data: appDataValue, version: 4}
       };
       if (sceneObj.transitionTime) {
         scene.transitiontime = sceneObj.transitionTime;

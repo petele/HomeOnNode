@@ -1,4 +1,4 @@
-{ "sceneName": "BR - Day",
+{ "sceneName": "Day (Bedroom)",
   "lights": [
     {"light": 19, "cmdName": "DEFAULT", "bri": 254},
     {"light": 20, "cmdName": "DEFAULT", "bri": 254},

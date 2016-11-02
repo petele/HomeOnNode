@@ -1,4 +1,4 @@
-{ "sceneName": "LR - Evening",
+{ "sceneName": "Evening (Living)",
   "lights": [
     {"light": 1, "cmdName": "PEACH", "bri": 200},
     {"light": 2, "cmdName": "BLUE", "bri": 200},
@@ -20,6 +20,7 @@
     {"light": 23, "cmdName": "OFF"},
     {"light": 24, "cmdName": "ROSE", "bri": 200},
     {"light": 25, "cmdName": "ROSE_DEEP", "bri": 125},
-    {"light": 26, "cmdName": "BLUE", "bri": 125}
+    {"light": 26, "cmdName": "BLUE", "bri": 125},
+    {"light": 27, "cmdName": "ROSE_DEEP", "bri": 125}
   ]
 }

@@ -1,7 +1,7 @@
 { "sceneName": "Morning",
   "lights": [
     {"light": 1, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 2, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 2, "cmdName": "PEACH", "bri": 254},
     {"light": 3, "cmdName": "DEFAULT", "bri": 254},
     {"light": 4, "cmdName": "PEACH", "bri": 150},
     {"light": 5, "cmdName": "PEACH", "bri": 150},
@@ -19,9 +19,11 @@
     {"light": 19, "cmdName": "DEFAULT", "bri": 254},
     {"light": 20, "cmdName": "DEFAULT", "bri": 254},
     {"light": 21, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 22, "cmdName": "PURPLE", "bri": 100},
+    {"light": 22, "cmdName": "PEACH", "bri": 100},
+    {"light": 23, "cmdName": "PEACH", "bri": 80},
     {"light": 24, "cmdName": "DEFAULT", "bri": 254},
     {"light": 25, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 26, "cmdName": "DEFAULT", "bri": 254}
+    {"light": 26, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 27, "cmdName": "PEACH", "bri": 200}
   ]
 }
