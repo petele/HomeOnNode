@@ -81,7 +81,7 @@ function Home(config, fb) {
       msg += ' (' + modifier + ')';
     }
     msg += ' received from: ' + source;
-    log.log(LOG_PREFIX, msg);
+    // log.log(LOG_PREFIX, msg);
     var command = config.commands[commandName];
     if (command) {
       command.modifier = modifier;
