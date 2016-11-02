@@ -1,4 +1,5 @@
 { "sceneName": "Evening (Living)",
+  "showInWebUI": true,
   "lights": [
     {"light": 1, "cmdName": "PEACH", "bri": 200},
     {"light": 2, "cmdName": "BLUE", "bri": 200},

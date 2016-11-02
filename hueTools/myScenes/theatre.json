@@ -1,4 +1,5 @@
 { "sceneName": "Theatre",
+  "showInWebUI": true,
   "lights": [
     {"light": 1, "cmdName": "RED", "bri": 40},
     {"light": 2, "cmdName": "OFF"},

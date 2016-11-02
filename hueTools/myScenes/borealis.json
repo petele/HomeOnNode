@@ -1,4 +1,5 @@
 { "sceneName": "Borealis",
+  "showInWebUI": true,
   "lights": [
     {"light": 1, "cmdName": "AURORA_01", "bri": 200},
     {"light": 2, "cmdName": "AURORA_02", "bri": 200},

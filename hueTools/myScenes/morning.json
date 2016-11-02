@@ -1,4 +1,5 @@
 { "sceneName": "Morning",
+  "showInWebUI": true,
   "lights": [
     {"light": 1, "cmdName": "DEFAULT", "bri": 254},
     {"light": 2, "cmdName": "PEACH", "bri": 254},

@@ -1,4 +1,5 @@
 { "sceneName": "Sleep",
+  "showInWebUI": true,
   "lights": [
     {"light": 1, "cmdName": "OFF"},
     {"light": 2, "cmdName": "RED", "bri": 10},

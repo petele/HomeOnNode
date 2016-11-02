@@ -196,7 +196,9 @@ function Home(config, fb) {
             roomName = _self.state.sonos.state.roomName;
           }
           if (cmd.name === 'PRESET') {
-            sonos.applyPreset(cmd.preset);
+            var opts = config.sonosPresetDefaults[cmd.options];
+            opts.uri = cmd.uri;
+            sonos.applyPreset(opts);
           } else if (cmd.name === 'PAUSE') {
             sonos.pause(roomName);
           } else if (cmd.name === 'NEXT') {
