@@ -77,8 +77,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var keys = Object.keys(scenes);
             keys.forEach(function(key) {
               var scene = scenes[key];
-              scene.key = key;
-              newScenes.push(scene);
+              var sData = scene.appdata.data;
+              if (sData.indexOf('HoN') >= 0 && sData.indexOf(',UI') >= 0) {
+                scene.key = key;
+                newScenes.push(scene);
+              }
             });
             self.set('hueScenes', newScenes);
           });
