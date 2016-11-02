@@ -1,5 +1,5 @@
 application: petele-home-automation
-version: 20151209-1
+version: 20161102-1
 runtime: python27
 threadsafe: yes
 api_version: 1
@@ -83,4 +83,13 @@ handlers:
   upload: 404.html
   secure: always
 
+skip_files:
+- ^bower_components/(.*/)?.*\.md$
+- ^bower_components/(.*/)?.*\.test$
+- ^bower_components/(.*/)?test/.*
+# - ^bower_components/(.*)+/test/.*$
+# - ^bower_components/(.*)+/tests/.*$
+- ^bower_components/(.*/)?Makefile$
+- ^bower_components/(.*/)?LICENSE$
+- ^bower_components/(.*/)?COPYING$
 
