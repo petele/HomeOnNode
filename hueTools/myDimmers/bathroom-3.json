@@ -1,0 +1,7 @@
+{ "sceneName": "Blurple (dBA)",
+  "lights": [
+    {"light": 24, "cmdName": "PEACH", "bri": 200},
+    {"light": 25, "cmdName": "ROSE_DEEP", "bri": 200},
+    {"light": 26, "cmdName": "REBECCA_PURPLE", "bri": 200}
+  ]
+}

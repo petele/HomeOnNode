@@ -1,0 +1,7 @@
+{ "sceneName": "Nightlight (dBA)",
+  "lights": [
+    {"light": 24, "cmdName": "RED", "bri": 50},
+    {"light": 25, "cmdName": "OFF"},
+    {"light": 26, "cmdName": "OFF"}
+  ]
+}

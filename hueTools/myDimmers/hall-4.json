@@ -1,0 +1,7 @@
+{ "sceneName": "Night (dHA)",
+  "lights": [
+    {"light": 1, "cmdName": "RED", "bri": 25},
+    {"light": 2, "cmdName": "RED", "bri": 25},
+    {"light": 3, "cmdName": "RED", "bri": 25}
+  ]
+}

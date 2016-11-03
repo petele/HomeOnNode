@@ -1,4 +1,4 @@
-{ "sceneName": "Day (Bedroom)",
+{ "sceneName": "Day (dBR)",
   "showInWebUI": true,
   "lights": [
     {"light": 19, "cmdName": "DEFAULT", "bri": 254},

@@ -1,0 +1,6 @@
+{ "sceneName": "Reading (dBS)",
+  "lights": [
+    {"light": 15, "cmdName": "READING", "bri": 240},
+    {"light": 16, "cmdName": "READING", "bri": 240}
+  ]
+}

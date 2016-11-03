@@ -1,4 +1,4 @@
-{ "sceneName": "Evening (Bedroom)",
+{ "sceneName": "Evening (dBR)",
   "showInWebUI": true,
   "lights": [
     {"light": 15, "cmdName": "CORAL", "bri": 254},

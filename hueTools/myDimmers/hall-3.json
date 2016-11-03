@@ -1,0 +1,7 @@
+{ "sceneName": "Borealis (dHA)",
+  "lights": [
+    {"light": 1, "cmdName": "AURORA_01", "bri": 200},
+    {"light": 2, "cmdName": "AURORA_02", "bri": 200},
+    {"light": 3, "cmdName": "AURORA_09", "bri": 200}
+  ]
+}

@@ -1,0 +1,5 @@
+{ "sceneName": "Purple (dST)",
+  "lights": [
+    {"light": 23, "cmdName": "REBECCA_PURPLE", "bri": 125}
+  ]
+}

@@ -1,0 +1,6 @@
+{ "sceneName": "Peach (dBS)",
+  "lights": [
+    {"light": 15, "cmdName": "PEACH", "bri": 254},
+    {"light": 16, "cmdName": "PEACH", "bri": 254}
+  ]
+}
