@@ -6,6 +6,8 @@ var exec = require('child_process').exec;
 var Keys = require('./Keys').keys;
 var log = require('./SystemLog2');
 
+var fbHeartbeatTime;
+var maxDisconnect = 60 * 60 * 6 * 1000;
 var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com/';
 var fb = new Firebase(fbURL);
 var fbNode;
@@ -45,12 +47,24 @@ function fbReady() {
       log.warn(LOG_PREFIX, 'Disconnected from Firebase');
     }
   });
+  fbHeartbeatTime = Date.now();
   fbNode.child('reboot').on('value', rebootRequest);
   setInterval(heartbeat, 75 * 1000);
 }
 
 function heartbeat() {
-  fbNode.child('heartbeat').set(Date.now());
+  var lastConnection = (Date.now() - fbHeartbeatTime);
+  if (lastConnection > maxDisconnect) {
+    log.error(LOG_PREFIX, 'Firebase heartbeat timeout exceeded.');
+    var cmd = 'sudo reboot';
+    exec(cmd, function(error, stdout, stderr) {});
+  } else {
+    fbNode.child('heartbeat').set(Date.now(), function(err) {
+      if (!err) {
+        fbHeartbeatTime = Date.now();
+      }
+    });
+  }
 }
 
 function rebootRequest(snapshot) {
