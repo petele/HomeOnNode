@@ -300,6 +300,31 @@ function Nest() {
     return false;
   }
 
+  function setThermostatFan(thermostat, minutes) {
+    if (checkIfReady(false)) {
+      var msg = 'Turned ' + thermostat.name +' fan ';
+      var thermostatPath = 'devices/thermostats/' + thermostat.device_id;
+      var fanTimerActive = thermostatPath + '/fan_timer_active';
+      if (minutes === 0) {
+        log.log(LOG_PREFIX, msg + 'OFF');
+        _fbNest.child(fanTimerActive).set(false, function(err) {
+          onSetComplete(fanTimerActive, err);
+        });
+        return true;      
+      } 
+      _fbNest.child(fanTimerActive).set(true, function(err) {
+        onSetComplete(fanTimerActive, err);
+      });
+      var fanTimerDuration = thermostatPath + '/fan_timer_duration'
+      _fbNest.child(fanTimerDuration).set(minutes, function(err) {
+        onSetComplete(fanTimerDuration, err);
+      });
+      log.log(LOG_PREFIX, msg + 'ON for ' + minutes + ' minutes.');
+      return true;
+    }
+    return false;
+  }
+
   /*****************************************************************************
    *
    * Public API
@@ -396,6 +421,36 @@ function Nest() {
     }
     return false;
   };
+
+  this.runNestFan = function(thermostatId, minutes) {
+    var validTimerLengths = [0, 15, 30, 45, 60, 120, 240, 480, 960];
+    var msg = 'runNestFan';
+    if (checkIfReady(true)) {
+      if (!thermostatId) {
+        log.error(LOG_PREFIX, msg + ' no thermostatId provided.');
+        return false;
+      }
+      var nestThermostat = _nestData.devices.thermostats[thermostatId];
+      if (!nestThermostat) {
+        msg += ' could not find thermostat (' + thermostatId + ')';
+        log.error(LOG_PREFIX, msg);
+        return false;
+      }
+      msg += ' in ' + nestThermostat.name;
+      try {
+        minutes = parseInt(minutes, 10);
+        if (validTimerLengths.includes(minutes) === false) {
+          log.exception(LOG_PREFIX, msg + ' invalid timer length.');
+          return false;
+        } 
+      } catch (ex) {
+        log.exception(LOG_PREFIX, msg + 'failed', ex);
+        return false;
+      }
+      return setThermostatFan(termostat, minutes);
+    }
+    return false;
+  }
 
   this.setTemperature = function(thermostatId, mode, temperature) {
     var msg = 'setTemperature';

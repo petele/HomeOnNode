@@ -168,6 +168,15 @@ function Home(config, fb) {
         setNestETA(cmds.tripId, cmds.etaInMinutes);
       }
     }
+    if (command.hasOwnProperty('nestFan')) {
+      cmds = command.nestFan;
+      if (Array.isArray(cmds) === false) {
+        cmds = [cmds];
+      }
+      cmds.forEach(function(cmd) {
+        setNestFan(cmd, modifier);
+      })
+    }
     if (command.hasOwnProperty('harmonyActivity')) {
       setHarmonyActivity(command.harmonyActivity);
     }
@@ -660,6 +669,9 @@ function Home(config, fb) {
 
     if (nest) {
       nest.login(Keys.nest.token);
+      nest.on('error', function(err) {
+        log.exception(LOG_PREFIX, 'Nest CRITICAL error occured.', err);
+      });
       nest.on('authError', function(err) {
         log.exception(LOG_PREFIX, 'Nest auth error occured.', err);
         shutdownNest();
@@ -813,6 +825,29 @@ function Home(config, fb) {
       }
     }
     log.log(LOG_PREFIX, msg + 'Nest unavailable.');
+    return false;
+  }
+
+  function setNestFan(cmd, modifier) {
+    var msg ='setNestFan failed, ';
+    if (nest) {
+      try {
+        var minutes = parseInt(cmd.minutes, 10);
+        if (modifier === 'OFF') {
+          minutes = 0;
+        }
+        var id = getNestThermostatId(cmd.roomId);
+        if (id) {
+          return nest.runNestFan(id, minutes);
+        }
+        log.error(LOG_PREFIX, msg + 'thermostat not found');
+        return false;
+      } catch (ex) {
+        log.exception(LOG_PREFIX, msg, ex);
+        return false;
+      }
+    }
+    log.warn(LOG_PREFIX, msg + 'Nest unavailable.');
     return false;
   }
 
