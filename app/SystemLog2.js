@@ -131,6 +131,9 @@ function generateLog(level, prefix, message, extra) {
   };
   if (extra) {
     result.extra = extra;
+    if (extra.message) {
+      result.exceptionMessage = extra.message;
+    }
   }
   return result;
 }
@@ -180,6 +183,9 @@ function printLog(logObj) {
       var extra = util.inspect(logObj.extra, inspectOpt);
       console.log(extra);
     }
+  }
+  if (logObj.exceptionMessage) {
+    console.log(' -- Exception Message: ', logObj.exceptionMessage);
   }
 }
 
