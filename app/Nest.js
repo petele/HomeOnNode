@@ -440,7 +440,8 @@ function Nest() {
       try {
         minutes = parseInt(minutes, 10);
         if (validTimerLengths.indexOf(minutes) === -1) {
-          log.exception(LOG_PREFIX, msg + ' invalid timer length.');
+          msg += ' invalid timer length (' + minutes.toString() + ').';
+          log.exception(LOG_PREFIX, msg);
           return false;
         } 
       } catch (ex) {
