@@ -185,7 +185,11 @@ function printLog(logObj) {
     }
   }
   if (logObj.exceptionMessage) {
-    console.log(' -- Exception Message: ', logObj.exceptionMessage);
+    // var exMsg = '2016-11-15T12:12:52.029 | EXCPT |'
+    var exMsg = '                        | ';
+    exMsg += colors.red('EXCPT') + ' | ' + logObj.exceptionMessage;
+    // exMsg += logObj.exceptionMessage;
+    console.log(exMsg);
   }
 }
 

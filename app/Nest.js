@@ -439,7 +439,7 @@ function Nest() {
       msg += ' in ' + nestThermostat.name;
       try {
         minutes = parseInt(minutes, 10);
-        if (validTimerLengths.includes(minutes) === false) {
+        if (validTimerLengths.indexOf(minutes) === -1) {
           log.exception(LOG_PREFIX, msg + ' invalid timer length.');
           return false;
         } 
