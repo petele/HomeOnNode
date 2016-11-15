@@ -444,7 +444,7 @@ function Nest() {
           return false;
         } 
       } catch (ex) {
-        log.exception(LOG_PREFIX, msg + 'failed', ex);
+        log.exception(LOG_PREFIX, msg + ' failed.', ex);
         return false;
       }
       return setThermostatFan(termostat, minutes);
