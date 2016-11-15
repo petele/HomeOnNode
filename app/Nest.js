@@ -441,14 +441,14 @@ function Nest() {
         minutes = parseInt(minutes, 10);
         if (validTimerLengths.indexOf(minutes) === -1) {
           msg += ' invalid timer length (' + minutes.toString() + ').';
-          log.exception(LOG_PREFIX, msg);
+          log.error(LOG_PREFIX, msg);
           return false;
         } 
       } catch (ex) {
         log.exception(LOG_PREFIX, msg + ' failed.', ex);
         return false;
       }
-      return setThermostatFan(termostat, minutes);
+      return setThermostatFan(nestThermostat, minutes);
     }
     return false;
   }
