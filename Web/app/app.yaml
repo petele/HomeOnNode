@@ -1,5 +1,5 @@
 application: petele-home-automation
-version: 20161102-1
+version: 20161115-1
 runtime: python27
 threadsafe: yes
 api_version: 1
