@@ -991,19 +991,36 @@ function Home(config, fb) {
 
     if (pushBullet) {
       pushBullet.on('notification', function(msg, count) {
-        if (msg.package_name === 'Hangouts') {
-          _self.executeCommandByName('NEW_NOTIFICATION', null, 'PushBullet');
+        try {
+          var cmdName;
+          if (msg.application_name) {
+            cmdName = config.pushBulletNotifications[msg.application_name];
+          }
+          if (cmdName) {
+            _self.executeCommandByName(cmdName, null, 'PushBullet');
+          } else {
+            var logObj = {
+              appName: msg.application_name,
+              pkgName: msg.package_name,
+              dismissible: msg.dismissible,
+              title: msg.title,
+              body: msg.body
+            };
+            fbPush('logs/pushBullet', logObj);            
+          }
+        } catch (ex) {
+          var logMsg = 'PushBullet notification commandName lookup failure.';
+          log.exception(LOG_PREFIX, logMsg, ex);
         }
-        var logObj = {
-          appName: msg.application_name,
-          pkgName: msg.package_name,
-          dismissible: msg.dismissible,
-          title: msg.title,
-          body: msg.body
-        };
-        fbPush('logs/pushBullet', logObj);
       });
-      pushBullet.on('dismissal', function(msg, count) {});
+      pushBullet.on('dismissal', function(msg, count) {
+        if (count === 0) {
+          var cmdName = config.pushBulletNotifications['-NONE'];
+          if (cmdName) {
+            _self.executeCommandByName(cmdName, null, 'PushBullet');
+          }
+        }
+      });
     }
   }
 
