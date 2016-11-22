@@ -175,6 +175,11 @@ function printLog(logObj) {
   msg.push(levelColor(formattedLevel));
   msg.push(logObj.message);
   console.log(msg.join(' | '));
+  if (logObj.exceptionMessage) {
+    var exMsg = '                        | ';
+    exMsg += colors.red('EXCPT') + ' | ' + logObj.exceptionMessage;
+    console.log(exMsg);
+  }
   if (logObj.extra) {
     if (logObj.extra.stack) {
       console.log(logObj.extra.stack);
@@ -183,13 +188,6 @@ function printLog(logObj) {
       var extra = util.inspect(logObj.extra, inspectOpt);
       console.log(extra);
     }
-  }
-  if (logObj.exceptionMessage) {
-    // var exMsg = '2016-11-15T12:12:52.029 | EXCPT |'
-    var exMsg = '                        | ';
-    exMsg += colors.red('EXCPT') + ' | ' + logObj.exceptionMessage;
-    // exMsg += logObj.exceptionMessage;
-    console.log(exMsg);
   }
 }
 

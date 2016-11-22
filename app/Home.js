@@ -18,6 +18,7 @@ var Nest = require('./Nest');
 var ZWave = require('./ZWave');
 var Sonos = require('./Sonos');
 var GCMPush = require('./GCMPush');
+var PushBullet = require('./PushBullet');
 
 var LOG_PREFIX = 'HOME';
 
@@ -32,6 +33,7 @@ function Home(config, fb) {
   var presence;
   var sonos;
   var gcmPush;
+  var pushBullet;
 
   var armingTimer;
   var zwaveTimer;
@@ -975,6 +977,44 @@ function Home(config, fb) {
 
   /*****************************************************************************
    *
+   * PushBullet - Initialization, Shut Down & Event handlers
+   *
+   ****************************************************************************/
+
+  function initPushBullet() {
+    try {
+      pushBullet = new PushBullet(Keys.pushBullet);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to initialize PushBullet', ex);
+      return;
+    }
+
+    if (pushBullet) {
+      pushBullet.on('notification', function(msg, count) {
+        if (msg.package_name === 'Hangouts') {
+          _self.executeCommandByName('NEW_NOTIFICATION', null, 'PushBullet');
+        }
+        var logObj = {
+          appName: msg.application_name,
+          pkgName: msg.package_name,
+          dismissible: msg.dismissible,
+          title: msg.title,
+          body: msg.body
+        };
+        fbPush('logs/pushBullet', logObj);
+      });
+      pushBullet.on('dismissal', function(msg, count) {});
+    }
+  }
+
+  function shutdownPushBullet() {
+    if (pushBullet) {
+      pushBullet.shutdown();
+    }
+  }
+
+  /*****************************************************************************
+   *
    * Sonos - Initialization & Shut Down
    *
    ****************************************************************************/
@@ -1193,6 +1233,7 @@ function Home(config, fb) {
     initSonos();
     initHarmony();
     initPresence();
+    initPushBullet();
     initWeather();
     setTimeout(function() {
       log.log(LOG_PREFIX, 'Ready');
@@ -1202,12 +1243,13 @@ function Home(config, fb) {
   }
 
   this.shutdown = function() {
-    shutdownHarmony();
     shutdownHue();
     shutdownNest();
     shutdownSonos();
     shutdownZWave();
+    shutdownHarmony();
     shutdownPresence();
+    shutdownPushBullet();
   };
 
   init();
