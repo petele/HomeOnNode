@@ -492,7 +492,11 @@ function Home(config, fb) {
       });
       var fbPresFlicPath = 'config/HomeOnNode/presence/FlicAway';
       fb.child(fbPresFlicPath).on('value', function(snapshot) {
-        presence.setFlicAway(snapshot.val());
+        if (presence) {
+          presence.setFlicAway(snapshot.val());
+        } else {
+          log.error(LOG_PREFIX, 'Away button disabled, no presence detected.');
+        }
       });
       presence.on('flic_away', function() {
         _self.executeCommand({state: 'ARMED'}, 'Flic');
