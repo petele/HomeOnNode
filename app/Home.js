@@ -1006,10 +1006,10 @@ function Home(config, fb) {
             var logObj = {
               appName: msg.application_name,
               pkgName: msg.package_name,
-              dismissible: msg.dismissible,
-              title: msg.title,
-              body: msg.body
+              dismissible: msg.dismissible
             };
+            if (msg.title) { logObj.title = msg.title; }
+            if (msg.body) { logObj.body = msg.body; }
             fbPush('logs/pushBullet', logObj);            
           }
         } catch (ex) {
