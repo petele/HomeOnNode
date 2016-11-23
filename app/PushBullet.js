@@ -32,14 +32,19 @@ function PushBullet(token) {
   }
 
   function handlePush(msg) {
+    var logMsg;
     if (msg.push && msg.push.type === 'mirror') {
       currentNotifications++;
-      log.debug(LOG_PREFIX, 'Notification', msg.push);
+      logMsg = 'Notification from: ' + msg.push.package_name;
+      log.debug(LOG_PREFIX, logMsg);
+      // log.debug(LOG_PREFIX, 'Notification', msg.push);
       self.emit('notification', msg.push, currentNotifications);
       return true;
     } else if (msg.push && msg.push.type === 'dismissal') {
       if (currentNotifications >= 1) { currentNotifications--; }
-      log.debug(LOG_PREFIX, 'Dismissal', msg.push);
+      logMsg = 'Dismissal from: ' + msg.push.package_name;
+      log.debug(LOG_PREFIX, logMsg);
+      // log.debug(LOG_PREFIX, 'Dismissal', msg.push);
       self.emit('dismissal', msg.push, currentNotifications);
       return true;
     }
