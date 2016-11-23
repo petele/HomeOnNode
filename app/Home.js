@@ -38,6 +38,7 @@ function Home(config, fb) {
   var armingTimer;
   var zwaveTimer;
   var sonosTimer;
+  var soundPlaying = false;
 
   /*****************************************************************************
    *
@@ -345,12 +346,18 @@ function Home(config, fb) {
   }
 
   function playSound(file, force) {
+    if (soundPlaying === true) {
+      log.debug(LOG_PREFIX, 'playSound skipped, currently playing.');
+      return;
+    }
+    soundPlaying = true;
     log.debug(LOG_PREFIX, 'playSound: ' + file + ' ' + force);
     if (_self.state.doNotDisturb === false || force === true) {
       setTimeout(function() {
         var cmd = 'mplayer ';
         cmd += file;
         exec(cmd, function(error, stdout, stderr) {
+          soundPlaying = false;
           if (error) {
             log.exception(LOG_PREFIX, 'PlaySound Error', error);
           }
