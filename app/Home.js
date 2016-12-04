@@ -347,7 +347,10 @@ function Home(config, fb) {
 
   function playSound(file, force) {
     var now = Date.now();
-    if (now - lastSoundPlayedAt > 15000 && force !== true) {
+    if (force === true) {
+      lastSoundPlayedAt = 0;
+    }
+    if (now - lastSoundPlayedAt > 15000) {
       log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
       return;
     }
