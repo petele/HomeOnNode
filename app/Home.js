@@ -38,7 +38,7 @@ function Home(config, fb) {
   var armingTimer;
   var zwaveTimer;
   var sonosTimer;
-  var soundPlaying = false;
+  var lastSoundPlayedAt = 0;
 
   /*****************************************************************************
    *
@@ -178,7 +178,7 @@ function Home(config, fb) {
       }
       cmds.forEach(function(cmd) {
         setNestFan(cmd, modifier);
-      })
+      });
     }
     if (command.hasOwnProperty('harmonyActivity')) {
       setHarmonyActivity(command.harmonyActivity);
@@ -346,18 +346,18 @@ function Home(config, fb) {
   }
 
   function playSound(file, force) {
-    if (soundPlaying === true) {
-      log.debug(LOG_PREFIX, 'playSound skipped, currently playing.');
+    var now = Date.now();
+    if (now - lastSoundPlayedAt > 15000 && force !== true) {
+      log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
       return;
     }
-    soundPlaying = true;
+    lastSoundPlayedAt = now;
     log.debug(LOG_PREFIX, 'playSound: ' + file + ' ' + force);
     if (_self.state.doNotDisturb === false || force === true) {
       setTimeout(function() {
         var cmd = 'mplayer ';
         cmd += file;
         exec(cmd, function(error, stdout, stderr) {
-          soundPlaying = false;
           if (error) {
             log.exception(LOG_PREFIX, 'PlaySound Error', error);
           }
@@ -1010,14 +1010,14 @@ function Home(config, fb) {
           if (cmdName) {
             _self.executeCommandByName(cmdName, null, 'PushBullet');
           } else {
-            var logObj = {
-              appName: msg.application_name,
-              pkgName: msg.package_name,
-              dismissible: msg.dismissible
-            };
-            if (msg.title) { logObj.title = msg.title; }
-            if (msg.body) { logObj.body = msg.body; }
-            fbPush('logs/pushBullet', logObj);            
+            // var logObj = {
+            //   appName: msg.application_name,
+            //   pkgName: msg.package_name,
+            //   dismissible: msg.dismissible
+            // };
+            // if (msg.title) { logObj.title = msg.title; }
+            // if (msg.body) { logObj.body = msg.body; }
+            // fbPush('logs/pushBullet', logObj);            
           }
         } catch (ex) {
           var logMsg = 'PushBullet notification commandName lookup failure.';
