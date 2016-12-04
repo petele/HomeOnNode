@@ -350,7 +350,7 @@ function Home(config, fb) {
     if (force === true) {
       lastSoundPlayedAt = 0;
     }
-    if (now - lastSoundPlayedAt > 15000) {
+    if (now - lastSoundPlayedAt < 15000) {
       log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
       return;
     }
