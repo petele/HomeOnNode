@@ -74,6 +74,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           // app.page = 'loading';
         }
       });
+      app.fbRoot.child('sayThis').limitToLast(1).on('child_added', function(snapshot) {
+        if (app.speechSynthesisEnabled === true) {
+          var utterance = snapshot.val();
+          var allowedDiff = 30 * 60 * 1000;
+          var timeDiff = Date.now() - utterance.sayAt;
+          if (timeDiff < allowedDiff) {
+            app.sayThis(utterance.utterance, utterance.lang);
+            snapshot.ref().remove();
+          }
+        }
+      });
     }
   });
   app.fbCommandRef = app.fbRoot.child('commands');
@@ -87,5 +98,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     });
   };
   app.lastInput = Date.now();
+  app.speechSynthesisEnabled = false;
+  if (localStorage.getItem('speechSynthesis') === 'true') {
+    app.speechSynthesisEnabled = true;
+  }
+  app.sayThis = function(sentence, lang) {
+    lang = lang || 'en-GB';
+    var utterance = new window.SpeechSynthesisUtterance(sentence);
+    utterance.lang = lang;
+    window.speechSynthesis.speak(utterance);
+    return utterance;
+  };
 
 })(document);

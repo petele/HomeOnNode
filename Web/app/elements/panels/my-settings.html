@@ -37,6 +37,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         Notifications (<span>{{gcmKey}}</span>)
       </paper-toggle-button>
 
+      <paper-toggle-button id="sayThis" on-change="speechChange">
+        Speech Synthesis
+      </paper-toggle-button>
+
     </paper-material>
 
   </template>
@@ -49,6 +53,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         is: 'my-settings',
         ready: function() {
           var self = this;
+          if (app.speechSynthesisEnabled === true) {
+            this.$.sayThis.checked = true;
+          }
           this.gcmKey = localStorage.getItem('fbGCMKey');
           navigator.serviceWorker.getRegistration().then(function(reg) {
             reg.pushManager.getSubscription().then(function(sub) {
@@ -63,6 +70,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this.subscribe();
           } else {
             this.unsubscribe();
+          }
+        },
+        speechChange: function() {
+          if (this.$.sayThis.checked) {
+            app.speechSynthesisEnabled = true;
+            localStorage.setItem('speechSynthesis', true);
+          } else {
+            app.speechSynthesisEnabled = false;
+            localStorage.setItem('speechSynthesis', false);
           }
         },
         updateSubscription: function(sub) {
