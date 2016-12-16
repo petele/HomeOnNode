@@ -239,6 +239,9 @@ function Home(config, fb) {
     if (command.hasOwnProperty('sound')) {
       playSound(command.sound, command.soundForce);
     }
+    if (command.hasOwnProperty('sayThis')) {
+      sayThis(command.sayThis, command.soundForce);
+    }
     if (command.hasOwnProperty('doNotDisturb')) {
       if (modifier === 'OFF' || command.doNotDisturb === 'OFF') {
         setDoNotDisturb('OFF');
@@ -366,6 +369,17 @@ function Home(config, fb) {
           }
         });
       }, 1);
+    }
+  }
+
+  function sayThis(utterance, force) {
+    log.debug(LOG_PREFIX, 'sayThis: ' + utterance + ' ' + force);
+    if (_self.state.doNotDisturb === false || force === true) {
+      var sayObj = {
+        sayAt: Date.now(),
+        utterance: utterance
+      };
+      fbPush('sayThis', sayObj);
     }
   }
 
