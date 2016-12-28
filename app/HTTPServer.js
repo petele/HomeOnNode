@@ -45,6 +45,21 @@ function HTTPServer(config, home, fb) {
     res.sendFile(path.join(__dirname, '/start.log'));
   });
 
+  exp.post('/sounds/:sound', function(req, res) {
+    var opts = {
+      root: __dirname + '/sounds/',
+      dotfiles: 'deny'
+    };
+    var soundFile = req.params.sound;
+    res.sendFile(soundFile, opts, function(err) {
+      if (err) {
+        var msg = 'Send sound file: ' + soundFile + ' failed.';
+        log.exception(LOG_PREFIX, msg, err);
+        res.status(err.status).end();
+      }
+    });
+  });
+
   exp.post('/shutdown', function(req, res) {
     var body = req.body;
     if (typeof body === 'string') {
