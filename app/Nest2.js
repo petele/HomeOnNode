@@ -4,6 +4,7 @@ var EventEmitter = require('events').EventEmitter;
 var util = require('util');
 var log = require('./SystemLog2');
 var Firebase = require('firebase');
+var diff = require('deep-diff').diff;
 var LOG_PREFIX = 'NEST';
 
 /**
@@ -232,8 +233,21 @@ function Nest(authToken) {
    */
   function initMonitor() {
     _fbNest.on('value', function(snapshot) {
-      _self.nestData = snapshot.val();
-      _self.emit('change', _self.nestData);
+      var newData = snapshot.val();
+      var changes = 0;
+      diff(_self.nestData, newData).forEach(function(d) {
+        var path = d.path.join('/');
+        if (path.indexOf('_url') > 0) {
+          return;
+        }
+        changes++
+        var xtra = {L: d.lhs, R: d.rhs};
+        log.debug(LOG_PREFIX, 'D: ' + path, xtra);
+      });
+      if (changes > 0) {
+        _self.nestData = newData;
+        _self.emit('change', _self.nestData);
+      }
     });
     _fbNest.child('.info/connected').on('value', function(snapshot) {
       if (snapshot.val() === true) {
@@ -330,7 +344,7 @@ function Nest(authToken) {
       return false;
     }
     var path = 'devices/thermostats/' + thermostatId + '/fan_timer_active';
-    _fbNest.child(path).set(temperature, function(err) {
+    _fbNest.child(path).set(true, function(err) {
       onSetComplete(path, err);
     });
     return true;
