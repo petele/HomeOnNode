@@ -7,22 +7,37 @@ var Firebase = require('firebase');
 var diff = require('deep-diff').diff;
 var LOG_PREFIX = 'NEST';
 
+var STATES = { preInit: 0, init: 1, ready: 10, offline: -1, error: -10 };
+
 /**
  * Nest API Wrapper
  *
  * @param {string} authToken Auth Token to use
+ * @param {Object} fbRef Firebase Root Reference
  * @return {Object} The Nest API Object
  */
-function Nest(authToken) {
-  var STATES = { preInit: 0, init: 1, ready: 10, offline: -1, error: -10 };
-  var MAX_DISCONNECT = 3 * 60 * 1000;
+function Nest(authToken, fbRef) {
+  
+  var MAX_DISCONNECT = 5 * 60 * 1000;
   var RECONNECT_TIMEOUT = 1 * 60 * 1000;
-  var ROOM_ID_MAP = {
-    BR: 'dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1',
-    LR: 'dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'
-  };
   var _fbRef;
   var _fbNest;
+  var _config = {
+    auto: {
+      DAY: {
+        LR: 68,
+        BR: 67
+      },
+      SLEEP: {
+        LR: 62,
+        BR: 63
+      }
+    },
+    thermostats: {
+      BR: 'dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1',
+      LR: 'dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'
+    }
+  }
   var _reconnectTimer;
   var _disconnectedTimer;
   var _authToken = authToken;
@@ -35,20 +50,6 @@ function Nest(authToken) {
   this.deviceState = STATES.preInit;
   this.nestData = {};
   this.structureId;
-
-  /**
-   * Set Firebase Reference
-   *
-   * @param {string} path Path to the Firebase object to watch
-   */
-  this.setFBRef = function(path) {
-    if (_fbRef) {
-      // TODO: Close the existing Firebase reference
-    }
-    if (path) {
-      // TODO: Setup new Firebase Reference
-    }
-  };
 
   /**
    * Sets the Nest status to Away
@@ -86,23 +87,30 @@ function Nest(authToken) {
    * @return {Boolean} True if the state was successfully changed
    */
   this.adjustTemperature = function(roomId, direction) {
+    var thermostatId = findThermostatId(roomId);
+    if (!thermostatId) {
+      return false;
+    }
+    var thermostat = getThermostat(thermostatId);
+    if (!thermostat) {
+      return false;
+    }
     try {
-      var thermostatId = ROOM_ID_MAP[roomId];
-      var thermostat = _self.nestData.devices.thermostats[thermostatId];
+      direction = direction.toUpperCase();
       var temperature = thermostat['target_temperature_f'];
       temperature = parseInt(temperature, 10);
-      if (direction.toUpperCase() === 'UP') {
+      if (direction === 'UP' || direction === 'DIM_UP') {
         temperature++;
       } else {
         temperature--;
       }
       if (temperature > 90 || temperature < 60) {
-        log.warn(LOG_PREFIX, 'adjustTemperature, failed, limit exceeded.');
+        log.warn(LOG_PREFIX, 'adjustTemperature failed, limit exceeded.');
         return false;
       }
       return setThermostat(thermostatId, temperature);
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'adjustTemperature Failed', ex);
+      log.exception(LOG_PREFIX, 'adjustTemperature failed', ex);
       return false;
     }
   }
@@ -115,17 +123,48 @@ function Nest(authToken) {
    * @return {Boolean} True if the state was successfully changed
    */
   this.setTemperature = function(roomId, temperature) {
+    var thermostatId = findThermostatId(roomId);
+    if (!thermostatId) {
+      return false;
+    }
     try {
       temperature = parseInt(temperature, 10);
       if (temperature > 90 || temperature < 60) {
-        log.warn(LOG_PREFIX, 'setTemperature, failed, limit exceeded.');
+        log.warn(LOG_PREFIX, 'setTemperature failed, limit exceeded.');
         return false;
       }
-      var thermostatId = ROOM_ID_MAP[roomId];
-      var thermostat = _self.nestData.devices.thermostats[thermostatId];
       return setThermostat(thermostatId, temperature);
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'setTemperature Failed', ex);
+      log.exception(LOG_PREFIX, 'setTemperature failed', ex);
+      return false;
+    }
+  }
+
+  /**
+   * Automatically adjust temperature based on config
+   *
+   * @param {string} value Auto mode to use
+   * @return {Boolean} True if the state was successfully changed
+   */
+  this.setAutoTemperature = function(value) {
+    if (!value) {
+      return false;
+    }
+    try {
+      var temperatures = _config.auto[value.toUpperCase()];
+      if (!temperatures) {
+        var msg = 'setAutoTemperature failed, unable to find settings for: ';
+        msg += value;
+        log.error(LOG_PREFIX, msg);
+        return false;
+      }
+      var keys = Object.keys(temperatures);
+      keys.forEach(function(key) {
+        _self.setTemperature(key, temperatures[key]);
+      });
+      return true;
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'setAutoTemperature failed', ex);
       return false;
     }
   }
@@ -138,13 +177,11 @@ function Nest(authToken) {
    * @return {Boolean} True if the state was successfully changed
    */
   this.runNestFan = function(roomId, minutes) {
-    try {
-      var thermostatId = ROOM_ID_MAP[roomId];
-      return runHVACFan(thermostatId, minutes);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'runNestFan Failed', ex);
+    var thermostatId = findThermostatId(roomId);
+    if (!thermostatId) {
       return false;
     }
+    return runHVACFan(thermostatId, minutes);
   }
 
   /*****************************************************************************
@@ -158,6 +195,13 @@ function Nest(authToken) {
     log.init(LOG_PREFIX, 'Init');
     _reconnectTimer = null;
     _disconnectedTimer = null;
+    // TODO: Re-enable
+    /*
+    _fbRef = fbRef.child('hvac');
+    _fbRef.on('value', function(snapshot) {
+      _config = snapshot.val();
+    });
+    */
     setState(STATES.init);
     login();
   }
@@ -275,6 +319,9 @@ function Nest(authToken) {
 
   /**
    * Called when the Nest Firebase object has been updated.
+   * @param {string} path Path used to set the parameter (used in logging)
+   * @param {Object} err Error (if any)
+   * @return {Boolean} True if the state was successfully changed
    */
   function onSetComplete(path, err) {
     if (err) {
@@ -285,11 +332,62 @@ function Nest(authToken) {
   }
 
   /**
+   * Finds the Nest ThermostatId for the specified roomId
+   * @param {string} roomId Room ID to look up.
+   * @return {string} thermostatId
+   */
+  function findThermostatId(roomId) {
+    var msg = 'Unable to find thermostatId';
+    if (!roomId) {
+      msg += ', roomId not provided.';
+      log.error(LOG_PREFIX, msg);
+      return null;
+    }
+    var thermostatId;
+    try {
+      thermostatId = _config.thermostats[roomId];
+    } catch (ex) {
+      log.exception(LOG_PREFIX, msg, ex);
+      return null;
+    }
+    if (thermostatId) {
+      return thermostatId;
+    }
+    msg += ' for roomId: ' + roomId;
+    log.error(LOG_PREFIX, msg);
+    return null;
+  }
+
+  /**
+   * Finds the Nest Thermostat for the specified thermostatId
+   * @param {string} thermostatId Thermostat to look up.
+   * @return {Object} thermostat
+   */
+  function getThermostat(thermostatId) {
+    var msg = 'Unable to find thermostat';
+    if (!thermostatId) {
+      msg += ', thermostatId not provided';
+      log.error(LOG_PREFIX, msg);
+      return null;
+    }
+    try {
+      var thermostat = _self.nestData.devices.thermostats[thermostatId];
+      return thermostat;
+    } catch (ex) {
+      msg += ', an exception occured.';
+      log.exception(LOG_PREFIX, msg, ex);
+      return null;
+    }
+  }
+
+  /**
    * Sets the Nest Home/Away state
+   * @param {string} state The new home state, home/away
+   * @return {Boolean} True if the state was successfully changed
    */
   function setHomeAway(state) {
     if (_self.deviceState !== STATES.ready) {
-      log.error(LOG_PREFIX, 'setHomeAway Failed, Nest not ready.');
+      log.error(LOG_PREFIX, 'setHomeAway failed, Nest not ready.');
       return false;
     }
     log.log(LOG_PREFIX, 'setHomeAway to: ' + state);
@@ -302,10 +400,12 @@ function Nest(authToken) {
 
   /**
    * Sets the Nest Camera streaming state for all cameras.
+   * @param {Boolean} state Whether the camera is on or not
+   * @return {Boolean} True if the state was successfully changed
    */
   function setCamerasStreaming(state) {
     if (_self.deviceState !== STATES.ready) {
-      log.error(LOG_PREFIX, 'setCamerasStreaming Failed, Nest not ready.');
+      log.error(LOG_PREFIX, 'setCamerasStreaming failed, Nest not ready.');
       return false;
     }
     var cameras = _self.nestData.structures[_self.structureId].cameras;
@@ -320,12 +420,18 @@ function Nest(authToken) {
     return true;
   }
 
+  /**
+   * Sets the temperature on the specified thermostat
+   * @param {string} thermostatId The thermostat to set
+   * @param {Number} temperature Temperature to set it to
+   * @return {Boolean} True if it was set successfully
+   */
   function setThermostat(thermostatId, temperature) {
     var thermostat = _self.nestData.devices.thermostats[thermostatId];
     var msg = 'setThermostat in ' + thermostat.name + ' to: ';
     msg += temperature + '°F';
     if (_self.deviceState !== STATES.ready) {
-      log.error(LOG_PREFIX, msg + ' Failed, Nest not ready.');
+      log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
       return false;
     }
     log.log(LOG_PREFIX, msg)
@@ -336,24 +442,47 @@ function Nest(authToken) {
     return true;
   }
 
+  /**
+   * Starts or stops the Fan
+   * @param {string} thermostatId The thermostat to set
+   * @param {Number} minutes Only useful for 0 to turn the fan off
+   * @return {Boolean} True if it was set successfully
+   */
   function runHVACFan(thermostatId, minutes) {
     var thermostat = _self.nestData.devices.thermostats[thermostatId];
     var msg = 'runHVACFan in ' + thermostat.name;
     if (_self.deviceState !== STATES.ready) {
-      log.error(LOG_PREFIX, msg + ' Failed, Nest not ready.');
+      log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
       return false;
     }
+    var fanOn = true;
+    if (minutes === 0) {
+      fanOn = false;
+      msg += ' - OFF';
+    }
     var path = 'devices/thermostats/' + thermostatId + '/fan_timer_active';
-    _fbNest.child(path).set(true, function(err) {
+    _fbNest.child(path).set(fanOn, function(err) {
       onSetComplete(path, err);
     });
     return true;
   }
 
+  if (!authToken) {
+    log.error(LOG_PREFIX, 'No Nest authToken provided.');
+    setState(STATES.error);
+    return null;
+  }
+  if (!fbRef) {
+    log.error(LOG_PREFIX, 'No Firebase reference provided.');
+    setState(STATES.error);
+    return null;
+  }
   init();
   return this;
 }
 
 util.inherits(Nest, EventEmitter);
 
-module.exports = Nest;
+// module.exports = Nest;
+exports.Nest = Nest;
+exports.STATES = STATES;
