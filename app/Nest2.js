@@ -25,12 +25,12 @@ function Nest(authToken, fbRef) {
   var _config = {
     auto: {
       DAY: {
-        LR: 68,
-        BR: 67
+        LR: 70,
+        BR: 70
       },
       SLEEP: {
         LR: 62,
-        BR: 63
+        BR: 62
       }
     },
     thermostats: {
@@ -285,8 +285,8 @@ function Nest(authToken, fbRef) {
           return;
         }
         changes++
-        var xtra = {L: d.lhs, R: d.rhs};
-        log.debug(LOG_PREFIX, 'D: ' + path, xtra);
+        // var xtra = {L: d.lhs, R: d.rhs};
+        // log.debug(LOG_PREFIX, 'D: ' + path, xtra);
       });
       if (changes > 0) {
         _self.nestData = newData;
