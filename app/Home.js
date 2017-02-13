@@ -130,18 +130,13 @@ function Home(config, fb) {
         setHueLights(cmd.lights, scene);
       });
     }
-    if (command.hasOwnProperty('zWave')) {
-      cmds = command.zWave;
-      if (Array.isArray(cmds) === false) {
-        cmds = [cmds];
+    if (command.hasOwnProperty('nanoLeaf')) {
+      if (command.nanoLeaf.effect) {
+        log.log(LOG_PREFIX, 'home nanoLeft effect - ' + command.nanoLeft.effect);
       }
-      cmds.forEach(function(cmd) {
-        var turnOn = cmd.state;
-        if (modifier === 'OFF') {
-          turnOn = false;
-        }
-        setZWaveSwitch(cmd.id, turnOn);
-      });
+      if (command.nanoLeaf.brightness) {
+        log.log(LOG_PREFIX, 'home nanoLeft brightness - ' + command.nanoLeft.brightness);
+      }
     }
     if (command.hasOwnProperty('nestThermostatAuto')) {
       var timeOfDay = command.nestThermostatAuto;
@@ -251,6 +246,19 @@ function Home(config, fb) {
     }
     if (command.hasOwnProperty('state')) {
       setState(command.state);
+    }
+    if (command.hasOwnProperty('zWave')) {
+      cmds = command.zWave;
+      if (Array.isArray(cmds) === false) {
+        cmds = [cmds];
+      }
+      cmds.forEach(function(cmd) {
+        var turnOn = cmd.state;
+        if (modifier === 'OFF') {
+          turnOn = false;
+        }
+        setZWaveSwitch(cmd.id, turnOn);
+      });
     }
   };
 
