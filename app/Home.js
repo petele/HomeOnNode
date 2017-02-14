@@ -1131,11 +1131,11 @@ function Home(config, fb) {
       let ip = '192.168.1.28';
       let port = 16021;
       nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
-      nanoLeaf.on('ready', function(nanoState, 'r') {
-        updateNanoLeafState(nanoState);
+      nanoLeaf.on('ready', function(nanoState) {
+        updateNanoLeafState(nanoState, 'r');
       });
-      nanoLeaf.on('state', function(nanoState, 's') {
-        updateNanoLeafState(nanoState);
+      nanoLeaf.on('state', function(nanoState) {
+        updateNanoLeafState(nanoState, 's');
       });
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize NanoLeaf', ex);
