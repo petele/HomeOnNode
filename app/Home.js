@@ -132,7 +132,7 @@ function Home(config, fb) {
         setHueLights(cmd.lights, scene);
       });
     }
-    if (command.hasOwnProperty('nanoLeaf') && nanoLeaf) {
+    if (nanoLeaf && command.hasOwnProperty('nanoLeaf')) {
       if (modifier === 'OFF') {
         nanoLeaf.setEffect('OFF')
       } else {
@@ -1131,19 +1131,22 @@ function Home(config, fb) {
       let ip = '192.168.1.28';
       let port = 16021;
       nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
+      nanoLeaf.on('ready', function(nanoState, 'r') {
+        updateNanoLeafState(nanoState);
+      });
+      nanoLeaf.on('state', function(nanoState, 's') {
+        updateNanoLeafState(nanoState);
+      });
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize NanoLeaf', ex);
+      nanoLeft = null;
       return;
     }
   }
 
-  function updateNanoLeafState(nanoState) {
+  function updateNanoLeafState(nanoState, fr) {
+    log.log(LOG_PREFIX, 'nanoLeat-' + fr);
     fbSet('state/nanoLeaf', nanoState);
-  }
-
-  if (nanoLeaf) {
-    nanoLeaf.on('ready', updateNanoLeafState);
-    nanoLeaf.on('state', updateNanoLeafState);
   }
 
   /*****************************************************************************
