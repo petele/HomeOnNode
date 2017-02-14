@@ -1137,6 +1137,15 @@ function Home(config, fb) {
     }
   }
 
+  function updateNanoLeafState(nanoState) {
+    fbSet('state/nanoLeaf', nanoState);
+  }
+
+  if (nanoLeaf) {
+    nanoLeaf.on('ready', updateNanoLeafState);
+    nanoLeaf.on('state', updateNanoLeafState);
+  }
+
   /*****************************************************************************
    *
    * ZWave - Initialization, Shut Down & Event handlers
