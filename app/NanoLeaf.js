@@ -14,7 +14,7 @@ function NanoLeaf(key, ip, port) {
   this.state = {};
   var hubAddress;
   var ready = false;
-  var requestTimeout = 30 * 1000;
+  var requestTimeout = 45 * 1000;
   var self = this;
 
   // Turn on/off PUT /api/beta/auth_token/state {"on": true}
@@ -41,7 +41,9 @@ function NanoLeaf(key, ip, port) {
         reject('not_ready');
         return;
       }
-      let body = {select: effectName};
+      let body = {
+        select: effectName
+      };
       resolve(makeLeafRequest('effects', 'PUT', body));
     });
 
@@ -55,23 +57,26 @@ function NanoLeaf(key, ip, port) {
         reject('not_ready');
         return;
       }
-      let bri;
-      try {
-        bri = parseInt(level, 10);
-      } catch (ex) {
-        log.error(LOG_PREFIX, 'setBrightness level must be an integer.');
-        reject('level must be an integer.');
-        return;
-      }
-      if (bri >= 0 && bri <= 100) {
-        let body = {brightness: bri};
-        resolve(makeLeafRequest('state', 'PUT', body));
-        return;
-      }
-      log.error(LOG_PREFIX, 'setBrightness level out of range.');
-      reject('Brightness out of range');
+      let body = {brightness: getBrightness(level)};
+      resolve(makeLeafRequest('state', 'PUT', body));
     });
   };
+
+  function getBrightness(level) {
+    if (level) {
+      try {
+        let bri = parseInt(level, 10);
+        if (bri >= 1 && bri <= 100) {
+          return bri;
+        } else {
+          log.error(LOG_PREFIX, 'Brightness out of range.');
+        }
+      } catch (ex) {
+        log.error(LOG_PREFIX, 'Brightness must be an integer.');
+      }
+    }
+    return 25;
+  }
 
   function checkIfReady() {
     if (ready) {
@@ -83,7 +88,7 @@ function NanoLeaf(key, ip, port) {
 
   function monitorLeaf() {
     log.debug(LOG_PREFIX, `Starting monitorLeaf...`);
-    setTimeout(getState, requestTimeout);
+    setInterval(getState, requestTimeout);
   }
 
   // Get all info GET /api/beta/auth_token/
@@ -108,9 +113,8 @@ function NanoLeaf(key, ip, port) {
     });
   }
 
-
   function makeLeafRequest(requestPath, method, body) {
-    log.debug(LOG_PREFIX, `makeLeafRequest[${method}, ${requestPath}]`, body);
+    // log.debug(LOG_PREFIX, `makeLeafRequest[${method}, ${requestPath}]`, body);
     return new Promise(function(resolve, reject) {
       var requestOptions = {
         uri: hubAddress + requestPath,
