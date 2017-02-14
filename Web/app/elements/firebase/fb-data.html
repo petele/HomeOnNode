@@ -65,7 +65,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             lights.forEach(function(light, index) {
               light.key = index;
               newLights.push(light);
+              console.log('aa', light);
             });
+            var light = {
+              key: newLights.length + 1,
+              name: 'NanoLeaf',
+              state: {
+                reachable: true,
+                on: false
+              }
+            };
+            newLights.push(light);
             self.set('hueLights', newLights);
           });
         },
