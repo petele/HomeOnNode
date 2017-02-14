@@ -1132,10 +1132,10 @@ function Home(config, fb) {
       let port = 16021;
       nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
       nanoLeaf.on('ready', function(nanoState) {
-        updateNanoLeafState(nanoState, 'r');
+        updateNanoLeafState(nanoState);
       });
       nanoLeaf.on('state', function(nanoState) {
-        updateNanoLeafState(nanoState, 's');
+        updateNanoLeafState(nanoState);
       });
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize NanoLeaf', ex);
@@ -1144,8 +1144,7 @@ function Home(config, fb) {
     }
   }
 
-  function updateNanoLeafState(nanoState, fr) {
-    log.log(LOG_PREFIX, 'nanoLeat-' + fr);
+  function updateNanoLeafState(nanoState) {
     fbSet('state/nanoLeaf', nanoState);
   }
 
