@@ -19,6 +19,7 @@ var ZWave = require('./ZWave');
 var Sonos = require('./Sonos');
 var GCMPush = require('./GCMPush');
 var PushBullet = require('./PushBullet');
+var NanoLeaf = require('./NanoLeaf');
 
 var LOG_PREFIX = 'HOME';
 
@@ -34,6 +35,7 @@ function Home(config, fb) {
   var sonos;
   var gcmPush;
   var pushBullet;
+  var nanoLeaf;
 
   var armingTimer;
   var zwaveTimer;
@@ -130,12 +132,12 @@ function Home(config, fb) {
         setHueLights(cmd.lights, scene);
       });
     }
-    if (command.hasOwnProperty('nanoLeaf')) {
+    if (command.hasOwnProperty('nanoLeaf') && nanoLeaf) {
       if (command.nanoLeaf.effect) {
-        log.log(LOG_PREFIX, 'home nanoLeft effect - ' + command.nanoLeft.effect);
+        nanoLeaf.setEffect(command.nanoLeaf.effect);
       }
       if (command.nanoLeaf.brightness) {
-        log.log(LOG_PREFIX, 'home nanoLeft brightness - ' + command.nanoLeft.brightness);
+        nanoLeaf.setBrightness(command.nanoLeaf.brightness);
       }
     }
     if (command.hasOwnProperty('nestThermostatAuto')) {
@@ -1116,6 +1118,23 @@ function Home(config, fb) {
 
   /*****************************************************************************
    *
+   * NanoLeaf - Initialization & Shut Down
+   *
+   ****************************************************************************/
+
+  function initNanoLeaf() {
+    try {
+      let ip = '192.168.1.28';
+      let port = 16021;
+      nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to initialize NanoLeaf', ex);
+      return;
+    }
+  }
+
+  /*****************************************************************************
+   *
    * ZWave - Initialization, Shut Down & Event handlers
    *
    ****************************************************************************/
@@ -1283,6 +1302,7 @@ function Home(config, fb) {
     initZWave();
     initNest();
     initHue();
+    initNanoLeaf();
     initSonos();
     initHarmony();
     initPresence();

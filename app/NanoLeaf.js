@@ -10,19 +10,20 @@ var log = require('./SystemLog2');
 
 var LOG_PREFIX = 'NANOLEAF';
 
-function NanoLeaf(key) {
+function NanoLeaf(key, ip, port) {
   this.state = {};
   var hubAddress;
   var ready = false;
-  var requestTimeout = 15 * 1000;
+  var requestTimeout = 30 * 1000;
   var self = this;
 
   // Turn on/off PUT /api/beta/auth_token/state {"on": true}
   this.setPower = function(turnOn) {
-    log.debug(LOG_PREFIX, `setPower[${turnOn}]`);
+    log.info(LOG_PREFIX, `setPower[${turnOn}]`);
     return new Promise(function(resolve, reject) {
       if (checkIfReady() === false) {
         reject('not_ready');
+        return;
       }
       let body = {on: turnOn};
       resolve(makeLeafRequest('state', 'PUT', body));
@@ -31,13 +32,14 @@ function NanoLeaf(key) {
 
   // Set effect PUT /api/beta/auth_token/effects {"select": "Pete1"}
   this.setEffect = function(effectName) {
-    log.debug(LOG_PREFIX, `setEffect[${effectName}]`);
+    log.info(LOG_PREFIX, `setEffect[${effectName}]`);
     if (effectName === 'OFF') {
-      return setPower(false);
+      return self.setPower(false);
     }
     return new Promise(function(resolve, reject) {
       if (checkIfReady() === false) {
         reject('not_ready');
+        return;
       }
       let body = {select: effectName};
       resolve(makeLeafRequest('effects', 'PUT', body));
@@ -47,10 +49,11 @@ function NanoLeaf(key) {
 
   // Set brightness PUT /api/beta/auth_token/state {"brightness": 100} 0-100
   this.setBrightness = function(level) {
-    log.debug(LOG_PREFIX, `setBrightness()[${level}]`);
+    log.info(LOG_PREFIX, `setBrightness()[${level}]`);
     return new Promise(function(resolve, reject) {
       if (checkIfReady() === false) {
         reject('not_ready');
+        return;
       }
       let bri;
       try {
@@ -58,10 +61,12 @@ function NanoLeaf(key) {
       } catch (ex) {
         log.error(LOG_PREFIX, 'setBrightness level must be an integer.');
         reject('level must be an integer.');
+        return;
       }
       if (bri >= 0 && bri <= 100) {
         let body = {brightness: bri};
         resolve(makeLeafRequest('state', 'PUT', body));
+        return;
       }
       log.error(LOG_PREFIX, 'setBrightness level out of range.');
       reject('Brightness out of range');
@@ -93,8 +98,8 @@ function NanoLeaf(key) {
         self.state = resp;
         var eventName = 'state';
         // If we weren't ready before, change to ready & fire ready event
-        if (self.ready === false) {
-          self.ready = true;
+        if (ready === false) {
+          ready = true;
           eventName = 'ready';
         }
         self.emit(eventName, resp);
@@ -105,7 +110,7 @@ function NanoLeaf(key) {
 
 
   function makeLeafRequest(requestPath, method, body) {
-    log.debug(LOG_PREFIX, `makeLeafRequest[${method}, ${requestPath}, ${body}]`);
+    log.debug(LOG_PREFIX, `makeLeafRequest[${method}, ${requestPath}]`, body);
     return new Promise(function(resolve, reject) {
       var requestOptions = {
         uri: hubAddress + requestPath,
@@ -120,14 +125,17 @@ function NanoLeaf(key) {
       request(requestOptions, function(error, response, respBody) {
         if (error) {
           reject(error);
+          return;
         }
         if (response && response.statusCode !== 200) {
           reject(new Error('Bad statusCode: ' + response.statusCode));
+          return;
         }
         if (respBody && respBody.error) {
           reject(new Error('Response Error: ' + respBody));
+          return;
         }
-        if (requestPath === '') {
+        if (requestPath !== '') {
           getState();
         }
         resolve(respBody);
@@ -137,8 +145,12 @@ function NanoLeaf(key) {
 
   function findHub() {
     return new Promise(function(resolve, reject) {
-      log.debug(LOG_PREFIX, 'Searching for hub...');
-      resolve({ip: '192.168.1.28', port: 1900});
+      if (ip && port) {
+        resolve({ip: ip, port: port});
+        return;
+      }
+      log.error(LOG_PREFIX, 'findHub NYI');
+      reject();
     });
   }
 
@@ -146,7 +158,7 @@ function NanoLeaf(key) {
     log.init(LOG_PREFIX, 'Starting NanoLeaf...');
     findHub()
     .then(function(hubInfo) {
-      log.debug(LOG_PREFIX, '')
+      log.log(LOG_PREFIX, `Hub found at ${hubInfo.ip}:${hubInfo.port}`);
       hubAddress = `http://${hubInfo.ip}:${hubInfo.port}/api/beta/${key}/`;
       return hubAddress;
     })
