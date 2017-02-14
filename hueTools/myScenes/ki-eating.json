@@ -1,0 +1,11 @@
+{ "sceneName": "Eating (dKI)",
+  "showInWebUI": false,
+  "lights": [
+    {"light": 4, "cmdName": "REBECCA_PURPLE", "bri": 180},
+    {"light": 5, "cmdName": "REBECCA_PURPLE", "bri": 180},
+    {"light": 6, "cmdName": "DEFAULT", "bri": 250},
+    {"light": 7, "cmdName": "DEFAULT", "bri": 250},
+    {"light": 17, "cmdName": "PEACH", "bri": 250},
+    {"light": 23, "cmdName": "OFF"}
+  ]
+}
