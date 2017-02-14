@@ -133,11 +133,15 @@ function Home(config, fb) {
       });
     }
     if (command.hasOwnProperty('nanoLeaf') && nanoLeaf) {
-      if (command.nanoLeaf.effect) {
-        nanoLeaf.setEffect(command.nanoLeaf.effect);
-      }
-      if (command.nanoLeaf.brightness) {
-        nanoLeaf.setBrightness(command.nanoLeaf.brightness);
+      if (modifier === 'OFF') {
+        nanoLeaf.setEffect('OFF')
+      } else {
+        if (command.nanoLeaf.effect) {
+          nanoLeaf.setEffect(command.nanoLeaf.effect);
+        }
+        if (command.nanoLeaf.brightness) {
+          nanoLeaf.setBrightness(command.nanoLeaf.brightness);
+        }
       }
     }
     if (command.hasOwnProperty('nestThermostatAuto')) {
