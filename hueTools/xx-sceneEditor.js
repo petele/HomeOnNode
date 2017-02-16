@@ -14,7 +14,7 @@ var recipes;
 console.log('HomeOnNode Hue Scene Helper');
 
 commander
-  .version('0.2.0')
+  .version('0.1.0')
   .option('-v, --verbose', 'Verbose output')
   .option('-t, --trial', 'Trial only, don\'t make requests.')
   .option('-r, --recipes <filename>', 'Recipes [recipes.json]', 'recipes.json');
@@ -82,8 +82,7 @@ commander
       if (sceneObj.transitionTime) {
         scene.transitiontime = sceneObj.transitionTime;
       }
-      makeRequest('POST', 'scenes/', scene)
-      .then(commandCompleted);
+      makeRequest('POST', 'scenes/', scene, commandCompleted);
     });
   });
 
@@ -141,7 +140,6 @@ function commandCompleted(body) {
       log.warn('Complete', 'Command completed: %j', resp);
     }
   });
-  return body;
 }
 
 function readSceneFile(filename) {
@@ -244,41 +242,35 @@ function getRecipe(rName) {
 }
 
 function makeRequest(method, path, body, callback) {
-  return new Promise(function(resolve, reject) {
-    var reqOpt = {
-      url: 'http://' + hueIP + '/api/' + Keys.hueBridge.key + '/' + path,
-      method: method,
-      timeout: requestTimeout,
-      json: true
-    };
-    if (body) {
-      reqOpt.body = body;
+  var reqOpt = {
+    url: 'http://' + hueIP + '/api/' + Keys.hueBridge.key + '/' + path,
+    method: method,
+    timeout: requestTimeout,
+    json: true
+  };
+  if (body) {
+    reqOpt.body = body;
+  }
+  var prefix = method + ' ' + path;
+  if (commander.trial === true) {
+    log.info(prefix, body);
+    if (callback) {
+      callback([{success: {id: '1234abcd', fake: true}}]);
     }
-    var prefix = method + ' ' + path;
-    if (commander.trial === true) {
-      log.info(prefix, body);
-      var fakeResult = [{success: {id: '1234abcd', fake: true}}];
-      if (callback) {
-        callback(fakeResult);
+  } else {
+    log.verbose(prefix, body);
+    request(reqOpt, function(error, response, body) {
+      var respPrefix = 'RESP ' + path;
+      var result = body;
+      if (error) {
+        log.error(respPrefix, error);
+        result = [{failed: error}];
+      } else {
+        log.info(respPrefix, body);
       }
-      resolve(fakeResult);
-    } else {
-      log.verbose(prefix, body);
-      request(reqOpt, function(error, response, body) {
-        var respPrefix = 'RESP ' + path;
-        var result = body;
-        if (error) {
-          log.error(respPrefix, error);
-          result = [{failed: error}];
-          reject(result);
-        } else {
-          log.info(respPrefix, body);
-          resolve(result);
-        }
-        if (callback) {
-          callback(result);
-        }
-      });
-    }
-  });
+      if (callback) {
+        callback(result);
+      }
+    });
+  }
 }
