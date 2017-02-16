@@ -67,17 +67,13 @@ function Nest(authToken, fbRef) {
 
   /**
    * Enables all Nest Cameras
+   *
+   * @param {Boolean} enabled If the camera is enabled or not
    */
-  this.enableCamera = function() {
-    return setCamerasStreaming(true);
+  this.enableCamera = function(enabled) {
+    return setCamerasStreaming(enabled);
   }
 
-  /**
-   * Disables all Nest Cameras
-   */
-  this.disableCamera = function() {
-    return setCamerasStreaming(false);
-  }
 
   /**
    * Adjust the temperature in a room by 1 degree

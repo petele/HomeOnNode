@@ -1,14 +1,14 @@
 'use strict';
 
 var ZWave = require('../app/node_modules/ZWave/index');
-var log = require('../app/SystemLog');
+var log = require('../app/SystemLog2');
 
 log.setDebug(true);
 log.setLogfile(null);
 
 var zwave = new ZWave();
 zwave.on('ready', function(nodes) {
-  console.log('Ready', nodes);
+  console.log('ZWAVE', 'Ready', nodes);
 
   // zwave.setNodeName(2, 'MOTION_LIVINGROOM');
   // zwave.setNodeName(3, 'DOOR_FRONT');

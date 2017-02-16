@@ -164,14 +164,6 @@ function Home(config, fb) {
         }
       });
     }
-    if (command.hasOwnProperty('nestETA')) {
-      cmds = command.nestETA;
-      if (modifier === 'OFF') {
-        setNestETA(cmds.tripId, 0);
-      } else {
-        setNestETA(cmds.tripId, cmds.etaInMinutes);
-      }
-    }
     if (command.hasOwnProperty('nestFan')) {
       cmds = command.nestFan;
       if (Array.isArray(cmds) === false) {
@@ -181,6 +173,13 @@ function Home(config, fb) {
         setNestFan(cmd, modifier);
       });
     }
+    if (command.hasOwnProperty('nestCam')) {
+      var enabled = command.nestCam;
+      if (modifier === 'OFF') {
+        enabled = 'OFF';
+      }
+      enableNestCam(enabled);
+    }
     if (command.hasOwnProperty('harmonyActivity')) {
       setHarmonyActivity(command.harmonyActivity);
     }
@@ -189,13 +188,6 @@ function Home(config, fb) {
     }
     if (command.hasOwnProperty('refreshHarmonyConfig')) {
       refreshHarmonyConfig();
-    }
-    if (command.hasOwnProperty('nestCam')) {
-      var enabled = command.nestCam;
-      if (modifier === 'OFF') {
-        enabled = 'OFF';
-      }
-      enableNestCam(enabled);
     }
     if (command.hasOwnProperty('sonos')) {
       if (sonos) {

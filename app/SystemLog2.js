@@ -192,6 +192,9 @@ function printLog(logObj) {
 }
 
 function saveLogToFB(logObj) {
+  if (logObj.levelValue > 40) {
+    return;
+  }
   if (_fbRef) {
     try {
       _fbRef.child(FIREBASE_LOG_PATH).push(logObj);
