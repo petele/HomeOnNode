@@ -86,7 +86,6 @@ function Home(config, fb) {
       msg += ' (' + modifier + ')';
     }
     msg += ' received from: ' + source;
-    // log.log(LOG_PREFIX, msg);
     var command = config.commands[commandName];
     if (command) {
       command.modifier = modifier;
@@ -104,7 +103,7 @@ function Home(config, fb) {
       msg += ' (' + modifier + ')';
     }
     msg += ' received from: ' + source;
-    log.log(LOG_PREFIX, msg);
+    log.log(LOG_PREFIX, msg, command);
     var cmds;
     if (command.hasOwnProperty('hueScene')) {
       var scenes = command.hueScene;
@@ -132,16 +131,20 @@ function Home(config, fb) {
         setHueLights(cmd.lights, scene);
       });
     }
-    if (nanoLeaf && command.hasOwnProperty('nanoLeaf')) {
-      if (modifier === 'OFF') {
-        nanoLeaf.setEffect('OFF')
+    if (command.hasOwnProperty('nanoLeaf')) {
+      if (nanoLeaf) {
+        if (modifier === 'OFF') {
+          nanoLeaf.setEffect('OFF')
+        } else {
+          if (command.nanoLeaf.effect) {
+            nanoLeaf.setEffect(command.nanoLeaf.effect);
+          }
+          if (command.nanoLeaf.brightness) {
+            nanoLeaf.setBrightness(command.nanoLeaf.brightness);
+          }
+        }
       } else {
-        if (command.nanoLeaf.effect) {
-          nanoLeaf.setEffect(command.nanoLeaf.effect);
-        }
-        if (command.nanoLeaf.brightness) {
-          nanoLeaf.setBrightness(command.nanoLeaf.brightness);
-        }
+        log.warn(LOG_PREFIX, 'NanoLeaf unavailable.');
       }
     }
     if (command.hasOwnProperty('nestThermostatAuto')) {
@@ -181,13 +184,25 @@ function Home(config, fb) {
       enableNestCam(enabled);
     }
     if (command.hasOwnProperty('harmonyActivity')) {
-      setHarmonyActivity(command.harmonyActivity);
+      if (harmony) {
+        harmony.setActivityByName(command.harmonyActivity);
+      } else {
+        log.warn(LOG_PREFIX, 'Harmony unavailable.');
+      }
     }
     if (command.hasOwnProperty('harmonyKey')) {
-      sendHarmonyKey(command.harmonyKey);
+      if (harmony) {
+        harmony.sendCommand(command.harmonyKey);
+      } else {
+        log.warn(LOG_PREFIX, 'Harmony unavailable.');
+      }
     }
     if (command.hasOwnProperty('refreshHarmonyConfig')) {
-      refreshHarmonyConfig();
+      if (harmony) {
+        harmony.getConfig();
+      } else {
+        log.warn(LOG_PREFIX, 'Harmony unavailable.');
+      }
     }
     if (command.hasOwnProperty('sonos')) {
       if (sonos) {
@@ -227,6 +242,8 @@ function Home(config, fb) {
     if (command.hasOwnProperty('sendNotification')) {
       if (gcmPush) {
         gcmPush.sendMessage(command.sendNotification);
+      } else {
+        log.warn(LOG_PREFIX, 'GCMPush unavailable.');
       }
     }
     if (command.hasOwnProperty('sound')) {
@@ -244,19 +261,6 @@ function Home(config, fb) {
     }
     if (command.hasOwnProperty('state')) {
       setState(command.state);
-    }
-    if (command.hasOwnProperty('zWave')) {
-      cmds = command.zWave;
-      if (Array.isArray(cmds) === false) {
-        cmds = [cmds];
-      }
-      cmds.forEach(function(cmd) {
-        var turnOn = cmd.state;
-        if (modifier === 'OFF') {
-          turnOn = false;
-        }
-        setZWaveSwitch(cmd.id, turnOn);
-      });
     }
   };
 
@@ -646,48 +650,6 @@ function Home(config, fb) {
     harmony = null;
   }
 
-  function refreshHarmonyConfig() {
-    if (harmony) {
-      try {
-        harmony.getConfig();
-        return true;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Harmony refreshHarmonyConfig failed.', ex);
-        return false;
-      }
-    }
-    log.warn(LOG_PREFIX, 'refreshHarmonyConfig failed, Harmony not ready');
-    return false;
-  }
-
-  function setHarmonyActivity(activityName) {
-    if (harmony) {
-      try {
-        harmony.setActivityByName(activityName);
-        return true;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Harmony activity failed', ex);
-        return false;
-      }
-    }
-    log.warn(LOG_PREFIX, 'Harmony activity failed, Harmony not ready.');
-    return false;
-  }
-
-  function sendHarmonyKey(harmonyKey) {
-    if (harmony) {
-      try {
-        harmony.sendCommand(harmonyKey);
-        return true;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Harmony command failed', ex);
-        return false;
-      }
-    }
-    log.warn(LOG_PREFIX, 'Harmony command failed, Harmony not ready.');
-    return false;
-  }
-
   /*****************************************************************************
    *
    * Nest - Initialization & Shut Down
@@ -757,33 +719,6 @@ function Home(config, fb) {
       }
     }
     log.warn(LOG_PREFIX, 'NestCam command failed, Nest not ready.');
-    return false;
-  }
-
-  function setNestETA(tripId, etaInMinutes) {
-    if (nest) {
-      try {
-        var etaBegin;
-        var etaEnd;
-        if (etaInMinutes === 0) {
-          etaBegin = 0;
-          etaEnd = 0;
-        } else {
-          etaBegin = moment().add(etaInMinutes, 'm').toISOString();
-          etaEnd = moment().add(etaInMinutes, 'm').add(30, 'm').toISOString();
-        }
-        if (!tripId) {
-          tripId = 'defaultTripName';
-        }
-        nest.setETA(tripId, etaBegin, etaEnd);
-        fbSet('state/nestETA', etaBegin);
-        return true;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Error setting Nest ETA', ex);
-        return false;
-      }
-    }
-    log.warn(LOG_PREFIX, 'Unable to set Nest ETA, Nest not ready.');
     return false;
   }
 
@@ -1032,15 +967,6 @@ function Home(config, fb) {
           }
           if (cmdName) {
             _self.executeCommandByName(cmdName, null, 'PushBullet');
-          } else {
-            // var logObj = {
-            //   appName: msg.application_name,
-            //   pkgName: msg.package_name,
-            //   dismissible: msg.dismissible
-            // };
-            // if (msg.title) { logObj.title = msg.title; }
-            // if (msg.body) { logObj.body = msg.body; }
-            // fbPush('logs/pushBullet', logObj);            
           }
         } catch (ex) {
           var logMsg = 'PushBullet notification commandName lookup failure.';
@@ -1166,12 +1092,6 @@ function Home(config, fb) {
         // zwaveTimer = setInterval(zwaveTimerTick, 30000);
       });
       zwave.on('node_event', zwaveEvent);
-      zwave.on('node_value_change', zwaveSaveNodeValue);
-      zwave.on('node_value_refresh', zwaveSaveNodeValue);
-      zwave.on('node_value_removed', function(nodeId, info) {
-        var msg = '[' + nodeId + '] ' + JSON.stringify(info);
-        log.warn(LOG_PREFIX, 'ZWave - nodeValueRemoved: ' + msg);
-      });
     }
   }
 
@@ -1196,51 +1116,6 @@ function Home(config, fb) {
     }
   }
 
-  function zwaveSaveNodeValue(nodeId, info) {
-    /* jshint -W106 */
-    // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-    var valueId = info.value_id;
-    // jscs:enable
-    /* jshint +W106 */
-    if (valueId) {
-      try {
-        var path;
-        valueId = valueId.replace(nodeId + '-', '');
-        if (valueId === '49-1-1') { // Temperature
-          path = 'temperature';
-        } else if (valueId === '49-1-5') { // Humidity
-          path = 'humidity';
-        } else if (valueId === '49-1-3') { // Luminance
-          path = 'luminance';
-        } else if (valueId === '49-1-27') { // UV
-          path = 'uv';
-        } else if (valueId === '128-1-0') { // Battery
-          path = 'battery';
-        } else if (valueId === '113-1-1') { // Alarm
-          path = 'alarm';
-        } else {
-          path = valueId;
-        }
-        var now = new Date();
-        var value = {
-          date: now,
-          date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
-        };
-        value.value = info.value;
-        if (info.value === undefined || info.value === null) {
-          value.value = info;
-        }
-        var nodeName = config.zwave[nodeId].label || nodeId;
-        path = 'state/sensor/' + nodeName + '/' + path;
-        fbSet(path, value);
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Error in saveNodeValue', ex);
-      }
-    } else {
-      log.error(LOG_PREFIX, 'ZWave - no valueId for saveNodeValue');
-    }
-  }
-
   function shutdownZWave() {
     log.log(LOG_PREFIX, 'Shutting down ZWave.');
     if (zwaveTimer) {
@@ -1254,20 +1129,6 @@ function Home(config, fb) {
     }
     zwave = null;
     fbSet('state/zwave');
-  }
-
-  function setZWaveSwitch(id, newState) {
-    if (zwave) {
-      try {
-        zwave.setNodeBinary(id, newState);
-        return true;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'ZWave Switch change failed.', ex);
-        return false;
-      }
-    }
-    log.warn(LOG_PREFIX, 'ZWave switch failed, ZWave not ready.');
-    return false;
   }
 
   /*****************************************************************************
