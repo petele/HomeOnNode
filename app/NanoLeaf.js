@@ -30,6 +30,17 @@ function NanoLeaf(key, ip, port) {
     });
   };
 
+  // Turn on/off PUT /api/beta/auth_token/state {"on": true}
+  this.powerToggle = function() {
+    log.debug(LOG_PREFIX, `powerToggle`);
+    try {
+      let currentState = self.state.state.on.value;
+      self.setPower(!currentState);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to determine current state.', ex);
+    }
+  };
+
   // Set effect PUT /api/beta/auth_token/effects {"select": "Pete1"}
   this.setEffect = function(effectName) {
     log.info(LOG_PREFIX, `setEffect[${effectName}]`);
