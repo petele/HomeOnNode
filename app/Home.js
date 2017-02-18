@@ -1046,7 +1046,7 @@ function Home(config, fb) {
 
   function initNanoLeaf() {
     try {
-      let ip = '192.168.1.28';
+      let ip = '192.168.86.208';
       let port = 16021;
       nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
       nanoLeaf.on('ready', function(nanoState) {
