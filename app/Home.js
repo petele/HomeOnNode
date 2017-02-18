@@ -370,15 +370,22 @@ function Home(config, fb) {
     lastSoundPlayedAt = now;
     log.debug(LOG_PREFIX, 'playSound: ' + file + ' ' + force);
     if (_self.state.doNotDisturb === false || force === true) {
-      setTimeout(function() {
-        var cmd = 'mplayer ';
-        cmd += file;
-        exec(cmd, function(error, stdout, stderr) {
-          if (error) {
-            log.exception(LOG_PREFIX, 'PlaySound Error', error);
-          }
-        });
-      }, 300);
+      var cmd = 'mplayer ';
+      cmd += file;
+      exec(cmd, function(error, stdout, stderr) {
+        if (error) {
+          log.exception(LOG_PREFIX, 'PlaySound Error', error);
+        }
+      });
+      // setTimeout(function() {
+      //   var cmd = 'mplayer ';
+      //   cmd += file;
+      //   exec(cmd, function(error, stdout, stderr) {
+      //     if (error) {
+      //       log.exception(LOG_PREFIX, 'PlaySound Error', error);
+      //     }
+      //   });
+      // }, 300);
     }
   }
 
