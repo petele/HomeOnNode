@@ -462,7 +462,6 @@ function Home(config, fb) {
    ****************************************************************************/
 
   function initWeather() {
-    // log.debug(LOG_PREFIX, 'Updating weather.');
     if (config.weatherLatLong && Keys.forecastIO && Keys.forecastIO.key) {
       var url = 'https://api.forecast.io/forecast/';
       url += Keys.forecastIO.key + '/';
@@ -910,7 +909,6 @@ function Home(config, fb) {
       });
       zwave.on('ready', function(nodes) {
         fbSet('state/zwave/nodes', nodes);
-        // zwaveTimer = setInterval(zwaveTimerTick, 30000);
       });
       zwave.on('node_event', zwaveEvent);
     }
@@ -1006,7 +1004,6 @@ function Home(config, fb) {
 
   this.shutdown = function() {
     shutdownHue();
-    shutdownNest();
     shutdownSonos();
     shutdownZWave();
     shutdownHarmony();
