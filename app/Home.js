@@ -147,41 +147,53 @@ function Home(config, fb) {
         log.warn(LOG_PREFIX, 'NanoLeaf unavailable.');
       }
     }
-    if (command.hasOwnProperty('nestThermostatAuto')) {
-      var timeOfDay = command.nestThermostatAuto;
-      if (timeOfDay === 'OFF') {
-        setNestThermostatOff();
-      } else {
-        setNestThermostatAuto(timeOfDay);
-      }
-    } else if (command.hasOwnProperty('nestThermostat')) {
-      cmds = command.nestThermostat;
-      if (Array.isArray(cmds) === false) {
-        cmds = [cmds];
-      }
-      cmds.forEach(function(cmd) {
-        if (modifier) {
-          adjustNestThermostat(cmd.roomId, modifier);
-        } else {
-          setNestThermostat(cmd.roomId, cmd.mode, cmd.temperature);
+    if (command.hasOwnProperty('nestThermostat')) {
+      if (nest) {
+        cmds = command.nestThermostat;
+        if (Array.isArray(cmds) === false) {
+          cmds = [cmds];
         }
-      });
+        cmds.forEach(function(cmd) {
+          if (modifier) {
+            nest.adjustTemperature(cmd.roomId, modifier);
+          } else {
+            nest.setTemperature(cmd.roomId, cmd.temperature);
+          }
+        });
+      } else {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+      }
+    }
+    if (command.hasOwnProperty('nestThermostatAuto')) {
+      if (nest) {
+        nest.setAutoTemperature(command.nestThermostatAuto);
+      } else {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+      }
     }
     if (command.hasOwnProperty('nestFan')) {
-      cmds = command.nestFan;
-      if (Array.isArray(cmds) === false) {
-        cmds = [cmds];
+      if (nest) {
+        cmds = command.nestFan;
+        if (Array.isArray(cmds) === false) {
+          cmds = [cmds];
+        }
+        cmds.forEach(function(cmd) {
+          nest.runNestFan(cmd.roomId, cmd.minutes);
+        });
+      } else {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
-      cmds.forEach(function(cmd) {
-        setNestFan(cmd, modifier);
-      });
     }
     if (command.hasOwnProperty('nestCam')) {
-      var enabled = command.nestCam;
-      if (modifier === 'OFF') {
-        enabled = 'OFF';
+      if (nest) {
+        let enabled = command.nestCam === 'ON';
+        if (modifier === 'OFF') {
+          enabled = false;
+        }
+        nest.enableCamera(enabled);
+      } else {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
-      enableNestCam(enabled);
     }
     if (command.hasOwnProperty('harmonyActivity')) {
       if (harmony) {
@@ -377,15 +389,6 @@ function Home(config, fb) {
           log.exception(LOG_PREFIX, 'PlaySound Error', error);
         }
       });
-      // setTimeout(function() {
-      //   var cmd = 'mplayer ';
-      //   cmd += file;
-      //   exec(cmd, function(error, stdout, stderr) {
-      //     if (error) {
-      //       log.exception(LOG_PREFIX, 'PlaySound Error', error);
-      //     }
-      //   });
-      // }, 300);
     }
   }
 
@@ -665,207 +668,15 @@ function Home(config, fb) {
 
   function initNest() {
     try {
-      nest = new Nest();
+
+      nest = new Nest(Keys.nest.token, fb.child('config')).Nest;
+      nest.on('change', updateNestState);
+      nest.on('state', updateNestState);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize Nest', ex);
-      shutdownNest();
+      nest = null;
       return;
     }
-
-    if (nest) {
-      nest.login(Keys.nest.token);
-      nest.on('error', function(err) {
-        log.exception(LOG_PREFIX, 'Nest CRITICAL error occured.', err);
-      });
-      nest.on('authError', function(err) {
-        log.exception(LOG_PREFIX, 'Nest auth error occured.', err);
-        shutdownNest();
-      });
-      nest.on('change', function(data) {
-        fbSet('state/nest', data);
-      });
-      nest.on('alarm', function(kind, protect) {
-        var msg = 'Nest Alarm - ';
-        msg += 'kind: ' + JSON.stringify(kind);
-        msg += 'protect: ' + JSON.stringify(protect);
-        log.warn(LOG_PREFIX, msg);
-        _self.executeCommandByName('NEST_ALARM', null, 'NEST_ALARM');
-      });
-      nest.on('ready', function(data) {
-        nest.enableListener();
-      });
-      nest.on('connectionCycle', function() {
-        var msg = {
-          title: 'HoN Nest Error',
-          body: 'The Nest connection has been cycling',
-          tag: 'HoN-nest-cycle',
-          appendTime: false
-        };
-        gcmPush.sendMessage(msg);
-      });
-    }
-  }
-
-  function shutdownNest() {
-    log.log(LOG_PREFIX, 'Shutting down Nest.');
-    nest = null;
-  }
-
-  function enableNestCam(enabled) {
-    if (nest) {
-      try {
-        if (enabled === 'ON') {
-          nest.enableCamera();
-          return true;
-        }
-        nest.disableCamera();
-        return true;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Failed to update NestCam', ex);
-        return false;
-      }
-    }
-    log.warn(LOG_PREFIX, 'NestCam command failed, Nest not ready.');
-    return false;
-  }
-
-  function getNestThermostatId(roomId) {
-    var msg = 'getNestThermostatId failed, ';
-    try {
-      var id = config.hvac.thermostats[roomId];
-      if (id) {
-        return id;
-      }
-      log.error(LOG_PREFIX, msg + 'roomId (' + roomId + ') not found.');
-    } catch (ex) {
-      log.exception(LOG_PREFIX, msg, ex);
-      return null;
-    }
-  }
-
-  function adjustNestThermostat(roomId, modifier) {
-    var msg = 'adjustNestThermostat ' + roomId + ': ' + modifier;
-    if (nest) {
-      try {
-        var id = getNestThermostatId(roomId);
-        if (id) {
-          msg += ' (' + id + ')';
-          var thermostat = _self.state.nest.devices.thermostats[id];
-          /* jshint -W106 */
-          // jscs:disable requireCamelCaseOrUpperCaseIdentifiers
-          var mode = thermostat.hvac_mode;
-          var temperature = thermostat.target_temperature_f;
-          // jscs:enable
-          /* jshint +W106 */
-          msg += ' from: ' + mode + ' ' + temperature + 'F ';
-          if (modifier === 'UP' || modifier === 'DIM_UP') {
-            temperature = temperature + 1;
-          } else if (modifier === 'DOWN' || modifier === 'DIM_DOWN') {
-            temperature = temperature - 1;
-          } else if (modifier === 'OFF') {
-            mode = 'off';
-          }
-          msg += 'to: ' + mode + ' ' + temperature + 'F';
-          log.debug(LOG_PREFIX, msg);
-          return nest.setTemperature(id, mode, temperature);
-        }
-        msg += ' failed. Thermostat not found.';
-        log.error(LOG_PREFIX, msg);
-        return false;
-      } catch (ex) {
-        msg += ' failed with exception.';
-        log.exception(LOG_PREFIX, msg, ex);
-        return false;
-      }
-    }
-    log.log(LOG_PREFIX, 'adjustNestThermostat failed, Nest unavailable.');
-    return false;
-  }
-
-  function setNestThermostat(roomId, mode, temperature) {
-    var msg = 'setNestThermostat failed, ';
-    if (nest) {
-      try {
-        var id = getNestThermostatId(roomId);
-        if (id) {
-          if (mode && temperature) {
-            return nest.setTemperature(id, mode, temperature);
-          } else {
-            log.error(LOG_PREFIX, msg + 'invalid mode or temperature');
-            return false;
-          }
-        }
-        log.error(LOG_PREFIX, msg + 'thermostat not found');
-        return false;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, msg, ex);
-        return false;
-      }
-    }
-    log.log(LOG_PREFIX, msg + 'Nest unavailable.');
-    return false;
-  }
-
-  function setNestFan(cmd, modifier) {
-    var msg ='setNestFan failed, ';
-    if (nest) {
-      try {
-        var minutes = parseInt(cmd.minutes, 10);
-        if (modifier === 'OFF') {
-          minutes = 0;
-        }
-        var id = getNestThermostatId(cmd.roomId);
-        if (id) {
-          return nest.runNestFan(id, minutes);
-        }
-        log.error(LOG_PREFIX, msg + 'thermostat not found');
-        return false;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, msg, ex);
-        return false;
-      }
-    }
-    log.warn(LOG_PREFIX, msg + 'Nest unavailable.');
-    return false;
-  }
-
-  function setNestThermostatAuto(timeOfDay) {
-    var msg = 'setNestThermostatAuto failed, ';
-    var hvacMode = config.hvac.defaultMode;
-    var hvacCmd = timeOfDay + '_' + hvacMode;
-    hvacCmd = hvacCmd.toUpperCase();
-    var rooms = config.hvac.auto[hvacCmd];
-    if (!rooms) {
-      log.error(LOG_PREFIX, msg + 'Params failed: ' + hvacCmd);
-      return false;
-    }
-    if (!nest) {
-      log.error(LOG_PREFIX, msg + 'Nest not ready.');
-      return false;
-    }
-    var keys = Object.keys(rooms);
-    keys.forEach(function(key) {
-      var temperature = rooms[key];
-      var thermostatId = config.hvac.thermostats[key];
-      if (temperature && thermostatId) {
-        nest.setTemperature(thermostatId, hvacMode, temperature);
-      }
-    });
-    return true;
-  }
-
-  function setNestThermostatOff() {
-    if (!nest) {
-      var msg = 'setNestThermostatOff failed, ';
-      log.error(LOG_PREFIX, msg + 'Nest not ready.');
-      return false;
-    }
-    var keys = Object.keys(config.hvac.thermostats);
-    keys.forEach(function(key) {
-      var thermostatId = config.hvac.thermostats[key];
-      nest.setTemperature(thermostatId, 'off', 70);
-    });
-    return true;
   }
 
   /*****************************************************************************
