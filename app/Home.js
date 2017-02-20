@@ -668,8 +668,7 @@ function Home(config, fb) {
 
   function initNest() {
     try {
-
-      nest = new Nest(Keys.nest.token, fb.child('config')).Nest;
+      nest = new Nest.Nest(Keys.nest.token, fb.child('config'));
       nest.on('change', updateNestState);
       nest.on('state', updateNestState);
     } catch (ex) {
@@ -677,6 +676,10 @@ function Home(config, fb) {
       nest = null;
       return;
     }
+  }
+
+  function updateNestState(data) {
+    fbSet('state/nest', data);
   }
 
   /*****************************************************************************

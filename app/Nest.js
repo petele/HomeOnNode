@@ -224,7 +224,7 @@ function Nest(authToken, fbRef) {
       log.warn(LOG_PREFIX, msg, extra);  
       return true;
     }
-    log.log(LOG_PREFIX, msg, extra);
+    log.log(LOG_PREFIX, msg);
     return true;
   }
 
