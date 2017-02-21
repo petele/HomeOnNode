@@ -669,7 +669,7 @@ function Home(config, fb) {
     try {
       nest = new Nest.Nest(Keys.nest.token, fb.child('config'));
       nest.on('change', updateNestState);
-      nest.on('state', updateNestState);
+      // nest.on('state', updateNestState);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize Nest', ex);
       nest = null;

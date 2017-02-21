@@ -248,6 +248,7 @@ function Nest(authToken, fbRef) {
         _self.nestData = data;
         _self.structureId = Object.keys(data.structures)[0];
         setState(STATES.ready, _self.nestData);
+        _self.emit('change', _self.nestData);
         initMonitor();
       });
       
