@@ -105,6 +105,9 @@ function Home(config, fb) {
     msg += ' received from: ' + source;
     log.log(LOG_PREFIX, msg, command);
     var cmds;
+    if (command.hasOwnProperty('state')) {
+      setState(command.state);
+    }
     if (command.hasOwnProperty('hueScene')) {
       var scenes = command.hueScene;
       if (Array.isArray(scenes) === false) {
@@ -134,7 +137,7 @@ function Home(config, fb) {
     if (command.hasOwnProperty('nanoLeaf')) {
       if (nanoLeaf) {
         if (modifier === 'OFF') {
-          nanoLeaf.setEffect('OFF')
+          nanoLeaf.setEffect('OFF');
         } else {
           if (command.nanoLeaf.effect) {
             nanoLeaf.setEffect(command.nanoLeaf.effect);
@@ -270,9 +273,6 @@ function Home(config, fb) {
       } else {
         setDoNotDisturb('ON');
       }
-    }
-    if (command.hasOwnProperty('state')) {
-      setState(command.state);
     }
   };
 
