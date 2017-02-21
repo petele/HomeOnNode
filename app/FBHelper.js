@@ -1,19 +1,27 @@
 'use strict';
 
-var os = require('os');
-var Firebase = require('firebase');
-var log = require('./SystemLog2');
-var moment = require('moment');
-var version = require('./version');
-var exec = require('child_process').exec;
+const os = require('os');
+const Firebase = require('firebase');
+const log = require('./SystemLog2');
+const moment = require('moment');
+const version = require('./version');
+const exec = require('child_process').exec;
 
-var LOG_PREFIX = 'FIREBASE';
+const LOG_PREFIX = 'FB_HELPER';
 
+/**
+ * Initalize the Firebase Wrapper
+ *
+ * @param {string} fbAppId The name of the Firebase App Id to use
+ * @param {string} key The Firebase authoritzation custom token
+ * @param {string} appName The appName of the current app for the heartbeat
+ * @return {Object} The Firebase object to use.
+ */
 function init(fbAppId, key, appName) {
   log.init(LOG_PREFIX, fbAppId + ' for ' + appName);
-  var timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
-  var fbURL = 'https://' + fbAppId + '.firebaseio.com/';
-  var fb = new Firebase(fbURL);
+  const timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
+  const fbURL = `https://${fbAppId}.firebaseio.com/`;
+  let fb = new Firebase(fbURL);
 
   fb.authWithCustomToken(key, function(error, authToken) {
     if (error) {
@@ -23,9 +31,9 @@ function init(fbAppId, key, appName) {
     }
   });
 
-  var now = Date.now();
-  var startedAt = moment(now).format(timeFormat);
-  var def = {
+  const now = Date.now();
+  const startedAt = moment(now).format(timeFormat);
+  let def = {
     appName: appName,
     startedAt: now,
     startedAt_: startedAt,
@@ -40,76 +48,57 @@ function init(fbAppId, key, appName) {
     }
   };
 
-  try {
-    var hostname = os.hostname();
-    log.log('NETWORK', 'Hostname: ' + hostname);
+  let hostname = getHostname();
+  if (hostname) {
     def.host.hostname = hostname;
-  } catch (ex) {
-    log.exception('NETWORK', 'Unable to retrieve hostname.', ex);
   }
-  try {
-    var addresses = [];
-    var interfaces = os.networkInterfaces();
-    for (var k in interfaces) {
-      for (var k2 in interfaces[k]) {
-        var address = interfaces[k][k2];
-        if (address.family === 'IPv4' && !address.internal) {
-          addresses.push(address.address);
-        }
-      }
-    }
-    if (addresses.length === 0) {
-      log.error('NETWORK', 'Whoops, 0 IP addresses returned');
-    } else if (addresses.length === 1) {
-      def.host.ipAddress = addresses[0];
-      log.log('NETWORK', 'IP address: ' + addresses[0]);
-    } else {
-      def.host.ipAddress = addresses[0];
-      var msg = 'Multiple IP addresses returned. Using: ' + addresses[0];
-      log.log('NETWORK', msg, addresses);
-    }
-  } catch (ex) {
-    log.exception('NETWORK', 'Unable to get local device IP addresses', ex);
+  let ipAddresses = getIPAddresses();
+  if (ipAddresses.length >= 1) {
+    def.host.ipAddress = ipAddresses[0];
   }
-
-  fb.child('devices/' + appName).set(def);
-
+  
+  fb.child(`devices/${appName}`).set(def);
   fb.child('.info/connected').on('value', function(snapshot) {
     if (snapshot.val() === true) {
       log.log(LOG_PREFIX, 'Connected.');
-      var now = Date.now();
-      var def = {
+      const now = Date.now();
+      const def = {
         heartbeat: now,
         heartbeat_: moment(now).format(timeFormat),
         online: true,
         shutdownAt: null
       };
-      fb.child('devices/' + appName).update(def);
-      fb.child('devices/' + appName + '/online').onDisconnect().set(false);
-      fb.child('devices/' + appName + '/shutdownAt')
-        .onDisconnect().set(Firebase.ServerValue.TIMESTAMP);
+      fb.child(`devices/${appName}`).update(def);
+      fb.child(`devices/${appName}/online`).onDisconnect().set(false);
+      fb.child(`devices/${appName}/shutdownAt`).onDisconnect()
+        .set(Firebase.ServerValue.TIMESTAMP);
     } else {
       log.warn(LOG_PREFIX, 'Disconnected.');
     }
   });
 
   setInterval(function() {
-    var now = Date.now();
-    fb.child('devices/' + appName + '/heartbeat_')
-      .set(moment(now).format(timeFormat));
-    fb.child('devices/' + appName + '/heartbeat').set(now);
-  }, 60000);
+    let ipAddresses = getIPAddresses();
+    if (ipAddresses.length >= 1) {
+      fb.child(`devices/${appName}/host/ipAddress`).set(ipAddresses[0]);
+    }
+  }, 5 * 60 * 1000);
 
-  fb.child('devices/' + appName + '/restart').on('value', function(snapshot) {
+  setInterval(function() {
+    const now = Date.now();
+    fb.child(`devices/${appName}/heartbeat_`).set(moment(now).format(timeFormat));
+    fb.child(`devices/${appName}/heartbeat`).set(now);
+  }, 1 * 60 * 1000);
+
+  fb.child(`devices/${appName}/restart`).on('value', function(snapshot) {
     if (snapshot.val() === true) {
       snapshot.ref().remove();
       log.appStop(LOG_PREFIX, 'Restart requested via Firebase.');
-      var cmd = 'sudo reboot';
-      exec(cmd, function(error, stdout, stderr) {});
+      exec('sudo reboot', function(error, stdout, stderr) {});
     }
   });
 
-  fb.child('devices/' + appName + '/shutdown').on('value', function(snapshot) {
+  fb.child(`devices/${appName}/shutdown`).on('value', function(snapshot) {
     if (snapshot.val() === true) {
       snapshot.ref().remove();
       log.appStop(LOG_PREFIX, 'Shutdown requested via Firebase.');
@@ -120,4 +109,45 @@ function init(fbAppId, key, appName) {
   return fb;
 }
 
+/**
+ * Get Hostname of the local device.
+ *
+ * @return {string} The device hostname.
+ */
+function getHostname() {
+  try {
+    const hostname = os.hostname();
+    log.log('NETWORK', `Hostname: ${hostname}`);
+    return hostname;
+  } catch (ex) {
+    log.exception('NETWORK', 'Unable to retrieve hostname.', ex);
+    return null;
+  }
+}
+
+/**
+ * Get a list of non-local IPv4 addresses for the current device.
+ *
+ * @return {Array} The list of non-local IPv4 addresses for the current device.
+ */
+function getIPAddresses() {
+  try {
+    let addresses = [];
+    const interfaces = os.networkInterfaces();
+    for (const iface in interfaces) {
+      for (const iface2 in interfaces[iface]) {
+        const address = interfaces[iface][iface2];
+        if (address.family === 'IPv4' && !address.internal) {
+          addresses.push(address.address);
+        }
+      }
+    }
+    return addresses;
+  } catch (ex) {
+    log.exception('NETWORK', 'Unable to get local device IP addresses', ex);
+  }
+  return [];
+}
+
 exports.init = init;
+exports.getIPAddresses = getIPAddresses;
