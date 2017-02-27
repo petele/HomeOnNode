@@ -1,0 +1,12 @@
+{
+  "sceneName": "Day",
+  "sceneId": "wc1DstWhAckSmtl",
+  "showInWebUI": true,
+  "scenes": [
+    "dimmers/ba-day.json",
+    "dimmers/br-day.json",
+    "dimmers/fh-on.json",
+    "dimmers/ki-day.json",
+    "dimmers/lr-day.json"
+  ]
+}

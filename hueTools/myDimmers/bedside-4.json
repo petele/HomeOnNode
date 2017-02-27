@@ -1,6 +1,0 @@
-{ "sceneName": "Night Light (dBS)",
-  "lights": [
-    {"light": 15, "cmdName": "RED_LS", "bri": 20},
-    {"light": 16, "cmdName": "RED", "bri": 40}
-  ]
-}

@@ -1,0 +1,13 @@
+{
+  "sceneName": "Aurora Borealis",
+  "sceneId": "NtH6-wh9hioG22v",
+  "showInWebUI": true,
+  "scenes": [
+    "dimmers/ba-aurora.json",
+    "dimmers/br-aurora.json",
+    "dimmers/bs-aurora.json",
+    "dimmers/fh-aurora.json",
+    "dimmers/ki-aurora.json",
+    "dimmers/lr-aurora.json"
+  ]
+}

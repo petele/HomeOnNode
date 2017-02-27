@@ -1,6 +1,0 @@
-{ "sceneName": "Blurple (dLT)",
-  "lights": [
-    {"light": 12, "cmdName": "REBECCA_PURPLE", "bri": 180},
-    {"light": 13, "cmdName": "ROSE_DEEP", "bri": 180}
-  ]
-}

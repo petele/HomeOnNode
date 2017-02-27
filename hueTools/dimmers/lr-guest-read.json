@@ -1,0 +1,16 @@
+{ "sceneName": "Guest Read [Living Room]",
+  "sceneId": "FylstdkasWrVYlu",
+  "showInWebUI": false,
+  "lights": [
+    {"light": 8, "cmdName": "OFF"},
+    {"light": 9, "cmdName": "OFF"},
+    {"light": 10, "cmdName": "OFF"},
+    {"light": 11, "cmdName": "OFF"},
+    {"light": 12, "cmdName": "READING", "bri": 254},
+    {"light": 13, "cmdName": "READING", "bri": 128},
+    {"light": 14, "cmdName": "OFF"},
+    {"light": 18, "cmdName": "OFF"},
+    {"light": 22, "cmdName": "READING", "bri": 128},
+    {"light": 27, "cmdName": "OFF"}
+  ]
+}

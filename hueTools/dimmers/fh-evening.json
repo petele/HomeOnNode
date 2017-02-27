@@ -1,0 +1,10 @@
+{
+  "sceneName": "Evening [Front Hall]",
+  "sceneId": "kQ1V-4J8UFuDExK",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 1, "cmdName": "PEACH", "bri": 200},
+    {"light": 2, "cmdName": "BLUE", "bri": 200},
+    {"light": 3, "cmdName": "PEACH", "bri": 200}
+  ]
+}

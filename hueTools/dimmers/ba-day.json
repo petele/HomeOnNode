@@ -1,0 +1,10 @@
+{
+  "sceneName": "On [Bathroom]",
+  "sceneId": "IF1C8D9SVPZclOQ",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 24, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 25, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 26, "cmdName": "REBECCA_PURPLE", "bri": 254}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "sceneName": "Aurora [Kitchen]",
+  "sceneId": "tEpTl3aBJhA8Qjo",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 4, "cmdName": "AURORA_01", "bri": 200},
+    {"light": 5, "cmdName": "AURORA_02", "bri": 200},
+    {"light": 6, "cmdName": "AURORA_01", "bri": 200},
+    {"light": 7, "cmdName": "AURORA_02", "bri": 200},
+    {"light": 17, "cmdName": "AURORA_06", "bri": 200},
+    {"light": 23, "cmdName": "AURORA_08", "bri": 200}
+  ]
+}

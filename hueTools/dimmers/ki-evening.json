@@ -1,0 +1,13 @@
+{
+  "sceneName": "Evening [Kitchen]",
+  "sceneId": "Lh8jhdxtHsSyore",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 4, "cmdName": "REBECCA_PURPLE", "bri": 180},
+    {"light": 5, "cmdName": "REBECCA_PURPLE", "bri": 180},
+    {"light": 6, "cmdName": "PEACH", "bri": 250},
+    {"light": 7, "cmdName": "PEACH", "bri": 250},
+    {"light": 17, "cmdName": "PEACH", "bri": 254},
+    {"light": 23, "cmdName": "OFF"}
+  ]
+}

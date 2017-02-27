@@ -1,0 +1,10 @@
+{
+  "sceneName": "Evening [Bathroom]",
+  "sceneId": "PTrMhudCsg6mOCt",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 24, "cmdName": "ROSE", "bri": 225},
+    {"light": 25, "cmdName": "ROSE_DEEP", "bri": 200},
+    {"light": 26, "cmdName": "BLUE", "bri": 200}
+  ]
+}

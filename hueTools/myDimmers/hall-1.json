@@ -1,7 +1,0 @@
-{ "sceneName": "Day (dHA)",
-  "lights": [
-    {"light": 1, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 2, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 3, "cmdName": "DEFAULT", "bri": 254}
-  ]
-}

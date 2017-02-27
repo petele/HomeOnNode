@@ -1,0 +1,18 @@
+{
+  "sceneName": "Sleep",
+  "sceneId": "AMUp6lH557C2t3p",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 15, "cmdName": "OFF"},
+    {"light": 19, "cmdName": "OFF"},
+    {"light": 20, "cmdName": "OFF"},
+    {"light": 21, "cmdName": "OFF"}
+  ],
+  "scenes": [
+    "dimmers/fh-night-light.json",
+    "dimmers/ba-night-light.json",
+    "dimmers/ki-night-light.json",
+    "dimmers/lr-night-light.json",
+    "dimmers/bs-reading-75.json"
+  ]
+}

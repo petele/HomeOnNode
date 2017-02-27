@@ -1,0 +1,10 @@
+{
+  "sceneName": "Morning [Front Hall]",
+  "sceneId": "BgkHemzclgW5VBZ",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 1, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 2, "cmdName": "PEACH", "bri": 254},
+    {"light": 3, "cmdName": "DEFAULT", "bri": 254}
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "sceneName": "Aurora [Bedside]",
+  "sceneId": "DN0kPKmHvOVmxlj",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 16, "cmdName": "AURORA_04", "bri": 200},
+    {"light": 28, "cmdName": "AURORA_06", "bri": 200}
+  ]
+}

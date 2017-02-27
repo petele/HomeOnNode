@@ -1,0 +1,9 @@
+{
+  "sceneName": "Reading (50) [Bedside]",
+  "sceneId": "76Kei61la9u4kIp",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 16, "cmdName": "READING", "bri": 128},
+    {"light": 28, "cmdName": "READING", "bri": 128}
+  ]
+}

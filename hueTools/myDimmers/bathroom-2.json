@@ -1,7 +1,0 @@
-{ "sceneName": "Peach (dBA)",
-  "lights": [
-    {"light": 24, "cmdName": "PEACH", "bri": 200},
-    {"light": 25, "cmdName": "PEACH", "bri": 200},
-    {"light": 26, "cmdName": "PEACH", "bri": 200}
-  ]
-}

@@ -1,6 +1,0 @@
-{ "sceneName": "White (dLT)",
-  "lights": [
-    {"light": 12, "cmdName": "DEFAULT", "bri": 250},
-    {"light": 13, "cmdName": "DEFAULT", "bri": 250}
-  ]
-}

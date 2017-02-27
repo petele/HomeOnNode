@@ -1,6 +1,0 @@
-{ "sceneName": "Red (dST)",
-  "lights": [
-    {"light": 12, "cmdName": "RED", "bri": 25},
-    {"light": 13, "cmdName": "RED", "bri": 25}
-  ]
-}

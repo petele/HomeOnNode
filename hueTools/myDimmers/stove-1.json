@@ -1,5 +1,0 @@
-{ "sceneName": "Cooking (dST)",
-  "lights": [
-    {"light": 23, "cmdName": "DEFAULT", "bri": 250}
-  ]
-}

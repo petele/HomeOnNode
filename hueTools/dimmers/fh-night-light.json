@@ -1,0 +1,10 @@
+{
+  "sceneName": "Night Light [Front Hall]",
+  "sceneId": "tMAzXFApSPSZbvA",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 1, "cmdName": "OFF"},
+    {"light": 2, "cmdName": "RED", "bri": 10},
+    {"light": 3, "cmdName": "OFF"}
+  ]
+}
