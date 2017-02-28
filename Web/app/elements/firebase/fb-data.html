@@ -51,6 +51,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var groups = snapshot.val();
             var newGroups = [];
             groups.forEach(function(group, index) {
+              if (group.type !== 'Room') {
+                return;
+              }
               group.key = index;
               newGroups.push(group);
             });
@@ -65,17 +68,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             lights.forEach(function(light, index) {
               light.key = index;
               newLights.push(light);
-              console.log('aa', light);
             });
-            var light = {
-              key: newLights.length + 1,
-              name: 'NanoLeaf',
-              state: {
-                reachable: true,
-                on: false
-              }
-            };
-            newLights.push(light);
             self.set('hueLights', newLights);
           });
         },
@@ -87,11 +80,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             var keys = Object.keys(scenes);
             keys.forEach(function(key) {
               var scene = scenes[key];
-              var sData = scene.appdata.data;
-              if (sData.indexOf('HoN') >= 0 && sData.indexOf(',UI') >= 0) {
-                scene.key = key;
-                newScenes.push(scene);
+              if (scene.name === 'Last on state') {
+                return;
               }
+              scene.key = key;
+              newScenes.push(scene);
             });
             self.set('hueScenes', newScenes);
           });

@@ -1,5 +1,6 @@
 {
   "sceneName": "Morning",
+  "sceneId": "uR9E4wuZ8dCZYCj",
   "showInWebUI": true,
   "scenes": [
     "dimmers/fh-morning.json",
