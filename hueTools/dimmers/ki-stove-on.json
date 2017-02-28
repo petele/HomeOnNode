@@ -1,0 +1,8 @@
+{
+  "sceneName": "Stove (On) [Kitchen]",
+  "sceneId": "a033615f5-on-0",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 23, "on":true, "xy": [0.3691, 0.3719], "bri": 254}
+  ]
+}

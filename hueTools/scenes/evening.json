@@ -4,7 +4,6 @@
   "showInWebUI": true,
   "scenes": [
     "dimmers/ba-evening.json",
-    "dimmers/br-evening.json",
     "dimmers/fh-evening.json",
     "dimmers/ki-evening.json",
     "dimmers/lr-evening.json"
