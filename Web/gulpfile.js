@@ -24,9 +24,10 @@ var historyApiFallback = require('connect-history-api-fallback');
 var packageJson = require('./package.json');
 var crypto = require('crypto');
 var replace = require('gulp-replace');
+var moment = require('moment');
 // var ghPages = require('gulp-gh-pages');
 
-var myVersion = 'x1';
+var myVersion = moment().format('YYYYMMDD-1');
 
 var AUTOPREFIXER_BROWSERS = [
   'ie >= 10',
@@ -144,7 +145,8 @@ gulp.task('copy', function() {
     '!app/test',
     '!app/cache-config.json',
     '!app/index.html',
-    '!app/sw-import.js'
+    '!app/sw-import.js',
+    '!app/app.yaml'
   ], {
     dot: true
   }).pipe(gulp.dest(dist()));
@@ -157,6 +159,10 @@ gulp.task('copy', function() {
   var swImport = gulp.src(['app/sw-import.js'])
     .pipe(replace(/@VERSION@/g, myVersion))
     .pipe(replace(/@LAST_UPDATED@/g, new Date().toISOString()))
+    .pipe(gulp.dest(dist()));
+
+  var appYaml = gulp.src(['app/app.yaml'])
+    .pipe(replace(/@VERSION@/g, myVersion))
     .pipe(gulp.dest(dist()));
 
   var bower = gulp.src([
@@ -179,7 +185,7 @@ gulp.task('copy', function() {
     .pipe($.rename('elements.vulcanized.html'))
     .pipe(gulp.dest(dist('elements')));
 
-  return merge(app, index, swImport, bower, elements, vulcanized, swBootstrap, swToolbox)
+  return merge(app, index, swImport, appYaml, bower, elements, vulcanized, swBootstrap, swToolbox)
     .pipe($.size({
       title: 'copy'
     }));
@@ -245,7 +251,8 @@ gulp.task('cache-config', function(callback) {
       config.precacheFingerprint = md5.digest('hex');
 
       var configPath = path.join(dir, 'cache-config.json');
-      fs.writeFile(configPath, JSON.stringify(config), callback);
+      var stringifiedConfig = JSON.stringify(config, null, 2);
+      fs.writeFile(configPath, stringifiedConfig, callback);
     }
   });
 });
