@@ -220,7 +220,7 @@ function Nest(authToken, fbRef) {
     _self.emit('state', newState, extra);
     var msg = 'State changed to: ' + newState;
     if (extra) {
-      if (typeof extra === string) {
+      if (typeof extra === 'string') {
         msg += ` (${extra})`;
       } else if (extra.message) {
         msg += ` (${extra.message})`;
