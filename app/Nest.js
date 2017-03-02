@@ -213,12 +213,19 @@ function Nest(authToken, fbRef) {
    */
   function setState(newState, extra) {
     if (_self.deviceState === newState) {
-      log.warn(LOG_PREFIX, 'State is already: ' + newState, msg);
+      log.log(LOG_PREFIX, 'State is already: ' + newState, extra);
       return false;
     }
     _self.deviceState = newState;
     _self.emit('state', newState, extra);
     var msg = 'State changed to: ' + newState;
+    if (extra) {
+      if (typeof extra === string) {
+        msg += ` (${extra})`;
+      } else if (extra.message) {
+        msg += ` (${extra.message})`;
+      }
+    }
     if (newState < 0) {
       log.warn(LOG_PREFIX, msg, extra);  
       return true;
@@ -251,7 +258,6 @@ function Nest(authToken, fbRef) {
         _self.emit('change', _self.nestData);
         initMonitor();
       });
-      
     });
   }
 
@@ -436,13 +442,13 @@ function Nest(authToken, fbRef) {
       return false;
     }
     if (hvacMode === 'eco' || hvacMode === 'off') {
-      msg += ' failed, incompatible HVAC mode: ' + hvacMode;
+      msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
       if (isRetry !== true) {
         msg += '. Will retry.';
         setTimeout(function() {
           setThermostat(thermostatId, temperature, true);
         }, RETRY_DELAY);
-        log.warn(LOG_PREFIX, msg);
+        log.log(LOG_PREFIX, msg);
         return false;
       }
       log.error(LOG_PREFIX, msg);
@@ -472,13 +478,13 @@ function Nest(authToken, fbRef) {
       return false;
     }
     if (hvacMode === 'eco' || hvacMode === 'off') {
-      msg += ' failed, incompatible HVAC mode: ' + hvacMode;
+      msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
       if (isRetry !== true) {
         msg += '. Will retry.';
         setTimeout(function() {
           runHVACFan(thermostatId, minutes, true);
         }, RETRY_DELAY);
-        log.warn(LOG_PREFIX, msg);
+        log.log(LOG_PREFIX, msg);
         return false;
       }
       log.error(LOG_PREFIX, msg);
@@ -498,7 +504,7 @@ function Nest(authToken, fbRef) {
 
   if (!authToken) {
     log.error(LOG_PREFIX, 'No Nest authToken provided.');
-    setState(STATES.error);
+    setState(STATES.error, 'No Nest authToken provided.');
     return null;
   }
   if (!fbRef) {

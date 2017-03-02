@@ -126,9 +126,12 @@ function Sonos() {
   function genericResponseHandler(apiName, error, response) {
     var msg = 'genericResponseHandler - ' + apiName;
     if (error) {
+      if (apiName.indexOf('pause') === 0) {
+        log.debug(LOG_PREFIX, msg, error);
+        return;
+      }
       log.error(LOG_PREFIX, msg, error);
     } else {
-      // log.debug(LOG_PREFIX, msg, response);
       log.debug(LOG_PREFIX, msg);
     }
   }
