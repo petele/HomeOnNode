@@ -1,0 +1,203 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-item/paper-item-body.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+
+<dom-module id="log-viewer">
+  <template>
+    <style include="shared-styles iron-flex">
+      :host {
+        display: block;
+        padding: 10px;
+        background-color: white;
+      }
+      .label {
+        font-size: 0.75em;
+        color: white;
+        border-radius: 0.25em;
+        padding: 0.2em 0.6em 0.3em;
+      }
+      .ERROR, .EXCPT, .STOP {
+        background-color: var(--paper-red-500);
+      }
+      .WARN {
+        background-color: var(--paper-amber-300);
+      }
+      .INFO, .POST {
+        background-color: var(--paper-blue-500);
+      }
+      .INIT, .START {
+        background-color: var(--paper-green-500);
+      }
+      .TODO {
+        background-color: var(--paper-cyan-300);
+      }
+      paper-item {
+        padding-left: 0;
+        padding-right: 0;
+        border-bottom: 1px solid var(--divider-color);
+        cursor: -webkit-grab;
+      }
+      paper-dialog {
+        min-width: 350px;
+      }
+      .circle {
+        display: inline-block;
+        width: 64px;
+        height: 64px;
+        text-align: center;
+        border-radius: 50%;
+        font-size: 30px;
+        line-height: 60px;
+      }
+      iron-icon {
+        color: white;
+        width: 48px;
+        height: 48px;
+      }
+    </style>
+
+    <paper-dialog id="detailDialog">
+      <div class="layout horizontal">
+        <h1 class="flex">[[getHeading(selectedLogItem)]]</h1>
+        <div class$="[[getClass(selectedLogItem.level)]]">
+          <iron-icon icon="[[getIcon(selectedLogItem.level)]]">
+          </iron-icon>
+        </div>
+      </div>
+      <p>
+        [[getMessage(selectedLogItem)]]
+      </p>
+      <p>
+        [[formatDate(selectedLogItem.date)]]
+      </p>
+      <div class="buttons">
+        <paper-button dialog-dismiss autofocus>Close</paper-button>
+      </div>
+    </paper-dialog>
+
+    <div>
+      <template is="dom-repeat" items="[[logs]]">
+        <paper-item on-tap="tapLogItem">
+          <paper-item-body two-line>
+            <div>[[item.message]]</div>
+            <div secondary>
+              <template is="dom-if" if="[[item.level]]">
+                <span class$="label [[item.level]]">[[item.level]]</span>
+              </template>
+              <span>[[formatDate(item.date)]]</span>
+            </div>
+          </paper-item-body>
+        </paper-item>
+      </template>
+    </div>
+
+  </template>
+
+  <script>
+    class LogViewer extends Polymer.Element {
+      static get is() { return 'log-viewer'; }
+
+      constructor() {
+        super();
+        this.MAX_ITEMS = 150;
+        this.logs = [];
+      }
+
+      static get properties() {
+        return {
+          path: {
+            type: String,
+          },
+        };
+      }
+
+      ready() {
+        super.ready();
+        if (!this.path) {
+          throw new Error('missing path attribute');
+        }
+        app.fbRoot.child(this.path)
+          .limitToLast(this.MAX_ITEMS)
+          .on('child_added', function(snap) {
+            let logItem = snap.val();
+            logItem.key = snap.key();
+            this.unshift('logs', logItem);
+            if (this.logs.length > this.MAX_ITEMS) {
+              this.logs.pop();
+            }
+          }, this);
+      }
+
+      formatDate(val) {
+        return moment(val).format('M/D/YY, h:mm:ss a');
+      }
+
+      getHeading(logItem) {
+        if (logItem.state) {
+          return logItem.state;
+        } else if (logItem.level) {
+          return logItem.level;
+        } else {
+          return 'Wait!';
+        }
+      }
+
+      getMessage(logItem) {
+        let result = '';
+        if (logItem.rawMessage) {
+          result += logItem.rawMessage;
+        } else {
+          result += logItem.message;
+        }
+        if (logItem.exceptionMessage) {
+          result += ' ' + logItem.exceptionMessage;
+        }
+        return result;
+      }
+
+      getClass(level) {
+        return 'circle ' + level;
+      }
+
+      getIcon(level) {
+        const LEVELS_FOR_ERROR = ['ERROR', 'EXCPT', 'STOP'];
+        const LEVELS_FOR_WARN = ['WARN'];
+        const LEVELS_FOR_OK = ['INIT', 'START'];
+        if (LEVELS_FOR_ERROR.indexOf(level) >= 0) {
+          return 'hon-icons:error';
+        }
+        if (LEVELS_FOR_WARN.indexOf(level) >= 0) {
+          return 'hon-icons:warning';
+        }
+        if (LEVELS_FOR_OK.indexOf(level) >= 0) {
+          return 'hon-icons:light';
+        }
+        return 'hon-icons:light';
+      }
+
+      tapLogItem(event) {
+        this.selectedLogItem = event.model.item;
+        this.$.detailDialog.open();
+      }
+
+    }
+
+    window.customElements.define(LogViewer.is, LogViewer);
+  </script>
+</dom-module>

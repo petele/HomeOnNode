@@ -1,0 +1,253 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="moment-js.html">
+<link rel="import" href="say-this.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+
+<dom-module id="my-app">
+  <template>
+    <style include="shared-styles">
+
+
+      app-drawer-layout:not([narrow]) [drawer-toggle] {
+        display: none;
+      }
+
+      app-header {
+        color: #fff;
+        background-color: var(--app-primary-color);
+      }
+
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      .drawer-list {
+        margin: 0 20px;
+      }
+
+      .drawer-list a {
+        display: block;
+        padding: 0 16px;
+        text-decoration: none;
+        color: var(--app-secondary-color);
+        line-height: 40px;
+      }
+
+      app-drawer paper-checkbox {
+        padding: 0 16px;
+        display: block;
+        line-height: 40px;
+      }
+
+      .drawer-list a.iron-selected {
+        color: black;
+        font-weight: bold;
+      }
+
+      paper-tabs {
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        width: 100%;
+        height: 100%;
+        text-transform: uppercase;
+        margin-bottom: 1px;
+      }
+
+      paper-tab {
+        /*flex-grow: 1;*/
+      }
+
+      paper-tab .link {
+        @apply(--layout-horizontal);
+        @apply(--layout-center-center);
+        color: var(--app-light-color);
+        text-decoration: none;
+      }
+
+    </style>
+
+
+
+    <app-location route="{{route}}"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="/:page"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+
+    <app-drawer-layout fullbleed>
+      <!-- Drawer content -->
+      <app-drawer id="drawer" slot="drawer">
+        <app-toolbar>Home On Node</app-toolbar>
+        <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
+          <a name="home" href="/">Home</a>
+          <a name="hvac" href="/hvac">Heat &amp; Air</a>
+          <a href="https://home.nest.com/#structures/ec1dea10-787f-11e3-82cb-123139253bf1">Nest</a>
+          <a name="devices" href="/devices">Devices</a>
+          <a name="settings" href="/settings">Settings</a>
+          <a name="weather" href="/weather">Weather</a>
+          <a name="system-logs" href="/system-logs">System Logs</a>
+          <a name="door-logs" href="/door-logs">Door Logs</a>
+          <a name="presence-logs" href="/presence-logs">Presence Logs</a>
+        </iron-selector>
+        <paper-checkbox id="cbNotifications" on-change="changeNotifications">
+          Notifications
+        </paper-checkbox>
+        <paper-checkbox id="cbSayThis" checked="{{sayThisEnabled}}" on-change="changeSayThis">
+          Say This
+        </paper-checkbox>
+      </app-drawer>
+
+      <!-- Main content -->
+      <app-header-layout has-scrolling-region>
+
+        <app-header slot="header" fixed condenses reveals effects="waterfall">
+          <app-toolbar>
+            <paper-icon-button icon="hon-icons:menu" drawer-toggle></paper-icon-button>
+            <paper-tabs selected="[[page]]" attr-for-selected="name" role="navigation" sticky >
+              <paper-tab name="home" link>
+                <a href="/" class="link" tabindex="-1">Home</a>
+              </paper-tab>
+              <paper-tab name="actions" link>
+                <a href="/actions" class="link" tabindex="-1">Actions</a>
+              </paper-tab>
+              <paper-tab name="lights" link>
+                <a href="/hue-scenes" class="link" tabindex="-1">Lights</a>
+              </paper-tab>
+              <paper-tab name="media" link>
+                <a href="/media" class="link" tabindex="-1">Media</a>
+              </paper-tab>
+            </paper-tabs> 
+          </app-toolbar>       
+
+        </app-header>
+        <say-this id="sayThis" enabled="[[sayThisEnabled]]"></say-this>
+        <iron-pages
+            selected="[[page]]"
+            attr-for-selected="name"
+            fallback-selection="view404"
+            role="main">
+          <view-home name="home"></view-home>
+          <view-lights name="lights" page="{{page}}"></view-lights>
+          <view-nanoleaf name="nanoleaf" page="{{page}}"></view-nanoleaf>
+          <view-hue-lights name="hue-lights" page="{{page}}"></view-hue-lights>
+          <view-hue-groups name="hue-groups" page="{{page}}"></view-hue-groups>
+          <view-hue-scenes name="hue-scenes" page="{{page}}"></view-hue-scenes>
+          <view-actions name="actions"></view-actions>
+          <view-media name="media"></view-media>
+          <view-devices name="devices"></view-devices>
+          <view-weather name="weather"></view-weather>
+          <view-hvac name="hvac"></view-hvac>
+          <view-system-logs name="system-logs"></view-system-logs>
+          <view-presence-logs name="presence-logs"></view-presence-logs>
+          <view-door-logs name="door-logs"></view-door-logs>
+          <view-404 name="404"></view-404>
+        </iron-pages>
+        <paper-toast id="toast" text="Hello world!"></paper-toast>
+      </app-header-layout>
+    </app-drawer-layout>
+  </template>
+
+  <script>
+    class MyApp extends Polymer.Element {
+
+      static get is() { return 'my-app'; }
+
+      static get properties() {
+        return {
+          page: {
+            type: String,
+            reflectToAttribute: true,
+            observer: '_pageChanged',
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          '_routePageChanged(routeData.page)',
+        ];
+      }
+
+      ready() {
+        super.ready();
+        setTimeout(() => {
+          app.$ = this.$;
+          this.sayThisEnabled = localStorage.getItem('sayThis') === 'true';
+        }, 250);
+        setInterval(() => {
+          let timeElapsed = (Date.now() - app.lastInput) / 1000;
+          if (timeElapsed > app.RESET_DISPLAY_AFTER && this.page !== 'home') {
+            this.page = 'home';
+            window.history.pushState({}, null, '/');
+          }
+        }, 15000);
+      }
+
+      changeSayThis(event) {
+        localStorage.setItem('sayThis', event.target.checked);
+      }
+
+      _routePageChanged(page) {
+        // Polymer 2.0 will call with `undefined` on initialization.
+        // Ignore until we are properly called with a string.
+        if (page === undefined) {
+          return;
+        }
+
+        // If no page was found in the route data, page will be an empty string.
+        // Deault to 'view1' in that case.
+        this.page = page || 'home';
+
+        // Close a non-persistent drawer when the page & route are changed.
+        if (!this.$.drawer.persistent) {
+          this.$.drawer.close();
+        }
+      }
+
+      _pageChanged(page) {
+        if (window.app && window.app.lastInput) {
+          app.lastInput = Date.now();
+        }
+        // Load page import on demand. Show 404 page if fails
+        var resolvedPageUrl = this.resolveUrl('view-' + page + '.html');
+        Polymer.importHref(
+            resolvedPageUrl,
+            null,
+            this._showPage404.bind(this),
+            true);
+      }
+
+      _showPage404() {
+        this.page = '404';
+      }
+    }
+
+    window.customElements.define(MyApp.is, MyApp);
+  </script>
+</dom-module>

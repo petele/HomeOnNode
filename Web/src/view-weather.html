@@ -1,0 +1,81 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+
+<dom-module id="view-weather">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+      .visual, .description {
+        width: 50%;
+        display: inline-block;
+      }
+      .description span {
+        color: blue;
+      }
+      iron-icon {
+        width: 120px;
+        height: 120px;
+      }
+    </style>
+
+    <fb-data path="state/weather" data="{{weatherData}}"></fb-data>
+
+    <div class="card">
+      <div class="current">
+        <div class="visual">
+          <iron-icon icon="hon-icons:[[weatherData.now.icon]]" class="weather-icon"></iron-icon>
+          <div class="temperature">
+            [[weatherData.now.apparentTemperature]]<span class="scale">°F</span>
+          </div>
+        </div><div class="description">
+          <div>High: <span>[[weatherData.today.temperatureMax]]</span></div>
+          <div>Low: <span>[[weatherData.today.temperatureMin]]</span></div>
+          <div>Humidity: <span>[[weatherData.now.humidity]]</span></div>
+          <div class="wind">
+            Wind: <span>[[weatherData.now.windSpeed]]</span> mph
+            [[weatherData.now.windBearing]]
+            <span class="scale">mph</span>°
+          </div>
+          <div>Sunrise: <span>[[weatherData.today.sunriseTime]]</span></div>
+          <div>Sunset: <span>[[weatherData.today.sunsetTime]]</span></div>
+        </div>
+      </div>
+    </div>
+
+
+
+  </template>
+
+  <script>
+    class WeatherView extends Polymer.Element {
+      static get is() { return 'view-weather'; }
+
+      // static get observers() {
+      //   return [
+      //     '_weatherChanged(weatherData)',
+      //   ];
+      // }
+
+      // _weatherChanged(newVal) {
+      //   window.pete = newVal;
+      // }
+
+    }
+
+    window.customElements.define(WeatherView.is, WeatherView);
+  </script>
+</dom-module>

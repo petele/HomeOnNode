@@ -1,0 +1,65 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+
+<dom-module id="elem-lights">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+        background-color: var(--app-primary-color);
+        margin: -10px -10px 10px -10px;
+        height: 32px;
+      }
+
+      paper-tabs {
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        width: 100%;
+        height: 100%;
+        text-transform: uppercase;
+        margin-bottom: 1px;
+      }
+
+      paper-tab .link {
+        @apply(--layout-horizontal);
+        @apply(--layout-center-center);
+        color: var(--app-light-color);
+        text-decoration: none;
+      }
+    </style>
+
+    <paper-tabs selected="{{page}}" attr-for-selected="name" role="navigation" sticky>
+      <paper-tab name="hue-scenes" link>
+        <a href="/hue-scenes" class="link" tabindex="-1">Scenes</a>
+      </paper-tab>
+      <paper-tab name="hue-groups" link>
+        <a href="/hue-groups" class="link" tabindex="-1">Groups</a>
+      </paper-tab>
+      <paper-tab name="hue-lights" link>
+        <a href="/hue-lights" class="link" tabindex="-1">Lights</a>
+      </paper-tab>
+      <paper-tab name="nanoleaf" link>
+        <a href="/nanoleaf" class="link" tabindex="-1">NanoLeaf</a>
+      </paper-tab>
+    </paper-tabs>
+
+  </template>
+
+  <script>
+    class LightsElem extends Polymer.Element {
+      static get is() { return 'elem-lights'; }
+    }
+    window.customElements.define(LightsElem.is, LightsElem);
+  </script>
+</dom-module>

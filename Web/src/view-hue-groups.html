@@ -1,0 +1,123 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="fb-data.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="elem-lights.html">
+<link rel="import" href="elem-hue-control.html">
+
+<dom-module id="view-hue-groups">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+        padding: 10px;
+        --app-grid-columns: 3;
+        --app-grid-item-height: 50px;
+        --app-grid-gutter: 8px;
+        background-color: white;
+      }
+    </style>
+
+    <elem-lights page="{{page}}"></elem-lights>
+
+    <elem-hue-control light-state="{{lightState}}"></elem-hue-control>
+
+    <fb-data path="state/hue/groups" data="{{hueGroupsObj}}"></fb-data>
+
+    <div class="app-grid">
+      <template is="dom-repeat" items="[[hueGroups]]">
+        <paper-button class$="[[getButtonClass(item)]]" on-tap="tapHueGroup">[[item.name]]</paper-button>
+      </template>
+    </div>
+
+  </template>
+
+  <script>
+    class HueGroupsView extends Polymer.Element {
+      static get is() { return 'view-hue-groups'; }
+
+      static get observers() {
+        return [
+          '_groupsChanged(hueGroupsObj)',
+        ];
+      }
+
+      getButtonClass(item) {
+        if (item.state.all_on) {
+          return 'button toggle-on';
+        }
+        return 'button';
+      }
+
+      _groupsChanged(hueGroups) {
+        if (!hueGroups) {
+          return;
+        }
+        let rooms = [];
+        let anyOn = false;
+        let allOn = true;
+        hueGroups.forEach(function(group, idx) {
+          if (!group) {
+            return;
+          }
+          if (group.state.any_on === true) {
+            anyOn = true;
+          }
+          if (group.state.all_on === false) {
+            allOn = false;
+          }
+          if (group.type === 'Room') {
+            group.groupId = idx;
+            rooms.push(group);
+          }
+        });
+        rooms.sort(app.sortByName);
+        let allLights = {
+          name: 'All Lights',
+          groupId: 0,
+          state: {
+            any_on: anyOn,
+            all_on: allOn,
+          },
+        };
+        rooms.splice(0, 0, allLights);
+        this.hueGroups = rooms;
+      }
+
+      tapHueGroup(event) {
+        let group = event.model.item;
+        let lightState = this.lightState;
+        if (lightState.toggle) {
+          lightState = {on: !group.state.any_on};
+        }
+        let cmd = {lights: group.groupId * -1, lightState: lightState};
+        this.startIndterminate(event.target);
+        app.sendCommand({hueCommand: cmd});
+      }
+
+      startIndterminate(button) {
+        button.classList.add('toggle-ind');
+        setTimeout(() => {
+          button.classList.remove('toggle-ind');
+        }, 15000);
+      }
+
+    }
+
+    window.customElements.define(HueGroupsView.is, HueGroupsView);
+  </script>
+</dom-module>

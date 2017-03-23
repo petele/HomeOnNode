@@ -1,0 +1,77 @@
+application: petele-home-automation
+version: polymer2
+runtime: python27
+threadsafe: yes
+api_version: 1
+
+handlers:
+- url: /bower_components
+  static_dir: bower_components
+  secure: always
+
+- url: /images
+  static_dir: images
+  secure: always
+
+- url: /scripts
+  static_dir: scripts
+  secure: always
+  login: admin
+
+- url: /src
+  static_dir: src
+  secure: always
+
+- url: /index.html
+  static_files: index.html
+  upload: index.html
+  login: admin
+  secure: always
+
+- url: /manifest.json
+  static_files: manifest.json
+  upload: manifest.json
+  secure: always
+
+- url: /service-worker.js
+  static_files: service-worker.js
+  upload: service-worker.js
+  secure: always
+
+- url: /sw-notifications.js
+  static_files: sw-notifications.js
+  upload: sw-notifications.js
+  secure: always
+
+- url: /
+  static_files: index.html
+  upload: index.html
+  login: admin
+  secure: always
+
+- url: /.*
+  static_files: index.html
+  upload: index.html
+  login: admin
+  secure: always
+
+# - url: /robots.txt
+#   static_files: robots.txt
+#   upload: robots.txt
+#   secure: always
+
+# - url: /cache-config.json
+#   static_files: cache-config.json
+#   upload: cache-config.json
+#   secure: always
+
+skip_files:
+- ^bower_components/(.*/)?.*\.md$
+- ^bower_components/(.*/)?.*\.test$
+- ^bower_components/(.*/)?test/.*
+# - ^bower_components/(.*)+/test/.*$
+# - ^bower_components/(.*)+/tests/.*$
+- ^bower_components/(.*/)?Makefile$
+- ^bower_components/(.*/)?LICENSE$
+- ^bower_components/(.*/)?COPYING$
+

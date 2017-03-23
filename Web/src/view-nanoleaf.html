@@ -1,0 +1,107 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="fb-data.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="elem-lights.html">
+
+<dom-module id="view-nanoleaf">
+  <template>
+    <style include="shared-styles app-grid-style iron-flex iron-flex-alignment">
+      :host {
+        display: block;
+        padding: 10px;
+        --app-grid-columns: 3;
+        --app-grid-item-height: 50px;
+        --app-grid-gutter: 8px;
+        background-color: white;
+      }
+    </style>
+    <elem-lights page="{{page}}"></elem-lights>
+    <fb-data path="state/nanoLeaf/state" data="{{nanoLeafState}}"></fb-data>
+    <fb-data path="state/nanoLeaf/effects" data="{{nanoLeafEffects}}"></fb-data>
+
+    <div class="layout horizontal">
+      <paper-checkbox id="nanoLeafPower" checked="[[nanoLeafState.on.value]]" on-change="tapPower">
+        On
+      </paper-checkbox>
+      <paper-slider class="flex" value="[[nanoLeafState.brightness.value]]" on-change="setBrightness">
+      </paper-slider>
+    </div>
+
+    <div class="app-grid" id="nlEffects">
+      <template id="ef" is="dom-repeat" items="[[nanoLeafEffects.list]]">
+        <paper-button class="button" name="[[item]]" on-tap="tapNanoLeafEffect">
+          [[item]]
+        </paper-button>
+      </template>
+    </div>
+
+  </template>
+
+  <script>
+    class NanoLeafView extends Polymer.Element {
+      static get is() { return 'view-nanoleaf'; }
+
+      static get observers() {
+        return [
+          '_effectChanged(nanoLeafEffects.select)',
+        ];
+      }
+      tapNanoLeafEffect(event) {
+        let cmd = {nanoLeaf: {effect: event.model.item}};
+        event.target.classList.add('toggle-ind');
+        app.sendCommand(cmd);
+      }
+      tapPower(event) {
+        let newVal = 'OFF';
+        if (event.target.checked === true) {
+          newVal = this.nanoLeafEffects.select;
+        }
+        app.sendCommand({nanoLeaf: {effect: newVal}});
+      }
+      setBrightness(event) {
+        let cmd = {nanoLeaf: {brightness: event.target.value}};
+        app.sendCommand(cmd);
+      }
+      effectClass(val) {
+        if (val === this.nanoLeafEffects.select) {
+          return 'button toggle-on';
+        }
+        return 'button';
+      }
+      _effectChanged(newVal) {
+        if (!newVal) {
+          return;
+        }
+        let elems = this.$.nlEffects.querySelectorAll('paper-button');
+        elems.forEach(function(elem) {
+          if (elem.name === this.nanoLeafEffects.select) {
+            elem.classList.add('toggle-on');
+          } else {
+            elem.classList.remove('toggle-on');
+          }
+          elem.classList.remove('toggle-ind');
+        }, this);
+      }
+    }
+
+    window.customElements.define(NanoLeafView.is, NanoLeafView);
+  </script>
+</dom-module>

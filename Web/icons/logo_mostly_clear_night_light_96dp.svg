@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 19.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="96px" height="96px" viewBox="0 0 48 48" enable-background="new 0 0 48 48" xml:space="preserve">
+<g id="XMLID_2364_">
+	<rect id="XMLID_2404_" fill="none" width="48" height="48"/>
+	<g id="XMLID_2365_">
+		<g id="XMLID_2367_">
+			<defs>
+				<path id="XMLID_2368_" d="M20,15c0-4,1.25-7.75,3.25-11C12.5,4.5,4,13.25,4,24c0,1.97,0.29,3.88,0.83,5.69
+					C3.7,30.78,3,32.31,3,34c0,3.31,2.69,6,6,6h3.04c3.34,2.51,7.49,4,11.96,4c7,0,13-3.5,16.75-9C29,35,20,26.25,20,15z"/>
+			</defs>
+			<clipPath id="XMLID_2_">
+				<use xlink:href="#XMLID_2368_"  overflow="visible"/>
+			</clipPath>
+			<path id="XMLID_2402_" clip-path="url(#XMLID_2_)" fill="#C6DAFC" d="M20,15c0-4,1.25-7.75,3.25-11C12.5,4.5,4,13.25,4,24
+				c0,11,9,20,20,20c7,0,13-3.5,16.75-9C29,35,20,26.25,20,15z"/>
+			<path id="XMLID_2394_" clip-path="url(#XMLID_2_)" fill="#1A237E" fill-opacity="0.1" d="M23.25,4l-0.31,0.27
+				C21.12,7.4,20,10.96,20,14.75c0,0.04,0,0.07,0,0.11C20.03,10.91,21.27,7.21,23.25,4z M40.4,35.25c-3.77,5.21-9.61,8.5-16.4,8.5
+				c-10.96,0-19.93-8.93-20-19.88c0,0.04,0,0.08,0,0.13c0,11,9,20,20,20c7,0,13-3.5,16.75-9L40.4,35.25z"/>
+			<path id="XMLID_2386_" clip-path="url(#XMLID_2_)" fill="#FFFFFF" fill-opacity="0.2" d="M20,15.11c0,0.05,0,0.09,0,0.14
+				c0,11.14,8.82,19.82,20.4,19.99L40.75,35C29.04,35,20.06,26.31,20,15.11z M23.25,4C12.5,4.5,4,13.25,4,24c0,0.04,0,0.08,0,0.12
+				c0.07-10.59,8.38-19.2,18.94-19.85L23.25,4z"/>
+			<path id="XMLID_2384_" clip-path="url(#XMLID_2_)" fill="none" d="M20,15c0-4,1.25-7.75,3.25-11C12.5,4.5,4,13.25,4,24
+				c0,11,9,20,20,20c7,0,13-3.5,16.75-9C29,35,20,26.25,20,15z"/>
+			<linearGradient id="XMLID_3_" gradientUnits="userSpaceOnUse" x1="19.3284" y1="33.1562" x2="19.3284" y2="43.9545">
+				<stop  offset="0" style="stop-color:#1A237E;stop-opacity:0.1"/>
+				<stop  offset="1" style="stop-color:#1A237E;stop-opacity:0.02"/>
+			</linearGradient>
+			<polygon id="XMLID_2383_" clip-path="url(#XMLID_2_)" fill="url(#XMLID_3_)" points="29.66,44 18.83,33.17 9,40 9,44 			"/>
+			<g id="XMLID_2378_" clip-path="url(#XMLID_2_)">
+				<g id="XMLID_601_">
+					
+						<image overflow="visible" opacity="0.1" width="23" height="18" id="XMLID_604_" xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABcAAAASCAYAAACw50UTAAAACXBIWXMAAAsSAAALEgHS3X78AAAA
+GXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAqlJREFUeNqsVd1uEkEUPmd2thRo
+KIXiX0kTIyY2xMRqvFJvTPTCe1/ClxBfwdfwAbzVW6MxMalX3GiWNoWwKfYHlt2Z4zfLBn8oLTUe
+MplhOPOd850/mGaFiQTbK6ZT5aWkKhOlM+UvgJZqNPp+SNVcXke+2Nwfv7OKZJjk4gr1o3a7GkPf
+Lgj+3Ks1m3mVJDUv1htMdlUUaRLLGbKwpURIDYyfdKzWvd7OzpDojTkHvKVqTSr4MdUpsdsAugfW
+G0R2mUhlqs5JNcKTDgx+Iq0+xz4FvR06mcdAOwONRsU/TLo1StQ2sJ4A6C6LXBJi/1doGR8bC3MX
+hwolhhV543p9sBcErei0XHjOaymHRd/om/D4MQs9wP11Yi5jL2Dlp4u5gKcrOBeha8iaA5svDEsV
+8vy193qjcpvC8BnA30kG/kKVysclxeMtpfgh7rbgwCpAdBa23xdiJO7exxeGGISoqIxa12RKkSlK
+cfNofLz/1DgDXqPxaMnS8WU8vUPC95kRd6Ll2UqapsnheikToRr2G9C8BbvXlCdkrTe4urZ+EoZv
+rT7wgqUc5aoA3oRSVUiWJgBnVhhyQes4rcD7GBeRiOyKMHmx7IUq7IPhWNO/iZoYEB9OIe9iMqJ1
+wK+6HnFNqMqmPibrOUvfQbOPmhgv0n0TBilDBY9dmBzjHJph2nyq3b6SxOIPROweaqsH1KGrOfoP
+AnpfJeYfIxLVtZa/wed9rBMYSLLOOXdxGhYCY4lYVOzGRNZELamq16NDrxsgGR9hbi3lPG2iRSQN
+5S5WIGQGI8wf11QuodJuh3GtqXuopM9ofzdHQplp/3liScSNBQrA4EOiuVMxlShMO3rRwTXX6Wyg
+sRxY43WkdNTb/7IydPPmQiN3Pv7po5gv/mcxT2YH108BBgALV0Q6dE1xXwAAAABJRU5ErkJggg==" transform="matrix(1 0 0 1 1 26)">
+					</image>
+					<path id="XMLID_602_" fill="#EEEEEE" d="M16,32h-1.34c-0.82-2.33-3.04-4-5.66-4c-3.31,0-6,2.69-6,6s2.69,6,6,6h7
+						c2.21,0,4-1.79,4-4C20,33.79,18.21,32,16,32z"/>
+				</g>
+			</g>
+			<path id="XMLID_2375_" clip-path="url(#XMLID_2_)" fill="#FFFFFF" fill-opacity="0.2" d="M9,28.25c2.61,0,4.83,1.67,5.66,4H16
+				c2.17,0,3.93,1.72,3.99,3.88c0-0.04,0.01-0.08,0.01-0.12c0-2.21-1.79-4-4-4h-1.34c-0.82-2.33-3.04-4-5.66-4c-3.31,0-6,2.69-6,6
+				c0,0.04,0,0.08,0,0.12C3.07,30.87,5.73,28.25,9,28.25z"/>
+			<path id="XMLID_2372_" clip-path="url(#XMLID_2_)" fill="#1A237E" fill-opacity="0.1" d="M16,40H9c-3.27,0-5.93-2.62-6-5.88
+				c0,0.04,0,0.08,0,0.12c0,3.31,2.69,6,6,6h7c2.21,0,4-1.79,4-4c0-0.04-0.01-0.08-0.01-0.12C19.93,38.28,18.17,40,16,40z"/>
+			<path id="XMLID_2369_" clip-path="url(#XMLID_2_)" fill-opacity="0.1" d="M19.99,35.88c-0.07,2.15-1.83,3.88-3.99,3.88H9
+				c-3.27,0-5.93-2.62-6-5.88c0,0.04,0,0.08,0,0.12s0,0.08,0,0.12C3.07,37.38,5.73,40,9,40h7c2.17,0,3.93-1.72,3.99-3.88
+				c0-0.04,0.01-0.08,0.01-0.12S19.99,35.92,19.99,35.88z"/>
+		</g>
+		<radialGradient id="XMLID_4_" cx="9.8566" cy="9.9385" r="39.8106" gradientUnits="userSpaceOnUse">
+			<stop  offset="0" style="stop-color:#FFFFFF;stop-opacity:0.1"/>
+			<stop  offset="1" style="stop-color:#FFFFFF;stop-opacity:0"/>
+		</radialGradient>
+		<path id="XMLID_2366_" fill="url(#XMLID_4_)" d="M20,15c0-4,1.25-7.75,3.25-11C12.5,4.5,4,13.25,4,24c0,1.97,0.29,3.88,0.83,5.69
+			C3.7,30.78,3,32.31,3,34c0,3.31,2.69,6,6,6h3.04c3.34,2.51,7.49,4,11.96,4c7,0,13-3.5,16.75-9C29,35,20,26.25,20,15z"/>
+	</g>
+</g>
+</svg>

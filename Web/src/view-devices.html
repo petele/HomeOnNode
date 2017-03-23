@@ -1,0 +1,180 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="fb-data.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="view-devices">
+  <template>
+    <style include="shared-styles iron-flex">
+      :host {
+        display: block;
+      }
+      .label {
+        width: 40%;
+        display: inline-block;
+        font-weight: bold;
+      }
+      .card {
+        position: relative;
+      }
+      .online {
+        color: var(--google-green-500);
+      }
+      .offline {
+        color: var(--google-red-500);
+      }
+      paper-icon-button {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        color: var(--google-red-500);
+      }
+      .circle {
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+        text-align: center;
+        color: #555;
+        border-radius: 50%;
+        background: #ddd;
+        font-size: 28px;
+        line-height: 44px;
+      }
+    </style>
+    <fb-data path="devices" data="{{devicesObj}}"></fb-data>
+
+    <paper-dialog id="confirmRebootDialog" on-iron-overlay-closed="confirmRebootClosed">
+      <h2>Confirm</h2>
+      <p>
+        Are you sure you want to reboot [[selectedDevice.deviceId]]?
+      </p>
+      <div class="buttons">
+        <paper-button dialog-dismiss autofocus>Cancel</paper-button>
+        <paper-button dialog-confirm>Reboot</paper-button>
+      </div>
+    </paper-dialog>
+
+    <template is="dom-repeat" items="[[devices]]">
+      <div class="card">
+        <div class="layout horizontal">
+          <h1 class="flex">[[item.deviceId]]</h1>
+          <div class="circle">
+            <iron-icon icon="[[getIcon(item.online)]]" class$="[[isOnline(item.online)]]">
+            </iron-icon>
+          </div>
+        </div>
+        <template is="dom-if" if="[[item.host]]">
+          <div>
+            <span class="label">IP Address</span>
+            <span>[[item.host.ipAddress]]</span>
+          </div>
+        </template>
+        <div>
+          <span class="label">Last Updated</span>
+          <span class$="[[isStale(item.heartbeat)]]">
+            [[formatDate(item.heartbeat)]]
+          </span>
+        </div>
+        <template is="dom-if" if="[[item.startedAt]]">
+          <div>
+            <span class="label">Started</span>
+            <span>[[formatDate(item.startedAt)]]</span>
+          </div>
+        </template>
+        <template is="dom-if" if="[[item.shutdownAt]]">
+          <div>
+            <span class="label">Shutdown</span>
+            <span>[[formatDate(item.shutdownAt)]]</span>
+          </div>
+        </template>
+        <div>
+          <span class="label">Version</span>
+          <span>[[item.version]]</span>
+        </div>
+        <paper-icon-button icon="hon-icons:restart" on-tap="rebootDevice"></paper-icon-button>
+      </div>
+
+    </template>
+  </template>
+
+  <script>
+    class DevicesView extends Polymer.Element {
+      static get is() { return 'view-devices'; }
+
+      static get observers() {
+        return [
+          '_devicesChanged(devicesObj)',
+        ];
+      }
+
+      _devicesChanged(devicesObj) {
+        if (!devicesObj) {
+          return;
+        }
+        let devices = [];
+        Object.keys(devicesObj).forEach(function(key) {
+          let device = devicesObj[key];
+          device.deviceId = key;
+          devices.push(device);
+        });
+        this.devices = devices;
+      }
+
+      rebootDevice(event) {
+        let device = event.model.item;
+        this.selectedDevice = device;
+        this.$.confirmRebootDialog.open();
+      }
+
+      confirmRebootClosed(event) {
+        if (event.detail.confirmed === true && this.selectedDevice) {
+          let path = `devices/${this.selectedDevice.deviceId}/restart`;
+          app.fbRoot.child(path).set(true);
+        }
+        this.selectedDevice = null;
+      }
+
+      isOnline(val) {
+        if (val === true) {
+          return 'online';
+        }
+        return 'offline';
+      }
+
+      getIcon(val) {
+        if (val === true) {
+          return 'hon-icons:cloud';
+        }
+        return 'hon-icons:cloud-disconnected';
+      }
+
+      formatDate(val) {
+        return moment(val).format('M/D/YY, h:mm:ss a');
+      }
+
+      isStale(val) {
+        let timeSpan = (Date.now() - val) / 1000;
+        if (timeSpan > 120) {
+          return 'offline';
+        }
+        return '';
+      }
+    }
+
+    window.customElements.define(DevicesView.is, DevicesView);
+  </script>
+</dom-module>

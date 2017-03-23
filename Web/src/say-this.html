@@ -1,0 +1,54 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<dom-module id="say-this">
+  <template>
+  </template>
+
+  <script>
+    class SayThis extends Polymer.Element {
+      static get is() { return 'say-this'; }
+
+      ready() {
+        super.ready();
+        this.ALLOWED_DIFF = 30 * 60 * 1000;
+        this.initSpeech();
+      }
+
+      initSpeech() {
+        setTimeout(() => {
+          app.fbRoot.child('sayThis').limitToLast(1)
+            .on('child_added', function(snapshot) {
+              if (this.enabled === true) {
+                let utterance = snapshot.val();
+                let timeDiff = Date.now() - utterance.sayAt;
+                if (timeDiff < this.ALLOWED_DIFF) {
+                  this.sayThis(utterance.utterance, utterance.lang);
+                  snapshot.ref().remove();
+                }
+              }
+            }, this);
+        }, 10000);
+      }
+
+      sayThis(sentence, lang) {
+        lang = lang || 'en-GB';
+        let utterance = new window.SpeechSynthesisUtterance(sentence);
+        utterance.lang = lang;
+        window.speechSynthesis.speak(utterance);
+        return utterance;
+      }
+    }
+
+    window.customElements.define(SayThis.is, SayThis);
+  </script>
+</dom-module>

@@ -1,0 +1,134 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="fb-data.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="elem-lights.html">
+
+<dom-module id="view-hue-scenes">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+        padding: 10px;
+        --app-grid-columns: 3;
+        --app-grid-item-height: 50px;
+        --app-grid-gutter: 8px;
+        background-color: white;
+      }
+      dom-repeat, dom-if { display: none; }
+    </style>
+    <elem-lights page="{{page}}"></elem-lights>
+    <fb-data path="state/hue/scenes" data="{{hueSceneObj}}"></fb-data>
+
+    <div class="app-grid">
+      <template is="dom-repeat" items="[[houseScenes]]">
+        <paper-button class="button" on-tap="tapHueScene">[[item.name]]</paper-button>
+      </template>
+    </div>
+
+    <div>
+      <template is="dom-repeat" items="[[roomScenes]]">
+        <div>[[item.name]]</div>
+        <div class="app-grid">
+          <template is="dom-repeat" items="[[item.on]]">
+            <paper-button class="button" on-tap="tapHueScene">[[item.name]]</paper-button>
+          </template>
+          <template is="dom-repeat" items="[[item.off]]">
+            <paper-button class="button" on-tap="tapHueScene">[[item.name]]</paper-button>
+          </template>
+          <template is="dom-repeat" items="[[item.scenes]]">
+            <paper-button class="button" on-tap="tapHueScene">[[item.name]]</paper-button>
+          </template>
+        </div>
+      </template>
+    </div>
+
+  </template>
+
+  <script>
+    class HueScenesView extends Polymer.Element {
+      static get is() { return 'view-hue-scenes'; }
+
+      static get observers() {
+        return [
+          '_scenesChanged(hueSceneObj)',
+        ];
+      }
+
+      tapHueScene(event) {
+        let sceneId = event.model.item.key;
+        app.sendCommand({hueScene: sceneId});
+      }
+
+      _scenesChanged(scenes) {
+        if (!scenes) {
+          return;
+        }
+        const reScene = /(.*)\s\[(.*)\]/;
+        let houseScenes = [];
+        let scenesByRoom = {};
+        let keys = Object.keys(scenes);
+        keys.forEach(function(key) {
+          let scene = scenes[key];
+          if (scene.name === 'Last on state') {
+            return;
+          }
+          scene.key = key;
+          let matches = scene.name.match(reScene);
+          if (!matches) {
+            houseScenes.push(scene);
+            return;
+          }
+          let roomName = matches[2];
+          let sceneName = matches[1];
+          scene.name = sceneName;
+
+          if (!scenesByRoom[roomName]) {
+            scenesByRoom[roomName] = {scenes: []};
+          }
+          if (sceneName === 'On') {
+            scenesByRoom[roomName].on = scene;
+          } else if (sceneName === 'Off') {
+            scenesByRoom[roomName].off = scene;
+          } else {
+            scenesByRoom[roomName].scenes.push(scene);
+          }
+        });
+        let roomScenes = [];
+        let roomNames = Object.keys(scenesByRoom);
+        roomNames.forEach(function(roomName) {
+          let room = {
+            name: roomName,
+            scenes: scenesByRoom[roomName].scenes.sort(app.sortByName),
+          };
+          if (scenesByRoom[roomName].on) {
+            room.on = [scenesByRoom[roomName].on];
+          }
+          if (scenesByRoom[roomName].off) {
+            room.off = [scenesByRoom[roomName].off];
+          }
+          roomScenes.push(room);
+        }, this);
+        this.houseScenes = houseScenes.sort(app.sortByName);
+        this.roomScenes = roomScenes.sort(app.sortByName);
+      }
+
+    }
+
+    window.customElements.define(HueScenesView.is, HueScenesView);
+  </script>
+</dom-module>

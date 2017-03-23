@@ -1,0 +1,210 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="fb-data.html">
+
+
+<dom-module id="view-home">
+  <template>
+    <style include="shared-styles app-grid-style iron-flex iron-flex-alignment">
+      :host {
+        display: block;
+        padding: 10px;
+        
+        --app-grid-item-height: 50px;
+        --app-grid-gutter: 8px;
+        background-color:white;
+      }
+      .current-time {
+        text-align: center;
+        font-size: 4em;
+      }
+      .top-bar {
+        margin: auto 4px 8px 4px;
+        height: 50px;
+      }
+      .weather-icon {
+        width: 48px;
+        height: 48px;
+      }
+      .weather-icon-container {
+        margin-top: 16px;
+      }
+      .app-grid {
+        padding-top: 0;
+      }
+      .grid-four {
+        --app-grid-columns: 4;
+      }
+      .grid-two {
+        --app-grid-columns: 2;
+      }
+      .grid-three {
+        --app-grid-columns: 3;
+      }
+    </style>
+
+    <fb-data path="config/WebUI/home/buttons" data="{{buttons}}"></fb-data>
+    <fb-data path="config/WebUI/home/topRow" data="{{topRowButtons}}"></fb-data>
+    <fb-data path="state/weather" data="{{dataWeather}}"></fb-data>
+
+    <fb-data path="state/doNotDisturb" data="{{dataDnD}}"></fb-data>
+    <fb-data path="state/systemState" data="{{dataSystemState}}"></fb-data>
+    <fb-data path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ" data="{{dataNestCam}}"></fb-data>
+
+
+    <div class="layout horizontal">
+      <div class="flex center current-time">
+        [[currentTime]]
+      </div>
+      <div class="weather-icon-container">
+        <div><iron-icon icon="[[weather.icon]]" class="weather-icon"></iron-icon></div>
+        <div>[[weather.tempNow]] | [[weather.tempToday]]</div>
+      </div>
+    </div>
+
+    <div class="app-grid grid-three">
+      <paper-button on-tap="toggleDoNotDisturb" class="button">
+        <iron-icon icon="[[doNotDisturbIcon]]">
+      </paper-button>
+      <paper-button on-tap="toggleState" class="button">
+        <iron-icon icon="[[systemStateIcon]]">
+      </paper-button>
+      <paper-button on-tap="toggleNestCam" class="button">
+        <iron-icon icon="[[nestCamIcon]]">
+      </paper-button>
+    </div>
+
+    <div class="layout horizontal top-bar">
+      <template is="dom-repeat" items="[[topRowButtons]]">
+        <paper-button class="button flex" on-tap="myTap">[[item.label]]</paper-button>
+      </template>  
+    </div>
+
+    <div class="app-grid">
+      <template is="dom-repeat" items="[[buttons]]">
+        <paper-button class="button" on-tap="myTap">[[item.label]]</paper-button>
+      </template>
+    </div>
+
+  </template>
+
+  <script>
+    class HomeView extends Polymer.Element {
+      static get is() { return 'view-home'; }
+
+      constructor() {
+        super();
+        this.state = {};
+      }
+
+      ready() {
+        super.ready();
+        this._clockTick();
+      }
+
+      static get observers() {
+        return [
+          '_weatherChanged(dataWeather)',
+          '_doNotDisturbChanged(dataDnD)',
+          '_systemStateChanged(dataSystemState)',
+          '_nestCamChanged(dataNestCam)',
+        ];
+      }
+
+      myTap(event) {
+        let item = event.model.item;
+        if (item.command) {
+          app.sendCommand(item.command);
+        }
+      }
+      _weatherChanged(weather) {
+        if (!weather || !weather.now || !weather.today) {
+          return;
+        }
+        this.weather = {
+          icon: 'hon-icons:' + weather.today.icon,
+          tempNow: Math.round(weather.now.temperature),
+          tempToday: Math.round(weather.today.temperatureMax),
+        };
+      }
+      _nestCamChanged(newVal) {
+        if (newVal === undefined) {
+          return;
+        }
+        let icon = 'hon-icons:camera-off';
+        if (newVal && newVal.is_streaming === true) {
+          icon = 'hon-icons:camera-on';
+        }
+        this.nestCamIcon = icon;
+      }
+      _doNotDisturbChanged(newVal) {
+        if (newVal === undefined) {
+          return;
+        }
+        let icon = 'hon-icons:alerts-on';
+        if (newVal === true) {
+          icon = 'hon-icons:alerts-off';
+        }
+        this.doNotDisturbIcon = icon;
+      }
+      _systemStateChanged(newVal) {
+        if (!newVal) {
+          return;
+        }
+        let icon;
+        if (newVal === 'ARMED') {
+          icon = 'hon-icons:state-armed';
+        } else if (newVal === 'AWAY') {
+          icon = 'hon-icons:state-away';
+        } else if (newVal === 'HOME') {
+          icon = 'hon-icons:state-home';
+        }
+        this.systemStateIcon = icon;
+      }
+      toggleDoNotDisturb() {
+        let newVal = 'ON';
+        if (this.dataDnD === true) {
+          newVal = 'OFF';
+        }
+        app.sendCommand({doNotDisturb: newVal});
+      }
+      toggleState() {
+        let cmdName = 'STATE_HOME';
+        if (this.dataSystemState === 'HOME') {
+          cmdName = 'STATE_ARMED';
+        }
+        app.sendCommand({cmdName: cmdName});
+      }
+      toggleNestCam() {
+        let newVal = 'ON';
+        if (this.dataNestCam.is_streaming === true) {
+          newVal = 'OFF';
+        }
+        app.sendCommand({nestCam: newVal});
+      }
+      _clockTick() {
+        this.currentTime = moment().format('h:mm a');
+        setTimeout(() => { this._clockTick(); }, 3000);
+      }
+
+    }
+
+    window.customElements.define(HomeView.is, HomeView);
+  </script>
+</dom-module>

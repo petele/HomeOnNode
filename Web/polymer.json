@@ -1,0 +1,46 @@
+{
+  "entrypoint": "index.html",
+  "shell": "src/my-app.html",
+  "fragments": [
+    "src/view-404.html",
+    "src/view-actions.html",
+    "src/view-devices.html",
+    "src/view-door-logs.html",
+    "src/view-home.html",
+    "src/view-hue-groups.html",
+    "src/view-hue-lights.html",
+    "src/view-hue-scenes.html",
+    "src/view-media.html",
+    "src/view-nanoleaf.html",
+    "src/view-presence-logs.html",
+    "src/view-system-logs.html",
+    "src/view-weather.html"
+  ],
+  "builds": [
+    {
+      "name": "bundled",
+      "addServiceWorker": true,
+      "swPrecacheConfig": "sw-precache-config.js",
+      "insertPrefetchLinks": true,
+      "bundle": true,
+      "js": {"minify": true, "compile": false},
+      "css": {"minify": true},
+      "html": {"minify": true}
+    }
+  ],
+  "sources": [
+    "src/**/*",
+    "images/**/*",
+    "scripts/**/*",
+    "bower.json",
+    "sw-notifications.js"
+  ],
+  "extraDependencies": [
+    "manifest.json",
+    "bower_components/webcomponentsjs/*.js",
+    "app.yaml"
+  ],
+  "lint": {
+    "rules": ["polymer-2"]
+  }
+}
