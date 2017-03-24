@@ -142,9 +142,10 @@ function NanoLeaf(key, ip, port) {
           reject(error);
           return;
         }
-        if (response && response.statusCode !== 200) {
-          reject(new Error('Bad statusCode: ' + response.statusCode));
-          return;
+        if (response && 
+            response.statusCode !== 200 && response.statusCode !== 204) {
+              reject(new Error('Bad statusCode: ' + response.statusCode));
+              return;
         }
         if (respBody && respBody.error) {
           reject(new Error('Response Error: ' + respBody));
