@@ -39,10 +39,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <div class="card card-narrow">
       <div class="sonosTitle no-overflow">
-        [[sonosState.currentTrack.title]] &nbsp;
+        [[getTitle(sonosState.currentTrack)]] &nbsp;
       </div>
       <div class="sonosArtistAlbum sonosTrackInfo no-overflow">
-        [[sonosState.currentTrack.artist]] - [[sonosState.currentTrack.album]]
+        [[getArtistAlbum(sonosState.currentTrack)]]
       </div>
       <div class="layout horizontal">
         <paper-icon-button icon="hon-icons:volume-down"
@@ -87,6 +87,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           '_sonosPlayerState(sonosState.playerState)',
           '_harmonyActivityChanged(currentHarmonyActivity)',
         ];
+      }
+
+      getTitle(currentTrack) {
+        if (currentTrack.uri.indexOf('spdif') > 0) {
+          return 'TV';
+        }
+        return currentTrack.title;
+      }
+
+      getArtistAlbum(currentTrack) {
+        if (currentTrack.artist && currentTrack.album) {
+          return currentTrack.artist + ' - ' + currentTrack.album;
+        }
+        if (currentTrack.artist || currentTrack.album) {
+          return currentTrack.artist || currentTrack.album;
+        }
+        return '';
       }
 
       _harmonyActivityChanged(newVal) {

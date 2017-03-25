@@ -14,6 +14,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-swatch-picker/paper-swatch-picker.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="elem-hue-control">
@@ -24,6 +26,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding-left: 12px;
         padding-right: 12px;
       }
+
+      paper-button {
+        margin-top: 12px;
+        padding-bottom: 0;
+      }
+
+      paper-button[disabled] {
+        background-color: white;
+      }
+
     </style>
 
     <div class="layout horizontal">
@@ -35,10 +47,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </paper-listbox>
       </paper-dropdown-menu>
 
+      <paper-button disabled="{{disablePickers}}">
+        <iron-icon icon="hon-icons:color-picker">
+      </paper-button>
+
       <!-- <paper-swatch-picker column-count=5 color-list='["#65a5f2", "#83be54", "#f0d551", "#e5943c", "#a96ddb"]'>
       </paper-swatch-picker> -->
 
-      <paper-dropdown-menu id="pdmBri" label="Brightness">
+      <paper-dropdown-menu id="pdmBri" 
+        label="Brightness" disabled="{{disablePickers}}">
         <paper-listbox class="dropdown-content" selected="0" on-iron-select="updateBrightness">
           <paper-item></paper-item>
           <paper-item value="100">100%</paper-item>
@@ -67,6 +84,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         super();
         this.isOn = false;
         this.bri = 0;
+        this.disablePickers = true;
       }
 
       static get properties() {
@@ -81,16 +99,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       updateAction(event) {
         let action = event.target.selectedItem.attributes['value'].value;
-        let disableBrightness = true;
+        let disable = true;
         if (action === 'on') {
           this.isOn = true;
-          disableBrightness = false;
+          disable = false;
         } else if (action === 'off') {
           this.isOn = false;
         } else {
           this.isOn = null;
         }
-        this.$.pdmBri.disabled = disableBrightness;
+        this.disablePickers = disable;
         this.updateLightState();
       }
 
