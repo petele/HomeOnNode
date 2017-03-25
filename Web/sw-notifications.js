@@ -30,6 +30,7 @@ self.addEventListener('push', function(event) {
     self.registration.showNotification(title, {
       body: notBody,
       icon: notIcon,
-      tag: notTag
+      tag: notTag,
+      badge: notIcon
     }));
 });

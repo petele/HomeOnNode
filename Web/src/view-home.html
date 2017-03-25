@@ -9,34 +9,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
-
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="fb-data.html">
-
+<link rel="import" href="shared-styles.html">
 
 <dom-module id="view-home">
   <template>
     <style include="shared-styles app-grid-style iron-flex iron-flex-alignment">
       :host {
         display: block;
-        padding: 10px;
-        
-        --app-grid-item-height: 50px;
-        --app-grid-gutter: 8px;
-        background-color:white;
       }
       .current-time {
         text-align: center;
         font-size: 4em;
-      }
-      .top-bar {
-        margin: auto 4px 8px 4px;
-        height: 50px;
       }
       .weather-icon {
         width: 48px;
@@ -45,17 +34,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .weather-icon-container {
         margin-top: 16px;
       }
-      .app-grid {
-        padding-top: 0;
-      }
-      .grid-four {
-        --app-grid-columns: 4;
-      }
-      .grid-two {
-        --app-grid-columns: 2;
-      }
-      .grid-three {
-        --app-grid-columns: 3;
+      .header {
+        padding-left: 8px;
+        padding-right: 8px;
       }
     </style>
 
@@ -68,38 +49,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <fb-data path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ" data="{{dataNestCam}}"></fb-data>
 
 
-    <div class="layout horizontal">
-      <div class="flex center current-time">
-        [[currentTime]]
+    <div class="card">
+      <div class="layout horizontal header">
+        <div class="flex current-time">
+          [[currentTime]]
+        </div>
+        <div class="weather-icon-container">
+          <div><iron-icon icon="[[weather.icon]]" class="weather-icon"></iron-icon></div>
+          <div>[[weather.tempNow]] | [[weather.tempToday]]</div>
+        </div>
       </div>
-      <div class="weather-icon-container">
-        <div><iron-icon icon="[[weather.icon]]" class="weather-icon"></iron-icon></div>
-        <div>[[weather.tempNow]] | [[weather.tempToday]]</div>
+    </div>
+
+    <div class="card">
+      <div class="app-grid grid-three">
+        <paper-button on-tap="toggleDoNotDisturb" class="button">
+          <iron-icon icon="[[doNotDisturbIcon]]">
+        </paper-button>
+        <paper-button on-tap="toggleState" class="button">
+          <iron-icon icon="[[systemStateIcon]]">
+        </paper-button>
+        <paper-button on-tap="toggleNestCam" class="button">
+          <iron-icon icon="[[nestCamIcon]]">
+        </paper-button>
       </div>
     </div>
 
-    <div class="app-grid grid-three">
-      <paper-button on-tap="toggleDoNotDisturb" class="button">
-        <iron-icon icon="[[doNotDisturbIcon]]">
-      </paper-button>
-      <paper-button on-tap="toggleState" class="button">
-        <iron-icon icon="[[systemStateIcon]]">
-      </paper-button>
-      <paper-button on-tap="toggleNestCam" class="button">
-        <iron-icon icon="[[nestCamIcon]]">
-      </paper-button>
-    </div>
-
-    <div class="layout horizontal top-bar">
-      <template is="dom-repeat" items="[[topRowButtons]]">
-        <paper-button class="button flex" on-tap="myTap">[[item.label]]</paper-button>
-      </template>  
-    </div>
-
-    <div class="app-grid">
-      <template is="dom-repeat" items="[[buttons]]">
-        <paper-button class="button" on-tap="myTap">[[item.label]]</paper-button>
-      </template>
+    <div class="card">
+      <div class="app-grid grid-two">
+        <template is="dom-repeat" items="[[topRowButtons]]">
+          <paper-button class="button flex" on-tap="myTap">[[item.label]]</paper-button>
+        </template>  
+      </div>
+      <div class="app-grid">
+        <template is="dom-repeat" items="[[buttons]]">
+          <paper-button class="button" on-tap="myTap">[[item.label]]</paper-button>
+        </template>
+      </div>
     </div>
 
   </template>

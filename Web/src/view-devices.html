@@ -9,13 +9,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
-<link rel="import" href="fb-data.html">
-<link rel="import" href="hon-icons.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="fb-data.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="shared-styles.html">
 
 <dom-module id="view-devices">
   <template>
@@ -48,11 +48,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         width: 48px;
         height: 48px;
         text-align: center;
-        color: #555;
+        color: var(--app-medium-color);
         border-radius: 50%;
         background: #ddd;
         font-size: 28px;
         line-height: 44px;
+      }
+      h1 {
+        margin-top: 0;
       }
     </style>
     <fb-data path="devices" data="{{devicesObj}}"></fb-data>

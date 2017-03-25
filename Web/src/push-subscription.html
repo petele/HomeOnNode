@@ -1,0 +1,106 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<dom-module id="push-subscription">
+  <template>
+  </template>
+
+  <script>
+    class PushSubscription extends Polymer.Element {
+      static get is() { return 'push-subscription'; }
+
+      ready() {
+        super.ready();
+        this._checkSubscription();
+      }
+
+      static get properties() {
+        return {
+          isSubscribed: {
+            type: Boolean,
+            notify: true,
+            reflectToAttribute: true,
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          '_subscriptionChanged(isSubscribed)',
+        ];
+      }
+
+      _subscriptionChanged(newVal) {
+        if (this.ready !== true) {
+          return;
+        }
+        if (newVal === true) {
+          this._subscribe();
+          return;
+        }
+        this._unsubscribe();
+      }
+
+      _logError(msg) {
+        console.error(msg);
+      }
+
+      _checkSubscription() {
+        navigator.serviceWorker.ready.then((swReg) => {
+          swReg.pushManager.getSubscription().then((subscription) => {
+            if (subscription) {
+              this.isSubscribed = true;
+            } else {
+              this.isSubscribed = false;
+            }
+            this.ready = true;
+          });
+        })
+        .catch(this._logError);
+      }
+
+      _getSubscriptionKey(endpoint) {
+        return endpoint.replace('https://android.googleapis.com/gcm/send/', '');
+      }
+
+      _subscribe() {
+        navigator.serviceWorker.ready.then((swReg) => {
+          swReg.pushManager.subscribe({userVisibleOnly: true})
+            .then((subscription) => {
+              let subObj = {
+                date: Date.now(),
+                userAgent: navigator.userAgent,
+                subscriptionInfo: JSON.parse(JSON.stringify(subscription)),
+              };
+              let subKey = this._getSubscriptionKey(subscription.endpoint);
+              app.fbRoot.child(`pushSubscribers/${subKey}`).set(subObj);
+            });
+          }).catch(this._logError);
+      }
+
+      _unsubscribe() {
+        navigator.serviceWorker.ready.then((swReg) => {
+          swReg.pushManager.getSubscription().then((subscription) => {
+            if (subscription) {
+              let subKey = this._getSubscriptionKey(subscription.endpoint);
+              app.fbRoot.child(`pushSubscribers/${subKey}`).remove();
+              subscription.unsubscribe();
+            }
+          });
+        }).catch(this._logError);
+      }
+
+    }
+
+    window.customElements.define(PushSubscription.is, PushSubscription);
+  </script>
+</dom-module>

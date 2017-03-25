@@ -1,5 +1,4 @@
 window.app = {};
-app.RESET_DISPLAY_AFTER = 2 * 60;
 app.lastInput = Date.now();
 app.fbRoot = new Firebase(window.fbURL);
 app.fbRoot.authWithCustomToken(window.fbKey, function(err, user) {

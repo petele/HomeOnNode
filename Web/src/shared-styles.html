@@ -9,43 +9,68 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/paper-styles/default-theme.html">
 
 <!-- shared styles for all views -->
 <dom-module id="shared-styles">
   <template>
     <style>
       :host {
-        --app-primary-color: #4285f4;
-        --app-secondary-color: black;
-        --app-light-color: white;
-        --app-button-background
+        --app-light-color: var(--paper-grey-50);
+        --app-grid-item-height: 50px;
+        --app-grid-gutter: 8px;
       }
 
       .card {
-        margin: 24px;
-        padding: 16px;
-        color: #757575;
-        border-radius: 5px;
-        background-color: #fff;
-        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+        color: var(--primary-text-color);
+        background-color: var(--primary-background-color);
+        margin-bottom: 12px;
+        padding: 8px;
+      }
+      .card-narrow {
+        padding-left: 24px;
+        padding-right: 24px;
       }
 
-      .circle {
-        display: inline-block;
-        width: 64px;
-        height: 64px;
-        text-align: center;
-        color: #555;
-        border-radius: 50%;
-        background: #ddd;
-        font-size: 30px;
-        line-height: 64px;
+      dom-repeat, dom-if { display: none; }
+
+      .no-overflow {
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
       }
 
-      h1 {
-        margin: 16px 0;
-        color: #212121;
-        font-size: 22px;
+      .grid-two {
+        --app-grid-columns: 2;
+      }
+      .grid-three {
+        --app-grid-columns: 3;
+      }
+      .grid-four {
+        --app-grid-columns: 4;
+      }
+
+      paper-tabs {
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        width: 100%;
+        height: 100%;
+        text-transform: uppercase;
+        margin-bottom: 1px;
+        background-color: var(--primary-color);
+        --paper-tabs-selection-bar-color: var(--accent-color);
+      }
+
+      paper-tab .link {
+        @apply(--layout-horizontal);
+        @apply(--layout-center-center);
+        color: var(--app-light-color);
+        text-decoration: none;
+      }
+
+      paper-icon-button {
+        color: var(--primary-text-color);
       }
 
       paper-button {
@@ -57,17 +82,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       paper-button.button {
         background-color: var(--paper-blue-grey-50);
       }
-      paper-button.toggle-off {
-        background-color: var(--dark-theme-secondary-color);
-      }
       paper-button.toggle-ind {
-        background-color: var(--app-primary-color);
-        opacity: var(--dark-secondary-opacity);
+        background-color: var(--primary-color);
+        opacity: 0.54;
         color: white;
       }
       paper-button.toggle-on {
         color: white;
-        background-color: var(--app-primary-color);
+        background-color: var(--primary-color);
       }
       .app-grid paper-button {
         margin-left: 0;

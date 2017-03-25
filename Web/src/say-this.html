@@ -27,7 +27,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       initSpeech() {
         setTimeout(() => {
           app.fbRoot.child('sayThis').limitToLast(1)
-            .on('child_added', function(snapshot) {
+            .on('child_added', (snapshot) => {
               if (this.enabled === true) {
                 let utterance = snapshot.val();
                 let timeDiff = Date.now() - utterance.sayAt;
@@ -36,7 +36,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   snapshot.ref().remove();
                 }
               }
-            }, this);
+            });
         }, 10000);
       }
 

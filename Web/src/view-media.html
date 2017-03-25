@@ -9,38 +9,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
-<link rel="import" href="fb-data.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="hon-icons.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="fb-data.html">
 
 <dom-module id="view-media">
   <template>
     <style include="shared-styles app-grid-style">
       :host {
         display: block;
-        padding: 10px;
         --app-grid-columns: 3;
-        --app-grid-item-height: 50px;
-        --app-grid-gutter: 8px;
-        background-color: white;
-      }
-      .sonosTrackInfo {
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
       }
       .sonosTitle {
         font-size: 1.75em;
       }
       .sonosArtistAlbum {
         font-size: 1.25em;
-      }
-      dom-repeat {
-        display:none;
       }
     </style>
 
@@ -49,38 +37,43 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <fb-data path="state/sonos/favorites" data="{{sonosFavorites}}"></fb-data>
     <fb-data path="state/harmonyConfig/activity" data="{{harmonyActivities}}"></fb-data>
 
-    <div class="">
-      <div class="sonosTitle sonosTrackInfo">
+    <div class="card card-narrow">
+      <div class="sonosTitle no-overflow">
         [[sonosState.currentTrack.title]] &nbsp;
       </div>
-      <div class="sonosArtistAlbum sonosTrackInfo">
+      <div class="sonosArtistAlbum sonosTrackInfo no-overflow">
         [[sonosState.currentTrack.artist]] - [[sonosState.currentTrack.album]]
       </div>
-    </div>
-    <div class="layout horizontal">
-      <paper-icon-button icon="hon-icons:volume-down"
-        cmd="SONOS_VOL_DOWN" on-tap="tapSonosControl"></paper-icon-button>
-      <paper-icon-button icon="hon-icons:skip-back"
-        cmd="SONOS_PREVIOUS" on-tap="tapSonosControl"></paper-icon-button>
-      <paper-icon-button id="sonosPlay" icon="hon-icons:play"
-        cmd="SONOS_PLAY" on-tap="tapSonosControl"></paper-icon-button>
-      <paper-icon-button icon="hon-icons:skip-forward"
-        cmd="SONOS_NEXT" on-tap="tapSonosControl"></paper-icon-button>
-      <paper-icon-button icon="hon-icons:volume-up"
-        cmd="SONOS_VOL_UP" on-tap="tapSonosControl"></paper-icon-button>
-    </div>
-
-    <div class="app-grid">
-      <template is="dom-repeat" items="[[harmonyActivities]]">
-        <paper-button class="button harmonyActivities" on-tap="tapHarmony">[[item.label]]</paper-button>
-      </template>
-      <paper-button class="button" on-tap="tapRadio">Radio</paper-button>
+      <div class="layout horizontal">
+        <paper-icon-button icon="hon-icons:volume-down"
+          cmd="SONOS_VOL_DOWN" on-tap="tapSonosControl"></paper-icon-button>
+        <paper-icon-button icon="hon-icons:skip-back"
+          cmd="SONOS_PREVIOUS" on-tap="tapSonosControl"></paper-icon-button>
+        <paper-icon-button id="sonosPlay" icon="hon-icons:play"
+          cmd="SONOS_PLAY" on-tap="tapSonosControl"></paper-icon-button>
+        <paper-icon-button icon="hon-icons:skip-forward"
+          cmd="SONOS_NEXT" on-tap="tapSonosControl"></paper-icon-button>
+        <paper-icon-button icon="hon-icons:volume-up"
+          cmd="SONOS_VOL_UP" on-tap="tapSonosControl"></paper-icon-button>
+      </div>
     </div>
 
-    <div class="app-grid">
-      <template is="dom-repeat" items="[[sonosFavorites]]">
-        <paper-button class="button" on-tap="tapSonosFav">[[item.title]]</paper-button>
-      </template>
+
+    <div class="card">
+      <div class="app-grid">
+        <template is="dom-repeat" items="[[harmonyActivities]]">
+          <paper-button class="button harmonyActivities" on-tap="tapHarmony">[[item.label]]</paper-button>
+        </template>
+        <paper-button class="button" on-tap="tapRadio">Radio</paper-button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="app-grid">
+        <template is="dom-repeat" items="[[sonosFavorites]]">
+          <paper-button class="button" on-tap="tapSonosFav">[[item.title]]</paper-button>
+        </template>
+      </div>
     </div>
 
   </template>

@@ -43,14 +43,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
           this.set('data', newData);
         }, 0);
-        app.fbRoot.child(this.path).on('value', function(snap) {
+        app.fbRoot.child(this.path).on('value', (snap) => {
           let newData = snap.val();
           this.set('data', newData);
           setTimeout(() => {
             localStorage.setItem(this.path, JSON.stringify(newData));
           }, 0);
           // console.log(this.path, newData)
-        }, this);
+        });
         // console.log('path', this.path);
       }
     }

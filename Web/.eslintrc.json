@@ -13,7 +13,8 @@
     "brace-style": "off",
     "new-cap": ["error", { "capIsNewExceptions": ["Polymer"] }],
     "no-var": "off",
-    "require-jsdoc": "off"
+    "require-jsdoc": "off",
+    "no-console": ["error", { "allow": ["error"] }]
   },
   "globals": {
     "Polymer": true,

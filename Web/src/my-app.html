@@ -21,29 +21,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="hon-icons.html">
 <link rel="import" href="moment-js.html">
 <link rel="import" href="say-this.html">
 <link rel="import" href="shared-styles.html">
-<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
-<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+<link rel="import" href="push-subscription.html">
 
 <dom-module id="my-app">
   <template>
     <style include="shared-styles">
-
-
       app-drawer-layout:not([narrow]) [drawer-toggle] {
         display: none;
       }
 
       app-header {
-        color: #fff;
-        background-color: var(--app-primary-color);
+        background-color: var(--primary-color);
       }
 
       app-header paper-icon-button {
-        --paper-icon-button-ink-color: white;
+        --paper-icon-button-ink-color: var(--light-accent-color);
+        color: var(--app-light-color);
       }
 
       .drawer-list {
@@ -54,7 +53,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
         padding: 0 16px;
         text-decoration: none;
-        color: var(--app-secondary-color);
+        color: var(--primary-text-color);
         line-height: 40px;
       }
 
@@ -65,28 +64,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       .drawer-list a.iron-selected {
-        color: black;
+        color: var(--primary-text-color);
         font-weight: bold;
-      }
-
-      paper-tabs {
-        font-family: 'Roboto', 'Noto', sans-serif;
-        -webkit-font-smoothing: antialiased;
-        width: 100%;
-        height: 100%;
-        text-transform: uppercase;
-        margin-bottom: 1px;
-      }
-
-      paper-tab {
-        /*flex-grow: 1;*/
-      }
-
-      paper-tab .link {
-        @apply(--layout-horizontal);
-        @apply(--layout-center-center);
-        color: var(--app-light-color);
-        text-decoration: none;
       }
 
     </style>
@@ -104,7 +83,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <!-- Drawer content -->
       <app-drawer id="drawer" slot="drawer">
         <app-toolbar>Home On Node</app-toolbar>
-        <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
+        <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
           <a name="home" href="/">Home</a>
           <a name="hvac" href="/hvac">Heat &amp; Air</a>
           <a href="https://home.nest.com/#structures/ec1dea10-787f-11e3-82cb-123139253bf1">Nest</a>
@@ -115,7 +94,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <a name="door-logs" href="/door-logs">Door Logs</a>
           <a name="presence-logs" href="/presence-logs">Presence Logs</a>
         </iron-selector>
-        <paper-checkbox id="cbNotifications" on-change="changeNotifications">
+        <paper-checkbox id="cbNotifications" checked="{{isSubscribed}}">
           Notifications
         </paper-checkbox>
         <paper-checkbox id="cbSayThis" checked="{{sayThisEnabled}}" on-change="changeSayThis">
@@ -147,6 +126,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         </app-header>
         <say-this id="sayThis" enabled="[[sayThisEnabled]]"></say-this>
+        <push-subscription is-subscribed="{{isSubscribed}}"></push-subscription>
         <iron-pages
             selected="[[page]]"
             attr-for-selected="name"
@@ -202,9 +182,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }, 250);
         setInterval(() => {
           let timeElapsed = (Date.now() - app.lastInput) / 1000;
-          if (timeElapsed > app.RESET_DISPLAY_AFTER && this.page !== 'home') {
-            this.page = 'home';
+          if (timeElapsed > 120 && this.page !== 'home') {
             window.history.pushState({}, null, '/');
+            window.dispatchEvent(new CustomEvent('location-changed'));
           }
         }, 15000);
       }

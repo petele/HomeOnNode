@@ -9,71 +9,85 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="fb-data.html">
+<link rel="import" href="shared-styles.html">
 
 <dom-module id="view-weather">
   <template>
-    <style include="shared-styles">
+    <style include="shared-styles app-grid-style">
       :host {
         display: block;
-        padding: 10px;
+        --weather-icon-size: 120px;
+        --app-grid-item-height: 72px;
       }
-      .visual, .description {
-        width: 50%;
-        display: inline-block;
+      .description {
+        color: var(--secondary-text-color);
       }
       .description span {
-        color: blue;
+        color: var(--primary-text-color);
       }
       iron-icon {
-        width: 120px;
-        height: 120px;
+        width: var(--weather-icon-size);
+        height: var(--weather-icon-size);
+      }
+      .weatherIcon {
+        text-align: center;
+      }
+      .currentTemp {
+        height: var(--weather-icon-size);
+        font-size: 4.5em;
+        vertical-align: middle;
+        text-align: center;
+      }
+      .currentTemp sup {
+        font-size: 0.5em;
       }
     </style>
 
     <fb-data path="state/weather" data="{{weatherData}}"></fb-data>
 
     <div class="card">
-      <div class="current">
-        <div class="visual">
-          <iron-icon icon="hon-icons:[[weatherData.now.icon]]" class="weather-icon"></iron-icon>
-          <div class="temperature">
-            [[weatherData.now.apparentTemperature]]<span class="scale">°F</span>
+      <div class="app-grid grid-two">
+        <div class="weatherIcon">
+          <iron-icon icon="hon-icons:[[weatherData.now.icon]]">
+          </iron-icon>
+        </div>
+        <div class="currentTemp">
+          [[round(weatherData.now.temperature)]]<sup>°F</sup>
+        </div>
+      </div>
+      <div class="app-grid summary">
+        [[weatherData.today.summary]]
+      </div>
+      <div class="app-grid grid-two description">
+        <div>
+          <div>Feel: <span>[[round(weatherData.now.apparentTemperature)]]°</span></div>
+          <div>High: <span>[[round(weatherData.today.temperatureMax)]]°</span></div>
+          <div>Low: <span>[[round(weatherData.today.temperatureMin)]]°</span></div>
+        </div>
+        <div>
+          <div>
+            Wind: <span>[[round(weatherData.now.windSpeed)]]</span> mph
           </div>
-        </div><div class="description">
-          <div>High: <span>[[weatherData.today.temperatureMax]]</span></div>
-          <div>Low: <span>[[weatherData.today.temperatureMin]]</span></div>
-          <div>Humidity: <span>[[weatherData.now.humidity]]</span></div>
-          <div class="wind">
-            Wind: <span>[[weatherData.now.windSpeed]]</span> mph
-            [[weatherData.now.windBearing]]
-            <span class="scale">mph</span>°
-          </div>
-          <div>Sunrise: <span>[[weatherData.today.sunriseTime]]</span></div>
-          <div>Sunset: <span>[[weatherData.today.sunsetTime]]</span></div>
+          <div>Sunrise: <span>[[formatTime(weatherData.today.sunriseTime)]]</span></div>
+          <div>Sunset: <span>[[formatTime(weatherData.today.sunsetTime)]]</span></div>
         </div>
       </div>
     </div>
-
-
-
   </template>
 
   <script>
     class WeatherView extends Polymer.Element {
       static get is() { return 'view-weather'; }
 
-      // static get observers() {
-      //   return [
-      //     '_weatherChanged(weatherData)',
-      //   ];
-      // }
-
-      // _weatherChanged(newVal) {
-      //   window.pete = newVal;
-      // }
-
+      formatTime(t) {
+        return moment(t * 1000).format('h:mm a');
+      }
+      round(n) {
+        return Math.round(n);
+      }
     }
 
     window.customElements.define(WeatherView.is, WeatherView);

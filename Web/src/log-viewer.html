@@ -9,28 +9,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-item/paper-item-body.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
-<link rel="import" href="hon-icons.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="hon-icons.html">
+
 
 <dom-module id="log-viewer">
   <template>
     <style include="shared-styles iron-flex">
       :host {
+        background-color: var(--primary-background-color);
         display: block;
-        padding: 10px;
-        background-color: white;
+        padding: 0 8px;
       }
       .label {
         font-size: 0.75em;
-        color: white;
+        color: var(--app-light-color);
         border-radius: 0.25em;
         padding: 0.2em 0.6em 0.3em;
+        margin-right: 1em;
       }
       .ERROR, .EXCPT, .STOP {
         background-color: var(--paper-red-500);
@@ -66,7 +68,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         line-height: 60px;
       }
       iron-icon {
-        color: white;
+        color: var(--app-light-color);
         width: 48px;
         height: 48px;
       }
@@ -134,14 +136,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         app.fbRoot.child(this.path)
           .limitToLast(this.MAX_ITEMS)
-          .on('child_added', function(snap) {
+          .on('child_added', (snap) => {
             let logItem = snap.val();
             logItem.key = snap.key();
             this.unshift('logs', logItem);
             if (this.logs.length > this.MAX_ITEMS) {
               this.logs.pop();
             }
-          }, this);
+          });
       }
 
       formatDate(val) {

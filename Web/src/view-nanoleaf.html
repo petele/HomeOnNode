@@ -9,48 +9,59 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
-<link rel="import" href="fb-data.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="hon-icons.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../bower_components/paper-slider/paper-slider.html">
 <link rel="import" href="elem-lights.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="fb-data.html">
 
 <dom-module id="view-nanoleaf">
   <template>
     <style include="shared-styles app-grid-style iron-flex iron-flex-alignment">
       :host {
         display: block;
-        padding: 10px;
-        --app-grid-columns: 3;
-        --app-grid-item-height: 50px;
-        --app-grid-gutter: 8px;
-        background-color: white;
+      }
+      paper-slider {
+        margin-left: -16px;
+        margin-right: -16px;
+        --paper-slider-active-color: var(--primary-color);
+        --paper-slider-secondary-color: var(--light-primary-color);
+        --paper-slider-knob-color: var(--primary-color);
+        --paper-slider-pin-color: var(--primary-color);
+      }
+      paper-checkbox {
+        padding-top: 4px;
+        margin-right: 24px;
       }
     </style>
     <elem-lights page="{{page}}"></elem-lights>
     <fb-data path="state/nanoLeaf/state" data="{{nanoLeafState}}"></fb-data>
     <fb-data path="state/nanoLeaf/effects" data="{{nanoLeafEffects}}"></fb-data>
 
-    <div class="layout horizontal">
-      <paper-checkbox id="nanoLeafPower" checked="[[nanoLeafState.on.value]]" on-change="tapPower">
-        On
-      </paper-checkbox>
-      <paper-slider class="flex" value="[[nanoLeafState.brightness.value]]" on-change="setBrightness">
-      </paper-slider>
+    <div class="card card-narrow" style="padding-top: 12px;">
+      <div class="layout horizontal">
+        <paper-checkbox id="nanoLeafPower" checked="[[nanoLeafState.on.value]]" on-change="tapPower">
+          On
+        </paper-checkbox>
+        <paper-slider class="flex" value="[[nanoLeafState.brightness.value]]" on-change="setBrightness">
+        </paper-slider>
+      </div>
     </div>
 
-    <div class="app-grid" id="nlEffects">
-      <template id="ef" is="dom-repeat" items="[[nanoLeafEffects.list]]">
-        <paper-button class="button" name="[[item]]" on-tap="tapNanoLeafEffect">
-          [[item]]
-        </paper-button>
-      </template>
+    <div class="card">
+      <div class="app-grid grid-three" id="nlEffects">
+        <template id="ef" is="dom-repeat" items="[[nanoLeafEffects.list]]">
+          <paper-button class="button" name="[[item]]" on-tap="tapNanoLeafEffect">
+            [[item]]
+          </paper-button>
+        </template>
+      </div>
     </div>
 
   </template>
