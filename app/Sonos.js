@@ -136,6 +136,32 @@ function Sonos() {
     }
   }
 
+  function setVolume(roomName, vol) {
+    let speakers;
+    if (roomName) {
+      speakers = _sonos.getPlayer(roomName);
+    } else {
+      speakers = [];
+      let zones = _sonos.getZones();
+      if (zones && zones[0] && zones[0].members) {
+        zones[0].members.forEach(function(member) {
+          speakers.push(_sonos.getPlayer(member.roomName));
+        });
+      }
+    }
+    if (Array.isArray(speakers) === false) {
+      speakers = [speakers];
+    }
+    speakers.forEach(function(speaker) {
+      if (speaker) {
+        speaker.setVolume(vol, function(error, response) {
+          let msg = 'incrementVolume[' + vol + ']';
+          genericResponseHandler(msg, error, response);
+        });
+      }      
+    });
+  }
+
 
   /*****************************************************************************
    *
@@ -230,15 +256,8 @@ function Sonos() {
 
   this.volumeDown = function(roomName) {
     if (_sonos) {
-      var speaker = getPlayer(roomName);
-      if (speaker) {
-        speaker.setVolume('-2', function(error, response) {
-          genericResponseHandler('volumeDown', error, response);
-        });
-        return true;
-      }
-      log.error(LOG_PREFIX, 'volumeDown failed, unable to find speaker.');
-      return false;
+      setVolume(roomName, '-2');
+      return true;
     }
     log.error(LOG_PREFIX, 'volumeDown failed, Sonos unavilable.');
     return false;
@@ -246,15 +265,8 @@ function Sonos() {
 
   this.volumeUp = function(roomName) {
     if (_sonos) {
-      var speaker = getPlayer(roomName);
-      if (speaker) {
-        speaker.setVolume('+2', function(error, response) {
-          genericResponseHandler('volumeUp', error, response);
-        });
-        return true;
-      }
-      log.error(LOG_PREFIX, 'volumeUp failed, unable to find speaker.');
-      return false;
+      setVolume(roomName, '+2');
+      return true;
     }
     log.error(LOG_PREFIX, 'volumeUp failed, Sonos unavilable.');
     return false;

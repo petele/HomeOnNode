@@ -243,9 +243,9 @@ function Home(config, fb) {
           } else if (cmd.name === 'PREVIOUS') {
             sonos.previous(roomName);
           } else if (cmd.name === 'VOLUME_DOWN') {
-            sonos.volumeDown(roomName);
+            sonos.volumeDown();
           } else if (cmd.name === 'VOLUME_UP') {
-            sonos.volumeUp(roomName);
+            sonos.volumeUp();
           } else {
             log.warn('[HOME] Unknown Sonos command: ' + JSON.stringify(cmd));
           }
