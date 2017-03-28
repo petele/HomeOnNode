@@ -32,7 +32,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <elem-hue-control light-state="{{lightState}}"></elem-hue-control>
     </div>
 
-    <fb-data path="state/hue/lights" data="{{hueLightsObj}}"></fb-data>
+    <fb-data path="state/hue/lights" data="{{hueLightsObj}}" disable-cache-save="true" read-delay="500"></fb-data>
 
     <div>
       <template is="dom-repeat" items="[[lightsByRoom]]">
@@ -90,34 +90,46 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
         const reLight = /(.*)\s-\s(.*)/;
-        let lightsByRoomObj = {};
-        hueLights.forEach(function(light, idx) {
-          if (!light) {
-            return;
-          }
-          let matches = light.name.match(reLight);
-          if (!matches) {
-            return;
-          }
-          let roomName = matches[1];
-          let lightName = matches[2];
-          light.name = lightName;
-          light.lightId = idx;
-          if (!lightsByRoomObj[roomName]) {
-            lightsByRoomObj[roomName] = [];
-          }
-          lightsByRoomObj[roomName].push(light);
-        });
         let lightsByRoom = [];
-        let roomNames = Object.keys(lightsByRoomObj);
-        roomNames.forEach(function(roomName) {
-          let room = {
-            name: roomName,
-            scenes: lightsByRoomObj[roomName].sort(app.sortByName),
-          };
-          lightsByRoom.push(room);
-        }, this);
-        this.lightsByRoom = lightsByRoom.sort(app.sortByName);
+        if (hueLights.newLightObj === 1) {
+          lightsByRoom = hueLights.lightsByRoom;
+        } else {
+          let lightsByRoomObj = {};
+          hueLights.forEach(function(light, idx) {
+            if (!light) {
+              return;
+            }
+            let matches = light.name.match(reLight);
+            if (!matches) {
+              return;
+            }
+            let roomName = matches[1];
+            let lightName = matches[2];
+            light.name = lightName;
+            light.lightId = idx;
+            if (!lightsByRoomObj[roomName]) {
+              lightsByRoomObj[roomName] = [];
+            }
+            lightsByRoomObj[roomName].push(light);
+          });
+          let roomNames = Object.keys(lightsByRoomObj);
+          roomNames.forEach(function(roomName) {
+            let room = {
+              name: roomName,
+              scenes: lightsByRoomObj[roomName].sort(app.sortByName),
+            };
+            lightsByRoom.push(room);
+          }, this);
+          lightsByRoom = lightsByRoom.sort(app.sortByName);
+          setTimeout(() => {
+            let newLightObj = {
+              newLightObj: 1,
+              lightsByRoom: lightsByRoom,
+            };
+            localStorage.setItem('state/hue/lights', JSON.stringify(newLightObj));
+          }, 500);
+        }
+        this.lightsByRoom = lightsByRoom;
       }
 
     }

@@ -38,7 +38,8 @@
   "extraDependencies": [
     "manifest.json",
     "bower_components/webcomponentsjs/*.js",
-    "app.yaml"
+    "app.yaml",
+    "empty.html"
   ],
   "lint": {
     "rules": ["polymer-2"]

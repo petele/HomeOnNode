@@ -1,26 +1,44 @@
 application: petele-home-automation
-version: polymer2
+version: polymer2-@@VERSION@@
 runtime: python27
 threadsafe: yes
 api_version: 1
+
+inbound_services:
+- warmup
 
 handlers:
 - url: /bower_components
   static_dir: bower_components
   secure: always
+  login: admin
+
+- url: /src/bower_components/.*
+  static_files: empty.html
+  upload: empty.html
+  secure: always
+  login: admin
 
 - url: /images
   static_dir: images
   secure: always
+  login: admin
 
 - url: /scripts
   static_dir: scripts
   secure: always
   login: admin
 
+- url: /src/src/.*
+  static_files: empty.html
+  upload: empty.html
+  secure: always
+  login: admin
+
 - url: /src
   static_dir: src
   secure: always
+  login: admin
 
 - url: /index.html
   static_files: index.html

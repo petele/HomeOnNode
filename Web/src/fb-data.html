@@ -30,28 +30,45 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             notify: true,
             reflectToAttribute: true,
           },
+          disableCacheSave: {
+            type: Boolean,
+          },
+          disableCacheLoad: {
+            type: Boolean,
+          },
+          readDelay: {
+            type: Number,
+          },
         };
       }
 
       ready() {
         super.ready();
-        setTimeout(() => {
-          let newData = localStorage.getItem(this.path);
-          if (newData) {
-            newData = JSON.parse(newData);
-            // console.log(newData);
-          }
-          this.set('data', newData);
-        }, 0);
-        app.fbRoot.child(this.path).on('value', (snap) => {
-          let newData = snap.val();
-          this.set('data', newData);
+        const SAVE_DELAY = 250;
+        if (this.disableCacheLoad !== true) {
           setTimeout(() => {
-            localStorage.setItem(this.path, JSON.stringify(newData));
+            let newData = localStorage.getItem(this.path);
+            if (newData) {
+              newData = JSON.parse(newData);
+            }
+            this.set('data', newData);
           }, 0);
-          // console.log(this.path, newData)
-        });
-        // console.log('path', this.path);
+        }
+        let delay = this.readDelay;
+        if (Number.isNaN(delay) || !delay) {
+          delay = 0;
+        }
+        setTimeout(() => {
+          app.fbRoot.child(this.path).on('value', (snap) => {
+            let newData = snap.val();
+            this.set('data', newData);
+            if (this.disableCacheSave !== true) {
+              setTimeout(() => {
+                localStorage.setItem(this.path, JSON.stringify(newData));
+              }, SAVE_DELAY);
+            }
+          });
+        }, delay);
       }
     }
 

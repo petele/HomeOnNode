@@ -60,9 +60,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 
     <div class="card">
-      <div class="app-grid">
-        <template is="dom-repeat" items="[[harmonyActivities]]">
-          <paper-button class="button harmonyActivities" on-tap="tapHarmony">[[item.label]]</paper-button>
+      <div class="app-grid" id="harmonyButtons">
+        <template is="dom-repeat" items="[[harmonyActivities]]" >
+          <paper-button class="button" on-tap="tapHarmony">[[item.label]]</paper-button>
         </template>
         <paper-button class="button" on-tap="tapRadio">Radio</paper-button>
       </div>
@@ -86,6 +86,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return [
           '_sonosPlayerState(sonosState.playerState)',
           '_harmonyActivityChanged(currentHarmonyActivity)',
+          '_sonosURISource(sonosState.currentTrack.uri, sonosState.playerState)',
         ];
       }
 
@@ -106,12 +107,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return '';
       }
 
-      _harmonyActivityChanged(newVal) {
+      _sonosURISource(uri, playerState) {
+        if (uri === 'x-rincon-stream:RINCON_5CAAFD0C01DC01400') {
+          if (playerState === 'PLAYING') {
+            this._harmonyActivityChanged(this.currentHarmonyActivity, true);
+          }
+        } else {
+          this._harmonyActivityChanged(this.currentHarmonyActivity, false);
+        }
+      }
+
+      _harmonyActivityChanged(newVal, isRadio) {
         if (!newVal) {
           return;
         }
-        let elements = this.root.querySelectorAll('.harmonyActivities');
         let currentActivity = newVal.label.toLowerCase();
+        if (currentActivity === 'sonos' && isRadio === true) {
+          currentActivity = 'radio';
+        }
+        let elements = this.$.harmonyButtons.querySelectorAll('paper-button');
         elements.forEach(function(elem) {
           elem.classList.remove('toggle-ind');
           if (currentActivity === elem.innerText.toLowerCase()) {

@@ -46,7 +46,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <fb-data path="state/doNotDisturb" data="{{dataDnD}}"></fb-data>
     <fb-data path="state/systemState" data="{{dataSystemState}}"></fb-data>
-    <fb-data path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ" data="{{dataNestCam}}"></fb-data>
+    <fb-data path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ/is_streaming" data="{{dataNestCam}}"></fb-data>
 
 
     <div class="card">
@@ -134,7 +134,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
         let icon = 'hon-icons:camera-off';
-        if (newVal && newVal.is_streaming === true) {
+        if (newVal === true) {
           icon = 'hon-icons:camera-on';
         }
         this.nestCamIcon = icon;
@@ -163,23 +163,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         this.systemStateIcon = icon;
       }
-      toggleDoNotDisturb() {
+      toggleDoNotDisturb(event) {
         let newVal = 'ON';
         if (this.dataDnD === true) {
           newVal = 'OFF';
         }
         app.sendCommand({doNotDisturb: newVal});
       }
-      toggleState() {
+      toggleState(event) {
         let cmdName = 'STATE_HOME';
         if (this.dataSystemState === 'HOME') {
           cmdName = 'STATE_ARMED';
         }
         app.sendCommand({cmdName: cmdName});
       }
-      toggleNestCam() {
+      toggleNestCam(event) {
         let newVal = 'ON';
-        if (this.dataNestCam.is_streaming === true) {
+        if (this.dataNestCam === true) {
           newVal = 'OFF';
         }
         app.sendCommand({nestCam: newVal});
@@ -188,7 +188,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.currentTime = moment().format('h:mm a');
         setTimeout(() => { this._clockTick(); }, 3000);
       }
-
     }
 
     window.customElements.define(HomeView.is, HomeView);

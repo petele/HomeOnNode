@@ -18,7 +18,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="fb-data.html">
 <link rel="import" href="hon-icons.html">
 
-
 <dom-module id="view-hue-scenes">
   <template>
     <style include="shared-styles app-grid-style">
@@ -27,7 +26,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
     <elem-lights page="{{page}}"></elem-lights>
-    <fb-data path="state/hue/scenes" data="{{hueSceneObj}}"></fb-data>
+    <fb-data path="state/hue/scenes" data="{{hueSceneObj}}" disable-cache-save="true" read-delay="500"></fb-data>
 
     <div class="card">
       <div class="app-grid grid-three">
@@ -74,56 +73,72 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _scenesChanged(scenes) {
+        const reScene = /(.*)\s\[(.*)\]/;
         if (!scenes) {
           return;
         }
-        const reScene = /(.*)\s\[(.*)\]/;
         let houseScenes = [];
-        let scenesByRoom = {};
-        let keys = Object.keys(scenes);
-        keys.forEach(function(key) {
-          let scene = scenes[key];
-          if (scene.name === 'Last on state') {
-            return;
-          }
-          scene.key = key;
-          let matches = scene.name.match(reScene);
-          if (!matches) {
-            houseScenes.push(scene);
-            return;
-          }
-          let roomName = matches[2];
-          let sceneName = matches[1];
-          scene.name = sceneName;
-
-          if (!scenesByRoom[roomName]) {
-            scenesByRoom[roomName] = {scenes: []};
-          }
-          if (sceneName === 'On') {
-            scenesByRoom[roomName].on = scene;
-          } else if (sceneName === 'Off') {
-            scenesByRoom[roomName].off = scene;
-          } else {
-            scenesByRoom[roomName].scenes.push(scene);
-          }
-        });
         let roomScenes = [];
-        let roomNames = Object.keys(scenesByRoom);
-        roomNames.forEach(function(roomName) {
-          let room = {
-            name: roomName,
-            scenes: scenesByRoom[roomName].scenes.sort(app.sortByName),
-          };
-          if (scenesByRoom[roomName].on) {
-            room.on = [scenesByRoom[roomName].on];
-          }
-          if (scenesByRoom[roomName].off) {
-            room.off = [scenesByRoom[roomName].off];
-          }
-          roomScenes.push(room);
-        }, this);
-        this.houseScenes = houseScenes.sort(app.sortByName);
-        this.roomScenes = roomScenes.sort(app.sortByName);
+        if (scenes.newSceneObj === 1) {
+          houseScenes = scenes.houseScenes;
+          roomScenes = scenes.roomScenes;
+        } else {
+          let scenesByRoom = {};
+          let keys = Object.keys(scenes);
+          keys.forEach(function(key) {
+            let scene = scenes[key];
+            if (scene.name === 'Last on state') {
+              return;
+            }
+            scene.key = key;
+            let matches = scene.name.match(reScene);
+            if (!matches) {
+              houseScenes.push(scene);
+              return;
+            }
+            let roomName = matches[2];
+            let sceneName = matches[1];
+            scene.name = sceneName;
+
+            if (!scenesByRoom[roomName]) {
+              scenesByRoom[roomName] = {scenes: []};
+            }
+            if (sceneName === 'On') {
+              scenesByRoom[roomName].on = scene;
+            } else if (sceneName === 'Off') {
+              scenesByRoom[roomName].off = scene;
+            } else {
+              scenesByRoom[roomName].scenes.push(scene);
+            }
+          });
+
+          let roomNames = Object.keys(scenesByRoom);
+          roomNames.forEach((roomName) => {
+            let room = {
+              name: roomName,
+              scenes: scenesByRoom[roomName].scenes.sort(app.sortByName),
+            };
+            if (scenesByRoom[roomName].on) {
+              room.on = [scenesByRoom[roomName].on];
+            }
+            if (scenesByRoom[roomName].off) {
+              room.off = [scenesByRoom[roomName].off];
+            }
+            roomScenes.push(room);
+          });
+          houseScenes = houseScenes.sort(app.sortByName);
+          roomScenes = roomScenes.sort(app.sortByName);
+          setTimeout(() => {
+            let newSceneObj = {
+              newSceneObj: 1,
+              houseScenes: this.houseScenes,
+              roomScenes: this.roomScenes,
+            };
+            localStorage.setItem('state/hue/scenes', JSON.stringify(newSceneObj));
+          }, 500);
+        }
+        this.houseScenes = houseScenes;
+        this.roomScenes = roomScenes;
       }
 
     }

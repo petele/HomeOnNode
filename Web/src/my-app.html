@@ -45,10 +45,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: var(--app-light-color);
       }
 
-      .drawer-list {
-        margin: 0 20px;
-      }
-
       .drawer-list a {
         display: block;
         padding: 0 16px;
@@ -61,6 +57,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding: 0 16px;
         display: block;
         line-height: 40px;
+      }
+
+      app-drawer div {
+        margin-top: 16px;
+        padding: 0 16px;
+        color: var(--secondary-text-color);
+        font-size: smaller;
       }
 
       .drawer-list a.iron-selected {
@@ -102,6 +105,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-checkbox id="cbSayThis" checked="{{sayThisEnabled}}" on-change="changeSayThis">
           Say This
         </paper-checkbox>
+        <div style="display:none;">
+          [[appVersion]]<br>
+          [[appBuildDate]]
+        </div>
       </app-drawer>
 
       <!-- Main content -->
@@ -179,6 +186,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ready() {
         super.ready();
         setTimeout(() => {
+          this.appVersion = app.version;
+          this.appBuildDate = app.buildDate;
           app.$ = this.$;
           this.sayThisEnabled = localStorage.getItem('sayThis') === 'true';
         }, 250);
