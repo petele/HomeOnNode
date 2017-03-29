@@ -1,13 +1,12 @@
 window.app = {};
 app.lastInput = Date.now();
 app.fbRoot = new Firebase(window.fbURL);
-app.fbRoot.authWithCustomToken(window.fbKey, function(err, user) {
+app.fbRoot.authWithCustomToken(window.fbKey, function(err) {
   if (err) {
     app.showToast('Firebase authentication error.');
-    console.log('Firebase Auth Error', err);
+    console.error('Firebase Auth Error', err);
     return;
   }
-  app.showToast('auth')
   app.fbRoot.child('.info/connected').on('value', function(snapshot) {
     if (snapshot.val() === true) {
       app.showToast('Connected to HomeOnNode');
@@ -15,6 +14,9 @@ app.fbRoot.authWithCustomToken(window.fbKey, function(err, user) {
       app.showToast('ERROR: Connection to HomeOnNode lost.');
     }
   });
+  setInterval(() => {
+    app.fbRoot.child('monitor/webClients/heartbeat').set(Date.now());
+  }, 3 * 60 * 1000);
 });
 app.sendCommand = function(cmd) {
   app.lastInput = Date.now();
@@ -22,6 +24,7 @@ app.sendCommand = function(cmd) {
   app.fbRoot.child('commands').push(cmd, function(err) {
     if (err) {
       console.error('[sendCommand]', cmd, err);
+      app.showToast(err.message);
     }
   });
 };

@@ -19,6 +19,7 @@
   "globals": {
     "Polymer": true,
     "moment": true,
-    "app": true
+    "app": true,
+    "Firebase": true
   }
 }
