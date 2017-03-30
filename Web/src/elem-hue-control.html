@@ -99,7 +99,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _colorChanged(c) {
-        console.log('newColor', c);
+        this.updateLightState();
       }
 
       updateAction(event) {
@@ -130,16 +130,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       updateLightState() {
-        let newLightState = {};
+        let newLightState = Object.assign({}, this.color);
         if (this.isOn === false) {
-          newLightState.on = false;
+          newLightState = {on: false};
         } else if (this.isOn === true) {
           newLightState.on = true;
           if (this.bri > 0) {
             newLightState.bri = Math.round((this.bri / 100) * 254);
           }
         } else {
-          newLightState.toggle = true;
+          newLightState = {toggle: true};
         }
         this.set('lightState', newLightState);
       }

@@ -24,69 +24,80 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
-      paper-dialog {
-        min-width: 350px;
-      }
       .app-grid {
         padding: 0;
       }
-      .pete paper-button {
-        width: 25%;
-        margin: 0;
+      .colorPicker paper-button {
         border-radius: 0;
-      }
-      paper-slider {
-        width: 100%;
+        margin: 0;
+        width: 25%;
+        min-height: 48px;
       }
       .circle {
-        display: inline-block;
-        width: 64px;
-        height: 64px;
-        text-align: center;
         border-radius: 50%;
-        font-size: 30px;
+        display: inline-block;
+        font-size: 12px;
+        height: 64px;
         line-height: 60px;
+        text-align: center;
+        width: 64px;
       }
       paper-icon-button[disabled] {
         opacity: 0.5;
       }
+      .ctContainer {
+        background-image: url(/images/color-temp-map.png);
+        background-size: cover;
+        margin-left: 24px;
+        margin-right: 24px;
+      }
+      paper-slider {
+        margin-left: -36px;
+        width: calc(100% + 72px);
+      }
     </style>
 
-    <paper-icon-button disabled="[[disabled]]" icon="hon-icons:color-picker" style="color: [[selectedColor]];" on-tap="showDialog">
+    <paper-icon-button 
+      disabled="[[disabled]]" 
+      icon="hon-icons:color-picker" 
+      style="color: [[colorValue]];"
+      on-tap="showDialog">
     </paper-icon-button>
 
     <paper-dialog id="colorDialog">
       <div class="layout horizontal">
         <h1 class="flex">Color</h1>
-        <div id="colorSample" class="circle" style="background-color: [[selectedColor]];">
+        <div id="colorSample" class="circle" style="background-color: [[colorValue]];">
+          [[colorInfo]]
         </div>
       </div>
 
       <div>
-        <div class="pete layout horizontal wrap">
+        <div class="colorPicker layout horizontal wrap">
+          <paper-button class="button" on-tap="tapReset">
+            Reset
+          </paper-button>
           <template is="dom-repeat" items="[[colors]]">
             <paper-button class="button" on-tap="tapColor" style="background-color: [[item.hex]]">
-              &nbsp;
+              [[item.label]]
             </paper-button>
           </template>
         </div>
       </div>
-      <div>
-        <paper-slider class="flex" value="{{hue}}" min="0" max="360">
-        </paper-slider>
-        <paper-slider class="flex" value="{{sat}}" min="0" max="100">
-        </paper-slider>
-        <paper-slider class="flex" value="{{lig}}" min="0" max="100">
+      <div class="ctContainer">
+        <paper-slider value="{{ctMired}}" min="153" max="500">
         </paper-slider>
       </div>
+      <!--
       <div>
-        <paper-checkbox checked="{{colorCycle}}">
+        <paper-checkbox checked="{{colorCycle}}" on-change="tapColorCycle">
           Color Cycle
         </paper-checkbox>
       </div>
-
+      -->
       <div class="buttons">
-        <paper-button dialog-dismiss autofocus>Close</paper-button>
+        <!-- <paper-button dialog-dismiss>Cancel</paper-button> -->
+        <paper-button dialog-confirm autofocus>Close</paper-button>
       </div>
     </paper-dialog>
 
@@ -99,19 +110,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ready() {
         super.ready();
         this.colors = [
-          {hex: '#ff0000', xy: [1, 2]},
-          {hex: '#ffff00', xy: [1, 2]},
-          {hex: '#ffffff', xy: [1, 2]},
-          {hex: '#00ffff', xy: [1, 2]},
-          {hex: '#0000ff', xy: [1, 2]},
-          {hex: '#000000', xy: [1, 2]},
-          {hex: '#ff00ff', xy: [1, 2]},
-          {hex: '#f0f0f0', xy: [1, 2]},
-          {hex: '#ff0000', xy: [1, 2]},
-          {hex: '#cc00aa', xy: [1, 2]},
-          {hex: '#382361', xy: [1, 2]},
-          {hex: '#927461', xy: [1, 2]},
+          {hex: 'Ivory', label: 'Default', hueValue: {ct: 320}},
+          {hex: 'Azure', label: 'Cool', hueValue: {ct: 160}},
+          {hex: 'Cornsilk', label: 'Warm', hueValue: {ct: 490}},
+
+          {hex: 'rgba(238, 130, 238, 0.5)', label: 'Rose',
+            hueValue: {xy: [0.3336, 0.2649]}},
+          {hex: 'Magenta', label: 'RoseD', hueValue: {xy: [0.3612, 0.1607]}},
+          {hex: 'LightSalmon', label: 'Peach', hueValue: {hue: 8191, sat: 213}},
+          {hex: 'Orange', label: 'Reading', hueValue: {xy: [0.6126, 0.3667]}},
+
+          {hex: 'Blue', label: 'Blue', hueValue: {xy: [0.168, 0.041]}},
+          {hex: 'BlueViolet', label: 'Purple',
+            hueValue: {xy: [0.2703, 0.1398]}},
+          {hex: 'OrangeRed', label: 'Crimson',
+            hueValue: {xy: [0.6417, 0.304]}},
+          {hex: 'HotPink', label: 'Pink', hueValue: {xy: [0.5386, 0.2468]}},
+
+          {hex: 'Aqua', label: 'Aqua', hueValue: {xy: [0.3237, 0.3497]}},
+          {hex: 'Orange', label: 'Orange', hueValue: {xy: [0.5916, 0.3824]}},
+          {hex: 'Green', label: 'Green', hueValue: {xy: [0.1984, 0.6746]}},
+          {hex: 'Lavender', label: 'Lavender',
+            hueValue: {xy: [0.3085, 0.3071]}},
         ];
+        this.color = {};
+        this.colorInfo = '';
+        this.colorValue = '#CCCCCC';
       }
 
       static get properties() {
@@ -129,27 +153,45 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get observers() {
         return [
-          '_slidersChanged(hue, sat, lig)',
+          'colorTempChanged(ctMired)',
         ];
       }
 
       showDialog() {
+        app.lastInput = Date.now();
         this.$.colorDialog.open();
       }
 
-      _slidersChanged(hue, sat, lig) {
-        if (hue === undefined || sat === undefined || lig === undefined) {
+      colorTempChanged(newCTMired) {
+        app.lastInput = Date.now();
+        if (newCTMired === undefined) {
           return;
         }
-        this.selectedColor = `hsl(${hue}, ${sat}%, ${lig}%)`;
-        this.color = {hue: hue, sat: sat};
-        console.log(this.hslColor);
+        if (newCTMired < 326) {
+          let o = (326 - newCTMired) / 173;
+          this.colorValue = `rgba(210, 250, 255, ${o})`;
+        } else {
+          let o = ((newCTMired - 153 - 173) * 2) / (500 - 153);
+          this.colorValue = `rgba(250, 218, 87, ${o})`;
+        }
+        this.color = {ct: newCTMired};
+        this.colorInfo = newCTMired;
       }
 
       tapColor(event) {
+        app.lastInput = Date.now();
         let selectedColor = event.model.item;
-        this.color = selectedColor.xy;
-        this.selectedColor = selectedColor.hex;
+        this.color = selectedColor.hueValue;
+        this.colorInfo = '';
+        this.colorValue = selectedColor.hex;
+        this.$.colorDialog.close();
+      }
+
+      tapReset() {
+        app.lastInput = Date.now();
+        this.color = {};
+        this.colorInfo = '';
+        this.colorValue = '#CCCCCC';
       }
 
     }
