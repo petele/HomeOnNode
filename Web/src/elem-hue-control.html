@@ -12,11 +12,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
-<link rel="import" href="../bower_components/paper-swatch-picker/paper-swatch-picker.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="shared-styles.html">
+<link rel="import" href="color-picker.html">
 
 <dom-module id="elem-hue-control">
   <template>
@@ -47,12 +47,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </paper-listbox>
       </paper-dropdown-menu>
 
-      <paper-button disabled="{{disablePickers}}">
-        <iron-icon icon="hon-icons:color-picker">
-      </paper-button>
-
-      <!-- <paper-swatch-picker column-count=5 color-list='["#65a5f2", "#83be54", "#f0d551", "#e5943c", "#a96ddb"]'>
-      </paper-swatch-picker> -->
+      <color-picker disabled="{{disablePickers}}" color="{{color}}"></color-picker>
 
       <paper-dropdown-menu id="pdmBri" 
         label="Brightness" disabled="{{disablePickers}}">
@@ -95,6 +90,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             reflectToAttribute: true,
           },
         };
+      }
+
+      static get observers() {
+        return [
+          '_colorChanged(color)',
+        ];
+      }
+
+      _colorChanged(c) {
+        console.log('newColor', c);
       }
 
       updateAction(event) {
