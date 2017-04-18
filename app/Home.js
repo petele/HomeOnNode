@@ -667,7 +667,7 @@ function Home(config, fb) {
 
   function initNest() {
     try {
-      nest = new Nest.Nest(Keys.nest.token, fb.child('config'));
+      nest = new Nest.Nest(Keys.nest.token, fb.child('config/HomeOnNode'));
       nest.on('change', updateNestState);
       // nest.on('state', updateNestState);
     } catch (ex) {
