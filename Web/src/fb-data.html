@@ -12,6 +12,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="fb-data">
   <template>
+
+    <firebase-document id="fbDoc" path="[[path]]">
+    </firebase-document>
+
   </template>
 
   <script>
@@ -44,7 +48,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        const SAVE_DELAY = 250;
         if (this.disableCacheLoad !== true) {
           setTimeout(() => {
             let newData = localStorage.getItem(this.path);
@@ -53,22 +56,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
             this.set('data', newData);
           }, 0);
-        }
-        let delay = this.readDelay;
-        if (Number.isNaN(delay) || !delay) {
-          delay = 0;
-        }
-        setTimeout(() => {
-          app.fbRoot.child(this.path).on('value', (snap) => {
-            let newData = snap.val();
-            this.set('data', newData);
-            if (this.disableCacheSave !== true) {
-              setTimeout(() => {
-                localStorage.setItem(this.path, JSON.stringify(newData));
-              }, SAVE_DELAY);
-            }
+          this.$.fbDoc.ref.on('value', (snapshot) => {
+            this.set('data', snapshot.val());
           });
-        }, delay);
+        }
       }
     }
 

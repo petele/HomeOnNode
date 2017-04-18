@@ -12,6 +12,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="say-this">
   <template>
+
+    <firebase-query
+        id="fbSayThis"
+        path="sayThis"
+        limit-to-last="1">
+    </firebase-query>
+
   </template>
 
   <script>
@@ -21,27 +28,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ready() {
         super.ready();
         this.ALLOWED_DIFF = 30 * 60 * 1000;
-        this.initSpeech();
-      }
-
-      initSpeech() {
         setTimeout(() => {
-          app.fbRoot.child('sayThis').limitToLast(1)
-            .on('child_added', (snapshot) => {
-              if (this.enabled === true) {
-                let utterance = snapshot.val();
-                let timeDiff = Date.now() - utterance.sayAt;
-                if (timeDiff < this.ALLOWED_DIFF) {
-                  this.sayThis(utterance.utterance, utterance.lang);
-                  snapshot.ref().remove();
-                }
-              }
-            });
+          this.initSpeech();
         }, 10000);
       }
 
+      initSpeech() {
+        this.$.fbSayThis.ref.on('child_added', (snapshot) => {
+          if (this.enabled === true) {
+            let utterance = snapshot.val();
+            let timeDiff = Date.now() - utterance.sayAt;
+            if (timeDiff < this.ALLOWED_DIFF) {
+              this.sayThis(utterance.utterance, utterance.lang);
+              snapshot.ref.remove();
+            }
+          }
+        });
+      }
+
       sayThis(sentence, lang) {
-        lang = lang || 'en-GB';
+        lang = lang || 'en-US';
         let utterance = new window.SpeechSynthesisUtterance(sentence);
         utterance.lang = lang;
         window.speechSynthesis.speak(utterance);

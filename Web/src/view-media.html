@@ -91,18 +91,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       getTitle(currentTrack) {
-        if (currentTrack.uri.indexOf('spdif') > 0) {
-          return 'TV';
+        if (currentTrack) {
+          if (currentTrack.uri && currentTrack.uri.indexOf('spdif') > 0) {
+            return 'TV';
+          }
+          if (currentTrack.title) {
+            return currentTrack.title;
+          }
         }
-        return currentTrack.title;
+        return '';
       }
 
       getArtistAlbum(currentTrack) {
-        if (currentTrack.artist && currentTrack.album) {
-          return currentTrack.artist + ' - ' + currentTrack.album;
-        }
-        if (currentTrack.artist || currentTrack.album) {
-          return currentTrack.artist || currentTrack.album;
+        if (currentTrack) {
+          if (currentTrack.artist && currentTrack.album) {
+            return currentTrack.artist + ' - ' + currentTrack.album;
+          }
+          if (currentTrack.artist || currentTrack.album) {
+            return currentTrack.artist || currentTrack.album;
+          }
         }
         return '';
       }

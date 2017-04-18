@@ -1,0 +1,114 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
+
+<dom-module id="my-firebase">
+  <template>
+
+    <paper-toast id="toast" text=""></paper-toast>
+
+    <firebase-app
+      auth-domain="petele-at-home.firebaseapp.com"
+      database-url="https://petele-at-home.firebaseio.com/"
+      api-key="AIzaSyCimAEx3GDDYlcQNnmQ2R9tu0CIEg8JVTA"
+      storage-bucket="petele-at-home.appspot.com"
+      messaging-sender-id="999286632442">
+    </firebase-app>
+
+    <firebase-auth id="fbAuth" on-error="handleError">
+    </firebase-auth>
+
+    <firebase-document
+      path="monitor/webClients/heartbeat"
+      data="{{fbHeartbeat}}">
+    </firebase-document>
+
+    <firebase-document
+      path=".info/connected"
+      data="{{fbIsConnected}}">
+    </firebase-document>
+
+    <firebase-document id="sendCommand" path="commands">
+    </firebase-document>
+
+  </template>
+  <script src="/scripts/keys.js"></script>
+  <script>
+    class MyFirebase extends Polymer.Element {
+      static get is() { return 'my-firebase'; }
+
+      static get observers() {
+        return [
+          'onlineChanged(fbIsConnected)',
+        ];
+      }
+
+      ready() {
+        super.ready();
+        this.onHeartbeat();
+        let fbUser = window.fbUser;
+        let fbPassword = window.fbPassword;
+        this.$.fbAuth.signInWithEmailAndPassword(fbUser, fbPassword)
+          .then(this.onFirebaseAuth)
+          .catch(this.onFirebaseAuthFail);
+        window.app = window.app || {};
+        window.app.sendCommand = (cmd) => {
+          window.app.lastInput = Date.now();
+          console.log('[sendCommand]', cmd);
+          this.$.sendCommand.ref.push(cmd, (err) => {
+            if (err) {
+              this.$.toast.text = err.message;
+              this.$.toast.show();
+            }
+          });
+        };
+      }
+
+      showToast(message) {
+        this.$.toast.text = message;
+        this.$.toast.show();
+      }
+
+      onFirebaseAuth() {
+        this.showToast('Logged in.');
+      }
+
+      onFirebaseAuthFail(err) {
+        console.error('onFirebaseAuthFail', err);
+        this.showToast(err.message);
+      }
+
+      onlineChanged(newVal) {
+        if (newVal === true) {
+          this.showToast('Connected.');
+        } else {
+          this.showToast('Disconnected.');
+        }
+      }
+
+      onHeartbeat() {
+        this.fbHeartbeat = Date.now();
+        setTimeout(() => {
+          this.onHeartbeat();
+        }, 3 * 60 * 1000);
+      }
+
+      handleError(err) {
+        console.error(err);
+        this.showToast(err.message);
+      }
+    }
+
+    window.customElements.define(MyFirebase.is, MyFirebase);
+  </script>
+</dom-module>

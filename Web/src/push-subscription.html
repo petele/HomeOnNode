@@ -12,6 +12,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="push-subscription">
   <template>
+
+    <firebase-document id="fbPush" path="pushSubscribers">
+    </firebase-document>
+
   </template>
 
   <script>
@@ -82,7 +86,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 subscriptionInfo: JSON.parse(JSON.stringify(subscription)),
               };
               let subKey = this._getSubscriptionKey(subscription.endpoint);
-              app.fbRoot.child(`pushSubscribers/${subKey}`).set(subObj);
+              this.$.fbPush.ref.child(subKey).set(subObj);
             });
           }).catch(this._logError);
       }
@@ -92,7 +96,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           swReg.pushManager.getSubscription().then((subscription) => {
             if (subscription) {
               let subKey = this._getSubscriptionKey(subscription.endpoint);
-              app.fbRoot.child(`pushSubscribers/${subKey}`).remove();
+              this.$.fbPush.ref.child(subKey).remove();
               subscription.unsubscribe();
             }
           });

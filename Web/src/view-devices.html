@@ -60,6 +60,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
     <fb-data path="devices" data="{{devicesObj}}"></fb-data>
 
+    <firebase-document id="fbDevices" path="devices">
+    </firebase-document>
+
     <paper-dialog id="confirmRebootDialog" on-iron-overlay-closed="confirmRebootClosed">
       <h2>Confirm</h2>
       <p>
@@ -145,8 +148,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       confirmRebootClosed(event) {
         if (event.detail.confirmed === true && this.selectedDevice) {
-          let path = `devices/${this.selectedDevice.deviceId}/restart`;
-          app.fbRoot.child(path).set(true);
+          let path = `${this.selectedDevice.deviceId}/restart`;
+          this.$.fbDevices.ref.child(path).set(true);
         }
         this.selectedDevice = null;
       }

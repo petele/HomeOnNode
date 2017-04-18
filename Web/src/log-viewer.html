@@ -74,6 +74,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
+    <firebase-query
+        id="query"
+        path="{{path}}"
+        limit-to-last="{{MAX_ITEMS}}">
+    </firebase-query>
+
     <paper-dialog id="detailDialog">
       <div class="layout horizontal">
         <h1 class="flex">[[getHeading(selectedLogItem)]]</h1>
@@ -134,16 +140,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (!this.path) {
           throw new Error('missing path attribute');
         }
-        app.fbRoot.child(this.path)
-          .limitToLast(this.MAX_ITEMS)
-          .on('child_added', (snap) => {
-            let logItem = snap.val();
-            logItem.key = snap.key();
-            this.unshift('logs', logItem);
-            if (this.logs.length > this.MAX_ITEMS) {
-              this.logs.pop();
-            }
-          });
+        this.$.query.ref.on('child_added', (snapshot) => {
+          let logItem = snapshot.val();
+          logItem.key = snapshot.key;
+          this.unshift('logs', logItem);
+          if (this.logs.length > this.MAX_ITEMS) {
+            this.logs.pop();
+          }
+        });
       }
 
       formatDate(val) {
