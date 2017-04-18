@@ -25,13 +25,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       messaging-sender-id="999286632442">
     </firebase-app>
 
-    <firebase-auth id="fbAuth" on-error="handleError">
+    <firebase-auth id="fbAuth">
     </firebase-auth>
-
-    <firebase-document
-      path="monitor/webClients/heartbeat"
-      data="{{fbHeartbeat}}">
-    </firebase-document>
 
     <firebase-document
       path=".info/connected"
@@ -39,6 +34,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </firebase-document>
 
     <firebase-document id="sendCommand" path="commands">
+    </firebase-document>
+
+    <firebase-document 
+      path="devices/HomeOnNode/heartbeat"
+      data="{{honHeartbeat}}">
     </firebase-document>
 
   </template>
@@ -50,28 +50,40 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get observers() {
         return [
           'onlineChanged(fbIsConnected)',
+          'serverTick(honHeartbeat)',
         ];
       }
 
       ready() {
         super.ready();
-        this.onHeartbeat();
-        let fbUser = window.fbUser;
-        let fbPassword = window.fbPassword;
-        this.$.fbAuth.signInWithEmailAndPassword(fbUser, fbPassword)
-          .then(this.onFirebaseAuth)
-          .catch(this.onFirebaseAuthFail);
+        this.initFirebase();
         window.app = window.app || {};
         window.app.sendCommand = (cmd) => {
           window.app.lastInput = Date.now();
-          console.log('[sendCommand]', cmd);
-          this.$.sendCommand.ref.push(cmd, (err) => {
+          if (this.$.fbAuth.signedIn === false) {
+            this.showToast('Not logged in.');
+            this.initFirebase(cmd);
+            return;
+          }
+          let ref = this.$.sendCommand.ref.push(cmd, (err) => {
             if (err) {
-              this.$.toast.text = err.message;
-              this.$.toast.show();
+              this.showToast(err.message);
             }
           });
+          console.log('[sendCommand]', ref.key, cmd);
         };
+      }
+
+      initFirebase(cmd) {
+        let fbUser = window.fbUser;
+        let fbPassword = window.fbPassword;
+        this.$.fbAuth.signInWithEmailAndPassword(fbUser, fbPassword)
+          .then(() => {
+            if (cmd) {
+              app.sendCommand(cmd);
+            }
+          })
+          .catch(this.onFirebaseAuthFail);
       }
 
       showToast(message) {
@@ -79,12 +91,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.toast.show();
       }
 
-      onFirebaseAuth() {
-        this.showToast('Logged in.');
-      }
-
       onFirebaseAuthFail(err) {
-        console.error('onFirebaseAuthFail', err);
+        console.log('onFirebaseAuthFail', err);
         this.showToast(err.message);
       }
 
@@ -96,17 +104,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      onHeartbeat() {
-        this.fbHeartbeat = Date.now();
-        setTimeout(() => {
-          this.onHeartbeat();
-        }, 3 * 60 * 1000);
+      serverTick(newVal) {
+        if (newVal) {
+          this.serverTickedAt = newVal;
+        }
       }
 
-      handleError(err) {
-        console.error(err);
-        this.showToast(err.message);
-      }
     }
 
     window.customElements.define(MyFirebase.is, MyFirebase);

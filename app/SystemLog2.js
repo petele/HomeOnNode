@@ -2,7 +2,6 @@
 
 var fs = require('fs');
 var util = require('util');
-var path = require('path');
 var zlib = require('zlib');
 var colors = require('colors');
 var gitHead = require('./version');
@@ -130,7 +129,11 @@ function generateLog(level, prefix, message, extra) {
     version: gitHead.head
   };
   if (extra) {
-    result.extra = extra;
+    if (typeof extra === 'string') {
+      result.extra = extra;
+    } else {
+      result.extra = JSON.stringify(extra);
+    }
     if (extra.message) {
       result.exceptionMessage = extra.message;
     }
@@ -192,12 +195,13 @@ function printLog(logObj) {
 }
 
 function saveLogToFB(logObj) {
-  if (logObj.levelValue > 40) {
+  if (logObj.levelValue > 50) {
     return;
   }
   if (_fbRef) {
     try {
       _fbRef.child(FIREBASE_LOG_PATH).push(logObj);
+      _fbErrors = 0;
     } catch (ex) {
       exception('LOGGER', 'Error pushing log item to Firebase', ex);
       if (_fbErrors++ > 3) {
