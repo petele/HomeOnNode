@@ -42,11 +42,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <fb-data path="config/WebUI/home/buttons" data="{{buttons}}"></fb-data>
     <fb-data path="config/WebUI/home/topRow" data="{{topRowButtons}}"></fb-data>
-    <fb-data path="state/weather" data="{{dataWeather}}"></fb-data>
+    <fb-data path="state/weather"
+      data="{{dataWeather}}"
+      disableCacheSave="true"
+      disableCacheLoad="true">
+    </fb-data>
 
     <fb-data path="state/doNotDisturb" data="{{dataDnD}}"></fb-data>
     <fb-data path="state/systemState" data="{{dataSystemState}}"></fb-data>
-    <fb-data path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ/is_streaming" data="{{dataNestCam}}"></fb-data>
+    <fb-data 
+      path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ/is_streaming"
+      data="{{dataNestCam}}">
+    </fb-data>
 
 
     <div class="card">

@@ -56,10 +56,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             }
             this.set('data', newData);
           }, 0);
-          this.$.fbDoc.ref.on('value', (snapshot) => {
-            this.set('data', snapshot.val());
-          });
         }
+        this.$.fbDoc.ref.on('value', (snapshot) => {
+          let newData = snapshot.val();
+          this.set('data', newData);
+          if (this.disableCacheSave !== true) {
+            setTimeout(() => {
+              localStorage.setItem(this.path, JSON.stringify(newData));
+            }, 400);
+          }
+        });
       }
     }
 
