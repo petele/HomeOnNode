@@ -199,6 +199,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             window.history.pushState({}, null, '/');
             window.dispatchEvent(new CustomEvent('location-changed'));
           }
+          if (timeElapsed > (60 * 60 * 4)) {
+            location.reload(true);
+          }
         }, 15000);
       }
 
