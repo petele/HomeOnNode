@@ -15,8 +15,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="elem-lights.html">
 <link rel="import" href="shared-styles.html">
-<link rel="import" href="fb-data.html">
+<link rel="import" href="fb-query.html">
 <link rel="import" href="hon-icons.html">
+<link rel="import" href="scenes-byroom.html">
 
 <dom-module id="view-hue-scenes">
   <template>
@@ -25,34 +26,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
       }
     </style>
-    <elem-lights page="{{page}}"></elem-lights>
-    <fb-data path="state/hue/scenes" data="{{hueSceneObj}}" disable-cache-save="true" read-delay="500"></fb-data>
 
-    <div class="card">
-      <div class="app-grid grid-three">
-        <template is="dom-repeat" items="[[houseScenes]]">
-          <paper-button class="button" on-tap="tapHueScene">[[item.name]]</paper-button>
-        </template>
-      </div>
-    </div>
+    <elem-lights page="{{page}}"></elem-lights>
+
+    <fb-query path="state/hue/scenes" data="{{hueScenes}}"></fb-query>
 
     <div>
-      <template is="dom-repeat" items="[[roomScenes]]">
-        <div class="card">
-          <div>[[item.name]]</div>
-          <div class="app-grid grid-three">
-            <template is="dom-repeat" items="[[item.on]]">
-              <paper-button class="button" on-tap="tapHueScene">[[item.name]]</paper-button>
-            </template>
-            <template is="dom-repeat" items="[[item.off]]">
-              <paper-button class="button" on-tap="tapHueScene">[[item.name]]</paper-button>
-            </template>
-            <template is="dom-repeat" items="[[item.scenes]]">
-              <paper-button class="button" on-tap="tapHueScene">[[item.name]]</paper-button>
-            </template>
-          </div>
-        </template>
-      </div>
+      <template is="dom-repeat" items="[[rooms]]">
+        <scenes-byroom
+          scenes="[[hueScenes]]"
+          room-name="[[item.name]]"
+          room-id="[[item.id]]">
+        </scenes-byroom>
+      </template>
     </div>
 
   </template>
@@ -61,86 +47,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HueScenesView extends Polymer.Element {
       static get is() { return 'view-hue-scenes'; }
 
-      static get observers() {
-        return [
-          '_scenesChanged(hueSceneObj)',
+      ready() {
+        super.ready();
+        this.rooms = [
+          {name: 'Home', id: 'all'},
+          {name: 'Bedroom', id: 'Bedroom'},
+          {name: 'Bathroom', id: 'Bathroom'},
+          {name: 'Front Hall', id: 'Front Hall'},
+          {name: 'Kitchen', id: 'Kitchen'},
+          {name: 'Living Room', id: 'Living Room'},
         ];
       }
-
-      tapHueScene(event) {
-        let sceneId = event.model.item.key;
-        app.sendCommand({hueScene: sceneId});
-      }
-
-      _scenesChanged(scenes) {
-        const reScene = /(.*)\s\[(.*)\]/;
-        if (!scenes) {
-          return;
-        }
-        let houseScenes = [];
-        let roomScenes = [];
-        if (scenes.newSceneObj === 1) {
-          houseScenes = scenes.houseScenes;
-          roomScenes = scenes.roomScenes;
-        } else {
-          let scenesByRoom = {};
-          let keys = Object.keys(scenes);
-          keys.forEach(function(key) {
-            let scene = scenes[key];
-            if (scene.name === 'Last on state') {
-              return;
-            }
-            scene.key = key;
-            let matches = scene.name.match(reScene);
-            if (!matches) {
-              houseScenes.push(scene);
-              return;
-            }
-            let roomName = matches[2];
-            let sceneName = matches[1];
-            scene.name = sceneName;
-
-            if (!scenesByRoom[roomName]) {
-              scenesByRoom[roomName] = {scenes: []};
-            }
-            if (sceneName === 'On') {
-              scenesByRoom[roomName].on = scene;
-            } else if (sceneName === 'Off') {
-              scenesByRoom[roomName].off = scene;
-            } else {
-              scenesByRoom[roomName].scenes.push(scene);
-            }
-          });
-
-          let roomNames = Object.keys(scenesByRoom);
-          roomNames.forEach((roomName) => {
-            let room = {
-              name: roomName,
-              scenes: scenesByRoom[roomName].scenes.sort(app.sortByName),
-            };
-            if (scenesByRoom[roomName].on) {
-              room.on = [scenesByRoom[roomName].on];
-            }
-            if (scenesByRoom[roomName].off) {
-              room.off = [scenesByRoom[roomName].off];
-            }
-            roomScenes.push(room);
-          });
-          houseScenes = houseScenes.sort(app.sortByName);
-          roomScenes = roomScenes.sort(app.sortByName);
-          setTimeout(() => {
-            let newSceneObj = {
-              newSceneObj: 1,
-              houseScenes: this.houseScenes,
-              roomScenes: this.roomScenes,
-            };
-            localStorage.setItem('state/hue/scenes', JSON.stringify(newSceneObj));
-          }, 500);
-        }
-        this.houseScenes = houseScenes;
-        this.roomScenes = roomScenes;
-      }
-
     }
 
     window.customElements.define(HueScenesView.is, HueScenesView);

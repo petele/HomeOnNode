@@ -28,11 +28,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding: 0 8px;
       }
       .label {
-        font-size: 0.75em;
-        color: var(--app-light-color);
         border-radius: 0.25em;
-        padding: 0.2em 0.6em 0.3em;
+        color: var(--app-light-color);
+        font-size: 0.75em;
         margin-right: 1em;
+        padding: 0.2em 0.6em 0.3em;
       }
       .ERROR, .EXCPT, .STOP {
         background-color: var(--paper-red-500);
@@ -50,34 +50,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: var(--paper-cyan-300);
       }
       paper-item {
-        padding-left: 0;
-        padding-right: 0;
         border-bottom: 1px solid var(--divider-color);
         cursor: -webkit-grab;
+        padding-left: 0;
+        padding-right: 0;
       }
       paper-dialog {
         min-width: 350px;
       }
       .circle {
-        display: inline-block;
-        width: 64px;
-        height: 64px;
-        text-align: center;
         border-radius: 50%;
+        display: inline-block;
         font-size: 30px;
+        height: 64px;
         line-height: 60px;
+        text-align: center;
+        width: 64px;
       }
       iron-icon {
         color: var(--app-light-color);
-        width: 48px;
         height: 48px;
+        width: 48px;
       }
     </style>
 
     <firebase-query
         id="query"
-        path="{{path}}"
-        limit-to-last="{{MAX_ITEMS}}">
+        data="{{logs}}"
+        path="[[path]]"
+        limit-to-last="[[MAX_ITEMS]]">
     </firebase-query>
 
     <paper-dialog id="detailDialog">
@@ -100,7 +101,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </paper-dialog>
 
     <div>
-      <template is="dom-repeat" items="[[logs]]">
+      <template is="dom-repeat" 
+        sort="sortLogs"
+        items="[[logs]]" initial-count="5">
         <paper-item on-tap="tapLogItem">
           <paper-item-body two-line>
             <div>[[item.message]]</div>
@@ -124,7 +127,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       constructor() {
         super();
         this.MAX_ITEMS = 150;
-        this.logs = [];
+      }
+
+      ready() {
+        super.ready();
+        if (!this.path) {
+          throw new Error('missing path attribute');
+        }
       }
 
       static get properties() {
@@ -135,19 +144,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         };
       }
 
-      ready() {
-        super.ready();
-        if (!this.path) {
-          throw new Error('missing path attribute');
+      static get observers() {
+        return [
+          'logsChanged(logs.splices)',
+        ];
+      }
+
+      logsChanged() {
+        if (this.logs.length > this.MAX_ITEMS) {
+          this.logs.pop();
         }
-        this.$.query.ref.on('child_added', (snapshot) => {
-          let logItem = snapshot.val();
-          logItem.key = snapshot.key;
-          this.unshift('logs', logItem);
-          if (this.logs.length > this.MAX_ITEMS) {
-            this.logs.pop();
-          }
-        });
+      }
+
+      sortLogs(a, b) {
+        if (a.date < b.date) {
+          return 1;
+        } else if (a.date > b.date) {
+          return -1;
+        }
+        return 0;
       }
 
       formatDate(val) {

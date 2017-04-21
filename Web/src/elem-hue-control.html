@@ -98,12 +98,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ];
       }
 
-      _colorChanged(c) {
+      _colorChanged() {
         this.updateLightState();
       }
 
       updateAction(event) {
-        let action = event.target.selectedItem.attributes['value'].value;
+        let action = event.target.selectedItem.getAttribute('value');
         let disable = true;
         if (action === 'on') {
           this.isOn = true;
@@ -119,8 +119,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       updateBrightness(event) {
         let brightness;
-        if (event.target.selectedItem.attributes['value']) {
-          brightness = event.target.selectedItem.attributes['value'].value;
+        if (event.target.selectedItem.getAttribute('value')) {
+          brightness = event.target.selectedItem.getAttribute('value');
           brightness = parseInt(brightness);
           this.bri = brightness;
         } else {
@@ -130,6 +130,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       updateLightState() {
+        window.lastUserInput = Date.now();
         let newLightState = Object.assign({}, this.color);
         if (this.isOn === false) {
           newLightState = {on: false};

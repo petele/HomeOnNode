@@ -9,15 +9,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
-<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
-<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
-<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
 <link rel="import" href="elem-lights.html">
 <link rel="import" href="elem-hue-control.html">
 <link rel="import" href="shared-styles.html">
-<link rel="import" href="fb-data.html">
-<link rel="import" href="hon-icons.html">
+<link rel="import" href="fb-query.html">
+<link rel="import" href="lights-byroom.html">
 
 <dom-module id="view-hue-lights">
   <template>
@@ -32,21 +29,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <elem-hue-control light-state="{{lightState}}"></elem-hue-control>
     </div>
 
-    <fb-data path="state/hue/lights" data="{{hueLightsObj}}" disable-cache-save="true" read-delay="500"></fb-data>
-
+    <fb-query path="state/hue/lights" data="{{hueLights}}"></fb-query>
     <div>
-      <template is="dom-repeat" items="[[lightsByRoom]]">
-        <div class="card">
-          <div>[[item.name]]</div>
-          <div class="app-grid grid-three">
-            <template is="dom-repeat" items="[[item.scenes]]">
-              <paper-button class$="[[getButtonClass(item)]]" on-tap="tapHueLight">[[item.name]]</paper-button>
-            </template>
-          </div>
-        </div>
+      <template is="dom-repeat" items="[[rooms]]">
+        <lights-byroom 
+          light-state="{{lightState}}"
+          lights="{{hueLights}}"
+          room-name="[[item.name]]"
+          room-id="[[item.id]]">
+        </lights-byroom>
       </template>
     </div>
-
 
   </template>
 
@@ -54,84 +47,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HueLightsView extends Polymer.Element {
       static get is() { return 'view-hue-lights'; }
 
-      static get observers() {
-        return [
-          '_lightsChanged(hueLightsObj)',
+      ready() {
+        super.ready();
+        this.rooms = [
+          {name: 'Bedroom', id: 'BR'},
+          {name: 'Bathroom', id: 'Bathroom'},
+          {name: 'Front Hall', id: 'Front Hall'},
+          {name: 'Kitchen', id: 'Kitchen'},
+          {name: 'Living Room', id: 'LR'},
         ];
       }
-
-      getButtonClass(item) {
-        if (item.state.on) {
-          return 'button toggle-on';
-        }
-        return 'button';
-      }
-
-      tapHueLight(event) {
-        let light = event.model.item;
-        let lightState = this.lightState;
-        if (lightState.toggle) {
-          lightState = {on: !light.state.on};
-        }
-        let cmd = {lights: light.lightId, lightState: lightState};
-        app.sendCommand({hueCommand: cmd});
-        this.startIndterminate(event.target);
-      }
-
-      startIndterminate(button) {
-        button.classList.add('toggle-ind');
-        setTimeout(() => {
-          button.classList.remove('toggle-ind');
-        }, 15000);
-      }
-
-      _lightsChanged(hueLights) {
-        if (!Array.isArray(hueLights)) {
-          return;
-        }
-        const reLight = /(.*)\s-\s(.*)/;
-        let lightsByRoom = [];
-        if (hueLights.newLightObj === 1) {
-          lightsByRoom = hueLights.lightsByRoom;
-        } else {
-          let lightsByRoomObj = {};
-          hueLights.forEach(function(light, idx) {
-            if (!light) {
-              return;
-            }
-            let matches = light.name.match(reLight);
-            if (!matches) {
-              return;
-            }
-            let roomName = matches[1];
-            let lightName = matches[2];
-            light.name = lightName;
-            light.lightId = idx;
-            if (!lightsByRoomObj[roomName]) {
-              lightsByRoomObj[roomName] = [];
-            }
-            lightsByRoomObj[roomName].push(light);
-          });
-          let roomNames = Object.keys(lightsByRoomObj);
-          roomNames.forEach(function(roomName) {
-            let room = {
-              name: roomName,
-              scenes: lightsByRoomObj[roomName].sort(app.sortByName),
-            };
-            lightsByRoom.push(room);
-          }, this);
-          lightsByRoom = lightsByRoom.sort(app.sortByName);
-          setTimeout(() => {
-            let newLightObj = {
-              newLightObj: 1,
-              lightsByRoom: lightsByRoom,
-            };
-            localStorage.setItem('state/hue/lights', JSON.stringify(newLightObj));
-          }, 500);
-        }
-        this.lightsByRoom = lightsByRoom;
-      }
-
     }
 
     window.customElements.define(HueLightsView.is, HueLightsView);

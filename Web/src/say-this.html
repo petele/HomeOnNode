@@ -9,15 +9,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 
 <dom-module id="say-this">
   <template>
 
     <firebase-query
-        id="fbSayThis"
-        path="sayThis"
-        limit-to-last="1">
+      id="fbSayThis"
+      path="sayThis"
+      limit-to-last="1">
     </firebase-query>
+
+    <paper-checkbox id="cbSayThis" checked="{{isEnabled}}" on-change="changeSayThis">
+      Say This
+    </paper-checkbox>
 
   </template>
 
@@ -27,21 +33,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        this.ALLOWED_DIFF = 30 * 60 * 1000;
-        setTimeout(() => {
-          this.initSpeech();
-        }, 10000);
+        this.ALLOWED_DIFF = 2 * 60 * 1000;
+        this.isEnabled = localStorage.getItem('sayThis') === 'true';
+        this.initSpeech();
+      }
+
+      changeSayThis(event) {
+        window.lastUserInput = Date.now();
+        localStorage.setItem('sayThis', event.target.checked);
       }
 
       initSpeech() {
         this.$.fbSayThis.ref.on('child_added', (snapshot) => {
-          if (this.enabled === true) {
+          if (this.isEnabled === true) {
             let utterance = snapshot.val();
             let timeDiff = Date.now() - utterance.sayAt;
             if (timeDiff < this.ALLOWED_DIFF) {
               this.sayThis(utterance.utterance, utterance.lang);
-              snapshot.ref.remove();
             }
+            snapshot.ref.remove();
           }
         });
       }

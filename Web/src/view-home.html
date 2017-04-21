@@ -14,8 +14,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
-<link rel="import" href="fb-data.html">
+<link rel="import" href="fb-document.html">
+<link rel="import" href="fb-query.html">
 <link rel="import" href="shared-styles.html">
+<link rel="import" href="send-command.html">
 
 <dom-module id="view-home">
   <template>
@@ -24,12 +26,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
       }
       .current-time {
-        text-align: center;
         font-size: 4em;
+        text-align: center;
       }
       .weather-icon {
-        width: 48px;
         height: 48px;
+        width: 48px;
       }
       .weather-icon-container {
         margin-top: 16px;
@@ -40,34 +42,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <fb-data path="config/WebUI/home/buttons" data="{{buttons}}"></fb-data>
-    <fb-data path="config/WebUI/home/topRow" data="{{topRowButtons}}"></fb-data>
-    <fb-data path="state/weather"
-      data="{{dataWeather}}"
+    <send-command id="sendCommand"></send-command>
+    <fb-document path="state/weather"
+      data="{{weather}}"
       disableCacheSave="true"
       disableCacheLoad="true">
-    </fb-data>
-
-    <fb-data path="state/doNotDisturb" data="{{dataDnD}}"></fb-data>
-    <fb-data path="state/systemState" data="{{dataSystemState}}"></fb-data>
-    <fb-data 
-      path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ/is_streaming"
-      data="{{dataNestCam}}">
-    </fb-data>
-
-
+    </fb-document>
     <div class="card">
       <div class="layout horizontal header">
         <div class="flex current-time">
           [[currentTime]]
         </div>
         <div class="weather-icon-container">
-          <div><iron-icon icon="[[weather.icon]]" class="weather-icon"></iron-icon></div>
-          <div>[[weather.tempNow]] | [[weather.tempToday]]</div>
+          <div>
+            <iron-icon icon="hon-icons:[[weather.today.icon]]" class="weather-icon">
+            </iron-icon>
+          </div>
+          <div>
+            [[round(weather.now.apparentTemperature)]] |
+            [[round(weather.today.apparentTemperatureMax)]]
+          </div>
         </div>
       </div>
     </div>
 
+    <fb-document path="state/doNotDisturb" data="{{dataDnD}}"></fb-document>
+    <fb-document path="state/systemState" data="{{dataSystemState}}"></fb-document>
+    <fb-document 
+      path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ/is_streaming"
+      data="{{dataNestCam}}">
+    </fb-document>
     <div class="card">
       <div class="app-grid grid-three">
         <paper-button on-tap="toggleDoNotDisturb" class="button">
@@ -82,15 +86,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
+    <fb-query path="config/WebUI/home/topRow" data="{{topRowButtons}}">
+    </fb-query>
+    <fb-query path="config/WebUI/home/buttons" data="{{buttons}}"></fb-query>
     <div class="card">
       <div class="app-grid grid-two">
         <template is="dom-repeat" items="[[topRowButtons]]">
-          <paper-button class="button flex" on-tap="myTap">[[item.label]]</paper-button>
+          <paper-button class="button flex" on-tap="myTap">
+            [[item.label]]
+          </paper-button>
         </template>  
       </div>
       <div class="app-grid">
         <template is="dom-repeat" items="[[buttons]]">
-          <paper-button class="button" on-tap="myTap">[[item.label]]</paper-button>
+          <paper-button class="button" on-tap="myTap">
+            [[item.label]]
+          </paper-button>
         </template>
       </div>
     </div>
@@ -101,42 +112,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HomeView extends Polymer.Element {
       static get is() { return 'view-home'; }
 
-      constructor() {
-        super();
-        this.state = {};
-      }
-
       ready() {
         super.ready();
-        this._clockTick();
+        this.clockTick();
       }
 
       static get observers() {
         return [
-          '_weatherChanged(dataWeather)',
-          '_doNotDisturbChanged(dataDnD)',
-          '_systemStateChanged(dataSystemState)',
-          '_nestCamChanged(dataNestCam)',
+          'doNotDisturbChanged(dataDnD)',
+          'systemStateChanged(dataSystemState)',
+          'nestCamChanged(dataNestCam)',
         ];
+      }
+
+      round(val) {
+        if (val) {
+          return Math.round(val);
+        }
+        return '';
       }
 
       myTap(event) {
         let item = event.model.item;
         if (item.command) {
-          app.sendCommand(item.command);
+          this.$.sendCommand.send(item.command);
         }
       }
-      _weatherChanged(weather) {
-        if (!weather || !weather.now || !weather.today) {
-          return;
-        }
-        this.weather = {
-          icon: 'hon-icons:' + weather.today.icon,
-          tempNow: Math.round(weather.now.temperature),
-          tempToday: Math.round(weather.today.temperatureMax),
-        };
-      }
-      _nestCamChanged(newVal) {
+
+      nestCamChanged(newVal) {
         if (newVal === undefined) {
           return;
         }
@@ -146,7 +149,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         this.nestCamIcon = icon;
       }
-      _doNotDisturbChanged(newVal) {
+
+      doNotDisturbChanged(newVal) {
         if (newVal === undefined) {
           return;
         }
@@ -156,44 +160,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         this.doNotDisturbIcon = icon;
       }
-      _systemStateChanged(newVal) {
+
+      systemStateChanged(newVal) {
         if (!newVal) {
           return;
         }
-        let icon;
+        let icon = 'hon-icons:state-home';
         if (newVal === 'ARMED') {
           icon = 'hon-icons:state-armed';
         } else if (newVal === 'AWAY') {
           icon = 'hon-icons:state-away';
-        } else if (newVal === 'HOME') {
-          icon = 'hon-icons:state-home';
         }
         this.systemStateIcon = icon;
       }
-      toggleDoNotDisturb(event) {
+
+      toggleDoNotDisturb() {
         let newVal = 'ON';
         if (this.dataDnD === true) {
           newVal = 'OFF';
         }
-        app.sendCommand({doNotDisturb: newVal});
+        this.$.sendCommand.send({doNotDisturb: newVal});
       }
-      toggleState(event) {
+
+      toggleState() {
         let cmdName = 'STATE_HOME';
         if (this.dataSystemState === 'HOME') {
           cmdName = 'STATE_ARMED';
         }
-        app.sendCommand({cmdName: cmdName});
+        this.$.sendCommand.send({cmdName: cmdName});
       }
-      toggleNestCam(event) {
+
+      toggleNestCam() {
         let newVal = 'ON';
         if (this.dataNestCam === true) {
           newVal = 'OFF';
         }
-        app.sendCommand({nestCam: newVal});
+        this.$.sendCommand.send({nestCam: newVal});
       }
-      _clockTick() {
+
+      clockTick() {
         this.currentTime = moment().format('h:mm a');
-        setTimeout(() => { this._clockTick(); }, 3000);
+        setTimeout(() => { this.clockTick(); }, 3000);
       }
     }
 

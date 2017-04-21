@@ -11,7 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
-<link rel="import" href="fb-data.html">
+<link rel="import" href="fb-document.html">
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="view-weather">
@@ -29,24 +29,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: var(--primary-text-color);
       }
       iron-icon {
-        width: var(--weather-icon-size);
         height: var(--weather-icon-size);
+        width: var(--weather-icon-size);
       }
       .weatherIcon {
         text-align: center;
       }
       .currentTemp {
-        height: var(--weather-icon-size);
         font-size: 4.5em;
-        vertical-align: middle;
+        height: var(--weather-icon-size);
         text-align: center;
+        vertical-align: middle;
       }
       .currentTemp sup {
         font-size: 0.5em;
       }
     </style>
 
-    <fb-data path="state/weather" data="{{weatherData}}"></fb-data>
+    <fb-document path="state/weather" data="{{weatherData}}"></fb-document>
 
     <div class="card">
       <div class="app-grid grid-two">
@@ -85,6 +85,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       formatTime(t) {
         return moment(t * 1000).format('h:mm a');
       }
+
       round(n) {
         return Math.round(n);
       }

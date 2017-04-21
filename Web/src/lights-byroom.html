@@ -1,0 +1,115 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="send-command.html">
+
+<dom-module id="lights-byroom">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+      }
+    </style>
+
+    <send-command id="sendCommand"></send-command>
+    <div class="card">
+      <div>[[roomName]]</div>
+      <div class="app-grid grid-three">
+        <template
+          is="dom-repeat"
+          items="[[lights]]"
+          filter="isInRoom">
+            <paper-button class$="[[getButtonClass(item.state.on)]]" on-tap="tapHueLight">
+            [[getLightName(item.name)]]
+          </paper-button>
+        </template>
+      </div>
+    </div>
+
+  </template>
+
+  <script>
+    class LightsByRoom extends Polymer.Element {
+      static get is() { return 'lights-byroom'; }
+
+      static get properties() {
+        return {
+          lights: {
+            type: Array,
+            notify: true,
+          },
+          roomName: {
+            type: String,
+          },
+          roomId: {
+            type: String,
+          },
+        };
+      }
+
+      getRoomAndName(lightName) {
+        const reLight = /(.*)\s-\s(.*)/;
+        let result = {name: lightName, room: 'all'};
+        let matches = lightName.match(reLight);
+        if (!matches) {
+          return result;
+        }
+        result.name = matches[2];
+        result.room = matches[1];
+        return result;
+      }
+
+      isInRoom(item) {
+        let light = this.getRoomAndName(item.name);
+        if (light.room === this.roomId) {
+          return true;
+        }
+        return false;
+      }
+
+      getLightName(item) {
+        let light = this.getRoomAndName(item);
+        return light.name;
+      }
+
+      getButtonClass(isOn) {
+        if (isOn === true) {
+          return 'button toggle-on';
+        }
+        return 'button';
+      }
+
+      tapHueLight(event) {
+        let light = event.model.item;
+        let lightState = this.lightState;
+        if (lightState.toggle) {
+          lightState = {on: !light.state.on};
+        }
+        let cmd = {lights: parseInt(light.$key), lightState: lightState};
+        this.$.sendCommand.send({hueCommand: cmd});
+        this.startIndterminate(event.target);
+      }
+
+      startIndterminate(button) {
+        button.classList.add('toggle-ind');
+        setTimeout(() => {
+          button.classList.remove('toggle-ind');
+        }, 15000);
+      }
+
+    }
+    window.customElements.define(LightsByRoom.is, LightsByRoom);
+  </script>
+</dom-module>

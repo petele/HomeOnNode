@@ -19,7 +19,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="elem-lights.html">
 <link rel="import" href="hon-icons.html">
 <link rel="import" href="shared-styles.html">
-<link rel="import" href="fb-data.html">
+<link rel="import" href="fb-document.html">
+<link rel="import" href="send-command.html">
 
 <dom-module id="view-nanoleaf">
   <template>
@@ -28,36 +29,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
       }
       paper-slider {
-        margin-left: -16px;
-        margin-right: -16px;
         --paper-slider-active-color: var(--primary-color);
         --paper-slider-secondary-color: var(--light-primary-color);
         --paper-slider-knob-color: var(--primary-color);
         --paper-slider-pin-color: var(--primary-color);
+        margin-left: -16px;
+        margin-right: -16px;
       }
       paper-checkbox {
-        padding-top: 4px;
         margin-right: 24px;
+        padding-top: 4px;
       }
     </style>
+
     <elem-lights page="{{page}}"></elem-lights>
-    <fb-data path="state/nanoLeaf/state" data="{{nanoLeafState}}"></fb-data>
-    <fb-data path="state/nanoLeaf/effects" data="{{nanoLeafEffects}}"></fb-data>
+
+    <send-command id="sendCommand"></send-command>
+    <fb-document path="state/nanoLeaf" data="{{nanoLeaf}}"></fb-document>    
 
     <div class="card card-narrow" style="padding-top: 12px;">
       <div class="layout horizontal">
-        <paper-checkbox id="nanoLeafPower" checked="[[nanoLeafState.on.value]]" on-change="tapPower">
+        <paper-checkbox id="nanoLeafPower" checked="[[nanoLeaf.state.on.value]]" on-change="tapPower">
           On
         </paper-checkbox>
-        <paper-slider class="flex" value="[[nanoLeafState.brightness.value]]" on-change="setBrightness">
+        <paper-slider class="flex" value="[[nanoLeaf.state.brightness.value]]" on-change="setBrightness">
         </paper-slider>
       </div>
     </div>
 
     <div class="card">
       <div class="app-grid grid-three" id="nlEffects">
-        <template id="ef" is="dom-repeat" items="[[nanoLeafEffects.list]]">
-          <paper-button class="button" name="[[item]]" on-tap="tapNanoLeafEffect">
+        <template is="dom-repeat" items="[[nanoLeaf.effects.list]]">
+          <paper-button class$="[[effectClass(item, nanoLeaf.effects.select, nanoLeaf.state.on.value)]]" name="[[item]]" on-tap="tapNanoLeafEffect">
             [[item]]
           </paper-button>
         </template>
@@ -70,47 +73,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class NanoLeafView extends Polymer.Element {
       static get is() { return 'view-nanoleaf'; }
 
-      static get observers() {
-        return [
-          '_effectChanged(nanoLeafEffects.select)',
-        ];
-      }
-      tapNanoLeafEffect(event) {
-        let cmd = {nanoLeaf: {effect: event.model.item}};
-        event.target.classList.add('toggle-ind');
-        app.sendCommand(cmd);
-      }
-      tapPower(event) {
-        let newVal = 'OFF';
-        if (event.target.checked === true) {
-          newVal = this.nanoLeafEffects.select;
+      effectClass(item, selected, isOn) {
+        if (isOn === false) {
+          return 'button';
         }
-        app.sendCommand({nanoLeaf: {effect: newVal}});
-      }
-      setBrightness(event) {
-        let cmd = {nanoLeaf: {brightness: event.target.value}};
-        app.sendCommand(cmd);
-      }
-      effectClass(val) {
-        if (val === this.nanoLeafEffects.select) {
+        if (item === selected) {
           return 'button toggle-on';
         }
         return 'button';
       }
-      _effectChanged(newVal) {
-        if (!newVal) {
-          return;
-        }
-        let elems = this.$.nlEffects.querySelectorAll('paper-button');
-        elems.forEach(function(elem) {
-          if (elem.name === this.nanoLeafEffects.select) {
-            elem.classList.add('toggle-on');
-          } else {
-            elem.classList.remove('toggle-on');
-          }
-          elem.classList.remove('toggle-ind');
-        }, this);
+
+      tapNanoLeafEffect(event) {
+        let cmd = {nanoLeaf: {effect: event.model.item}};
+        event.target.classList.add('toggle-ind');
+        this.$.sendCommand.send(cmd);
       }
+
+      tapPower(event) {
+        let newVal = 'OFF';
+        if (event.target.checked === true) {
+          newVal = this.nanoLeaf.effects.select;
+        }
+        this.$.sendCommand.send({nanoLeaf: {effect: newVal}});
+      }
+
+      setBrightness(event) {
+        let cmd = {nanoLeaf: {brightness: event.target.value}};
+        this.$.sendCommand.send(cmd);
+      }
+
     }
 
     window.customElements.define(NanoLeafView.is, NanoLeafView);

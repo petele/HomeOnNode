@@ -15,7 +15,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="hon-icons.html">
 <link rel="import" href="shared-styles.html">
-<link rel="import" href="fb-data.html">
+<link rel="import" href="fb-document.html">
+<link rel="import" href="fb-query.html">
+<link rel="import" href="send-command.html">
 
 <dom-module id="view-media">
   <template>
@@ -32,11 +34,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </style>
 
-    <fb-data path="state/harmony" data="{{currentHarmonyActivity}}"></fb-data>
-    <fb-data path="state/sonos/state/state" data="{{sonosState}}"></fb-data>
-    <fb-data path="state/sonos/favorites" data="{{sonosFavorites}}"></fb-data>
-    <fb-data path="state/harmonyConfig/activity" data="{{harmonyActivities}}"></fb-data>
+    <send-command id="sendCommand"></send-command>
 
+    <fb-document path="state/sonos/state/state" data="{{sonosState}}">
+    </fb-document>
     <div class="card card-narrow">
       <div class="sonosTitle no-overflow">
         [[getTitle(sonosState.currentTrack)]] &nbsp;
@@ -58,20 +59,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
-
+    <fb-document path="state/harmony" data="{{currentHarmonyActivity}}">
+    </fb-document>
+    <fb-query path="state/harmonyConfig/activity" data="{{harmonyActivities}}">
+    </fb-query>
     <div class="card">
       <div class="app-grid" id="harmonyButtons">
         <template is="dom-repeat" items="[[harmonyActivities]]" >
-          <paper-button class="button" on-tap="tapHarmony">[[item.label]]</paper-button>
+          <paper-button on-tap="tapHarmony"
+            class$="[[harmonyActivityClass(item.label, currentHarmonyActivity.label)]]">
+              [[item.label]]
+          </paper-button>
         </template>
-        <paper-button class="button" on-tap="tapRadio">Radio</paper-button>
       </div>
     </div>
 
+    <fb-query path="state/sonos/favorites" data="{{sonosFavorites}}">
+    </fb-query>
     <div class="card">
       <div class="app-grid">
+        <paper-button class="button" on-tap="tapRadio">Radio</paper-button>
         <template is="dom-repeat" items="[[sonosFavorites]]">
-          <paper-button class="button" on-tap="tapSonosFav">[[item.title]]</paper-button>
+          <paper-button class="button" on-tap="tapSonosFav">
+            [[item.title]]
+          </paper-button>
         </template>
       </div>
     </div>
@@ -84,10 +95,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get observers() {
         return [
-          '_sonosPlayerState(sonosState.playerState)',
-          '_harmonyActivityChanged(currentHarmonyActivity)',
-          '_sonosURISource(sonosState.currentTrack.uri, sonosState.playerState)',
+          'sonosPlayerStateChanged(sonosState.playerState)',
         ];
+      }
+
+      harmonyActivityClass(activityLabel, currentActivity) {
+        activityLabel = activityLabel.toLowerCase();
+        currentActivity = currentActivity.toLowerCase();
+        if (activityLabel === currentActivity) {
+          return 'button toggle-on';
+        }
+        return 'button';
       }
 
       getTitle(currentTrack) {
@@ -114,36 +132,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return '';
       }
 
-      _sonosURISource(uri, playerState) {
-        if (uri === 'x-rincon-stream:RINCON_5CAAFD0C01DC01400') {
-          if (playerState === 'PLAYING') {
-            this._harmonyActivityChanged(this.currentHarmonyActivity, true);
-          }
-        } else {
-          this._harmonyActivityChanged(this.currentHarmonyActivity, false);
-        }
-      }
-
-      _harmonyActivityChanged(newVal, isRadio) {
-        if (!newVal) {
-          return;
-        }
-        let currentActivity = newVal.label.toLowerCase();
-        if (currentActivity === 'sonos' && isRadio === true) {
-          currentActivity = 'radio';
-        }
-        let elements = this.$.harmonyButtons.querySelectorAll('paper-button');
-        elements.forEach(function(elem) {
-          elem.classList.remove('toggle-ind');
-          if (currentActivity === elem.innerText.toLowerCase()) {
-            elem.classList.add('toggle-on');
-          } else {
-            elem.classList.remove('toggle-on');
-          }
-        });
-      }
-
-      _sonosPlayerState(newVal) {
+      sonosPlayerStateChanged(newVal) {
         if (newVal === undefined) {
           return;
         }
@@ -154,23 +143,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           cmd = 'SONOS_PAUSE';
         }
         this.$.sonosPlay.icon = icon;
-        this.$.sonosPlay.attributes['cmd'].value = cmd;
+        this.$.sonosPlay.setAttribute('cmd', cmd);
       }
 
       tapSonosControl(event) {
-        let cmd = {cmdName: event.target.attributes['cmd'].value};
-        app.sendCommand(cmd);
+        let cmd = {cmdName: event.target.getAttribute('cmd')};
+        this.$.sendCommand.send(cmd);
       }
 
       tapHarmony(event) {
         let cmd = {harmonyActivity: event.model.item.label};
-        app.sendCommand(cmd);
+        this.$.sendCommand.send(cmd);
         this.startIndterminate(event.target);
       }
 
-      tapRadio(event) {
-        app.sendCommand({cmdName: 'SONOS_FM'});
-        this.startIndterminate(event.target);
+      tapRadio() {
+        this.$.sendCommand.send({cmdName: 'SONOS_FM'});
       }
 
       tapSonosFav(event) {
@@ -181,7 +169,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               uri: event.model.item.uri,
             },
           };
-        app.sendCommand(cmd);
+        this.$.sendCommand.send(cmd);
       }
 
       startIndterminate(button) {

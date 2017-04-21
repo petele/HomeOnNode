@@ -1,0 +1,129 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="send-command.html">
+
+<dom-module id="scenes-byroom">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+      }
+    </style>
+
+    <send-command id="sendCommand"></send-command>
+    <div class="card">
+      <div>[[roomName]]</div>
+      <div class="app-grid grid-three">
+        <template is="dom-repeat"
+          items="[[scenes]]"
+          sort="sortScenes"
+          filter="isInRoom">
+            <paper-button class="button" on-tap="tapHueScene">
+              [[getSceneName(item.name)]]
+            </paper-button>
+        </template>
+      </div>
+    </div>
+
+
+  </template>
+
+  <script>
+    class ScenesByRoom extends Polymer.Element {
+      static get is() { return 'scenes-byroom'; }
+
+      static get properties() {
+        return {
+          scenes: {
+            type: Array,
+            notify: true,
+          },
+          roomName: {
+            type: String,
+          },
+          roomId: {
+            type: String,
+          },
+        };
+      }
+
+      ready() {
+        super.ready();
+      }
+
+      getRoomAndName(lightName) {
+        const reScene = /(.*)\s\[(.*)\]/;
+        let result = {name: lightName, room: 'all'};
+        let matches = lightName.match(reScene);
+        if (!matches) {
+          return result;
+        }
+        result.name = matches[1];
+        result.room = matches[2];
+        return result;
+      }
+
+      isInRoom(item) {
+        if (item.name.toLowerCase() === 'last on state') {
+          return false;
+        }
+        let scene = this.getRoomAndName(item.name);
+        if (scene.name.toLowerCase() === 'off') {
+          return false;
+        }
+        if (scene.room === this.roomId) {
+          return true;
+        }
+        return false;
+      }
+
+      sortScenes(a, b) {
+        if (a.name.toLowerCase().indexOf('on [') === 0) {
+          return -1;
+        }
+        if (b.name.toLowerCase().indexOf('on [') === 0) {
+          return 1;
+        }
+        if (a.name > b.name) {
+          return 1;
+        }
+        if (a.name < b.name) {
+          return -1;
+        }
+        return 0;
+      }
+
+      getSceneName(item) {
+        let scene = this.getRoomAndName(item);
+        return scene.name;
+      }
+
+      getButtonClass(isOn) {
+        if (isOn === true) {
+          return 'button toggle-on';
+        }
+        return 'button';
+      }
+
+      tapHueScene(event) {
+        let sceneId = event.model.item.$key;
+        this.$.sendCommand.send({hueScene: sceneId});
+      }
+
+    }
+    window.customElements.define(ScenesByRoom.is, ScenesByRoom);
+  </script>
+</dom-module>

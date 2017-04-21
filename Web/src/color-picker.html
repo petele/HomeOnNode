@@ -30,8 +30,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .colorPicker paper-button {
         border-radius: 0;
         margin: 0;
-        width: 25%;
         min-height: 48px;
+        width: 25%;
       }
       .circle {
         border-radius: 50%;
@@ -158,12 +158,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       showDialog() {
-        app.lastInput = Date.now();
+        window.lastUserInput = Date.now();
         this.$.colorDialog.open();
       }
 
       colorTempChanged(newCTMired) {
-        app.lastInput = Date.now();
+        window.lastUserInput = Date.now();
         if (newCTMired === undefined) {
           return;
         }
@@ -179,7 +179,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       tapColor(event) {
-        app.lastInput = Date.now();
+        window.lastUserInput = Date.now();
         let selectedColor = event.model.item;
         this.color = selectedColor.hueValue;
         this.colorInfo = '';
@@ -188,7 +188,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       tapReset() {
-        app.lastInput = Date.now();
+        window.lastUserInput = Date.now();
         this.color = {};
         this.colorInfo = '';
         this.colorValue = '#CCCCCC';

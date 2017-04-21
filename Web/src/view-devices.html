@@ -13,7 +13,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
-<link rel="import" href="fb-data.html">
+<link rel="import" href="fb-query.html">
 <link rel="import" href="hon-icons.html">
 <link rel="import" href="shared-styles.html">
 
@@ -24,9 +24,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
       }
       .label {
-        width: 40%;
         display: inline-block;
         font-weight: bold;
+        width: 40%;
       }
       .card {
         position: relative;
@@ -38,35 +38,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: var(--google-red-500);
       }
       paper-icon-button {
-        position: absolute;
         bottom: 10px;
-        right: 10px;
         color: var(--google-red-500);
+        position: absolute;
+        right: 10px;
       }
       .circle {
-        display: inline-block;
-        width: 48px;
-        height: 48px;
-        text-align: center;
-        color: var(--app-medium-color);
-        border-radius: 50%;
         background: #ddd;
+        border-radius: 50%;
+        color: var(--app-medium-color);
+        display: inline-block;
         font-size: 28px;
+        height: 48px;
         line-height: 44px;
+        text-align: center;
+        width: 48px;
       }
       h1 {
         margin-top: 0;
       }
     </style>
-    <fb-data path="devices" data="{{devicesObj}}"></fb-data>
-
-    <firebase-document id="fbDevices" path="devices">
-    </firebase-document>
+    <fb-query path="devices" data="{{devices}}"></fb-query>
 
     <paper-dialog id="confirmRebootDialog" on-iron-overlay-closed="confirmRebootClosed">
       <h2>Confirm</h2>
       <p>
-        Are you sure you want to reboot [[selectedDevice.deviceId]]?
+        Are you sure you want to reboot [[selectedDevice.appName]]?
       </p>
       <div class="buttons">
         <paper-button dialog-dismiss autofocus>Cancel</paper-button>
@@ -77,7 +74,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <template is="dom-repeat" items="[[devices]]">
       <div class="card card-narrow">
         <div class="layout horizontal">
-          <h1 class="flex">[[item.deviceId]]</h1>
+          <h1 class="flex">[[item.appName]]</h1>
           <div class="circle">
             <iron-icon icon="[[getIcon(item.online)]]" class$="[[isOnline(item.online)]]">
             </iron-icon>
@@ -121,37 +118,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class DevicesView extends Polymer.Element {
       static get is() { return 'view-devices'; }
 
-      static get observers() {
-        return [
-          '_devicesChanged(devicesObj)',
-        ];
-      }
-
-      _devicesChanged(devicesObj) {
-        if (!devicesObj) {
-          return;
-        }
-        let devices = [];
-        Object.keys(devicesObj).forEach(function(key) {
-          let device = devicesObj[key];
-          device.deviceId = key;
-          devices.push(device);
-        });
-        this.devices = devices;
-      }
-
       rebootDevice(event) {
-        let device = event.model.item;
-        this.selectedDevice = device;
+        window.lastUserInput = Date.now();
+        this.selectedDevice = event.model.item;
+        this.selectedIndex = event.model.index;
         this.$.confirmRebootDialog.open();
       }
 
       confirmRebootClosed(event) {
-        if (event.detail.confirmed === true && this.selectedDevice) {
-          let path = `${this.selectedDevice.deviceId}/restart`;
-          this.$.fbDevices.ref.child(path).set(true);
+        if (event.detail.confirmed === true) {
+          let path = `devices.${this.selectedIndex}.restart`;
+          this.set(path, true);
         }
         this.selectedDevice = null;
+        window.lastUserInput = Date.now();
       }
 
       isOnline(val) {

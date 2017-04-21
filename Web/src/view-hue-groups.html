@@ -16,8 +16,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="elem-lights.html">
 <link rel="import" href="elem-hue-control.html">
 <link rel="import" href="shared-styles.html">
-<link rel="import" href="fb-data.html">
+<link rel="import" href="fb-query.html">
 <link rel="import" href="hon-icons.html">
+<link rel="import" href="send-command.html">
 
 <dom-module id="view-hue-groups">
   <template>
@@ -28,13 +29,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
 
     <elem-lights page="{{page}}"></elem-lights>
-    <fb-data path="state/hue/groups" data="{{hueGroupsObj}}"></fb-data>
+    
+    <send-command id="sendCommand"></send-command>
+    <fb-query path="state/hue/groups" data="{{hueGroups}}"></fb-query>
 
     <div class="card">
       <elem-hue-control light-state="{{lightState}}"></elem-hue-control>
       <div class="app-grid grid-three">
-        <template is="dom-repeat" items="[[hueGroups]]">
-          <paper-button class$="[[getButtonClass(item)]]" on-tap="tapHueGroup">[[item.name]]</paper-button>
+        <paper-button class$="[[allOn]]" on-tap="tapAllLights">
+          All Lights
+        </paper-button>
+        <template
+          is="dom-repeat"
+          filter="isRoom"
+          items="[[hueGroups]]">
+            <paper-button class$="[[getButtonClass(item.$key, item.state.all_on)]]" on-tap="tapHueGroup">
+              [[item.name]]
+            </paper-button>
         </template>
       </div>
     </div>
@@ -45,52 +56,53 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HueGroupsView extends Polymer.Element {
       static get is() { return 'view-hue-groups'; }
 
-      static get observers() {
-        return [
-          '_groupsChanged(hueGroupsObj)',
-        ];
+      ready() {
+        super.ready();
+        this.allLights = {};
+        this.allOn = 'button';
       }
 
-      getButtonClass(item) {
-        if (item.state.all_on) {
+      getButtonClass(key, isOn) {
+        this.updateAllLights(key, isOn);
+        if (isOn === true) {
           return 'button toggle-on';
         }
         return 'button';
       }
 
-      _groupsChanged(hueGroups) {
-        if (!Array.isArray(hueGroups)) {
-          return;
-        }
-        let rooms = [];
-        let anyOn = false;
-        let allOn = true;
-        hueGroups.forEach(function(group, idx) {
-          if (!group) {
-            return;
-          }
-          if (group.state.any_on === true) {
-            anyOn = true;
-          }
-          if (group.state.all_on === false) {
-            allOn = false;
-          }
-          if (group.type === 'Room') {
-            group.groupId = idx;
-            rooms.push(group);
+      updateAllLights(key, isOn) {
+        this.allLights[key] = isOn;
+        let isAllOn = true;
+        Object.keys(this.allLights).forEach((k) => {
+          if (this.allLights[k] === false) {
+            isAllOn = false;
           }
         });
-        rooms.sort(app.sortByName);
-        let allLights = {
-          name: 'All Lights',
-          groupId: 0,
-          state: {
-            any_on: anyOn,
-            all_on: allOn,
-          },
-        };
-        rooms.splice(0, 0, allLights);
-        this.hueGroups = rooms;
+        if (isAllOn === true) {
+          this.allOn = 'button toggle-on';
+        } else {
+          this.allOn = 'button';
+        }
+      }
+
+      isRoom(item) {
+        if (item.type === 'Room') {
+          return true;
+        }
+        return false;
+      }
+
+      tapAllLights(event) {
+        let cmd = {lights: -0, lightState: {on: false}};
+        if (this.lightState.toggle === true) {
+          if (this.allOn === 'button') {
+            cmd.lightState.on = {on: true};
+          }
+        } else {
+          cmd.lightState = this.lightState;
+        }
+        this.startIndterminate(event.target);
+        this.$.sendCommand.send({hueCommand: cmd});
       }
 
       tapHueGroup(event) {
@@ -99,9 +111,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (lightState.toggle) {
           lightState = {on: !group.state.any_on};
         }
-        let cmd = {lights: group.groupId * -1, lightState: lightState};
+        let cmd = {lights: '-' + group.$key, lightState: lightState};
         this.startIndterminate(event.target);
-        app.sendCommand({hueCommand: cmd});
+        this.$.sendCommand.send({hueCommand: cmd});
       }
 
       startIndterminate(button) {

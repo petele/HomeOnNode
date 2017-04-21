@@ -9,26 +9,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="shared-styles.html">
-<link rel="import" href="log-viewer.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
 
-<dom-module id="view-presence-logs">
+
+<dom-module id="send-command">
   <template>
-    <style include="shared-styles">
-      :host {
-        display: block;
-      }
-    </style>
 
-    <log-viewer path="logs/presence"></log-viewer>
+    <firebase-document
+      id="fbDoc"
+      path="commands">
+    </firebase-document>
 
   </template>
 
   <script>
-    class PresenceLogsView extends Polymer.Element {
-      static get is() { return 'view-presence-logs'; }
+    class SendCommand extends Polymer.Element {
+      static get is() { return 'send-command'; }
+
+      send(cmd) {
+        window.lastUserInput = Date.now();
+        let ref = this.$.fbDoc.ref.push(cmd, (err) => {
+          if (err) {
+            this.showToast(err.message);
+          }
+        });
+        console.log('[-sendCommand-]', ref.key, cmd);
+      }
+
     }
 
-    window.customElements.define(PresenceLogsView.is, PresenceLogsView);
+    window.customElements.define(SendCommand.is, SendCommand);
   </script>
 </dom-module>

@@ -48,24 +48,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       .drawer-list a {
+        color: var(--primary-text-color);
         display: block;
+        line-height: 40px;
         padding: 0 16px;
         text-decoration: none;
-        color: var(--primary-text-color);
-        line-height: 40px;
       }
 
-      app-drawer paper-checkbox {
-        padding: 0 16px;
+      app-drawer say-this,
+      app-drawer push-subscription {
         display: block;
         line-height: 40px;
+        padding: 0 16px;
       }
 
       app-drawer div {
-        margin-top: 16px;
-        padding: 0 16px;
         color: var(--secondary-text-color);
         font-size: smaller;
+        margin-top: 16px;
+        padding: 0 16px;
       }
 
       .drawer-list a.iron-selected {
@@ -78,12 +79,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <my-firebase></my-firebase>
 
     <app-location route="{{route}}"></app-location>
-    <app-route
-        route="{{route}}"
-        pattern="/:page"
-        data="{{routeData}}"
-        tail="{{subroute}}"></app-route>
 
+    <app-route
+      route="{{route}}"
+      pattern="/:page"
+      data="{{routeData}}"
+      tail="{{subroute}}">
+    </app-route>
+    
     <app-drawer-layout fullbleed>
       <!-- Drawer content -->
       <app-drawer id="drawer" slot="drawer">
@@ -99,14 +102,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <a name="system-logs" href="/system-logs">System Logs</a>
           <a name="door-logs" href="/door-logs">Door Logs</a>
           <a name="presence-logs" href="/presence-logs">Presence Logs</a>
-          
         </iron-selector>
-        <paper-checkbox id="cbNotifications" checked="{{isSubscribed}}">
-          Notifications
-        </paper-checkbox>
-        <paper-checkbox id="cbSayThis" checked="{{sayThisEnabled}}" on-change="changeSayThis">
-          Say This
-        </paper-checkbox>
+        <push-subscription></push-subscription>
+        <say-this></say-this>
         <div style="display:none;">
           [[appVersion]]<br>
           [[appBuildDate]]
@@ -115,7 +113,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <!-- Main content -->
       <app-header-layout has-scrolling-region>
-
         <app-header slot="header" fixed condenses reveals effects="waterfall">
           <app-toolbar>
             <paper-icon-button icon="hon-icons:menu" drawer-toggle></paper-icon-button>
@@ -134,10 +131,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </paper-tab>
             </paper-tabs> 
           </app-toolbar>       
-
         </app-header>
-        <say-this id="sayThis" enabled="[[sayThisEnabled]]"></say-this>
-        <push-subscription is-subscribed="{{isSubscribed}}"></push-subscription>
+
         <iron-pages
             selected="[[page]]"
             attr-for-selected="name"
@@ -187,14 +182,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        setTimeout(() => {
-          this.appVersion = app.version;
-          this.appBuildDate = app.buildDate;
-          app.$ = this.$;
-          this.sayThisEnabled = localStorage.getItem('sayThis') === 'true';
-        }, 250);
         setInterval(() => {
-          let timeElapsed = (Date.now() - app.lastInput) / 1000;
+          let timeElapsed = (Date.now() - window.lastUserInput) / 1000;
           if (timeElapsed > 120 && this.page !== 'home') {
             window.history.pushState({}, null, '/');
             window.dispatchEvent(new CustomEvent('location-changed'));
@@ -203,10 +192,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             location.reload(true);
           }
         }, 15000);
-      }
-
-      changeSayThis(event) {
-        localStorage.setItem('sayThis', event.target.checked);
+        window.lastUserInput = Date.now();
       }
 
       _routePageChanged(page) {
@@ -227,9 +213,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _pageChanged(page) {
-        if (window.app && window.app.lastInput) {
-          app.lastInput = Date.now();
-        }
+        window.lastUserInput = Date.now();
         // Load page import on demand. Show 404 page if fails
         var resolvedPageUrl = this.resolveUrl('view-' + page + '.html');
         Polymer.importHref(

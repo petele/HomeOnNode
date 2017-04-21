@@ -15,7 +15,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="my-firebase">
   <template>
 
-    <paper-toast id="toast" text=""></paper-toast>
+    <paper-toast id="toast"></paper-toast>
 
     <firebase-app
       auth-domain="petele-at-home.firebaseapp.com"
@@ -31,9 +31,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <firebase-document
       path=".info/connected"
       data="{{fbIsConnected}}">
-    </firebase-document>
-
-    <firebase-document id="sendCommand" path="commands">
     </firebase-document>
 
     <firebase-document 
@@ -57,32 +54,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       ready() {
         super.ready();
         this.initFirebase();
-        window.app = window.app || {};
-        window.app.sendCommand = (cmd) => {
-          window.app.lastInput = Date.now();
-          if (this.$.fbAuth.signedIn === false) {
-            this.showToast('Not logged in.');
-            this.initFirebase(cmd);
-            return;
-          }
-          let ref = this.$.sendCommand.ref.push(cmd, (err) => {
-            if (err) {
-              this.showToast(err.message);
-            }
-          });
-          console.log('[sendCommand]', ref.key, cmd);
-        };
       }
 
-      initFirebase(cmd) {
+      initFirebase() {
         let fbUser = window.fbUser;
         let fbPassword = window.fbPassword;
         this.$.fbAuth.signInWithEmailAndPassword(fbUser, fbPassword)
-          .then(() => {
-            if (cmd) {
-              app.sendCommand(cmd);
-            }
-          })
           .catch(this.onFirebaseAuthFail);
       }
 

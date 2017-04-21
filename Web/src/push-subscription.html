@@ -9,12 +9,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 
 <dom-module id="push-subscription">
   <template>
 
     <firebase-document id="fbPush" path="pushSubscribers">
     </firebase-document>
+
+    <paper-checkbox
+      checked="{{isSubscribed}}"
+      on-change="changeSubscription">
+        Notifications
+    </paper-checkbox>
 
   </template>
 
@@ -24,41 +32,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        this._checkSubscription();
+        this.checkSubscription();
       }
 
-      static get properties() {
-        return {
-          isSubscribed: {
-            type: Boolean,
-            notify: true,
-            reflectToAttribute: true,
-          },
-        };
-      }
-
-      static get observers() {
-        return [
-          '_subscriptionChanged(isSubscribed)',
-        ];
-      }
-
-      _subscriptionChanged(newVal) {
-        if (this.ready !== true) {
-          return;
-        }
-        if (newVal === true) {
+      changeSubscription(event) {
+        if (event.target.checked === true) {
           this._subscribe();
-          return;
+        } else {
+          this._unsubscribe();
         }
-        this._unsubscribe();
       }
 
-      _logError(msg) {
-        console.error(msg);
+      _logError(err) {
+        console.log('ERROR', err);
       }
 
-      _checkSubscription() {
+      checkSubscription() {
         navigator.serviceWorker.ready.then((swReg) => {
           swReg.pushManager.getSubscription().then((subscription) => {
             if (subscription) {
