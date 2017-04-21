@@ -40,10 +40,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <div class="layout horizontal">
       <paper-dropdown-menu id="pdmAction" label="Action">
-        <paper-listbox class="dropdown-content" selected="0" on-iron-select="updateAction">
-          <paper-item value="toggle">Toggle</paper-item>
-          <paper-item value="on">On</paper-item>
-          <paper-item value="off">Off</paper-item>
+        <paper-listbox
+          slot="dropdown-content"
+          selected="0"
+          on-iron-select="updateAction">
+            <paper-item value="toggle">Toggle</paper-item>
+            <paper-item value="on">On</paper-item>
+            <paper-item value="off">Off</paper-item>
         </paper-listbox>
       </paper-dropdown-menu>
 
@@ -51,19 +54,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <paper-dropdown-menu id="pdmBri" 
         label="Brightness" disabled="{{disablePickers}}">
-        <paper-listbox class="dropdown-content" selected="0" on-iron-select="updateBrightness">
-          <paper-item></paper-item>
-          <paper-item value="100">100%</paper-item>
-          <paper-item value="90">90%</paper-item>
-          <paper-item value="80">80%</paper-item>
-          <paper-item value="70">70%</paper-item>
-          <paper-item value="60">60%</paper-item>
-          <paper-item value="50">50%</paper-item>
-          <paper-item value="40">40%</paper-item>
-          <paper-item value="30">30%</paper-item>
-          <paper-item value="20">20%</paper-item>
-          <paper-item value="10">10%</paper-item>
-          <paper-item value="5">5%</paper-item>
+        <paper-listbox
+          slot="dropdown-content"
+          selected="0"
+          on-iron-select="updateBrightness">
+            <paper-item></paper-item>
+            <paper-item value="100">100%</paper-item>
+            <paper-item value="90">90%</paper-item>
+            <paper-item value="80">80%</paper-item>
+            <paper-item value="70">70%</paper-item>
+            <paper-item value="60">60%</paper-item>
+            <paper-item value="50">50%</paper-item>
+            <paper-item value="40">40%</paper-item>
+            <paper-item value="30">30%</paper-item>
+            <paper-item value="20">20%</paper-item>
+            <paper-item value="10">10%</paper-item>
+            <paper-item value="5">5%</paper-item>
         </paper-listbox>
       </paper-dropdown-menu>
 

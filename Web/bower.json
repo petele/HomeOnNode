@@ -81,7 +81,9 @@
     "iron-checked-element-behavior": "2.0-preview",
     "iron-autogrow-textarea": "2.0-preview",
     "iron-input": "2.0-preview",
-    "iron-a11y-announcer": "2.0-preview"
+    "iron-a11y-announcer": "2.0-preview",
+    "polymerfire": "2.0-preview",
+    "app-storage": "2.0-preview"
   },
   "devDependencies": {
     "web-component-tester": "6.0.0-prerelease.5"
