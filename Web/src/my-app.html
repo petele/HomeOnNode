@@ -105,7 +105,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </iron-selector>
         <push-subscription></push-subscription>
         <say-this></say-this>
-        <div style="display:none;">
+        <div>
           [[appVersion]]<br>
           [[appBuildDate]]
         </div>
@@ -149,6 +149,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <view-devices name="devices"></view-devices>
           <view-weather name="weather"></view-weather>
           <view-hvac name="hvac"></view-hvac>
+          <view-settings name="settings"></view-settings>
           <view-system-logs name="system-logs"></view-system-logs>
           <view-presence-logs name="presence-logs"></view-presence-logs>
           <view-door-logs name="door-logs"></view-door-logs>
@@ -182,6 +183,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
+        this.appVersion = '20170420';
+        this.appBuildDate = 'A1';
         setInterval(() => {
           let timeElapsed = (Date.now() - window.lastUserInput) / 1000;
           if (timeElapsed > 120 && this.page !== 'home') {
