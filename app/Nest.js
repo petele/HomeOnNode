@@ -193,7 +193,7 @@ function Nest(authToken, fbRef) {
     log.init(LOG_PREFIX, 'Init');
     _reconnectTimer = null;
     _disconnectedTimer = null;
-    if (_fbRef) {
+    if (fbRef) {
       _fbRef = fbRef.child('hvac');
       _fbRef.on('value', function(snapshot) {
         _config = snapshot.val();
