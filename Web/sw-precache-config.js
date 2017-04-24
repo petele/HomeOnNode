@@ -17,11 +17,15 @@ module.exports = {
     '/bower_components/webcomponentsjs/*',
     '/images/*',
     '/scripts/*',
-    '/bower_components/app-storage/app-indexeddb-mirror/*',
     '/src/common-worker-scope.js',
+    '/bower_components/app-storage/app-indexeddb-mirror/*',
   ],
   navigateFallback: 'index.html',
   importScripts: [
     'sw-notifications.js',
   ],
+  runtimeCaching: [{
+    urlPattern: /\/src\/common-worker-scope\.js\?.*/,
+    handler: 'cacheFirst',
+  }],
 };

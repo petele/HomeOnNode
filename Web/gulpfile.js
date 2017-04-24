@@ -22,9 +22,6 @@ const chalk = require('chalk');
 
 const VERSION_ID = moment().format('YYYYMMDD');
 const BUILD_DATE = moment().format('MMMM Do YYYY, h:mm a');
-const FILES_FOR_REPLACE = [
-  'build/bundled/app.yaml'
-];
 
 /**
  * Executes a shell command and returns the result in a promise.
@@ -54,17 +51,28 @@ function promisedExec(cmd, cwd) {
   });
 }
 
-function replaceStrings() {
-  return Promise.all(FILES_FOR_REPLACE.map(function(file) {
-    return new Promise(function(resolve, reject) {
-      var content = fs.readFileSync(file, 'utf8');
-      content = content.replace(/@@VERSION@@/g, VERSION_ID);
-      content = content.replace(/@@BUILD_DATE@@/g, BUILD_DATE);
-      fs.writeFileSync(file, content);
-      resolve(true);
-    });
-  }));
+function setAppYamlVersion() {
+  return new Promise(function(resolve, reject) {
+    let file = 'build/bundled/app.yaml';
+    var content = fs.readFileSync(file, 'utf8');
+    content = content.replace(/@@VERSION@@/g, VERSION_ID);
+    fs.writeFileSync(file, content);
+    resolve(true);
+  });
 }
+
+gulp.task('updateVersion', function() {
+  return new Promise(function(resolve, reject) {
+    let file = 'src/my-version.html';
+    var content = fs.readFileSync(file, 'utf8');
+    let version = `this.appVersion = '${VERSION_ID}';`;
+    let buildDate = `this.appBuildDate = '${BUILD_DATE}';`;
+    content = content.replace(/this\.appVersion = '.*?';/g, version);
+    content = content.replace(/this\.appBuildDate = '.*?';/g, buildDate);
+    fs.writeFileSync(file, content);
+    resolve(true);
+  });
+});
 
 gulp.task('clean', function() {
   return del(['build']);
@@ -81,12 +89,12 @@ gulp.task('lint', function() {
     })
 });
 
-gulp.task('build', ['clean'], function() {
+gulp.task('build', ['clean', 'updateVersion'], function() {
   return promisedExec('polymer build', '.')
     .then((output) => {
       console.log(output);
     })
-    .then(replaceStrings);
+    .then(setAppYamlVersion);
 });
 
 gulp.task('deploy', ['build'], function() {

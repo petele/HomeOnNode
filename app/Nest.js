@@ -73,7 +73,6 @@ function Nest(authToken, fbRef) {
     return setCamerasStreaming(enabled);
   };
 
-
   /**
    * Adjust the temperature in a room by 1 degree
    *
@@ -198,7 +197,7 @@ function Nest(authToken, fbRef) {
       _fbRef.on('value', function(snapshot) {
         _config = snapshot.val();
       });
-    }    
+    }
     setState(STATES.init);
     login();
   }
@@ -227,7 +226,7 @@ function Nest(authToken, fbRef) {
       }
     }
     if (newState < 0) {
-      log.warn(LOG_PREFIX, msg, extra);  
+      log.warn(LOG_PREFIX, msg, extra);
       return true;
     }
     log.log(LOG_PREFIX, msg);
@@ -324,6 +323,7 @@ function Nest(authToken, fbRef) {
 
   /**
    * Called when the Nest Firebase object has been updated.
+   *
    * @param {string} path Path used to set the parameter (used in logging)
    * @param {Object} err Error (if any)
    * @return {Boolean} True if the state was successfully changed
@@ -331,13 +331,16 @@ function Nest(authToken, fbRef) {
   function onSetComplete(path, err) {
     if (err) {
       log.exception(LOG_PREFIX, err.message + ' at path: ' + path, err);
+      return false;
     } else {
       log.debug(LOG_PREFIX, 'setComplete: ' + path);
+      return true;
     }
   }
 
   /**
    * Finds the Nest ThermostatId for the specified roomId
+   *
    * @param {string} roomId Room ID to look up.
    * @return {string} thermostatId
    */
@@ -365,6 +368,7 @@ function Nest(authToken, fbRef) {
 
   /**
    * Finds the Nest Thermostat for the specified thermostatId
+   *
    * @param {string} thermostatId Thermostat to look up.
    * @return {Object} thermostat
    */
@@ -387,6 +391,7 @@ function Nest(authToken, fbRef) {
 
   /**
    * Sets the Nest Home/Away state
+   *
    * @param {string} state The new home state, home/away
    * @return {Boolean} True if the state was successfully changed
    */
@@ -405,6 +410,7 @@ function Nest(authToken, fbRef) {
 
   /**
    * Sets the Nest Camera streaming state for all cameras.
+   *
    * @param {Boolean} state Whether the camera is on or not
    * @return {Boolean} True if the state was successfully changed
    */
@@ -427,6 +433,7 @@ function Nest(authToken, fbRef) {
 
   /**
    * Sets the temperature on the specified thermostat
+   *
    * @param {string} thermostatId The thermostat to set
    * @param {Number} temperature Temperature to set it to
    * @param {Boolean} isRetry If the attempt is a retry
@@ -464,6 +471,7 @@ function Nest(authToken, fbRef) {
 
   /**
    * Starts or stops the Fan
+   *
    * @param {string} thermostatId The thermostat to set
    * @param {Number} minutes Only useful for 0 to turn the fan off
    * @param {Boolean} isRetry If the attempt is a retry

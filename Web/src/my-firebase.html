@@ -69,6 +69,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       onFirebaseAuthFail(err) {
+        // eslint-disable-next-line no-console
         console.log('onFirebaseAuthFail', err);
         this.showToast(err.message);
       }

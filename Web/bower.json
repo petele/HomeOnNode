@@ -1,7 +1,7 @@
 {
-  "name": "HomeOnNode Web",
+  "name": "hon-web",
   "authors": [
-    "The Polymer Authors"
+    ""
   ],
   "license": "https://polymer.github.io/LICENSE.txt",
   "dependencies": {

@@ -53,7 +53,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <fb-document path="config/HomeOnNode/hvac" data="{{hvacConfig}}">
     </fb-document>
-    <div class="card">
+    <div class="card" style="display:none;">
       <div>HVAC Mode</div>
       <paper-dropdown-menu label="HVAC Mode">
         <paper-listbox 
@@ -69,36 +69,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </div>
 
     <div class="card">
-      <div>Day</div>
+      <div>Living Room</div>
       <div class="app-grid grid-two">
         <paper-input 
-          label="Living Room"
+          label="Day"
           type="number"
           min="60" max="80"
-          value={{hvacConfig.auto.DAY.LR}}>
+          value="{{hvacConfig.auto.DAY.LR}}">
         </paper-input>
         <paper-input 
-          label="Bedroom"
+          label="Night"
           type="number"
           min="60" max="80"
-          value={{hvacConfig.auto.DAY.BR}}>
+          value="{{hvacConfig.auto.SLEEP.LR}}">
         </paper-input>
       </div>
     </div>
+
     <div class="card">
-      <div>Sleep</div>
+      <div>Bedroom</div>
       <div class="app-grid grid-two">
         <paper-input 
-          label="Living Room"
+          label="Day"
           type="number"
           min="60" max="80"
-          value={{hvacConfig.auto.SLEEP.LR}}>
+          value="{{hvacConfig.auto.DAY.BR}}">
         </paper-input>
         <paper-input 
-          label="Bedroom"
+          label="Night"
           type="number"
           min="60" max="80"
-          value={{hvacConfig.auto.SLEEP.BR}}>
+          value="{{hvacConfig.auto.SLEEP.BR}}">
       </div>
     </div>
   </template>

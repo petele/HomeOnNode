@@ -1,18 +1,24 @@
 'use strict';
 
-var EventEmitter = require('events').EventEmitter;
-var Keys = require('./Keys').keys;
-var util = require('util');
-var log = require('./SystemLog2');
-var webpush = require('web-push-encryption');
-var moment = require('moment');
+const util = require('util');
+const moment = require('moment');
+const Keys = require('./Keys').keys;
+const log = require('./SystemLog2');
+const webpush = require('web-push');
+const EventEmitter = require('events').EventEmitter;
 
-var LOG_PREFIX = 'GCMPush';
+const LOG_PREFIX = 'GCMPush';
 
 function GCMPush(fb) {
-  var _fb = fb;
-  var _self = this;
-  var _sendReady = false;
+  const _fb = fb;
+  const _self = this;
+  const _options = {
+    gcmAPIKey: Keys.gcm.apiKey,
+    TTL: 120,
+  };
+  let _sendReady = false;
+  let _subscribers = [];
+
 
   /*****************************************************************************
    *
@@ -22,10 +28,20 @@ function GCMPush(fb) {
 
   function init() {
     log.init(LOG_PREFIX, 'Init');
-    setTimeout(function() {
-      _sendReady = true;
-      _self.emit('ready');
-    }, 250);
+    _fb.child('pushSubscribers').on('value', (snapshot) => {
+      let subscribers = [];
+      snapshot.forEach((subscriberObj) => {
+        let subscriber = subscriberObj.val();
+        subscriber.key = subscriberObj.key();
+        subscribers.push(subscriber);
+      });
+      _subscribers = subscribers;
+      log.log(LOG_PREFIX, `Subscribers updated: ${_subscribers.length}`);
+      if (_sendReady === false) {
+        _sendReady = true;
+        _self.emit('ready');
+      }
+    });
   }
 
   /*****************************************************************************
@@ -35,49 +51,44 @@ function GCMPush(fb) {
    ****************************************************************************/
 
   this.sendMessage = function(message) {
-    var msg;
-    if (message && typeof message === 'object') {
-      var now = Date.now();
-      message.sentAt = now;
-      if (!message.tag) {
-        message.tag = 'HoN-generic';
-      }
-      if (!message.id) {
-        message.id = 'HoN-' + now;
-      }
-      if (message.appendTime) {
-        message.body += ' ' + moment().format('h:mm a (ddd MMM Mo)');
-      }
-      message = JSON.stringify(message);
-      _fb.child('pushSubscribers').once('value', function(snapshot) {
-        log.log(LOG_PREFIX, 'Sending notifications...');
-        snapshot.forEach(function(subscriberObj) {
-          var subscriber = subscriberObj.val();
-          var subscriberKey = subscriberObj.key();
-          var subscription = subscriber.subscriptionInfo;
-          if (subscriber.subscriptionInfo.keys) {
-            webpush.sendWebPush(message, subscription, Keys.gcm.apiKey)
-              .then(function(resp) {
-                msg = 'Message sent to ' + subscriberKey;
-                msg += ' - ' + JSON.stringify(resp);
-                log.debug(LOG_PREFIX, msg);
-              })
-              .catch(function(resp) {
-                msg = 'Error sending message to ' + subscriberKey;
-                msg += ' - ' + JSON.stringify(resp);
-                log.warn(LOG_PREFIX, msg);
-              });
-          } else {
-            msg = 'Subscriber (' + subscriberKey + ') had no keys.';
-            msg += ' Removed.';
-            log.warn(LOG_PREFIX, msg);
-            subscriberObj.ref().remove();
-          }
-        });
-      });
-    } else {
-      log.error(LOG_PREFIX, 'No or invalid message provided. Nothing sent.');
+    if (!message) {
+      log.error(LOG_PREFIX, 'sendMessage() failed, cannot send empty message');
+      return;
     }
+    if (typeof message !== 'object') {
+      log.error(LOG_PREFIX, 'sendMessage() failed, message must be an object');
+      return;
+    }
+    if (_sendReady !== true) {
+      log.error(LOG_PREFIX, 'sendMessage() failed, not ready.');
+      return;
+    }
+    log.log(LOG_PREFIX, 'Sending notifications...');
+    const now = Date.now();
+    message.sentAt = now;
+    if (!message.tag) {
+      message.tag = 'HoN-generic';
+    }
+    if (!message.id) {
+      message.id = 'HoN-' + now.toString();
+    }
+    if (message.appendTime) {
+      message.body += ' ' + moment().format('h:mm a (ddd MMM Mo)');
+    }
+    const payload = JSON.stringify(message);
+    _subscribers.forEach((subscriberObj) => {
+      const key = subscriberObj.key;
+      const shortKey = subscriberObj.key.substring(0, 11);
+      const subscriber = subscriberObj.subscriptionInfo;
+      webpush.sendNotification(subscriber, payload, _options)
+        .then((resp) => {
+          log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
+        })
+        .catch((err) => {
+          log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
+          _fb.child(`pushSubscribers/${key}/lastAttemptFailed`).set(true);
+        });
+    });
   };
 
   init();

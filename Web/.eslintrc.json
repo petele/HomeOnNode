@@ -10,16 +10,14 @@
     "html"
   ],
   "rules": {
-    "brace-style": "off",
+    "brace-style": ["warn", "1tbs", {"allowSingleLine": true }],
     "new-cap": ["error", { "capIsNewExceptions": ["Polymer"] }],
-    "no-var": "off",
+    "no-var": "warn",
     "require-jsdoc": "off",
     "no-console": ["error", { "allow": ["error"] }]
   },
   "globals": {
     "Polymer": true,
-    "moment": true,
-    "app": true,
-    "Firebase": true
+    "moment": true
   }
 }

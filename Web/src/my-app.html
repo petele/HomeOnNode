@@ -25,6 +25,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 <link rel="import" href="../bower_components/neon-animation/web-animations.html">
 <link rel="import" href="my-firebase.html">
+<link rel="import" href="my-version.html">
 <link rel="import" href="hon-icons.html">
 <link rel="import" href="moment-js.html">
 <link rel="import" href="say-this.html">
@@ -59,13 +60,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       app-drawer push-subscription {
         display: block;
         line-height: 40px;
-        padding: 0 16px;
-      }
-
-      app-drawer div {
-        color: var(--secondary-text-color);
-        font-size: smaller;
-        margin-top: 16px;
         padding: 0 16px;
       }
 
@@ -105,10 +99,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </iron-selector>
         <push-subscription></push-subscription>
         <say-this></say-this>
-        <div>
-          [[appVersion]]<br>
-          [[appBuildDate]]
-        </div>
+        <my-version></my-version>
       </app-drawer>
 
       <!-- Main content -->
@@ -183,8 +174,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        this.appVersion = '20170420';
-        this.appBuildDate = 'A1';
         setInterval(() => {
           let timeElapsed = (Date.now() - window.lastUserInput) / 1000;
           if (timeElapsed > 120 && this.page !== 'home') {
@@ -218,7 +207,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _pageChanged(page) {
         window.lastUserInput = Date.now();
         // Load page import on demand. Show 404 page if fails
-        var resolvedPageUrl = this.resolveUrl('view-' + page + '.html');
+        let resolvedPageUrl = this.resolveUrl('view-' + page + '.html');
         Polymer.importHref(
             resolvedPageUrl,
             null,

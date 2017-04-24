@@ -22,7 +22,7 @@
     "node-xmpp-client": "1.0.0-alpha20",
     "openzwave-shared": "^1.1.4",
     "request": "^2.69.0",
-    "web-push-encryption": "^1.0.0",
+    "web-push": "^3.2.2",
     "ws": "^1.1.1"
   },
   "devDependencies": {}

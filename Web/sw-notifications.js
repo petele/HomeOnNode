@@ -2,10 +2,11 @@
 
 self.addEventListener('push', function(event) {
   console.log('Push message', event);
-  var title = 'HomeOnNode';
-  var notBody = 'An unknown event has occured, Eep!';
-  var notIcon = '/images/athome-192.png';
-  var notTag = 'unknown';
+  let title = 'HomeOnNode';
+  let body = 'An unknown event has occured, Eep!';
+  let icon = '/images/athome-192.png';
+  let tag = 'HoN-generic';
+  let badge = '/images/ic_home_black_2x_web_48dp.png';
   if (event.data) {
     var data = {};
     try {
@@ -17,20 +18,23 @@ self.addEventListener('push', function(event) {
       title = data.title;
     }
     if (data.body) {
-      notBody = data.body;
+      body = data.body;
     }
     if (data.icon) {
-      notIcon = data.icon;
+      icon = data.icon;
     }
     if (data.tag) {
-      notTag = data.tag;
+      tag = data.tag;
+    }
+    if (data.badge) {
+      badge = data.badge;
     }
   }
   event.waitUntil(
     self.registration.showNotification(title, {
-      body: notBody,
-      icon: notIcon,
-      tag: notTag,
-      badge: notIcon,
+      body: body,
+      icon: icon,
+      tag: tag,
+      badge: badge,
     }));
 });

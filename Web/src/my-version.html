@@ -9,36 +9,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
-<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
 
-
-<dom-module id="send-command">
+<dom-module id="my-version">
   <template>
-
-    <firebase-document
-      id="fbDoc"
-      path="commands">
-    </firebase-document>
-
+    <style include="shared-styles">
+      :host {
+        color: var(--secondary-text-color);
+        display: block;
+        font-size: smaller;
+        margin-top: 16px;
+        padding: 0 16px;
+      }
+    </style>
+    <div>
+      [[appVersion]]<br>
+      [[appBuildDate]]
+    </div>
   </template>
 
   <script>
-    class SendCommand extends Polymer.Element {
-      static get is() { return 'send-command'; }
+    class MyVersion extends Polymer.Element {
+      static get is() { return 'my-version'; }
 
-      send(cmd) {
-        window.lastUserInput = Date.now();
-        let ref = this.$.fbDoc.ref.push(cmd, (err) => {
-          if (err) {
-            this.showToast(err.message);
-          }
-        });
-        // eslint-disable-next-line no-console
-        console.log('[-sendCommand-]', ref.key, cmd);
+      ready() {
+        super.ready();
+        this.appVersion = '20170424';
+        this.appBuildDate = 'April 24th 2017, 4:47 pm';
       }
 
     }
 
-    window.customElements.define(SendCommand.is, SendCommand);
+    window.customElements.define(MyVersion.is, MyVersion);
   </script>
 </dom-module>

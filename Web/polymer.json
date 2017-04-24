@@ -23,7 +23,7 @@
       "name": "bundled",
       "addServiceWorker": true,
       "swPrecacheConfig": "sw-precache-config.js",
-      "insertPrefetchLinks": true,
+      "insertPrefetchLinks": false,
       "bundle": true,
       "js": {"minify": true, "compile": false},
       "css": {"minify": true},
