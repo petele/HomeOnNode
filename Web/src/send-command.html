@@ -10,10 +10,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymerfire/polymerfire.html">
-
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 
 <dom-module id="send-command">
   <template>
+
+    <paper-toast id="toast"></paper-toast>
 
     <firebase-document
       id="fbDoc"
@@ -30,7 +32,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         window.lastUserInput = Date.now();
         let ref = this.$.fbDoc.ref.push(cmd, (err) => {
           if (err) {
-            this.showToast(err.message);
+            // eslint-disable-next-line no-console
+            console.log('ERROR', '[-sendCommand-]', err);
+            this.$.toast.text = err.message;
+            this.$.toast.show();
           }
         });
         // eslint-disable-next-line no-console

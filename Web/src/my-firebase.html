@@ -60,18 +60,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         let fbUser = window.fbUser;
         let fbPassword = window.fbPassword;
         this.$.fbAuth.signInWithEmailAndPassword(fbUser, fbPassword)
-          .catch(this.onFirebaseAuthFail);
+          .catch((err) => {
+            // eslint-disable-next-line no-console
+            console.log('onFirebaseAuthFail', err);
+            this.showToast(err.message);
+          });
       }
 
       showToast(message) {
         this.$.toast.text = message;
         this.$.toast.show();
-      }
-
-      onFirebaseAuthFail(err) {
-        // eslint-disable-next-line no-console
-        console.log('onFirebaseAuthFail', err);
-        this.showToast(err.message);
       }
 
       onlineChanged(newVal) {
