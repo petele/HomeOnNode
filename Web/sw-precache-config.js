@@ -16,10 +16,12 @@ module.exports = {
     '/manifest.json',
     '/bower_components/webcomponentsjs/*',
     '/images/*',
-    '/scripts/*'
+    '/scripts/*',
+    '/bower_components/app-storage/app-indexeddb-mirror/*',
+    '/src/common-worker-scope.js',
   ],
   navigateFallback: 'index.html',
   importScripts: [
-    'sw-notifications.js'
-  ]
+    'sw-notifications.js',
+  ],
 };

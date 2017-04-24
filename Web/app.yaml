@@ -13,6 +13,12 @@ handlers:
   secure: always
   login: admin
 
+- url: /src/common-worker-scope.js
+  static_files: bower_components/app-storage/app-indexeddb-mirror/common-worker-scope.js
+  upload: bower_components/app-storage/app-indexeddb-mirror/common-worker-scope.js
+  secure: always
+  login: admin
+
 - url: /src/bower_components/.*
   static_files: empty.html
   upload: empty.html

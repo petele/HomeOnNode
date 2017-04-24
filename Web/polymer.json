@@ -40,6 +40,7 @@
   "extraDependencies": [
     "manifest.json",
     "bower_components/webcomponentsjs/*.js",
+    "bower_components/app-storage/app-indexeddb-mirror/*",
     "app.yaml",
     "empty.html"
   ],

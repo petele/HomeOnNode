@@ -31,6 +31,6 @@ self.addEventListener('push', function(event) {
       body: notBody,
       icon: notIcon,
       tag: notTag,
-      badge: notIcon
+      badge: notIcon,
     }));
 });
