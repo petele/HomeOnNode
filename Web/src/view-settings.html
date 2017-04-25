@@ -10,25 +10,57 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="shared-styles.html">
 
 <dom-module id="view-settings">
   <template>
-    <style>
+    <style include="shared-styles app-grid-style">
       :host {
         display: block;
-        padding: 10px 20px;
       }
     </style>
 
-    <paper-button class="button" raised on-tap="tapReset">
-      Reset Cache
-    </paper-button>
+    <div class="card">
+      <div>Cache</div>
+      <div class="app-grid grid-two">
+        <paper-button class="button" on-tap="tapReset">
+          Reset
+        </paper-button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div>Firebase</div>
+      <div class="app-grid grid-two">
+        <paper-button class="button" on-tap="tapSignIn">
+          Sign In
+        </paper-button>
+        <paper-button class="button" on-tap="tapSignOut">
+          Sign Out
+        </paper-button>
+      </div>
+    </div>
 
   </template>
 
   <script>
     class SettingsView extends Polymer.Element {
       static get is() { return 'view-settings'; }
+
+      ready() {
+        super.ready();
+        this.fbAuth = document.querySelector('my-app').$.fbHelper;
+        window.pete = this;
+      }
+
+      tapSignIn() {
+        this.fbAuth.signIn();
+      }
+
+      tapSignOut() {
+        this.fbAuth.signOut();
+      }
 
       tapReset() {
         localStorage.clear();

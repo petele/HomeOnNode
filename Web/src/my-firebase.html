@@ -25,12 +25,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       messaging-sender-id="999286632442">
     </firebase-app>
 
-    <firebase-auth id="fbAuth">
+    <firebase-auth
+      id="fbAuth"
+      user="{{fbUser}}">
     </firebase-auth>
 
     <firebase-document
       path=".info/connected"
-      data="{{fbIsConnected}}">
+      data="{{isConnected}}">
     </firebase-document>
 
     <firebase-document 
@@ -46,41 +48,63 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get observers() {
         return [
-          'onlineChanged(fbIsConnected)',
           'serverTick(honHeartbeat)',
+          'readyChanged(fbUser, isConnected)',
         ];
       }
 
       ready() {
         super.ready();
-        this.initFirebase();
+        this.user = window.honKeys.user;
+        this.password = window.honKeys.password;
+        this.fbApiKey = window.honKeys.apiKey;
+        this.signIn();
       }
 
-      initFirebase() {
-        let user = window.honKeys.user;
-        let password = window.honKeys.password;
-        this.fbApiKey = window.honKeys.apiKey;
-        this.$.fbAuth.signInWithEmailAndPassword(user, password)
+      signIn() {
+        this.$.fbAuth.signInWithEmailAndPassword(this.user, this.password)
           .catch((err) => {
             // eslint-disable-next-line no-console
             console.log('onFirebaseAuthFail', err);
-            this.showToast(err.message);
+            this.showToast('Sign in failed.', 0);
           });
       }
 
-      showToast(message) {
-        this.$.toast.text = message;
-        this.$.toast.show();
+      signOut() {
+        this.$.fbAuth.signOut();
       }
 
-      onlineChanged(newVal) {
-        // eslint-disable-next-line no-console
-        console.log('Firebase Connected:', newVal);
-        if (newVal === true) {
-          this.showToast('Connected.');
-        } else {
-          this.showToast('Disconnected.');
+      showToast(message, duration) {
+        const toast = this.$.toast;
+        if (toast.opened) {
+          toast.close();
         }
+        toast.text = message;
+        if (duration === undefined || duration === null) {
+          duration = 3000;
+        }
+        toast.duration = duration;
+        toast.show();
+      }
+
+      readyChanged() {
+        let user = !!this.fbUser;
+        let isConnected = this.isConnected === true;
+        if (user && isConnected) {
+          this.showToast('Ready');
+          return;
+        }
+        // eslint-disable-next-line no-console
+        console.log('firebaseReady', user, isConnected);
+        let msg;
+        if (!user && isConnected) {
+          msg = 'Not signed in';
+        } else if (user && !isConnected) {
+          msg = 'Connection lost';
+        } else {
+          msg = 'Whoops';
+        }
+        this.showToast(msg, 0);
       }
 
       serverTick(newVal) {

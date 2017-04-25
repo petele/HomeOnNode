@@ -49,11 +49,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <!-- Load and register pre-caching Service Worker -->
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/service-worker.js');
-        });
-      }
+      setTimeout(() => {
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js');
+          });
+        }        
+      }, 5000);
     </script>
 
     <!-- Load webcomponents-loader.js to check and load any polyfills your browser needs -->
