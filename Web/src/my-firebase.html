@@ -20,7 +20,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <firebase-app
       auth-domain="petele-at-home.firebaseapp.com"
       database-url="https://petele-at-home.firebaseio.com/"
-      api-key="AIzaSyCimAEx3GDDYlcQNnmQ2R9tu0CIEg8JVTA"
+      api-key="{{fbApiKey}}"
       storage-bucket="petele-at-home.appspot.com"
       messaging-sender-id="999286632442">
     </firebase-app>
@@ -57,9 +57,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       initFirebase() {
-        let fbUser = window.fbUser;
-        let fbPassword = window.fbPassword;
-        this.$.fbAuth.signInWithEmailAndPassword(fbUser, fbPassword)
+        let user = window.honKeys.user;
+        let password = window.honKeys.password;
+        this.fbApiKey = window.honKeys.apiKey;
+        this.$.fbAuth.signInWithEmailAndPassword(user, password)
           .catch((err) => {
             // eslint-disable-next-line no-console
             console.log('onFirebaseAuthFail', err);
