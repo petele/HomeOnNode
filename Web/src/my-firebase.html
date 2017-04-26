@@ -18,6 +18,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <paper-toast id="toast"></paper-toast>
 
     <firebase-app
+      id="fbApp"
+      on-error="handleAppError"
       auth-domain="petele-at-home.firebaseapp.com"
       database-url="https://petele-at-home.firebaseio.com/"
       api-key="{{fbApiKey}}"
@@ -27,15 +29,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <firebase-auth
       id="fbAuth"
+      on-error="handleAuthError"
       user="{{fbUser}}">
     </firebase-auth>
 
     <firebase-document
+      on-error="handleDocError"
       path=".info/connected"
       data="{{isConnected}}">
     </firebase-document>
 
     <firebase-document 
+      on-error="handleDocError"
       path="devices/HomeOnNode/heartbeat"
       data="{{honHeartbeat}}">
     </firebase-document>
@@ -59,6 +64,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.password = window.honKeys.password;
         this.fbApiKey = window.honKeys.apiKey;
         this.signIn();
+        window.pete = this;
+        console.log('window.pete set to:', this);
+      }
+
+      handleAppError(a, b, c) {
+        console.log('handleAppError', a, b, c);
+      }
+
+      handleAuthError(a, b, c) {
+        console.log('handleAuthError', a, b, c);
+      }
+
+      handleDocError(a, b, c) {
+        console.log('handleDocError', a, b, c);
       }
 
       signIn() {
@@ -90,19 +109,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       readyChanged() {
         let user = !!this.fbUser;
         let isConnected = this.isConnected === true;
+        // eslint-disable-next-line no-console
+        console.log('firebaseReady', user, isConnected);
         if (user && isConnected) {
           this.showToast('Ready');
           return;
         }
-        // eslint-disable-next-line no-console
-        console.log('firebaseReady', user, isConnected);
-        let msg;
+        let msg = 'Whoops! No user or cnx';
         if (!user && isConnected) {
           msg = 'Not signed in';
         } else if (user && !isConnected) {
           msg = 'Connection lost';
-        } else {
-          msg = 'Whoops';
         }
         this.showToast(msg, 0);
       }

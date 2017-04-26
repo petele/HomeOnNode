@@ -210,9 +210,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         let resolvedPageUrl = this.resolveUrl('view-' + page + '.html');
         Polymer.importHref(
             resolvedPageUrl,
-            null,
+            this._pageLoaded.bind(this),
             this._showPage404.bind(this),
             true);
+      }
+
+      _pageLoaded() {
+        document.body.classList.remove('loading');
       }
 
       _showPage404() {
