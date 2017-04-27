@@ -56,6 +56,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
     </script>
 
+    <!-- Load webcomponents-loader.js to check and load any polyfills your browser needs -->
+    <script src="/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
+
+    <!-- Load your application shell -->
+    <link rel="import" href="/src/my-app.html">
+
     <!-- Add any global styles for body, document, etc. -->
     <style>
       body {
@@ -66,23 +72,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: #eeeeee;
       }
 
-      body.loading {
+      .spinner-container {
         background-color: #3f51b5;
-      }
-
-      .spinner {
         display: none;
+        height: 100vh;
         margin: auto;
         padding-top: 100px;
         text-align: center;
-        width: 70px;
       }
 
-      body.loading .spinner {
+      .spinner-container-visible {
         display: block;
       }
 
-      .spinner > div {
+      .spinner-container .spinner {
+        margin: auto;
+        width: 70px;
+      }
+
+      .spinner-container .spinner-text {
+        color: #efefef;
+        margin-top: 1em;
+      }
+
+      .spinner-container .spinner > div {
         width: 18px;
         height: 18px;
         background-color: #ccc;
@@ -93,12 +106,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         animation: sk-bouncedelay 1.4s infinite ease-in-out both;
       }
 
-      .spinner .bounce1 {
+      .spinner-container .spinner .bounce1 {
         -webkit-animation-delay: -0.32s;
         animation-delay: -0.32s;
       }
 
-      .spinner .bounce2 {
+      .spinner-container .spinner .bounce2 {
         -webkit-animation-delay: -0.16s;
         animation-delay: -0.16s;
       }
@@ -123,17 +136,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </head>
   <body class="loading">
 
-    <div class="spinner">
-      <div class="bounce1"></div>
-      <div class="bounce2"></div>
-      <div class="bounce3"></div>
+    <div class="spinner-container spinner-container-visible">
+      <div class="spinner">
+        <div class="bounce1"></div>
+        <div class="bounce2"></div>
+        <div class="bounce3"></div>
+      </div>
+      <div class="spinner-text">
+        <b>AtHome</b> Loading...
+      </div>
     </div>
-
-    <!-- Load webcomponents-loader.js to check and load any polyfills your browser needs -->
-    <script src="/bower_components/webcomponentsjs/webcomponents-loader.js"></script>
-
-    <!-- Load your application shell -->
-    <link rel="import" href="/src/my-app.html">
 
     <my-app></my-app>
 
