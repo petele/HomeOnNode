@@ -12,8 +12,13 @@
       "type": "image/png"
     },
     {
-      "src": "/images/athome.png",
-      "sizes": "300x300",
+      "src": "/images/athome-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/athome-1024.png",
+      "sizes": "1024x1024",
       "type": "image/png"
     }
   ],
