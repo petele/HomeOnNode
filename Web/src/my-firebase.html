@@ -64,19 +64,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.password = window.honKeys.password;
         this.fbApiKey = window.honKeys.apiKey;
         this.signIn();
-        window.pete = this;
-        console.log('window.pete set to:', this);
       }
 
       handleAppError(a, b, c) {
+        // eslint-disable-next-line no-console
         console.log('handleAppError', a, b, c);
       }
 
       handleAuthError(a, b, c) {
+        // eslint-disable-next-line no-console
         console.log('handleAuthError', a, b, c);
       }
 
       handleDocError(a, b, c) {
+        // eslint-disable-next-line no-console
         console.log('handleDocError', a, b, c);
       }
 

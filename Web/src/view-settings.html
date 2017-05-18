@@ -48,12 +48,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class SettingsView extends Polymer.Element {
       static get is() { return 'view-settings'; }
 
-      ready() {
-        super.ready();
-        this.fbAuth = document.querySelector('my-app').$.fbHelper;
-        window.pete = this;
-      }
-
       tapSignIn() {
         this.fbAuth.signIn();
       }
@@ -64,8 +58,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       tapReset() {
         localStorage.clear();
+        sessionStorage.clear();
         indexedDB.deleteDatabase('app-mirror');
+        caches.keys().then(function(keyList) {
+          return Promise.all(keyList.map(function(key) {
+            // eslint-disable-next-line no-console
+            console.log('Removing service-worker cache:', key);
+            return caches.delete(key);
+          }));
+        })
+        .then(() => {
+          if ('serviceWorker' in navigator) {
+            return navigator.serviceWorker.getRegistrations();
+          } else {
+            return Promise.resolve([]);
+          }
+        })
+        .then((registrations) => {
+          return Promise.all(registrations.map((reg) => {
+            // eslint-disable-next-line no-console
+            console.log('Removing service worker:', reg);
+            return reg.unregister();
+          }));
+        })
+        .then(() => {
+          window.location.href = 'https://petele-home-automation.appspot.com/';
+        });
       }
+
     }
 
     window.customElements.define(SettingsView.is, SettingsView);
