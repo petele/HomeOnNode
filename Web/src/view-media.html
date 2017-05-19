@@ -24,7 +24,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <style include="shared-styles app-grid-style">
       :host {
         display: block;
-        --app-grid-columns: 3;
       }
       .sonosTitle {
         font-size: 1.75em;
@@ -64,7 +63,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <fb-query path="state/harmonyConfig/activity" data="{{harmonyActivities}}">
     </fb-query>
     <div class="card">
-      <div class="app-grid" id="harmonyButtons">
+      <div class="app-grid grid-medium" id="harmonyButtons">
         <template is="dom-repeat" items="[[harmonyActivities]]" >
           <paper-button on-tap="tapHarmony"
             class$="[[harmonyActivityClass(item.label, currentHarmonyActivity.label)]]">
@@ -77,7 +76,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <fb-query path="state/sonos/favorites" data="{{sonosFavorites}}">
     </fb-query>
     <div class="card">
-      <div class="app-grid">
+      <div class="app-grid grid-medium">
         <paper-button class="button" on-tap="tapRadio">Radio</paper-button>
         <template is="dom-repeat" items="[[sonosFavorites]]">
           <paper-button class="button" on-tap="tapSonosFav">

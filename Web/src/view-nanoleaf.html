@@ -58,7 +58,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </div>
 
     <div class="card">
-      <div class="app-grid grid-three" id="nlEffects">
+      <div class="app-grid grid-medium" id="nlEffects">
         <template is="dom-repeat" items="[[nanoLeaf.effects.list]]">
           <paper-button class$="[[effectClass(item, nanoLeaf.effects.select, nanoLeaf.state.on.value)]]" name="[[item]]" on-tap="tapNanoLeafEffect">
             [[item]]

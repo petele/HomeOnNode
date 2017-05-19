@@ -40,6 +40,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding-left: 8px;
         padding-right: 8px;
       }
+      .grid-two { --app-grid-columns: 2; }
+      .grid-three { --app-grid-columns: 3; }
     </style>
 
     <send-command id="sendCommand"></send-command>
@@ -97,7 +99,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-button>
         </template>  
       </div>
-      <div class="app-grid">
+      <div class="app-grid grid-very-wide">
         <template is="dom-repeat" items="[[buttons]]">
           <paper-button class="button" on-tap="myTap">
             [[item.label]]
