@@ -65,10 +65,10 @@ gulp.task('updateVersion', function() {
   return new Promise(function(resolve, reject) {
     let file = 'src/my-version.html';
     var content = fs.readFileSync(file, 'utf8');
-    let version = `this.appVersion = '${VERSION_ID}';`;
-    let buildDate = `this.appBuildDate = '${BUILD_DATE}';`;
-    content = content.replace(/this\.appVersion = '.*?';/g, version);
-    content = content.replace(/this\.appBuildDate = '.*?';/g, buildDate);
+    let version = `value: '${VERSION_ID}',`;
+    let buildDate = `value: '${BUILD_DATE}',`;
+    content = content.replace(/value: '\d{8}',/g, version);
+    content = content.replace(/value: '\w+ \d{1,2}\w\w \d{4}, .*?',/g, buildDate);
     fs.writeFileSync(file, content);
     resolve(true);
   });
