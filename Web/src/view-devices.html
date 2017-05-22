@@ -119,6 +119,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class DevicesView extends Polymer.Element {
       static get is() { return 'view-devices'; }
 
+      static get properties() {
+        return {
+          selectedDevice: Object,
+        };
+      }
+
       rebootDevice(event) {
         window.lastUserInput = Date.now();
         this.selectedDevice = event.model.item;

@@ -47,17 +47,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HueScenesView extends Polymer.Element {
       static get is() { return 'view-hue-scenes'; }
 
-      ready() {
-        super.ready();
-        this.rooms = [
-          {name: 'Home', id: 'all'},
-          {name: 'Bedroom', id: 'Bedroom'},
-          {name: 'Bathroom', id: 'Bathroom'},
-          {name: 'Front Hall', id: 'Front Hall'},
-          {name: 'Kitchen', id: 'Kitchen'},
-          {name: 'Living Room', id: 'Living Room'},
-        ];
+      static get properties() {
+        return {
+          page: String,
+          rooms: {
+            type: Array,
+            value: [
+              {name: 'Home', id: 'all'},
+              {name: 'Bedroom', id: 'Bedroom'},
+              {name: 'Bathroom', id: 'Bathroom'},
+              {name: 'Front Hall', id: 'Front Hall'},
+              {name: 'Kitchen', id: 'Kitchen'},
+              {name: 'Living Room', id: 'Living Room'},
+            ],
+          },
+        };
       }
+
     }
 
     window.customElements.define(HueScenesView.is, HueScenesView);

@@ -47,16 +47,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HueLightsView extends Polymer.Element {
       static get is() { return 'view-hue-lights'; }
 
-      ready() {
-        super.ready();
-        this.rooms = [
-          {name: 'Bedroom', id: 'BR'},
-          {name: 'Bathroom', id: 'Bathroom'},
-          {name: 'Front Hall', id: 'Front Hall'},
-          {name: 'Kitchen', id: 'Kitchen'},
-          {name: 'Living Room', id: 'LR'},
-        ];
+      static get properties() {
+        return {
+          page: String,
+          rooms: {
+            type: Array,
+            value: [
+              {name: 'Bedroom', id: 'BR'},
+              {name: 'Bathroom', id: 'Bathroom'},
+              {name: 'Front Hall', id: 'Front Hall'},
+              {name: 'Kitchen', id: 'Kitchen'},
+              {name: 'Living Room', id: 'LR'},
+            ],
+          },
+        };
       }
+
     }
 
     window.customElements.define(HueLightsView.is, HueLightsView);

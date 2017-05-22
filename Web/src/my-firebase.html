@@ -51,6 +51,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class MyFirebase extends Polymer.Element {
       static get is() { return 'my-firebase'; }
 
+      static get properties() {
+        return {
+          fbUser: Object,
+          fbApiKey: String,
+          isConnected: Boolean,
+          honHeartbeat: Number,
+        };
+      }
+
       static get observers() {
         return [
           'serverTick(honHeartbeat)',

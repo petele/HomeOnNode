@@ -114,6 +114,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HomeView extends Polymer.Element {
       static get is() { return 'view-home'; }
 
+      static get properties() {
+        return {
+          currentTime: String,
+          dataDnD: Boolean,
+          dataSystemState: String,
+          dataNestCam: Boolean,
+          doNotDisturbIcon: String,
+          systemStateIcon: String,
+          nestCamIcon: String,
+        };
+      }
+
       ready() {
         super.ready();
         this.clockTick();

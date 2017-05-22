@@ -107,6 +107,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class ColorPicker extends Polymer.Element {
       static get is() { return 'color-picker'; }
 
+      static get properties() {
+        return {
+          color: {
+            type: Object,
+            notify: true,
+            reflectToAttribute: true,
+          },
+          colors: Array,
+          colorInfo: String,
+          colorValue: String,
+          ctMired: Number,
+          disabled: {
+            type: Boolean,
+          },
+        };
+      }
+
       ready() {
         super.ready();
         this.colors = [
@@ -136,19 +153,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.color = {};
         this.colorInfo = '';
         this.colorValue = '#CCCCCC';
-      }
-
-      static get properties() {
-        return {
-          color: {
-            type: Object,
-            notify: true,
-            reflectToAttribute: true,
-          },
-          disabled: {
-            type: Boolean,
-          },
-        };
       }
 
       static get observers() {

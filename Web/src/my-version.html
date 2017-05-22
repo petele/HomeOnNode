@@ -31,10 +31,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class MyVersion extends Polymer.Element {
       static get is() { return 'my-version'; }
 
-      ready() {
-        super.ready();
-        this.appVersion = '20170521';
-        this.appBuildDate = 'May 21st 2017, 4:08 pm';
+      static get properties() {
+        return {
+          appVersion: {
+            type: String,
+            value: '20170521',
+          },
+          appBuildDate: {
+            type: String,
+            value: 'May 22st 2017, 2:31pm',
+          },
+        };
       }
 
     }

@@ -31,9 +31,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class SayThis extends Polymer.Element {
       static get is() { return 'say-this'; }
 
+      static get properties() {
+        return {
+          isEnabled: Boolean,
+          ALLOWED_DIFF: {
+            type: Number,
+            value: 2 * 60 * 1000,
+          },
+        };
+      }
+
       ready() {
         super.ready();
-        this.ALLOWED_DIFF = 2 * 60 * 1000;
         this.isEnabled = localStorage.getItem('sayThis') === 'true';
         this.initSpeech();
       }

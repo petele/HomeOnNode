@@ -42,6 +42,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     class LightsElem extends Polymer.Element {
       static get is() { return 'elem-lights'; }
+
+      static get properties() {
+        return {
+          page: String,
+        };
+      }
     }
     window.customElements.define(LightsElem.is, LightsElem);
   </script>

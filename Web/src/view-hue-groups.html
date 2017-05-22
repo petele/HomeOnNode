@@ -56,6 +56,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HueGroupsView extends Polymer.Element {
       static get is() { return 'view-hue-groups'; }
 
+      static get properties() {
+        return {
+          page: String,
+          lightState: Object,
+          allOn: String,
+        };
+      }
+
       ready() {
         super.ready();
         this.allLights = {};

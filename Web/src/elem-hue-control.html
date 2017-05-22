@@ -81,21 +81,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class HueControlElem extends Polymer.Element {
       static get is() { return 'elem-hue-control'; }
 
-      constructor() {
-        super();
-        this.isOn = false;
-        this.bri = 0;
-        this.disablePickers = true;
-      }
-
       static get properties() {
         return {
+          disablePickers: Boolean,
           lightState: {
             type: Object,
             notify: true,
             reflectToAttribute: true,
           },
+          color: String,
         };
+      }
+
+      constructor() {
+        super();
+        this.isOn = false;
+        this.bri = 0;
+        this.disablePickers = true;
       }
 
       static get observers() {

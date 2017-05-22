@@ -125,9 +125,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class LogViewer extends Polymer.Element {
       static get is() { return 'log-viewer'; }
 
-      constructor() {
-        super();
-        this.MAX_ITEMS = 150;
+      static get properties() {
+        return {
+          MAX_ITEMS: {
+            type: Number,
+            value: 150,
+          },
+          path: String,
+          selectedLogItem: Object,
+        };
       }
 
       ready() {
@@ -135,14 +141,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (!this.path) {
           throw new Error('missing path attribute');
         }
-      }
-
-      static get properties() {
-        return {
-          path: {
-            type: String,
-          },
-        };
       }
 
       static get observers() {

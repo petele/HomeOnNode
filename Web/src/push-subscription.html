@@ -30,6 +30,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class PushSubscription extends Polymer.Element {
       static get is() { return 'push-subscription'; }
 
+      static get properties() {
+        return {
+          isSubscribed: Boolean,
+        };
+      }
+
       ready() {
         super.ready();
         this.checkSubscription();

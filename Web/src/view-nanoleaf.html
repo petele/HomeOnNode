@@ -60,7 +60,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div class="card">
       <div class="app-grid grid-medium" id="nlEffects">
         <template is="dom-repeat" items="[[nanoLeaf.effects.list]]">
-          <paper-button class$="[[effectClass(item, nanoLeaf.effects.select, nanoLeaf.state.on.value)]]" name="[[item]]" on-tap="tapNanoLeafEffect">
+          <paper-button class$="[[effectClass(item, nanoLeaf.effects.select, nanoLeaf.state.on.value)]]" on-tap="tapNanoLeafEffect">
             [[item]]
           </paper-button>
         </template>
@@ -72,6 +72,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     class NanoLeafView extends Polymer.Element {
       static get is() { return 'view-nanoleaf'; }
+
+      static get properties() {
+        return {
+          page: String,
+        };
+      }
 
       effectClass(item, selected, isOn) {
         if (isOn === false) {
