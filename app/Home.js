@@ -7,10 +7,8 @@ var log = require('./SystemLog2');
 var Keys = require('./Keys').keys;
 var version = require('./version');
 var moment = require('moment');
-var request = require('request');
 var fs = require('fs');
 
-var Firebase = require('firebase');
 var Harmony = require('./Harmony');
 var Hue = require('./Hue');
 var Presence = require('./Presence');
@@ -20,6 +18,7 @@ var Sonos = require('./Sonos');
 var GCMPush = require('./GCMPush');
 var PushBullet = require('./PushBullet');
 var NanoLeaf = require('./NanoLeaf');
+let Weather = require('./Weather');
 
 var LOG_PREFIX = 'HOME';
 
@@ -32,14 +31,14 @@ function Home(config, fb) {
   var harmony;
   var zwave;
   var presence;
-  var sonos;
+  let sonos;
   var gcmPush;
   var pushBullet;
   var nanoLeaf;
+  let weather;
 
   var armingTimer;
   var zwaveTimer;
-  var sonosTimer;
   var lastSoundPlayedAt = 0;
 
   /*****************************************************************************
@@ -136,16 +135,7 @@ function Home(config, fb) {
     }
     if (command.hasOwnProperty('nanoLeaf')) {
       if (nanoLeaf) {
-        if (modifier === 'OFF') {
-          nanoLeaf.setEffect('OFF');
-        } else {
-          if (command.nanoLeaf.effect) {
-            nanoLeaf.setEffect(command.nanoLeaf.effect);
-          }
-          if (command.nanoLeaf.brightness) {
-            nanoLeaf.setBrightness(command.nanoLeaf.brightness);
-          }
-        }
+        nanoLeaf.executeCommand(command.nanoLeaf, modifier);
       } else {
         log.warn(LOG_PREFIX, 'NanoLeaf unavailable.');
       }
@@ -226,29 +216,7 @@ function Home(config, fb) {
           cmds = [cmds];
         }
         cmds.forEach(function(cmd) {
-          var roomName = cmd.roomName;
-          if (!roomName) {
-            roomName = _self.state.sonos.state.roomName;
-          }
-          if (cmd.name === 'PRESET') {
-            var opts = config.sonosPresetOptions[cmd.options];
-            opts.uri = cmd.uri;
-            sonos.applyPreset(opts);
-          } else if (cmd.name === 'PAUSE') {
-            sonos.pause(roomName);
-          } else if (cmd.name === 'NEXT') {
-            sonos.next(roomName);
-          } else if (cmd.name === 'PLAY') {
-            sonos.play(roomName);
-          } else if (cmd.name === 'PREVIOUS') {
-            sonos.previous(roomName);
-          } else if (cmd.name === 'VOLUME_DOWN') {
-            sonos.volumeDown();
-          } else if (cmd.name === 'VOLUME_UP') {
-            sonos.volumeUp();
-          } else {
-            log.warn('[HOME] Unknown Sonos command: ' + JSON.stringify(cmd));
-          }
+          sonos.executeCommand(cmd, config.sonosPresetOptions);
         });
       } else {
         log.error('[HOME] Sonos command failed, Sonos unavailable.');
@@ -461,55 +429,14 @@ function Home(config, fb) {
    *
    ****************************************************************************/
 
-  function initWeather() {
-    if (config.weatherLatLong && Keys.forecastIO && Keys.forecastIO.key) {
-      var url = 'https://api.forecast.io/forecast/';
-      url += Keys.forecastIO.key + '/';
-      url += config.weatherLatLong;
-      request(url, function(error, response, body) {
-        if (error || !response || response.statusCode !== 200) {
-          var msg = 'Forecast.IO API - ';
-          if (error) {
-            log.exception(LOG_PREFIX, msg + 'Error', error);
-            return;
-          } else if (!response) {
-            log.error(LOG_PREFIX, msg + 'No response!');
-            return;
-          } else if (response.statusCode !== 200) {
-            log.error(LOG_PREFIX, msg + 'Returned statusCode: ' + response.statusCode);
-            log.debug('Response: ' + body);
-            return;
-          }
-          log.exception(LOG_PREFIX, msg + 'Unknown Error');
-          return;
-        }
-        var forecast;
-        try {
-          forecast = JSON.parse(body);
-        } catch (ex) {
-          log.exception(LOG_PREFIX, 'Unable to parse weather response', ex);
-          return;
-        }
-        if (forecast) {
-          if (forecast.currently) {
-            fbSet('state/weather/now', forecast.currently);
-          } else {
-            log.error(LOG_PREFIX, 'Could not find current forecast.');
-          }
-          if (forecast.daily && forecast.daily.data[0]) {
-            fbSet('state/weather/today', forecast.daily.data[0]);
-          } else {
-            log.error(LOG_PREFIX, 'Could not find daily forecast.');
-          }
-        } else {
-          log.error(LOG_PREFIX, 'Could not find forecast!');
-        }
-      });
-    } else {
-      log.warn(LOG_PREFIX, 'Missing key, expected Lat/Lon & API Key');
-    }
-    var interval = 5 * 60 * 1000;
-    setTimeout(initWeather, interval);
+  /**
+   * Init Weather
+  */
+  function _initWeather() {
+    weather = new Weather(config.weatherLatLong, Keys.forecastIO.key);
+    weather.on('weather', (forecast) => {
+      fbSet('state/weather', forecast);
+    });
   }
 
   /*****************************************************************************
@@ -669,7 +596,6 @@ function Home(config, fb) {
     try {
       nest = new Nest.Nest(Keys.nest.token, fb.child('config/HomeOnNode'));
       nest.on('change', updateNestState);
-      // nest.on('state', updateNestState);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize Nest', ex);
       nest = null;
@@ -810,51 +736,28 @@ function Home(config, fb) {
     }
   }
 
-  /*****************************************************************************
-   *
-   * Sonos - Initialization & Shut Down
-   *
-   ****************************************************************************/
-
-  function initSonos() {
+  /**
+   * Init Sonos
+  */
+  function _initSonos() {
     try {
       sonos = new Sonos();
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to initialize Sonos', ex);
-      if (sonos) {
-        sonos.shutdown();
-      }
-      return;
-    }
-
-    if (sonos) {
-      sonos.on('transport-state', function(transportState) {
+      sonos.on('ready', () => {
+        log.debug(LOG_PREFIX, 'Sonos ready...');
+      });
+      sonos.on('transport-state', (transportState) => {
         fbSet('state/sonos/state', transportState);
       });
-      sonos.on('topology-changed', function(zones) {
+      sonos.on('topology-changed', (zones) => {
         fbSet('state/sonos/zones', zones);
       });
-      sonos.on('favorites-changed', function(favorites) {
+      sonos.on('favorites-changed', (favorites) => {
         fbSet('state/sonos/favorites', favorites);
       });
-      setTimeout(getSonosFavorites, 120*1000);
-    }
-  }
-
-  function getSonosFavorites() {
-    if (sonos) {
-      sonos.getFavorites();
-    }
-    setTimeout(getSonosFavorites, 5*60*1000);
-  }
-
-  function shutdownSonos() {
-    if (sonosTimer) {
-      clearInterval(sonosTimer);
-      sonosTimer = null;
-    }
-    if (sonos) {
-      sonos.shutdown();
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to initialize Sonos', ex);
+      sonos = null;
+      return;
     }
   }
 
@@ -869,15 +772,11 @@ function Home(config, fb) {
       let ip = '192.168.86.208';
       let port = 16021;
       nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
-      nanoLeaf.on('ready', function(nanoState) {
-        updateNanoLeafState(nanoState);
-      });
-      nanoLeaf.on('state', function(nanoState) {
-        updateNanoLeafState(nanoState);
-      });
+      nanoLeaf.on('ready', updateNanoLeafState);
+      nanoLeaf.on('state', updateNanoLeafState);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize NanoLeaf', ex);
-      nanoLeft = null;
+      nanoLeaf = null;
       return;
     }
   }
@@ -990,11 +889,11 @@ function Home(config, fb) {
     initNest();
     initHue();
     initNanoLeaf();
-    initSonos();
+    _initSonos();
     initHarmony();
     initPresence();
     initPushBullet();
-    initWeather();
+    _initWeather();
     setTimeout(function() {
       log.log(LOG_PREFIX, 'Ready');
       _self.emit('ready');
@@ -1004,7 +903,6 @@ function Home(config, fb) {
 
   this.shutdown = function() {
     shutdownHue();
-    shutdownSonos();
     shutdownZWave();
     shutdownHarmony();
     shutdownPresence();

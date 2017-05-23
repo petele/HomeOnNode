@@ -1,297 +1,245 @@
 'use strict';
 
-var log = require('./SystemLog2');
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-var SonosDiscovery = require('./sonos-discovery/lib/sonos.js');
+const log = require('./SystemLog2');
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
+const SonosSystem = require('sonos-discovery');
 
 // Based on https://github.com/jishi/node-sonos-discovery
 
-var LOG_PREFIX = 'SONOS';
+const LOG_PREFIX = 'SONOS';
 
+/**
+ * Sonos API.
+*/
 function Sonos() {
-  var _self = this;
-  var _sonos;
-  var _favorites = {};
+  const FAV_INTERVAL = 12 * 60 * 1000;
+  let _ready = false;
+  let _sonosSystem;
+  const _self = this;
 
-  var _logger = {
-    logIt: function(level, args) {
-      var PREFIX = 'SONOS*';
-      var msg = '';
-      var extras;
-      var argsAsArray = Array.prototype.slice.call(args);
-      if (argsAsArray.length === 0) {
-        msg = 'Blank log message. :(';
-      } else if (argsAsArray.length === 1) {
-        msg = argsAsArray[0];
-      } else if (argsAsArray.length === 2) {
-        msg = argsAsArray[0];
-        extras = argsAsArray[1];
-      } else {
-        msg = argsAsArray.shift();
-        extras = argsAsArray;
-      }
-      if (level === 'LOG') {
-        log.log(PREFIX, msg, extras);
-      } else if (level === 'ERROR') {
-        log.error(PREFIX, msg, extras);
-      } else {
-        log.debug(PREFIX, msg, extras);
-      }
-    },
-    info: function() {
-      this.logIt('LOG', arguments);
-    },
-    error: function() {
-      this.logIt('ERROR', arguments);
-    },
-    debug: function() {
-      this.logIt('DEBUG', arguments);
+  /**
+   * Execute a Sonos command.
+   *
+   * @param {string} command The command to run.
+   * @param {Object} presetOptions The preset options
+      from /config/HomeOnNode/sonosPresetOptions
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  this.executeCommand = function(command, presetOptions) {
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
     }
+    if (command.name === 'PRESET') {
+      let preset = presetOptions[command.options];
+      preset.uri = command.uri;
+      return _applyPreset(preset);
+    }
+    if (command.name === 'PAUSE') {
+      return _pause();
+    }
+    if (command.name === 'PLAY') {
+      return _play();
+    }
+    if (command.name === 'NEXT') {
+      return _next();
+    }
+    if (command.name === 'PREVIOUS') {
+      return _previous();
+    }
+    if (command.name === 'VOLUME_UP') {
+      return _volumeUp();
+    }
+    if (command.name === 'VOLUME_DOWN') {
+      return _volumeDown();
+    }
+    return Promise.reject(new Error('unknown_command'));
   };
 
-  function init() {
-    log.init(LOG_PREFIX, 'Init start.');
-    process.on('SIGINT', handleSigInt);
-    _sonos = new SonosDiscovery({log: _logger});
-    _sonos.on('transport-state', transportStateChanged);
-    _sonos.on('favorites-change', favoritesChanged);
-    _sonos.on('topology-change', topologyChanged);
-    log.init(LOG_PREFIX, 'Init complete.');
-  }
-
-  /*****************************************************************************
-   *
-   * Base connect/disconnect functions
-   *
-   ****************************************************************************/
-
-  this.shutdown = function() {
-    log.log(LOG_PREFIX, 'Shutting down...');
-    // TODO
-    return true;
-  };
-
-
-  /*****************************************************************************
-   *
-   * Event handlers
-   *
-   ****************************************************************************/
-
-  function handleSigInt() {
-    log.log(LOG_PREFIX, 'SIGINT received.');
-    _self.shutdown();
-  }
-
-  function transportStateChanged(transportState) {
-    _self.emit('transport-state', transportState);
-  }
-
-  function favoritesChanged(favorites) {
-    _favorites = favorites;
-    _self.emit('favorites-changed', favorites);
-  }
-
-  function topologyChanged(zones) {
-    _self.emit('topology-changed', zones);
-  }
-
-  /*****************************************************************************
-   *
-   * Internal help functions
-   *
-   ****************************************************************************/
-
-  function getPlayer(roomName) {
-    if (_sonos) {
-      var speaker;
-      if (roomName) {
-        speaker = _sonos.getPlayer(roomName);
-      }
-      if (speaker) {
-        log.debug(LOG_PREFIX, 'getPlayer: ' + speaker.roomName);
-        return speaker;
-      }
-      speaker = _sonos.getAnyPlayer();
-      if (speaker) {
-        log.debug(LOG_PREFIX, 'getPlayer: ' + speaker.roomName);
-        return speaker;
-      }
-    }
-    log.error(LOG_PREFIX, 'getPlayer failed, no speakers found.');
-    return null;
-  }
-
-  function genericResponseHandler(apiName, error, response) {
-    var msg = 'genericResponseHandler - ' + apiName;
-    if (error) {
-      if (apiName.indexOf('pause') === 0) {
-        log.debug(LOG_PREFIX, msg, error);
-        return;
-      }
-      log.error(LOG_PREFIX, msg, error);
-    } else {
-      log.debug(LOG_PREFIX, msg);
-    }
-  }
-
-  function setVolume(roomName, vol) {
-    let speakers;
-    if (roomName) {
-      speakers = _sonos.getPlayer(roomName);
-    } else {
-      speakers = [];
-      let zones = _sonos.getZones();
-      if (zones && zones[0] && zones[0].members) {
-        zones[0].members.forEach(function(member) {
-          speakers.push(_sonos.getPlayer(member.roomName));
-        });
-      }
-    }
-    if (Array.isArray(speakers) === false) {
-      speakers = [speakers];
-    }
-    speakers.forEach(function(speaker) {
-      if (speaker) {
-        speaker.setVolume(vol, function(error, response) {
-          let msg = 'incrementVolume[' + vol + ']';
-          genericResponseHandler(msg, error, response);
-        });
-      }      
+  /**
+   * Init
+  */
+  function _init() {
+    log.init(LOG_PREFIX, 'Starting Sonos...');
+    _sonosSystem = new SonosSystem();
+    _sonosSystem.on('initialized', () => {
+      _ready = true;
+      _self.emit('ready');
+      _getFavorites();
+      setInterval(_getFavorites, FAV_INTERVAL);
+    });
+    _sonosSystem.on('transport-state', (transportState) => {
+      _self.emit('transport-state', transportState);
+    });
+    _sonosSystem.on('topology-changed', (zones) => {
+      _self.emit('topology-changed', zones);
     });
   }
 
-
-  /*****************************************************************************
+  /**
+   * Checks if system is ready
    *
-   * Public API
+   * @return {Boolean} true if system is ready, false if not.
+  */
+  function _isReady() {
+    if (_ready === true && _sonosSystem) {
+      return true;
+    }
+    log.error(LOG_PREFIX, 'Command failed, Sonos system not ready.');
+    return false;
+  }
+
+  /**
+   * Gets Sonos Player
    *
-   ****************************************************************************/
-
-  this.applyPreset = function(preset) {
-    if (_sonos) {
-      _sonos.applyPreset(preset, function(error, response) {
-        genericResponseHandler('applyPreset', error, response);
-      });
-      return true;
-    }
-    log.error(LOG_PREFIX, 'applyPreset failed, Sonos unavilable.');
-    return false;
-  };
-
-  this.play = function(roomName) {
-    if (_sonos) {
-      var speaker = getPlayer(roomName);
-      if (speaker) {
-        speaker.play(function(error, response) {
-          genericResponseHandler('play', error, response);
-        });
-        return true;
-      }
-      log.error(LOG_PREFIX, 'play failed, unable to find speaker.');
-      return false;
-    }
-    log.error(LOG_PREFIX, 'play failed, Sonos unavilable.');
-    return false;
-  };
-
-  this.pause = function(roomName) {
-    if (_sonos) {
-      var speakers = [];
-      if (roomName) {
-        speakers.push(roomName);
-      } else {
-        _sonos.getZones().forEach(function(zone) {
-          speakers.push(zone.coordinator.roomName);
-        });
-      }
-      speakers.forEach(function(rName) {
-        var speaker = getPlayer(rName);
-        // console.log('s', util.inspect(speaker, {depth:3, colors:true}));
-        if (speaker.state.currentState !== 'STOPPED') {
-          speaker.pause(function(error, response) {
-            var msg = 'pause (' + rName + ')';
-            genericResponseHandler(msg, error, response);
-          });        
-        }
-      });
-      return true;
-    }
-    log.error(LOG_PREFIX, 'pause failed, Sonos unavilable.');
-    return false;
-  };
-
-  this.next = function(roomName) {
-    if (_sonos) {
-      var speaker = getPlayer(roomName);
-      if (speaker) {
-        speaker.nextTrack(function(error, response) {
-          genericResponseHandler('nextTrack', error, response);
-        });
-        return true;
-      }
-      log.error(LOG_PREFIX, 'next failed, unable to find speaker.');
-      return false;
-    }
-    log.error(LOG_PREFIX, 'next failed, Sonos unavilable.');
-    return false;
-  };
-
-  this.previous = function(roomName) {
-    if (_sonos) {
-      var speaker = getPlayer(roomName);
-      if (speaker) {
-        speaker.previousTrack(function(error, response) {
-          genericResponseHandler('previousTrack', error, response);
-        });
-        return true;
-      }
-      log.error(LOG_PREFIX, 'previous failed, unable to find speaker.');
-      return false;
-    }
-    log.error(LOG_PREFIX, 'previous failed, Sonos unavilable.');
-    return false;
-  };
-
-  this.volumeDown = function(roomName) {
-    if (_sonos) {
-      setVolume(roomName, '-2');
-      return true;
-    }
-    log.error(LOG_PREFIX, 'volumeDown failed, Sonos unavilable.');
-    return false;
-  };
-
-  this.volumeUp = function(roomName) {
-    if (_sonos) {
-      setVolume(roomName, '+2');
-      return true;
-    }
-    log.error(LOG_PREFIX, 'volumeUp failed, Sonos unavilable.');
-    return false;
-  };
-
-  this.getZones = function() {
-    if (_sonos) {
-      return _sonos.getZones();
-    }
-    log.error(LOG_PREFIX, 'getZones failed, Sonos unavilable.');
-    return null;
-  };
-
-  this.getFavorites = function() {
-    if (_sonos) {
-      var speaker = _sonos.getAnyPlayer();
-      if (speaker) {
-        speaker.getFavorites(function(err, favs) {
-          favoritesChanged(favs);
-        });
+   * @param {string} roomName The name of the player to return (optional).
+   * @return {Object} A Sonos Player.
+  */
+  function _getPlayer(roomName) {
+    let player;
+    if (roomName) {
+      player = _sonosSystem.getPlayer(roomName);
+      if (player) {
+        return player;
       }
     }
-  };
+    return _sonosSystem.getAnyPlayer();
+  }
 
-  init();
+  /**
+   * Increment/decrement the whole system volume.
+   *
+   * @param {string} vol The increment/decrement amount, ie: +2, -2, etc.
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _adjustVolume(vol) {
+    return Promise.all(
+      _sonosSystem.zones.map((zone) => {
+        const player = _sonosSystem.getPlayerByUUID(zone.uuid);
+        return player.coordinator.setGroupVolume(vol);
+      })
+    );
+  }
+
+  /**
+   * Update Favorites
+   *
+   * Fires an event (favorites-changed) when the favorites have been updated.
+  */
+  function _getFavorites() {
+    if (_isReady() !== true) {
+      return;
+    }
+    let player = _getPlayer();
+    player.system.getFavorites().then((favs) => {
+      _self.emit('favorites-changed', favs);
+    });
+  }
+
+  /**
+   * Applies a Sonos Preset
+   *
+   * @param {Object} preset The settings to apply.
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _applyPreset(preset) {
+    log.debug(LOG_PREFIX, 'applyPreset()', preset);
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    return _sonosSystem.applyPreset(preset);
+  }
+
+  /**
+   * Play.
+   *
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _play() {
+    log.debug(LOG_PREFIX, 'play()');
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    let player = _getPlayer();
+    return player.play();
+  }
+
+  /**
+   * Pause.
+   *
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _pause() {
+    log.debug(LOG_PREFIX, 'pause()');
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    return Promise.all(
+      _sonosSystem.zones.filter((zone) => {
+        return zone.coordinator.state.playbackState === 'PLAYING';
+      })
+      .map((zone) => {
+        const player = _sonosSystem.getPlayerByUUID(zone.uuid);
+        return player.pause();
+      })
+    );
+  }
+
+  /**
+   * Next.
+   *
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _next() {
+    log.debug(LOG_PREFIX, 'next()');
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    let player = _getPlayer();
+    return player.nextTrack();
+  }
+
+  /**
+   * Previous.
+   *
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _previous() {
+    log.debug(LOG_PREFIX, 'previous()');
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    let player = _getPlayer();
+    return player.previousTrack();
+  }
+
+  /**
+   * Volume Down.
+   *
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _volumeDown() {
+    log.debug(LOG_PREFIX, 'volumeDown()');
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    return _adjustVolume('-2');
+  }
+
+  /**
+   * Volume Up.
+   *
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _volumeUp() {
+    log.debug(LOG_PREFIX, 'volumeUp()');
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    return _adjustVolume('+2');
+  }
+
+  _init();
 }
 
 util.inherits(Sonos, EventEmitter);

@@ -1,5 +1,5 @@
 'use strict';
 
-var gitHead = '[HEAD]';
+const gitHead = '[HEAD]';
 
 exports.head = gitHead;
