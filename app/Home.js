@@ -14,11 +14,11 @@ var Hue = require('./Hue');
 var Presence = require('./Presence');
 var Nest = require('./Nest');
 var ZWave = require('./ZWave');
-var Sonos = require('./Sonos');
+const Sonos = require('./Sonos');
 var GCMPush = require('./GCMPush');
 var PushBullet = require('./PushBullet');
-var NanoLeaf = require('./NanoLeaf');
-let Weather = require('./Weather');
+const NanoLeaf = require('./NanoLeaf');
+const Weather = require('./Weather');
 
 var LOG_PREFIX = 'HOME';
 
@@ -34,7 +34,7 @@ function Home(config, fb) {
   let sonos;
   var gcmPush;
   var pushBullet;
-  var nanoLeaf;
+  let nanoLeaf;
   let weather;
 
   var armingTimer;
@@ -781,22 +781,22 @@ function Home(config, fb) {
    *
    ****************************************************************************/
 
-  function initNanoLeaf() {
+  /**
+   * Init NanoLeaf
+  */
+  function _initNanoLeaf() {
     try {
       let ip = '192.168.86.208';
       let port = 16021;
       nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
-      nanoLeaf.on('ready', updateNanoLeafState);
-      nanoLeaf.on('state', updateNanoLeafState);
+      nanoLeaf.on('state-changed', (state) => {
+        fbSet('state/nanoLeaf', state);
+      });
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize NanoLeaf', ex);
       nanoLeaf = null;
       return;
     }
-  }
-
-  function updateNanoLeafState(nanoState) {
-    fbSet('state/nanoLeaf', nanoState);
   }
 
   /*****************************************************************************
@@ -902,7 +902,7 @@ function Home(config, fb) {
     initZWave();
     initNest();
     initHue();
-    initNanoLeaf();
+    _initNanoLeaf();
     _initSonos();
     initHarmony();
     initPresence();

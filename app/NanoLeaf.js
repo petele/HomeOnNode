@@ -18,12 +18,12 @@ const LOG_PREFIX = 'NANOLEAF';
  * @param {String} port Port of the hub.
 */
 function NanoLeaf(key, ip, port) {
-  const _hubAddress = `http://${ip}:${port}/api/v1/${key}/`;
+  const _hubAddress = `http://${ip}:${port}/api/beta/${key}/`;
+  const REFRESH_INTERVAL = 45 * 1000;
+  const _self = this;
   let _ready = false;
   let _state = {};
-  const REFRESH_INTERVAL = 45 * 1000;
   this.state = _state;
-  const _announce = this.emit;
 
   /**
    * Execute a NanoLeaf command.
@@ -56,9 +56,8 @@ function NanoLeaf(key, ip, port) {
   */
   function _init() {
     log.init(LOG_PREFIX, 'Starting NanoLeaf...');
-    _getState.then((state) => {
-      setInterval(_getState, REFRESH_INTERVAL);
-    });
+    _getState();
+    setInterval(_getState, REFRESH_INTERVAL);
   }
 
   /**
@@ -153,13 +152,11 @@ function NanoLeaf(key, ip, port) {
       // Has the state changed since last time?
       if (diff(_state, resp)) {
         _state = resp;
-        let eventName = 'state';
         // If we weren't ready before, change to ready & fire ready event
         if (_ready === false) {
           _ready = true;
-          eventName = 'ready';
         }
-        _announce(eventName, resp);
+        _self.emit('state-changed', resp);
       }
       return resp;
     });
