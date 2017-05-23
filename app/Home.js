@@ -384,7 +384,8 @@ function Home(config, fb) {
    * @return {Object} The cleaned up object
   */
   function removeEmpty(obj) {
-    Object.entries(obj).forEach(([key, val]) => {
+    Object.keys(obj).forEach((key) => {
+      let val = obj[key];
       if (val && typeof val === 'object') {
         removeEmpty(val);
       } else if (val === null || val === undefined) {
