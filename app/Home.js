@@ -377,15 +377,38 @@ function Home(config, fb) {
    *
    ****************************************************************************/
 
+  /**
+   * Remove empty items from object
+   *
+   * @param {Object} obj Object to iterate and remove empty items from
+   * @return {Object} The cleaned up object
+  */
+  function removeEmpty(obj) {
+    Object.entries(obj).forEach(([key, val]) => {
+      if (val && typeof val === 'object') {
+        removeEmpty(val);
+      } else if (val === null || val === undefined) {
+        delete obj[key];
+      }
+    });
+    return obj;
+  }
+
+  /**
+   * Push value to Firebase
+   *
+   * @param {String} path Path to push object to
+   * @param {Object} value The value to push
+  */
   function fbPush(path, value) {
-    var fbObj = fb;
+    let fbObj = fb;
     if (path) {
       fbObj = fb.child(path);
     }
     try {
-      fbObj.push(value, function(err) {
+      fbObj.push(removeEmpty(value), function(err) {
         if (err) {
-          log.exception(LOG_PREFIX, 'Unable to push data to Firebase. (CB)', err);
+          log.exception(LOG_PREFIX, 'Unable to push to Firebase. (CB)', err);
         }
       });
       fbSetLastUpdated();
@@ -394,8 +417,14 @@ function Home(config, fb) {
     }
   }
 
+  /**
+   * Set value to Firebase
+   *
+   * @param {String} path Path to push object to
+   * @param {Object} value The value to push
+  */
   function fbSet(path, value) {
-    var fbObj = fb;
+    let fbObj = fb;
     if (path) {
       fbObj = fb.child(path);
     }
@@ -403,7 +432,7 @@ function Home(config, fb) {
       if (value === null) {
         fbObj.remove();
       } else {
-        fbObj.set(value, function(err) {
+        fbObj.set(removeEmpty(value), function(err) {
           if (err) {
             log.exception(LOG_PREFIX, 'Set data failed on path: ' + path, err);
           }
@@ -415,11 +444,14 @@ function Home(config, fb) {
     }
   }
 
+  /**
+   * Set state last updated
+  */
   function fbSetLastUpdated() {
-    var now = Date.now();
+    const now = Date.now();
     fb.child('state/time').update({
       lastUpdated: now,
-      lastUpdated_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
+      lastUpdated_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
     });
   }
 
