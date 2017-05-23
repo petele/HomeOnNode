@@ -1,8 +1,6 @@
-/* globals log */
-
 'use strict';
 
-var cronJob = function() {
+const cronJob = function() {
   // log.debug('CRON', '60');
 };
 

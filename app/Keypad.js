@@ -1,13 +1,19 @@
 'use strict';
 
-var log = require('./SystemLog2');
-var keypress = require('keypress');
+const log = require('./SystemLog2');
+const keypress = require('keypress');
 
-var LOG_PREFIX = 'KEYPAD';
+const LOG_PREFIX = 'KEYPAD';
 
+/**
+ * Listen for key presses.
+ *
+ * @param {Object} modifiers Possible modifiers to use.
+ * @param {Function} callback Callback to call when a key is pressed.
+*/
 function listen(modifiers, callback) {
   log.init(LOG_PREFIX, 'Init');
-  var modifier = null;
+  let modifier = null;
   keypress(process.stdin);
 
   // listen for the 'keypress' event
@@ -40,7 +46,7 @@ function listen(modifiers, callback) {
     }
     try {
       ch = ch.toString();
-      var m = modifiers[ch];
+      let m = modifiers[ch];
       if (m) {
         modifier = m;
         setTimeout(function() {

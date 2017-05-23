@@ -1,46 +1,48 @@
 'use strict';
 
-var fs = require('fs');
-var Gpio = require('onoff').Gpio;
-var exec = require('child_process').exec;
-var request = require('request');
-var GCMPush = require('./GCMPush');
-var log = require('./SystemLog2');
-var fbHelper = require('./FBHelper');
-var Keys = require('./Keys').keys;
+const fs = require('fs');
+const Gpio = require('onoff').Gpio;
+const exec = require('child_process').exec;
+const request = require('request');
+const GCMPush = require('./GCMPush');
+const log = require('./SystemLog2');
+const fbHelper = require('./FBHelper');
+const Keys = require('./Keys').keys;
 
-var APP_NAME = 'REMOTE';
-var fb;
-var pin;
-var config;
-var gcmPush;
-var lastPushed = 0;
-var lastValue = 1;
-var minTime = 3000;
+let APP_NAME = 'REMOTE';
+let fb;
+let pin;
+let config;
+let gcmPush;
+let lastPushed = 0;
+let lastValue = 1;
+const minTime = 3000;
 
-var LOG_PREFIX = 'DOORBELL';
-var logOpts = {
+const LOG_PREFIX = 'DOORBELL';
+const logOpts = {
   logFileName: './logs/system.log',
-  logToFile: true
+  logToFile: true,
 };
 
+/**
+ * Send a doorbell notification
+*/
 function sendDoorbell() {
-  var url = 'http://' + config.controller.ip + ':' + config.controller.port;
-  url += '/doorbell';
-  var ring = {
+  const url = `http://${config.controller.ip}:${config.controller.port}/doorbell`;
+  const ring = {
     url: url,
     method: 'POST',
-    json: true
+    json: true,
   };
   request(ring, function(error, response, body) {
-    var msg = 'Ring Doorbell via ';
+    let msg = 'Ring Doorbell via ';
     if (error) {
       log.exception(LOG_PREFIX, msg + 'HTTP request failed.', error);
       if (fb) {
         fb.child('commands').send({cmdName: 'RUN_ON_DOORBELL'}, function(err) {
           if (err) {
             log.exception(LOG_PREFIX, msg + 'FB failed.', err);
-            var cmd = 'sudo reboot';
+            const cmd = 'sudo reboot';
             exec(cmd, function() {});
             return;
           } else {
@@ -53,11 +55,11 @@ function sendDoorbell() {
     log.log(LOG_PREFIX, 'Doorbell rang.');
   });
   if (gcmPush) {
-    var gcmMessage = {
+    const gcmMessage = {
       title: 'Door Bell',
       body: 'The doorbell rang at',
       tag: 'HoN-doorbell',
-      appendTime: true
+      appendTime: true,
     };
     gcmPush.sendMessage(gcmMessage);
   }
@@ -77,20 +79,17 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     if (config.doorbellPin) {
       pin = new Gpio(config.doorbellPin, 'in', 'both');
       pin.watch(function(error, value) {
-        var now = Date.now();
-        var hasChanged = value !== lastValue ? true : false;
-        var timeOK = now > lastPushed + minTime ? true : false;
+        const now = Date.now();
+        const hasChanged = value !== lastValue ? true : false;
+        const timeOK = now > lastPushed + minTime ? true : false;
         lastValue = value;
         if (hasChanged && timeOK && value === 0) {
           log.log(LOG_PREFIX, 'Ding-dong');
           lastPushed = now;
           sendDoorbell();
         } else {
-          var msg = 'Debounced.';
-          msg += ' value=' + value;
-          msg += ' hasChanged=' + hasChanged;
-          msg += ' timeOK=' + timeOK;
-          log.log(LOG_PREFIX, msg);
+          const msg = `v=${value} changed=${hasChanged} time=${timeOK}`;
+          log.log(LOG_PREFIX, 'Debounced. ' + msg);
         }
       });
     }
@@ -101,6 +100,12 @@ setInterval(function() {
   log.cleanFile(logOpts.logFileName);
 }, 60 * 60 * 24 * 1000);
 
+/**
+ * Exit the app.
+ *
+ * @param {String} sender Who is requesting the app to exit.
+ * @param {Number} exitCode The exit code to use.
+*/
 function exit(sender, exitCode) {
   exitCode = exitCode || 0;
   log.log(LOG_PREFIX, 'Starting shutdown process');

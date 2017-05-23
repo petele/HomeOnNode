@@ -1,22 +1,23 @@
 'use strict';
 
-var os = require('os');
-var Firebase = require('firebase');
-var exec = require('child_process').exec;
-var Keys = require('./Keys').keys;
-var log = require('./SystemLog2');
+const os = require('os');
+const Firebase = require('firebase');
+const exec = require('child_process').exec;
+const Keys = require('./Keys').keys;
+const log = require('./SystemLog2');
 
-var fbHeartbeatTime;
-var maxDisconnect = 60 * 60 * 6 * 1000;
-var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com/';
-var fb = new Firebase(fbURL);
-var fbNode;
-var deviceName = os.hostname();
+const MAX_DISCONNECT = 60 * 60 * 6 * 1000;
+const FB_URL = `https://${Keys.firebase.appId}.firebaseio.com/`;
 
-var LOG_PREFIX = 'MONITOR';
-var logOpts = {
+const fb = new Firebase(FB_URL);
+const deviceName = os.hostname();
+const fbNode = fb.child('monitor/' + deviceName);
+let fbHeartbeatTime;
+
+const LOG_PREFIX = 'MONITOR';
+const logOpts = {
   logFileName: './logs/system.log',
-  logToFile: true
+  logToFile: true,
 };
 log.appStart(deviceName, logOpts);
 
@@ -29,8 +30,10 @@ fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
   }
 });
 
+/**
+ * Init.
+*/
 function fbReady() {
-  fbNode = fb.child('monitor/' + deviceName);
   fb.child('.info/connected').on('value', function(snapshot) {
     if (snapshot.val() === true) {
       log.log(LOG_PREFIX, 'Connected to Firebase');
@@ -52,11 +55,14 @@ function fbReady() {
   setInterval(heartbeat, 75 * 1000);
 }
 
+/**
+ * Hearbeat tick.
+*/
 function heartbeat() {
-  var lastConnection = (Date.now() - fbHeartbeatTime);
-  if (lastConnection > maxDisconnect) {
+  const lastConnection = (Date.now() - fbHeartbeatTime);
+  if (lastConnection > MAX_DISCONNECT) {
     log.error(LOG_PREFIX, 'Firebase heartbeat timeout exceeded.');
-    var cmd = 'sudo reboot';
+    const cmd = 'sudo reboot';
     exec(cmd, function(error, stdout, stderr) {});
   } else {
     fbNode.child('heartbeat').set(Date.now(), function(err) {
@@ -67,10 +73,15 @@ function heartbeat() {
   }
 }
 
+/**
+ * Reboot the device.
+ *
+ * @param {Object} snapshot Firebase snapshot.
+*/
 function rebootRequest(snapshot) {
   if (snapshot.val() === true) {
     log.log(LOG_PREFIX, 'Reboot requested.');
-    var cmd = 'sudo reboot';
+    const cmd = 'sudo reboot';
     exec(cmd, function(error, stdout, stderr) {});
   }
 }

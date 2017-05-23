@@ -45,7 +45,7 @@ function init(fbAppId, key, appName) {
     host: {
       hostname: null,
       ipAddress: null,
-    }
+    },
   };
 
   let hostname = getHostname();
@@ -56,7 +56,7 @@ function init(fbAppId, key, appName) {
   if (ipAddresses.length >= 1) {
     def.host.ipAddress = ipAddresses[0];
   }
-  
+
   fb.child(`devices/${appName}`).set(def);
   fb.child('.info/connected').on('value', function(snapshot) {
     if (snapshot.val() === true) {
@@ -66,7 +66,7 @@ function init(fbAppId, key, appName) {
         heartbeat: now,
         heartbeat_: moment(now).format(timeFormat),
         online: true,
-        shutdownAt: null
+        shutdownAt: null,
       };
       fb.child(`devices/${appName}`).update(def);
       fb.child(`devices/${appName}/online`).onDisconnect().set(false);
@@ -86,7 +86,8 @@ function init(fbAppId, key, appName) {
 
   setInterval(function() {
     const now = Date.now();
-    fb.child(`devices/${appName}/heartbeat_`).set(moment(now).format(timeFormat));
+    fb.child(`devices/${appName}/heartbeat_`)
+      .set(moment(now).format(timeFormat));
     fb.child(`devices/${appName}/heartbeat`).set(now);
   }, 1 * 60 * 1000);
 
@@ -134,7 +135,9 @@ function getIPAddresses() {
   try {
     let addresses = [];
     const interfaces = os.networkInterfaces();
+    // eslint-disable-next-line guard-for-in
     for (const iface in interfaces) {
+      // eslint-disable-next-line guard-for-in
       for (const iface2 in interfaces[iface]) {
         const address = interfaces[iface][iface2];
         if (address.family === 'IPv4' && !address.internal) {

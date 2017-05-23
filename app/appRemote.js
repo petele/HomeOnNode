@@ -1,30 +1,35 @@
 'use strict';
 
-var fs = require('fs');
-var request = require('request');
-var log = require('./SystemLog2');
-var fbHelper = require('./FBHelper');
-var Keys = require('./Keys').keys;
-var Keypad = require('./Keypad');
+const fs = require('fs');
+const request = require('request');
+const log = require('./SystemLog2');
+const fbHelper = require('./FBHelper');
+const Keys = require('./Keys').keys;
+const Keypad = require('./Keypad');
 
-var fb;
-var config;
-var cmdId = 0;
-var APP_NAME = 'REMOTE';
-var logOpts = {
+let fb;
+let config;
+let cmdId = 0;
+let APP_NAME = 'REMOTE';
+const logOpts = {
   logFileName: './logs/system.log',
-  logToFile: true
+  logToFile: true,
 };
 
+/**
+ * Send a command
+ *
+ * @param {Object} command Command to send.
+ * @param {String} path The URL path to send the command.
+*/
 function sendCommand(command, path) {
-  var prefix = 'sendCommand (' + cmdId++ + ')';
-  var url = 'http://' + config.controller.ip + ':' + config.controller.port;
-  url += path;
-  var cmd = {
+  const prefix = 'sendCommand (' + cmdId++ + ')';
+  const url = `http://${config.controller.ip}:${config.controller.port}${path}`;
+  const cmd = {
     uri: url,
     method: 'POST',
     json: true,
-    body: command
+    body: command,
   };
   log.log(prefix, 'Send', command);
   request(cmd, function(error, response, body) {
@@ -45,7 +50,7 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     log.appStart(APP_NAME, logOpts);
     fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
-    var keypadConfigPath = 'config/' + config.appName + '/keypad';
+    const keypadConfigPath = `config/${config.appName}/keypad`;
     fb.child(keypadConfigPath).on('value', function(snapshot) {
       log.log(APP_NAME, 'Keypad settings updated.');
       config.keypad = snapshot.val();
@@ -56,10 +61,10 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
         if (exitApp) {
           exit('SIGINT', 0);
         } else {
-          var cmd = config.keypad.keys[key];
+          const cmd = config.keypad.keys[key];
           if (cmd) {
             cmd.modifier = modifier;
-            var path = '/execute';
+            let path = '/execute';
             if (cmd.hasOwnProperty('cmdName')) {
               path = '/execute/name';
             }
@@ -73,6 +78,12 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
   }
 });
 
+/**
+ * Exit the app.
+ *
+ * @param {String} sender Who is requesting the app to exit.
+ * @param {Number} exitCode The exit code to use.
+*/
 function exit(sender, exitCode) {
   exitCode = exitCode || 0;
   log.log(APP_NAME, 'Starting shutdown process');

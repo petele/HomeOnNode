@@ -1,20 +1,23 @@
 'use strict';
 
-var Keys = require('./Keys').keys;
-var Firebase = require('firebase');
-var log = require('./SystemLog2');
+const Keys = require('./Keys').keys;
+const Firebase = require('firebase');
+const log = require('./SystemLog2');
 
+/**
+ * Reboot the device.
+ *
+ * @param {String} path Firebase path of the logs to print.
+*/
 function printLogs(path) {
   fb.child(path).orderByChild('date').limitToLast(100).on('child_added',
     function(snapshot) {
-      var msg = snapshot.val();
-      log.printLog(msg);
+      log.printLog(snapshot.val());
     }
   );
 }
 
-var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com/';
-var fb = new Firebase(fbURL);
+const fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
 fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
   if (error) {
     log.exception('DUMPLOG', 'Firebase auth failed.', error);

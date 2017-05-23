@@ -9,6 +9,11 @@ const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'GCMPush';
 
+/**
+ * Sends a GCM message
+ *
+ * @param {Object} fb Firebase object.
+*/
 function GCMPush(fb) {
   const _fb = fb;
   const _self = this;
@@ -19,14 +24,10 @@ function GCMPush(fb) {
   let _sendReady = false;
   let _subscribers = [];
 
-
-  /*****************************************************************************
-   *
-   * Internal functions
-   *
-   ****************************************************************************/
-
-  function init() {
+  /**
+   * Init
+  */
+  function _init() {
     log.init(LOG_PREFIX, 'Init');
     _fb.child('pushSubscribers').on('value', (snapshot) => {
       let subscribers = [];
@@ -44,24 +45,24 @@ function GCMPush(fb) {
     });
   }
 
-  /*****************************************************************************
+  /**
+   * Send a message
    *
-   * Public API
-   *
-   ****************************************************************************/
-
+   * @param {Object} message The message to send.
+   * @return {Promise} A promise with the results of the sent messages.
+  */
   this.sendMessage = function(message) {
     if (!message) {
       log.error(LOG_PREFIX, 'sendMessage() failed, cannot send empty message');
-      return;
+      return Promise.reject(new Error('empty_message_not_allowed'));
     }
     if (typeof message !== 'object') {
       log.error(LOG_PREFIX, 'sendMessage() failed, message must be an object');
-      return;
+      return Promise.reject(new Error('message_must_be_object'));
     }
     if (_sendReady !== true) {
       log.error(LOG_PREFIX, 'sendMessage() failed, not ready.');
-      return;
+      return Promise.reject(new Error('not_ready'));
     }
     log.log(LOG_PREFIX, 'Sending notifications...');
     const now = Date.now();
@@ -76,22 +77,27 @@ function GCMPush(fb) {
       message.body += ' ' + moment().format('h:mm a (ddd MMM Mo)');
     }
     const payload = JSON.stringify(message);
-    _subscribers.forEach((subscriberObj) => {
+
+    return Promise.all(_subscribers.map((subscriberObj) => {
       const key = subscriberObj.key;
       const shortKey = subscriberObj.key.substring(0, 11);
       const subscriber = subscriberObj.subscriptionInfo;
-      webpush.sendNotification(subscriber, payload, _options)
+      return new Promise(function(resolve, reject) {
+        webpush.sendNotification(subscriber, payload, _options)
         .then((resp) => {
           log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
+          resolve(true);
         })
         .catch((err) => {
           log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
           _fb.child(`pushSubscribers/${key}/lastAttemptFailed`).set(true);
+          resolve(false);
         });
-    });
+      });
+    }));
   };
 
-  init();
+  _init();
 }
 
 util.inherits(GCMPush, EventEmitter);

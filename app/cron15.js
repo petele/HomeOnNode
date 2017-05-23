@@ -1,16 +1,14 @@
-/* globals log, home */
+/* globals home */
 
 'use strict';
 
-var cronJob = function() {
-  // log.debug('CRON', '15');
-
+const cronJob = function() {
   if (home.state.systemState === 'AWAY') {
-    var allOff = {
+    const allOff = {
       hueCommand: {
         lights: 0,
-        lightState: {on: false}
-      }
+        lightState: {on: false},
+      },
     };
     home.executeCommand(allOff, 'AWAY_TIMER');
   }

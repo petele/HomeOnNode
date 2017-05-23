@@ -1,26 +1,31 @@
 'use strict';
 
-var fs = require('fs');
-var log = require('./SystemLog2');
-var Home = require('./Home');
-var Keys = require('./Keys').keys;
-var HTTPServer = require('./HTTPServer');
-var fbHelper = require('./FBHelper');
-var Keypad = require('./Keypad');
+const fs = require('fs');
+const log = require('./SystemLog2');
+const Home = require('./Home');
+const Keys = require('./Keys').keys;
+const HTTPServer = require('./HTTPServer');
+const fbHelper = require('./FBHelper');
+const Keypad = require('./Keypad');
 
-var config;
-var fb;
-var home;
-var httpServer;
-var LOG_PREFIX = 'APP';
-var APP_NAME = 'HomeOnNode';
-var logOpts = {
+const LOG_PREFIX = 'APP';
+const APP_NAME = 'HomeOnNode';
+const logOpts = {
   logFileName: './start.log',
   logToFile: true,
-  logToFirebase: true
+  logToFirebase: true,
 };
+
+let config;
+let fb;
+let home;
+let httpServer;
+
 log.appStart(APP_NAME, logOpts);
 
+/**
+ * Init
+*/
 function init() {
   fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
   log.setFirebaseRef(fb);
@@ -51,7 +56,7 @@ function init() {
       });
 
       fb.child('commands').on('child_added', function(snapshot) {
-        var cmd = null;
+        let cmd;
         try {
           cmd = snapshot.val();
           if (cmd.hasOwnProperty('cmdName')) {
@@ -60,7 +65,7 @@ function init() {
             home.executeCommand(cmd, 'FB');
           }
         } catch (ex) {
-          var msg = 'Unable to execute Firebase Command: ';
+          let msg = 'Unable to execute Firebase Command: ';
           msg += JSON.stringify(cmd);
           log.exception(LOG_PREFIX, msg, ex);
         }
@@ -68,13 +73,15 @@ function init() {
       });
 
       try {
-        Keypad.listen(config.keypad.modifiers, function(key, modifier, exitApp) {
-          if (exitApp) {
-            exit('SIGINT', 0);
-          } else {
-            home.handleKeyEntry(key, modifier, 'KEYPAD');
+        Keypad.listen(config.keypad.modifiers,
+          function(key, modifier, exitApp) {
+            if (exitApp) {
+              exit('SIGINT', 0);
+            } else {
+              home.handleKeyEntry(key, modifier, 'KEYPAD');
+            }
           }
-        });
+        );
       } catch (ex) {
         log.exception(LOG_PREFIX, 'Error initializing keyboard', ex);
       }
@@ -91,6 +98,12 @@ function init() {
   });
 }
 
+/**
+ * Exit the app.
+ *
+ * @param {String} sender Who is requesting the app to exit.
+ * @param {Number} exitCode The exit code to use.
+*/
 function exit(sender, exitCode) {
   if (exitCode === undefined) {
     exitCode = 0;
@@ -115,6 +128,13 @@ process.on('SIGINT', function() {
   exit('SIGINT', 0);
 });
 
+/**
+ * Load and run a JavaScript file.
+ *   Used for the cron job system.
+ *
+ * @param {String} file The file to load and run.
+ * @param {Function} callback Callback to run once completed.
+*/
 function loadAndRunJS(file, callback) {
   log.debug(LOG_PREFIX, 'loadAndRunJS (' + file + ')');
   fs.readFile(file, function(err, data) {
@@ -127,7 +147,7 @@ function loadAndRunJS(file, callback) {
       try {
         eval(data.toString());  // jshint ignore:line
       } catch (ex) {
-        log.exception(LOG_PREFIX, 'loadAndRunJS: Exception caught on eval.', ex);
+        log.exception(LOG_PREFIX, 'loadAndRunJS: Exception on eval.', ex);
         if (callback) {
           callback(ex, file);
         }

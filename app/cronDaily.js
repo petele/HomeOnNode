@@ -2,7 +2,7 @@
 
 'use strict';
 
-var cronJob = function() {
+const cronJob = function() {
   log.cleanLogs('logs/doors', 30);
   log.cleanLogs('logs/logs', 7);
   log.cleanLogs('logs/presence');
