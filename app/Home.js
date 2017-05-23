@@ -378,24 +378,6 @@ function Home(config, fb) {
    ****************************************************************************/
 
   /**
-   * Remove empty items from object
-   *
-   * @param {Object} obj Object to iterate and remove empty items from
-   * @return {Object} The cleaned up object
-  */
-  function removeEmpty(obj) {
-    Object.keys(obj).forEach((key) => {
-      let val = obj[key];
-      if (val && typeof val === 'object') {
-        removeEmpty(val);
-      } else if (val === null || val === undefined) {
-        delete obj[key];
-      }
-    });
-    return obj;
-  }
-
-  /**
    * Push value to Firebase
    *
    * @param {String} path Path to push object to
@@ -407,7 +389,7 @@ function Home(config, fb) {
       fbObj = fb.child(path);
     }
     try {
-      fbObj.push(removeEmpty(value), function(err) {
+      fbObj.push(value, function(err) {
         if (err) {
           log.exception(LOG_PREFIX, 'Unable to push to Firebase. (CB)', err);
         }
@@ -433,7 +415,7 @@ function Home(config, fb) {
       if (value === null) {
         fbObj.remove();
       } else {
-        fbObj.set(removeEmpty(value), function(err) {
+        fbObj.set(value, function(err) {
           if (err) {
             log.exception(LOG_PREFIX, 'Set data failed on path: ' + path, err);
           }
@@ -779,6 +761,7 @@ function Home(config, fb) {
         log.debug(LOG_PREFIX, 'Sonos ready...');
       });
       sonos.on('player-state', (transportState) => {
+        transportState = JSON.parse(JSON.stringify(transportState));
         fbSet('state/sonos/state', transportState);
       });
       sonos.on('favorites-changed', (favorites) => {
