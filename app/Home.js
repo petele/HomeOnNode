@@ -745,11 +745,8 @@ function Home(config, fb) {
       sonos.on('ready', () => {
         log.debug(LOG_PREFIX, 'Sonos ready...');
       });
-      sonos.on('transport-state', (transportState) => {
+      sonos.on('player-state', (transportState) => {
         fbSet('state/sonos/state', transportState);
-      });
-      sonos.on('topology-changed', (zones) => {
-        fbSet('state/sonos/zones', zones);
       });
       sonos.on('favorites-changed', (favorites) => {
         fbSet('state/sonos/favorites', favorites);

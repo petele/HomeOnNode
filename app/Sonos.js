@@ -70,6 +70,8 @@ function Sonos() {
     });
     _sonosSystem.on('transport-state', (transportState) => {
       _self.emit('transport-state', transportState);
+      const playerState = transportState.system.zones[0].coordinator.state;
+      _self.emit('player-state', playerState);
     });
     _sonosSystem.on('topology-changed', (zones) => {
       _self.emit('topology-changed', zones);

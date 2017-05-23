@@ -16,7 +16,7 @@ const LOG_PREFIX = 'WEATHER';
 function Weather(latLon, key) {
   const REFRESH_INTERVAL = 5 * 60 * 1000;
   const _weatherURL = `https://api.forecast.io/forecast/${key}/${latLon}`;
-  const _announce = this.emit;
+  const _self = this;
 
   /**
    * Init
@@ -52,7 +52,7 @@ function Weather(latLon, key) {
           today: fullForecast.daily.data[0],
         };
         log.debug(LOG_PREFIX, 'Weather updated.');
-        _announce('weather', forecast);
+        _self.emit('weather', forecast);
         return;
       } catch (ex) {
         log.exception(LOG_PREFIX, 'Unable to parse forecast.io response', ex);
