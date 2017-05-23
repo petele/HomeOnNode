@@ -765,6 +765,7 @@ function Home(config, fb) {
         fbSet('state/sonos/state', transportState);
       });
       sonos.on('favorites-changed', (favorites) => {
+        favorites = JSON.parse(JSON.stringify(favorites));
         fbSet('state/sonos/favorites', favorites);
       });
     } catch (ex) {

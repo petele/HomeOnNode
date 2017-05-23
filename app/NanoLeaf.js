@@ -1,137 +1,94 @@
 'use strict';
 
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-var diff = require('deep-diff').diff;
-var request = require('request');
-var log = require('./SystemLog2');
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
+const diff = require('deep-diff').diff;
+const request = require('request');
+const log = require('./SystemLog2');
 
 // Consider adding queue to API to ensure we don't over extend
 
-var LOG_PREFIX = 'NANOLEAF';
+const LOG_PREFIX = 'NANOLEAF';
 
+/**
+ * NanoLeaf API.
+ *
+ * @param {String} key Authentication key.
+ * @param {String} ip IP address of the hub.
+ * @param {String} port Port of the hub.
+*/
 function NanoLeaf(key, ip, port) {
-  this.state = {};
-  var hubAddress;
-  var ready = false;
-  var requestTimeout = 45 * 1000;
-  var self = this;
+  const _hubAddress = `http://${ip}:${port}/api/v1/${key}/`;
+  let _ready = false;
+  let _state = {};
+  const REFRESH_INTERVAL = 45 * 1000;
+  this.state = _state;
+  const _announce = this.emit;
 
-  // Turn on/off PUT /api/beta/auth_token/state {"on": true}
-  this.setPower = function(turnOn) {
-    log.info(LOG_PREFIX, `setPower[${turnOn}]`);
-    return new Promise(function(resolve, reject) {
-      if (checkIfReady() === false) {
-        reject('not_ready');
-        return;
-      }
-      let body = {on: turnOn};
-      resolve(makeLeafRequest('state', 'PUT', body));
-    });
-  };
-
-  // Turn on/off PUT /api/beta/auth_token/state {"on": true}
-  this.powerToggle = function() {
-    log.debug(LOG_PREFIX, `powerToggle`);
-    try {
-      let currentState = self.state.state.on.value;
-      self.setPower(!currentState);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to determine current state.', ex);
+  /**
+   * Execute a NanoLeaf command.
+   *
+   * @param {Object} command The command to run.
+   * @param {String} modifier Any modifiers to change the command
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  this.executeCommand = function(command, modifier) {
+    if (modifier === 'OFF') {
+      return _setPower(false);
     }
-  };
-
-  // Set effect PUT /api/beta/auth_token/effects {"select": "Pete1"}
-  this.setEffect = function(effectName) {
-    log.info(LOG_PREFIX, `setEffect[${effectName}]`);
-    if (effectName === 'OFF') {
-      return self.setPower(false);
+    if (command.effect) {
+      return _setEffect(command.effect);
     }
-    return new Promise(function(resolve, reject) {
-      if (checkIfReady() === false) {
-        reject('not_ready');
-        return;
-      }
-      let body = {
-        select: effectName
-      };
-      resolve(makeLeafRequest('effects', 'PUT', body));
-    });
-
-  };
-
-  // Set brightness PUT /api/beta/auth_token/state {"brightness": 100} 0-100
-  this.setBrightness = function(level) {
-    log.info(LOG_PREFIX, `setBrightness()[${level}]`);
-    return new Promise(function(resolve, reject) {
-      if (checkIfReady() === false) {
-        reject('not_ready');
-        return;
-      }
-      let body = {brightness: getBrightness(level)};
-      resolve(makeLeafRequest('state', 'PUT', body));
-    });
-  };
-
-  function getBrightness(level) {
-    if (level) {
-      try {
-        let bri = parseInt(level, 10);
-        if (bri >= 1 && bri <= 100) {
-          return bri;
-        } else {
-          log.error(LOG_PREFIX, 'Brightness out of range.');
-        }
-      } catch (ex) {
-        log.error(LOG_PREFIX, 'Brightness must be an integer.');
-      }
+    if (command.brightness) {
+      return _setBrightness(command.brightness);
     }
-    return 25;
+    if (command.colorTemp) {
+      return _setColorTemperature(command.colorTemp);
+    }
+    if (command.hue && command.sat) {
+      return _setHueAndSat(command.hue, command.sat);
+    }
+    return Promise.reject(new Error('unknown_command'));
+  };
+
+  /**
+   * Init
+  */
+  function _init() {
+    log.init(LOG_PREFIX, 'Starting NanoLeaf...');
+    _getState.then((state) => {
+      setInterval(_getState, REFRESH_INTERVAL);
+    });
   }
 
-  function checkIfReady() {
-    if (ready) {
+  /**
+   * Checks if system is ready
+   *
+   * @return {Boolean} true if system is ready, false if not.
+  */
+  function _isReady() {
+    if (_ready) {
       return true;
     }
     log.error(LOG_PREFIX, 'NanoLeaf not ready.');
     return false;
   }
 
-  function monitorLeaf() {
-    log.debug(LOG_PREFIX, `Starting monitorLeaf...`);
-    setInterval(getState, requestTimeout);
-  }
-
-  // Get all info GET /api/beta/auth_token/
-  function getState() {
-    return makeLeafRequest('', 'GET', null)
-    .catch(function(err) {
-      log.error(LOG_PREFIX, err.message);
-    })
-    .then(function(resp) {
-      // Has the state changed since last time?
-      if (diff(self.state, resp)) {
-        self.state = resp;
-        var eventName = 'state';
-        // If we weren't ready before, change to ready & fire ready event
-        if (ready === false) {
-          ready = true;
-          eventName = 'ready';
-        }
-        self.emit(eventName, resp);
-      }
-      return resp;
-    });
-  }
-
-  function makeLeafRequest(requestPath, method, body) {
-    // log.debug(LOG_PREFIX, `makeLeafRequest[${method}, ${requestPath}]`, body);
+  /**
+   * Makes a request to the leaf hub.
+   *
+   * @param {string} requestPath The path to make the request
+   * @param {string} method The HTTP method to use.
+   * @param {Object} body The body of the request.
+   * @return {Promise} A promise that resolves to the response.
+  */
+  function _makeLeafRequest(requestPath, method, body) {
     return new Promise(function(resolve, reject) {
-      var requestOptions = {
-        uri: hubAddress + requestPath,
+      let requestOptions = {
+        uri: _hubAddress + requestPath,
         method: method,
         json: true,
-        agent: false
+        agent: false,
       };
       if (body) {
         requestOptions.body = body;
@@ -142,7 +99,7 @@ function NanoLeaf(key, ip, port) {
           reject(error);
           return;
         }
-        if (response && 
+        if (response &&
             response.statusCode !== 200 && response.statusCode !== 204) {
               reject(new Error('Bad statusCode: ' + response.statusCode));
               return;
@@ -152,39 +109,183 @@ function NanoLeaf(key, ip, port) {
           return;
         }
         if (requestPath !== '') {
-          getState();
+          _getState();
         }
         resolve(respBody);
-      });    
+      });
     });
   }
 
-  function findHub() {
+  /**
+   * Validates an integer input.
+   *
+   * @param {Number} value The value to validate.
+   * @param {Number} min The minimum value for the value.
+   * @param {Number} max The maximum value for the value.
+   * @param {String} label The label to use in error output.
+   * @return {Number} The validated integer or null if it failed.
+  */
+  function _validateInput(value, min, max, label) {
+    try {
+      let val = parseInt(value, 10);
+      if (val < min || val > max) {
+        log.error(LOG_PREFIX, `${label} out of range.`);
+        return null;
+      }
+      return val;
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Brightness must be an integer.');
+      return null;
+    }
+  }
+
+  /**
+   * Get current leaf state
+   *
+   * @return {Promise} A promise that resolves to the current leaf state
+  */
+  function _getState() {
+    return _makeLeafRequest('', 'GET', null)
+    .catch(function(err) {
+      log.error(LOG_PREFIX, err.message);
+    })
+    .then((resp) => {
+      // Has the state changed since last time?
+      if (diff(_state, resp)) {
+        _state = resp;
+        let eventName = 'state';
+        // If we weren't ready before, change to ready & fire ready event
+        if (_ready === false) {
+          _ready = true;
+          eventName = 'ready';
+        }
+        _announce(eventName, resp);
+      }
+      return resp;
+    });
+  }
+
+  /**
+   * Turns the NanoLeaf on/off.
+   *   PUT /api/v1/auth_token/state {"on": {"value": true}}
+   *
+   * @param {Boolean} turnOn On/Off.
+   * @return {Promise} A promise that resolves to the response.
+  */
+  function _setPower(turnOn) {
+    log.info(LOG_PREFIX, `setPower(${turnOn})`);
     return new Promise(function(resolve, reject) {
-      if (ip && port) {
-        resolve({ip: ip, port: port});
+      if (_isReady() !== true) {
+        reject(new Error('not_ready'));
         return;
       }
-      log.error(LOG_PREFIX, 'findHub NYI');
-      reject();
+      let body = {on: turnOn};
+      resolve(_makeLeafRequest('state', 'PUT', body));
     });
   }
 
-  function init() {
-    log.init(LOG_PREFIX, 'Starting NanoLeaf...');
-    findHub()
-    .then(function(hubInfo) {
-      log.log(LOG_PREFIX, `Hub found at ${hubInfo.ip}:${hubInfo.port}`);
-      hubAddress = `http://${hubInfo.ip}:${hubInfo.port}/api/beta/${key}/`;
-      return hubAddress;
-    })
-    .then(getState)
-    .then(function(state) {
-      monitorLeaf();
+  /**
+   * Sets the current effect.
+   *   PUT /api/v1/auth_token/effects {"select": "Pete1"}
+   *
+   * @param {string} effectName Effect name.
+   * @return {Promise} A promise that resolves to the response.
+  */
+  function _setEffect(effectName) {
+    log.info(LOG_PREFIX, `setEffect(${effectName})`);
+    if (effectName === 'OFF') {
+      return _setPower(false);
+    }
+    return new Promise(function(resolve, reject) {
+      if (_isReady() === false) {
+        reject(new Error('not_ready'));
+        return;
+      }
+      let body = {select: effectName};
+      resolve(_makeLeafRequest('effects', 'PUT', body));
     });
   }
 
-  init();
+  /**
+   * Sets the brightness.
+   *   PUT /api/v1/auth_token/state {"brightness": {"value": 100}}
+   *
+   * @param {Number} level Brightness level.
+   * @return {Promise} A promise that resolves to the response.
+  */
+  function _setBrightness(level) {
+    log.info(LOG_PREFIX, `setBrightness(${level})`);
+    return new Promise(function(resolve, reject) {
+      if (_isReady() === false) {
+        reject(new Error('not_ready'));
+        return;
+      }
+      level = _validateInput(level, 0, 100, 'Brightness');
+      if (!level) {
+        reject(new Error('value_out_of_range'));
+        return;
+      }
+      let body = {brightness: {value: level}};
+      resolve(_makeLeafRequest('state', 'PUT', body));
+    });
+  }
+
+  /**
+   * Sets the color temperature.
+   *   PUT /api/v1/auth_token/state {"ct": {"value": 100}}
+   *
+   * @param {Number} ct Color temperature.
+   * @return {Promise} A promise that resolves to the response.
+  */
+  function _setColorTemperature(ct) {
+    log.info(LOG_PREFIX, `setColorTemperature(${ct})`);
+    return new Promise(function(resolve, reject) {
+      if (_isReady() === false) {
+        reject(new Error('not_ready'));
+        return;
+      }
+      ct = _validateInput(ct, 1200, 6500, 'Color Temperature');
+      if (!ct) {
+        reject(new Error('value_out_of_range'));
+        return;
+      }
+      let body = {ct: {value: ct}};
+      resolve(_makeLeafRequest('state', 'PUT', body));
+    });
+  }
+
+  /**
+   * Sets the hue and saturation.
+   *   PUT /api/v1/auth_token/state {"hue": {"value": 100}}
+   *   PUT /api/v1/auth_token/state {"sat": {"value": 100}}
+   *
+   * @param {Number} hue Hue.
+   * @param {Number} sat Saturation
+   * @return {Promise} A promise that resolves to the response.
+  */
+  function _setHueAndSat(hue, sat) {
+    log.info(LOG_PREFIX, `setHueAndSat(${hue, sat})`);
+    return new Promise(function(resolve, reject) {
+      if (_isReady() === false) {
+        reject(new Error('not_ready'));
+        return;
+      }
+      hue = _validateInput(hue, 0, 359, 'Hue');
+      sat = _validateInput(sat, 0, 100, 'Sat');
+      if (!hue || !sat) {
+        reject(new Error('value_out_of_range'));
+        return;
+      }
+      let body = {hue: {value: hue}};
+      _makeLeafRequest('state', 'PUT', body)
+      .then(() => {
+        let body = {sat: {value: sat}};
+        resolve(_makeLeafRequest('state', 'PUT', body));
+      });
+    });
+  }
+
+  _init();
 }
 
 util.inherits(NanoLeaf, EventEmitter);
