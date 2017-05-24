@@ -93,12 +93,12 @@ function NanoLeaf(key, ip, port) {
         uri: _hubAddress + requestPath,
         method: method,
         agent: false,
+        json: true,
       };
       if (requestPath === 'new') {
         requestOptions.uri = `http://${ip}:${port}/api/v1/new`;
       }
       if (body) {
-        requestOptions.json = true;
         requestOptions.body = body;
       }
       request(requestOptions, function(error, response, respBody) {
