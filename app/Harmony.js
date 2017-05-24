@@ -380,7 +380,7 @@ function Harmony(uuid) {
    * @return {Boolean}
   */
   function _setActivityById(activityId) {
-    if (_isReady() !== false) {
+    if (_isReady() !== true) {
       return false;
     }
     const activityName = _activitiesById[activityId];
