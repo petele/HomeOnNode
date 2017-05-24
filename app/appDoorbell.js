@@ -61,7 +61,9 @@ function sendDoorbell() {
       tag: 'HoN-doorbell',
       appendTime: true,
     };
-    gcmPush.sendMessage(gcmMessage);
+    setTimeout(() => {
+      gcmPush.sendMessage(gcmMessage);
+    }, 250);
   }
 }
 
