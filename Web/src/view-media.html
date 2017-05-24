@@ -35,7 +35,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
 
-    <fb-document path="state/sonos/state/state" data="{{sonosState}}">
+    <fb-document path="state/sonos/state" data="{{sonosState}}">
     </fb-document>
     <div class="card card-narrow">
       <div class="sonosTitle no-overflow">
@@ -94,7 +94,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get observers() {
         return [
-          'sonosPlayerStateChanged(sonosState.playerState)',
+          'sonosPlayerStateChanged(sonosState.playbackState)',
         ];
       }
 
