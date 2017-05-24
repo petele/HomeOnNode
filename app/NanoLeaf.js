@@ -45,8 +45,14 @@ function NanoLeaf(key, ip, port) {
     if (command.colorTemp) {
       return _setColorTemperature(command.colorTemp);
     }
-    if (command.hue && command.sat) {
+    if (command.hasOwnProperty('hue') && command.hasOwnProperty('hue')) {
       return _setHueAndSat(command.hue, command.sat);
+    }
+    if (command.authorize) {
+      return _makeLeafRequest('new', 'POST').then((resp) => {
+        log.log(LOG_PREFIX, resp);
+        return resp;
+      });
     }
     return Promise.reject(new Error('unknown_command'));
   };
@@ -86,13 +92,15 @@ function NanoLeaf(key, ip, port) {
       let requestOptions = {
         uri: _hubAddress + requestPath,
         method: method,
-        json: true,
         agent: false,
       };
+      if (requestPath === 'new') {
+        requestOptions.uri = `http://${ip}:${port}/api/v1/new`;
+      }
       if (body) {
+        requestOptions.json = true;
         requestOptions.body = body;
       }
-
       request(requestOptions, function(error, response, respBody) {
         if (error) {
           reject(error);

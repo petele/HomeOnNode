@@ -14,9 +14,9 @@ var Hue = require('./Hue');
 var Presence = require('./Presence');
 var Nest = require('./Nest');
 var ZWave = require('./ZWave');
-const Sonos = require('./Sonos');
-var GCMPush = require('./GCMPush');
 var PushBullet = require('./PushBullet');
+const Sonos = require('./Sonos');
+const GCMPush = require('./GCMPush');
 const NanoLeaf = require('./NanoLeaf');
 const Weather = require('./Weather');
 
@@ -31,9 +31,9 @@ function Home(config, fb) {
   var harmony;
   var zwave;
   var presence;
-  let sonos;
-  var gcmPush;
   var pushBullet;
+  let sonos;
+  let gcmPush;
   let nanoLeaf;
   let weather;
 
