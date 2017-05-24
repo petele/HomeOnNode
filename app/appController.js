@@ -52,7 +52,7 @@ function init() {
       }
 
       home.on('ready', function() {
-        httpServer = new HTTPServer(config, home, fb);
+        httpServer = new HTTPServer(config, home);
       });
 
       fb.child('commands').on('child_added', function(snapshot) {

@@ -9,28 +9,29 @@ var version = require('./version');
 var moment = require('moment');
 var fs = require('fs');
 
-var Harmony = require('./Harmony');
+
 var Hue = require('./Hue');
-var Presence = require('./Presence');
 var ZWave = require('./ZWave');
-var PushBullet = require('./PushBullet');
+const Presence = require('./Presence');
+const PushBullet = require('./PushBullet');
+const Harmony = require('./Harmony');
 const Nest = require('./Nest');
 const Sonos = require('./Sonos');
 const GCMPush = require('./GCMPush');
 const NanoLeaf = require('./NanoLeaf');
 const Weather = require('./Weather');
 
-var LOG_PREFIX = 'HOME';
+const LOG_PREFIX = 'HOME';
 
 function Home(config, fb) {
   this.state = {};
-  var _self = this;
+  const _self = this;
 
   var hue;
-  var harmony;
   var zwave;
-  var presence;
-  var pushBullet;
+  let presence;
+  let pushBullet;
+  let harmony;
   let nest;
   let sonos;
   let gcmPush;
@@ -39,7 +40,7 @@ function Home(config, fb) {
 
   var armingTimer;
   var zwaveTimer;
-  var lastSoundPlayedAt = 0;
+  let _lastSoundPlayedAt = 0;
 
   /*****************************************************************************
    *
@@ -104,9 +105,13 @@ function Home(config, fb) {
     msg += ' received from: ' + source;
     log.log(LOG_PREFIX, msg, command);
     var cmds;
+
+    // DONE
     if (command.hasOwnProperty('state')) {
-      setState(command.state);
+      _setState(command.state);
     }
+
+    // TODO
     if (command.hasOwnProperty('hueScene')) {
       var scenes = command.hueScene;
       if (Array.isArray(scenes) === false) {
@@ -116,6 +121,8 @@ function Home(config, fb) {
         setHueScene(scene);
       });
     }
+
+    // TODO
     if (command.hasOwnProperty('hueCommand')) {
       cmds = command.hueCommand;
       if (Array.isArray(cmds) === false) {
@@ -133,6 +140,8 @@ function Home(config, fb) {
         setHueLights(cmd.lights, scene);
       });
     }
+
+    // DONE
     if (command.hasOwnProperty('nanoLeaf')) {
       if (nanoLeaf) {
         nanoLeaf.executeCommand(command.nanoLeaf, modifier);
@@ -140,23 +149,22 @@ function Home(config, fb) {
         log.warn(LOG_PREFIX, 'NanoLeaf unavailable.');
       }
     }
+
+    // DONE
     if (command.hasOwnProperty('nestThermostat')) {
       if (nest) {
-        cmds = command.nestThermostat;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
+        let cmd = command.nestThermostat;
+        if (modifier) {
+          nest.adjustTemperature(cmd.roomId, modifier);
+        } else {
+          nest.setTemperature(cmd.roomId, cmd.temperature);
         }
-        cmds.forEach(function(cmd) {
-          if (modifier) {
-            nest.adjustTemperature(cmd.roomId, modifier);
-          } else {
-            nest.setTemperature(cmd.roomId, cmd.temperature);
-          }
-        });
       } else {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
     }
+
+    // DONE
     if (command.hasOwnProperty('nestThermostatAuto')) {
       if (nest) {
         nest.setAutoTemperature(command.nestThermostatAuto);
@@ -164,19 +172,18 @@ function Home(config, fb) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
     }
+
+    // DONE
     if (command.hasOwnProperty('nestFan')) {
       if (nest) {
-        cmds = command.nestFan;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
-        }
-        cmds.forEach(function(cmd) {
-          nest.runNestFan(cmd.roomId, cmd.minutes);
-        });
+        let cmd = command.nestFan;
+        nest.runNestFan(cmd.roomId, cmd.minutes);
       } else {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
     }
+
+    // DONE
     if (command.hasOwnProperty('nestCam')) {
       if (nest) {
         let enabled = command.nestCam === 'ON';
@@ -188,6 +195,8 @@ function Home(config, fb) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
     }
+
+    // DONE
     if (command.hasOwnProperty('harmonyActivity')) {
       if (harmony) {
         harmony.setActivityByName(command.harmonyActivity);
@@ -195,33 +204,22 @@ function Home(config, fb) {
         log.warn(LOG_PREFIX, 'Harmony unavailable.');
       }
     }
+
+    // DONE
     if (command.hasOwnProperty('harmonyKey')) {
-      if (harmony) {
-        harmony.sendCommand(command.harmonyKey);
-      } else {
-        log.warn(LOG_PREFIX, 'Harmony unavailable.');
-      }
+      log.warn(LOG_PREFIX, 'DEPRECATED: harmonyKey');
     }
-    if (command.hasOwnProperty('refreshHarmonyConfig')) {
-      if (harmony) {
-        harmony.getConfig();
-      } else {
-        log.warn(LOG_PREFIX, 'Harmony unavailable.');
-      }
-    }
+
+    // DONE
     if (command.hasOwnProperty('sonos')) {
       if (sonos) {
-        cmds = command.sonos;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
-        }
-        cmds.forEach(function(cmd) {
-          sonos.executeCommand(cmd, config.sonosPresetOptions);
-        });
+          sonos.executeCommand(command.sonos, config.sonosPresetOptions);
       } else {
         log.error('[HOME] Sonos command failed, Sonos unavailable.');
       }
     }
+
+    // DONE
     if (command.hasOwnProperty('sendNotification')) {
       if (gcmPush) {
         gcmPush.sendMessage(command.sendNotification);
@@ -229,25 +227,36 @@ function Home(config, fb) {
         log.warn(LOG_PREFIX, 'GCMPush unavailable.');
       }
     }
+
+    // DONE
     if (command.hasOwnProperty('sound')) {
-      playSound(command.sound, command.soundForce);
+      _playSound(command.sound, command.soundForce);
     }
+
+    // DONE
     if (command.hasOwnProperty('sayThis')) {
-      sayThis(command.sayThis, command.soundForce);
+      _sayThis(command.sayThis, command.soundForce);
     }
+
+    // DONE
     if (command.hasOwnProperty('doNotDisturb')) {
       if (modifier === 'OFF' || command.doNotDisturb === 'OFF') {
-        setDoNotDisturb('OFF');
+        _setDoNotDisturb('OFF');
       } else {
-        setDoNotDisturb('ON');
+        _setDoNotDisturb('ON');
       }
     }
   };
 
+  /**
+   * Ring the doorbell
+   *
+   * @param {String} source Where doorbell was rung/sender
+  */
   this.ringDoorbell = function(source) {
     log.log(LOG_PREFIX, 'Doorbell');
     fbSet('state/lastDoorbell', Date.now());
-    return _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
+    _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
   };
 
   /*****************************************************************************
@@ -273,13 +282,13 @@ function Home(config, fb) {
       doorName: doorName,
       state: doorState,
       date: now,
-      date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
+      date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
     };
     fbPush('logs/doors', doorLogObj);
     log.log(LOG_PREFIX, doorName + ' ' + doorState);
     if (updateState === true) {
       if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
-        setState('HOME');
+        _setState('HOME');
       }
     }
     var cmdName = 'DOOR_' + doorName;
@@ -290,17 +299,21 @@ function Home(config, fb) {
     return _self.executeCommandByName(cmdName, modifier, 'DOOR_' + doorName);
   }
 
-  function setDoNotDisturb(val) {
+  /**
+   * Sets the Do Not Disturb property
+   *
+   * @param {String} val Turn do not disturb on/off
+  */
+  function _setDoNotDisturb(val) {
     log.debug(LOG_PREFIX, 'setDoNotDisturb: ' + val);
     if (val === 'ON') {
       fbSet('state/doNotDisturb', true);
-      return true;
+      return;
     }
     fbSet('state/doNotDisturb', false);
-    return true;
   }
 
-  function setState(newState) {
+  function _setState(newState) {
     log.debug(LOG_PREFIX, 'setState: ' + newState);
     if (armingTimer) {
       clearTimeout(armingTimer);
@@ -310,7 +323,7 @@ function Home(config, fb) {
     if (newState === 'ARMED') {
       armingTimer = setTimeout(function() {
         armingTimer = null;
-        setState('AWAY');
+        _setState('AWAY');
       }, armingDelay);
     }
     if (_self.state.systemState === newState) {
@@ -324,7 +337,7 @@ function Home(config, fb) {
       message: newState,
       state: newState,
       date: now,
-      date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
+      date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
     };
     fbPush('logs/systemState', stateLog);
     if (nest) {
@@ -338,20 +351,25 @@ function Home(config, fb) {
     return true;
   }
 
-  function playSound(file, force) {
-    var now = Date.now();
+  /**
+   * Plays a sound
+   *
+   * @param {String} file The audio file to play
+   * @param {Boolean} force Override doNotDisturb settings
+  */
+  function _playSound(file, force) {
+    const now = Date.now();
     if (force === true) {
-      lastSoundPlayedAt = 0;
+      _lastSoundPlayedAt = 0;
     }
-    if (now - lastSoundPlayedAt < 20 * 1000) {
+    if (now - _lastSoundPlayedAt < (20 * 1000)) {
       log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
       return;
     }
-    lastSoundPlayedAt = now;
-    log.debug(LOG_PREFIX, 'playSound: ' + file + ' ' + force);
+    _lastSoundPlayedAt = now;
+    log.debug(LOG_PREFIX, `playSound: ${file} ${force}`);
     if (_self.state.doNotDisturb === false || force === true) {
-      var cmd = 'mplayer ';
-      cmd += file;
+      const cmd = `mplayer ${file}`;
       exec(cmd, function(error, stdout, stderr) {
         if (error) {
           log.exception(LOG_PREFIX, 'PlaySound Error', error);
@@ -360,12 +378,18 @@ function Home(config, fb) {
     }
   }
 
-  function sayThis(utterance, force) {
+  /**
+   * Adds an Utterance to the Firebase queue
+   *
+   * @param {String} utterance The words to say
+   * @param {Boolean} force Override doNotDisturb settings
+  */
+  function _sayThis(utterance, force) {
     log.debug(LOG_PREFIX, 'sayThis: ' + utterance + ' ' + force);
     if (_self.state.doNotDisturb === false || force === true) {
-      var sayObj = {
+      const sayObj = {
         sayAt: Date.now(),
-        utterance: utterance
+        utterance: utterance,
       };
       fbPush('sayThis', sayObj);
     }
@@ -438,12 +462,6 @@ function Home(config, fb) {
     });
   }
 
-  /*****************************************************************************
-   *
-   * Weather - Initialization
-   *
-   ****************************************************************************/
-
   /**
    * Init Weather
   */
@@ -454,158 +472,98 @@ function Home(config, fb) {
     });
   }
 
-  /*****************************************************************************
-   *
-   * Presence - Initialization & Shut Down
-   *
-   ****************************************************************************/
-
-  function initPresence() {
-    try {
-      presence = new Presence();
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to initialize Presence', ex);
-      shutdownPresence();
-      return;
-    }
-
-    if (presence) {
-      presence.on('adapterError', shutdownPresence);
-      presence.on('presence_unavailable', shutdownPresence);
-      presence.on('error', function(err) {
-        log.exception(LOG_PREFIX, 'Presence error', err);
-      });
-      var fbPresFlicPath = 'config/HomeOnNode/presence/FlicAway';
-      fb.child(fbPresFlicPath).on('value', function(snapshot) {
-        if (presence) {
-          presence.setFlicAway(snapshot.val());
-        } else {
-          log.error(LOG_PREFIX, 'Away button disabled, no presence detected.');
-        }
-      });
-      presence.on('flic_away', function() {
-        _self.executeCommand({state: 'ARMED'}, 'Flic');
-      });
-      presence.on('change', function(person, present, who) {
-        var presenceLog = {
-          level: 'INFO',
-          message: person.name + ' is ' + person.state,
-          name: person.name,
-          state: person.state,
-          date: person.lastSeen,
-          date_: person.lastSeen_
-        };
-        fbPush('logs/presence', presenceLog);
-        fbSet('state/presence', who);
-        var cmdName = 'PRESENCE_SOME';
-        if (present === 0) {
-          cmdName = 'PRESENCE_NONE';
-        }
-        _self.executeCommandByName(cmdName, null, 'PRESENCE');
-      });
-      var fbPresPath = 'config/HomeOnNode/presence/people';
-      fb.child(fbPresPath).on('child_added', function(snapshot) {
-        if (presence) {
-          presence.addPerson(snapshot.val());
-        }
-      });
-      fb.child(fbPresPath).on('child_removed', function(snapshot) {
-        if (presence) {
-          var uuid = snapshot.val().uuid;
-          presence.removePersonByKey(uuid);
-        }
-      });
-      fb.child(fbPresPath).on('child_changed', function(snapshot) {
-        if (presence) {
-          presence.updatePerson(snapshot.val());
-        }
-      });
-    }
+  /**
+   * Init Presence
+  */
+  function _initPresence() {
+    presence = new Presence();
+    const fbPresFlicPath = 'config/HomeOnNode/presence/FlicAway';
+    fb.child(fbPresFlicPath).on('value', function(snapshot) {
+      presence.setFlicAwayUUID(snapshot.val());
+    });
+    presence.on('flic_away', () => {
+      _self.executeCommand({state: 'ARMED'}, 'Flic');
+    });
+    presence.on('change', _presenceChanged);
+    const fbPresPath = 'config/HomeOnNode/presence/people';
+    fb.child(fbPresPath).on('child_added', function(snapshot) {
+      presence.addPerson(snapshot.val());
+    });
+    fb.child(fbPresPath).on('child_removed', function(snapshot) {
+      var uuid = snapshot.val().uuid;
+      presence.removePersonByKey(uuid);
+    });
+    fb.child(fbPresPath).on('child_changed', function(snapshot) {
+      presence.updatePerson(snapshot.val());
+    });
   }
 
-  function shutdownPresence() {
+  /**
+   * Presence Changed
+   *
+   * @param {Object} person The person who's presence changed.
+   * @param {Number} numPresent The number of people present.
+   * @param {Object} who The list of who is present
+  */
+  function _presenceChanged(person, numPresent, who) {
+    const presenceLog = {
+      level: 'INFO',
+      message: person.name + ' is ' + person.state,
+      name: person.name,
+      state: person.state,
+      date: person.lastSeen,
+      date_: person.lastSeen_,
+    };
+    fbPush('logs/presence', presenceLog);
+    fbSet('state/presence', who);
+    let cmdName = 'PRESENCE_SOME';
+    if (numPresent === 0) {
+      cmdName = 'PRESENCE_NONE';
+    }
+    _self.executeCommandByName(cmdName, null, 'PRESENCE');
+  }
+
+  /**
+   * Shutdown the Presence API
+  */
+  function _shutdownPresence() {
     log.log(LOG_PREFIX, 'Shutting down Presence.');
     try {
-      presence.shutdown();
+      if (presence) {
+        presence.shutdown();
+      }
     } catch (ex) {
       log.warn(LOG_PREFIX, 'Error attempting to shut down Presence.');
     }
-    var fbPresPath = 'config/HomeOnNode/presence/people';
-    fb.child(fbPresPath).off();
+    fb.child('config/HomeOnNode/presence/people').off();
+    fb.child('config/HomeOnNode/presence/FlicAway').off();
     presence = null;
   }
 
-  /*****************************************************************************
-   *
-   * Harmony - Initialization & Shut Down
-   *
-   ****************************************************************************/
-
-  function initHarmony() {
-    try {
-      harmony = new Harmony(Keys.harmony.key);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to initialize Harmony', ex);
-      resetHarmony();
-      return;
-    }
-
-    if (harmony) {
-      harmony.on('ready', function(config) {
-        fbSet('state/harmonyConfig', config);
-      });
-      harmony.on('activity', updateHarmonyActivity);
-      harmony.on('connection_failed', resetHarmony);
-      harmony.on('hub_search_failed', resetHarmony);
-      harmony.on('no_hubs_found', resetHarmony);
-      harmony.on('socket_error', function(err) {});
-      harmony.on('error', function(err) {});
-      harmony.on('no_client', resetHarmony);
-    }
+  /**
+   * Init Harmony API
+  */
+  function _initHarmony() {
+    harmony = new Harmony(Keys.harmony.key);
+    harmony.on('activity_changed', (activity) => {
+      fbSet('state/harmony', activity);
+    });
+    harmony.on('config_changed', (config) => {
+      fbSet('state/harmonyConfig', config);
+    });
   }
 
-  function resetHarmony() {
-    log.log(LOG_PREFIX, 'Harmony failed, will attempt reconnect in 90 seconds.');
-    shutdownHarmony();
-    setTimeout(function() {
-      log.log(LOG_PREFIX, 'Attempting to reconnect to Harmony.');
-      initHarmony();
-    }, 90 * 1000);
-  }
-
-  function updateHarmonyActivity(newActivity) {
-    log.log(LOG_PREFIX, 'Harmony activity is: ' + JSON.stringify(newActivity));
-    fbSet('state/harmony', newActivity);
-    if (_self.state.harmonyConfig && _self.state.harmonyConfig.activity) {
-      var activityPath = 'state/harmonyConfig/activity/[I]/isOn';
-      var activities = _self.state.harmonyConfig.activity;
-      activities.forEach(function(activity, i) {
-        var isOn = false;
-        if (activity.id === newActivity.id) {
-          isOn = false;
-        }
-        fbSet(activityPath.replace('[I]', i), isOn);
-      });
-    }
-  }
-
-  function shutdownHarmony() {
+  /**
+   * Shutdown the Harmony API
+  */
+  function _shutdownHarmony() {
     log.log(LOG_PREFIX, 'Shutting down Harmony.');
-    try {
-      if (harmony) {
-        harmony.close();
-      }
-    } catch (ex) {
-      log.warn(LOG_PREFIX, 'Error attempting to shut down Harmony.', ex);
+    if (harmony) {
+      harmony.close();
     }
     harmony = null;
   }
 
-  /*****************************************************************************
-   *
-   * Nest - Initialization & Shut Down
-   *
-   ****************************************************************************/
 
   /**
    * Init Nest
@@ -706,50 +664,38 @@ function Home(config, fb) {
     });
   }
 
-  /*****************************************************************************
-   *
-   * PushBullet - Initialization, Shut Down & Event handlers
-   *
-   ****************************************************************************/
+  /**
+   * Init Push Bullet
+  */
+  function _initPushBullet() {
+    pushBullet = new PushBullet(Keys.pushBullet);
+    pushBullet.on('notification', _receivedPushBulletNotification);
+  }
 
-  function initPushBullet() {
-    try {
-      pushBullet = new PushBullet(Keys.pushBullet);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to initialize PushBullet', ex);
-      return;
-    }
-
-    if (pushBullet) {
-      pushBullet.on('notification', function(msg, count) {
-        try {
-          var cmdName;
-          if (msg.application_name) {
-            cmdName = config.pushBulletNotifications[msg.application_name];
-          }
-          if (cmdName) {
-            _self.executeCommandByName(cmdName, null, 'PushBullet');
-          }
-        } catch (ex) {
-          var logMsg = 'PushBullet notification commandName lookup failure.';
-          log.exception(LOG_PREFIX, logMsg, ex);
-        }
-      });
-      pushBullet.on('dismissal', function(msg, count) {
-        if (count === 0) {
-          var cmdName = config.pushBulletNotifications['-NONE'];
-          if (cmdName) {
-            _self.executeCommandByName(cmdName, null, 'PushBullet');
-          }
-        }
-      });
+  /**
+   * Handle incoming PushBullet notification
+   *
+   * @param {Object} msg Incoming message
+   * @param {Number} count Number of visible messages
+  */
+  function _receivedPushBulletNotification(msg, count) {
+    let cmdName;
+    if (msg.application_name) {
+      cmdName = config.pushBulletNotifications[msg.application_name];
+      if (cmdName) {
+        _self.executeCommandByName(cmdName, null, 'PushBullet');
+      }
     }
   }
 
-  function shutdownPushBullet() {
+  /**
+   * Shutdown PushBullet
+  */
+  function _shutdownPushBullet() {
     if (pushBullet) {
       pushBullet.shutdown();
     }
+    pushBullet = null;
   }
 
   /**
@@ -776,28 +722,16 @@ function Home(config, fb) {
     }
   }
 
-  /*****************************************************************************
-   *
-   * NanoLeaf - Initialization & Shut Down
-   *
-   ****************************************************************************/
-
   /**
    * Init NanoLeaf
   */
   function _initNanoLeaf() {
-    try {
-      let ip = '192.168.86.208';
-      let port = 16021;
-      nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
-      nanoLeaf.on('state-changed', (state) => {
-        fbSet('state/nanoLeaf', state);
-      });
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to initialize NanoLeaf', ex);
-      nanoLeaf = null;
-      return;
-    }
+    let ip = '192.168.86.208';
+    let port = 16021;
+    nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
+    nanoLeaf.on('state-changed', (state) => {
+      fbSet('state/nanoLeaf', state);
+    });
   }
 
   /*****************************************************************************
@@ -872,7 +806,7 @@ function Home(config, fb) {
 
   function init() {
     log.init(LOG_PREFIX, 'Initializing home.');
-    var now = Date.now();
+    const now = Date.now();
     _self.state = {
       doNotDisturb: false,
       hasNotification: false,
@@ -881,9 +815,9 @@ function Home(config, fb) {
         started: now,
         started_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
         lastUpdated: now,
-        lastUpdated_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS')
+        lastUpdated_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
       },
-      gitHead: version.head
+      gitHead: version.head,
     };
     fbSet('state/time/started', _self.state.time.started);
     fbSet('state/time/updated', _self.state.time.started);
@@ -905,23 +839,23 @@ function Home(config, fb) {
     initHue();
     _initNanoLeaf();
     _initSonos();
-    initHarmony();
-    initPresence();
-    initPushBullet();
+    _initHarmony();
+    _initPresence();
+    _initPushBullet();
     _initWeather();
     setTimeout(function() {
       log.log(LOG_PREFIX, 'Ready');
       _self.emit('ready');
     }, 750);
-    playSound(config.readySound);
+    _playSound(config.readySound);
   }
 
   this.shutdown = function() {
     shutdownHue();
     shutdownZWave();
-    shutdownHarmony();
-    shutdownPresence();
-    shutdownPushBullet();
+    _shutdownHarmony();
+    _shutdownPresence();
+    _shutdownPushBullet();
   };
 
   init();

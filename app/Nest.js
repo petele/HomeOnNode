@@ -55,6 +55,141 @@ function Nest(authToken, fbRef) {
   this.nestData = _nestData;
 
   /**
+   * Starts the Nest Fan and runs it for the default time period
+   *
+   * @param {string} roomId Room ID (LR/BR) to adjust
+   * @param {Number} minutes Not yet used
+   * @return {Boolean} True if the state was successfully changed
+   */
+  this.runNestFan = function(roomId, minutes) {
+    const thermostatId = _findThermostatId(roomId);
+    if (!thermostatId) {
+      return Promise.reject(new Error('room_id_not_found'));
+    }
+    return _runHVACFan(thermostatId, minutes);
+  };
+
+  /**
+   * Sets the Nest status to Away
+   *
+   * @return {Promise} Resolves to a boolean, with the result of the request
+   */
+  this.setAway = function() {
+    return _setHomeAway('away');
+  };
+
+  /**
+   * Sets the Nest status to Home
+   *
+   * @return {Promise} Resolves to a boolean, with the result of the request
+   */
+  this.setHome = function() {
+    return _setHomeAway('home');
+  };
+
+  /**
+   * Enables all Nest Cameras
+   *
+   * @param {Boolean} enabled If the camera is enabled or not
+   * @return {Promise} Resolves to a boolean, with the result of the request
+   */
+  this.enableCamera = function(enabled) {
+    return _setCamerasStreaming(enabled);
+  };
+
+  /**
+   * Adjust the temperature in a room by 1 degree
+   *
+   * @param {string} roomId Room ID (LR/BR) to adjust
+   * @param {string} direction Direction to adjust the temp (UP/DOWN)
+   * @return {Boolean} True if the state was successfully changed
+   */
+  this.adjustTemperature = function(roomId, direction) {
+    const thermostatId = _findThermostatId(roomId);
+    if (!thermostatId) {
+      return Promise.reject(new Error('room_id_not_found'));
+    }
+    const thermostat = _getThermostat(thermostatId);
+    if (!thermostat) {
+      return Promise.reject(new Error('thermostat_not_found'));
+    }
+    try {
+      direction = direction.toUpperCase();
+      let temperature = thermostat['target_temperature_f'];
+      temperature = parseInt(temperature, 10);
+      if (direction === 'UP' || direction === 'DIM_UP') {
+        temperature++;
+      } else if (direction === 'DOWN' || direction === 'DIM_DOWN') {
+        temperature--;
+      } else {
+        let msg = 'adjustTemperature failed, unknown direction: ' + direction;
+        log.warn(LOG_PREFIX, msg);
+      }
+      if (temperature > 90 || temperature < 60) {
+        log.warn(LOG_PREFIX, 'adjustTemperature failed, limit exceeded.');
+        return Promise.reject(new Error('temperature_limit_exceeded'));
+      }
+      return _setThermostat(thermostatId, temperature);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'adjustTemperature failed', ex);
+      return Promise.reject(ex);
+    }
+  };
+
+  /**
+   * Set the temperature in a room to a specific temperature
+   *
+   * @param {string} roomId Room ID (LR/BR) to adjust
+   * @param {Number} temperature Temperature to set the room to
+   * @return {Boolean} True if the state was successfully changed
+   */
+  this.setTemperature = function(roomId, temperature) {
+    const thermostatId = _findThermostatId(roomId);
+    if (!thermostatId) {
+      return Promise.reject(new Error('room_id_not_found'));
+    }
+    try {
+      temperature = parseInt(temperature, 10);
+      if (temperature > 90 || temperature < 60) {
+        log.warn(LOG_PREFIX, 'setTemperature failed, limit exceeded.');
+        return Promise.reject(new Error('temperature_limit_exceeded'));
+      }
+      return _setThermostat(thermostatId, temperature);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'setTemperature failed', ex);
+      return Promise.reject(ex);
+    }
+  };
+
+  /**
+   * Automatically adjust temperature based on config
+   *
+   * @param {string} value Auto mode to use
+   * @return {Boolean} True if the state was successfully changed
+   */
+  this.setAutoTemperature = function(value) {
+    if (!value) {
+      return Promise.reject(new Error('invalid_input'));
+    }
+    try {
+      const temperatures = _config.auto[value.toUpperCase()];
+      if (!temperatures) {
+        let msg = 'setAutoTemperature failed, unable to find settings for: ';
+        msg += value;
+        log.error(LOG_PREFIX, msg);
+        return Promise.reject(new Error('no_settings_for_mode'));
+      }
+      const keys = Object.keys(temperatures);
+      return Promise.all(keys.map((key) => {
+        return this.setTemperature(key, temperatures[key]);
+      }));
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'setAutoTemperature failed', ex);
+      return Promise.reject(ex);
+    }
+  };
+
+  /**
    * Initialize the API
    */
   function _init() {
@@ -387,141 +522,6 @@ function Nest(authToken, fbRef) {
       });
     });
   }
-
-  /**
-   * Sets the Nest status to Away
-   *
-   * @return {Promise} Resolves to a boolean, with the result of the request
-   */
-  this.setAway = function() {
-    return _setHomeAway('away');
-  };
-
-  /**
-   * Sets the Nest status to Home
-   *
-   * @return {Promise} Resolves to a boolean, with the result of the request
-   */
-  this.setHome = function() {
-    return _setHomeAway('home');
-  };
-
-  /**
-   * Enables all Nest Cameras
-   *
-   * @param {Boolean} enabled If the camera is enabled or not
-   * @return {Promise} Resolves to a boolean, with the result of the request
-   */
-  this.enableCamera = function(enabled) {
-    return _setCamerasStreaming(enabled);
-  };
-
-  /**
-   * Adjust the temperature in a room by 1 degree
-   *
-   * @param {string} roomId Room ID (LR/BR) to adjust
-   * @param {string} direction Direction to adjust the temp (UP/DOWN)
-   * @return {Boolean} True if the state was successfully changed
-   */
-  this.adjustTemperature = function(roomId, direction) {
-    const thermostatId = _findThermostatId(roomId);
-    if (!thermostatId) {
-      return Promise.reject(new Error('room_id_not_found'));
-    }
-    const thermostat = _getThermostat(thermostatId);
-    if (!thermostat) {
-      return Promise.reject(new Error('thermostat_not_found'));
-    }
-    try {
-      direction = direction.toUpperCase();
-      let temperature = thermostat['target_temperature_f'];
-      temperature = parseInt(temperature, 10);
-      if (direction === 'UP' || direction === 'DIM_UP') {
-        temperature++;
-      } else if (direction === 'DOWN' || direction === 'DIM_DOWN') {
-        temperature--;
-      } else {
-        let msg = 'adjustTemperature failed, unknown direction: ' + direction;
-        log.warn(LOG_PREFIX, msg);
-      }
-      if (temperature > 90 || temperature < 60) {
-        log.warn(LOG_PREFIX, 'adjustTemperature failed, limit exceeded.');
-        return Promise.reject(new Error('temperature_limit_exceeded'));
-      }
-      return _setThermostat(thermostatId, temperature);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'adjustTemperature failed', ex);
-      return Promise.reject(ex);
-    }
-  };
-
-  /**
-   * Set the temperature in a room to a specific temperature
-   *
-   * @param {string} roomId Room ID (LR/BR) to adjust
-   * @param {Number} temperature Temperature to set the room to
-   * @return {Boolean} True if the state was successfully changed
-   */
-  this.setTemperature = function(roomId, temperature) {
-    const thermostatId = _findThermostatId(roomId);
-    if (!thermostatId) {
-      return Promise.reject(new Error('room_id_not_found'));
-    }
-    try {
-      temperature = parseInt(temperature, 10);
-      if (temperature > 90 || temperature < 60) {
-        log.warn(LOG_PREFIX, 'setTemperature failed, limit exceeded.');
-        return Promise.reject(new Error('temperature_limit_exceeded'));
-      }
-      return _setThermostat(thermostatId, temperature);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'setTemperature failed', ex);
-      return Promise.reject(ex);
-    }
-  };
-
-  /**
-   * Automatically adjust temperature based on config
-   *
-   * @param {string} value Auto mode to use
-   * @return {Boolean} True if the state was successfully changed
-   */
-  this.setAutoTemperature = function(value) {
-    if (!value) {
-      return Promise.reject(new Error('invalid_input'));
-    }
-    try {
-      const temperatures = _config.auto[value.toUpperCase()];
-      if (!temperatures) {
-        let msg = 'setAutoTemperature failed, unable to find settings for: ';
-        msg += value;
-        log.error(LOG_PREFIX, msg);
-        return Promise.reject(new Error('no_settings_for_mode'));
-      }
-      const keys = Object.keys(temperatures);
-      return Promise.all(keys.map((key) => {
-        return this.setTemperature(key, temperatures[key]);
-      }));
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'setAutoTemperature failed', ex);
-      return Promise.reject(ex);
-    }
-  };
-
-  /**
-   * Starts the Nest Fan and runs it for the default time period
-   *
-   * @param {string} roomId Room ID (LR/BR) to adjust
-   * @param {Number} minutes Not yet used
-   * @return {Boolean} True if the state was successfully changed
-   */
-  this.runNestFan = function(roomId, minutes) {
-    const thermostatId = _findThermostatId(roomId);
-    if (!thermostatId) {
-      return Promise.reject(new Error('room_id_not_found'));
-    }
-    return _runHVACFan(thermostatId, minutes);
-  };
 
   _init();
 }

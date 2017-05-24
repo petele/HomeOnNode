@@ -1,34 +1,36 @@
 'use strict';
 
-var GCMPush = require('./GCMPush');
-var Keys = require('./Keys').keys;
-var Firebase = require('firebase');
-var log = require('./SystemLog2');
+const GCMPush = require('./GCMPush');
+const Keys = require('./Keys').keys;
+const Firebase = require('firebase');
+const log = require('./SystemLog2');
 
-var gcmMessage = {
+const DEFAULT_MESSAGE = {
   title: 'HomeOnNode - Eep!',
   body: 'Something unexpected happened at',
   tag: 'HoN-unexpected',
-  appendTime: true
+  appendTime: true,
 };
 
-function init() {
-  var fbURL = 'https://' + Keys.firebase.appId + '.firebaseio.com';
-  var fb = new Firebase(fbURL);
+/**
+ * Send default message to all users
+*/
+function _sendMessage() {
+  const fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com`);
   fb.authWithCustomToken(Keys.firebase.key, function(error) {
     if (error) {
       log.exception('FB', 'Authentication error', error);
       process.exit(1);
     } else {
-      var gcmPush = new GCMPush(fb);
+      const gcmPush = new GCMPush(fb);
       gcmPush.on('ready', function() {
-        gcmPush.sendMessage(gcmMessage);
+        gcmPush.sendMessage(DEFAULT_MESSAGE);
       });
     }
   });
 }
 
-init();
+_sendMessage();
 setTimeout(function() {
   process.exit(0);
 }, 3000);

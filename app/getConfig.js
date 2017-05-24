@@ -1,16 +1,20 @@
 'use strict';
 
-var fs = require('fs');
-var log = require('./SystemLog2');
-var Keys = require('./Keys').keys.firebase;
-var Firebase = require('firebase');
+const fs = require('fs');
+const log = require('./SystemLog2');
+const Keys = require('./Keys').keys.firebase;
+const Firebase = require('firebase');
 
-var LOG_PREFIX = 'GET_CONFIG';
+const LOG_PREFIX = 'GET_CONFIG';
 
-var fbURL = 'https://' + Keys.appId + '.firebaseio.com/';
-var fb = new Firebase(fbURL);
+const fb = new Firebase(`https://${Keys.appId}.firebaseio.com/`);
 
-function init(path) {
+/**
+ * Gets the config data from Firebase.
+ *
+ * @param {String} path The path to the config file.
+*/
+function _getConfigFromFB(path) {
   fb.authWithCustomToken(Keys.key, function(error, authToken) {
     if (error) {
       log.exception(LOG_PREFIX, 'Auth Error', error);
@@ -20,7 +24,7 @@ function init(path) {
     path = 'config/' + path;
     fb.child(path).once('value', function(snapshot) {
       log.log(LOG_PREFIX, 'Config file received.');
-      var config = snapshot.val();
+      const config = snapshot.val();
       if (config) {
         fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
         log.log(LOG_PREFIX, 'Config file saved.');
@@ -42,9 +46,9 @@ function init(path) {
 }
 
 log.appStart('getConfig', false);
-var appId = process.argv[2];
+let appId = process.argv[2];
 if (!appId) {
   log.log('No app id provided, using HomeOnNode');
   appId = 'HomeOnNode';
 }
-init(appId);
+_getConfigFromFB(appId);

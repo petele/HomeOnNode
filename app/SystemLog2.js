@@ -1,14 +1,14 @@
 'use strict';
 
-var fs = require('fs');
-var util = require('util');
-var zlib = require('zlib');
-var colors = require('colors');
-var gitHead = require('./version');
-var moment = require('moment');
+const fs = require('fs');
+const util = require('util');
+const zlib = require('zlib');
+const colors = require('colors');
+const gitHead = require('./version');
+const moment = require('moment');
 
-var FIREBASE_LOG_PATH = 'logs/logs';
-var logLevels = {
+const FIREBASE_LOG_PATH = 'logs/logs';
+const LOG_LEVELS = {
   START: {level: 0, color: colors.green},
   STOP: {level: 0, color: colors.red},
   INIT: {level: 0, color: colors.green},
@@ -18,12 +18,13 @@ var logLevels = {
   INFO: {level: 50, color: colors.cyan},
   TODO: {level: 60, color: colors.magenta},
   DEBUG: {level: 60, color: colors.blue},
-  EXTRA: {level: 70, color: colors.blue}
+  EXTRA: {level: 70, color: colors.blue},
 };
-var _fbRef = null;
-var _fbErrors = 0;
-var _fbLogCache = [];
-var _options = {
+
+let _fbRef = null;
+let _fbErrors = 0;
+let _fbLogCache = [];
+let _options = {
   appName: null,
   logToFile: false,
   logFileName: './logs/system.log',
@@ -31,33 +32,48 @@ var _options = {
   logLevel: {
     console: 90,
     file: 50,
-    firebase: 50
+    firebase: 50,
   },
-  verbose: false
+  verbose: false,
 };
 
-function appStart(appName, options) {
+/**
+ * Log an App start
+ *
+ * @param {String} appName The new state to
+ * @param {Object} options Message to attach to the event
+ */
+function _appStart(appName, options) {
   if (!appName) {
     throw new Error('No appName provided.');
   }
   _options.appName = appName;
-  var msg = appName + ' (' + gitHead.head + ')';
-  var logObj = generateLog('START', 'APP', msg);
+  const logObj = _generateLog('START', 'APP', `${appName}  (${gitHead.head})`);
   if (options) {
-    setOptions(options);
+    _setOptions(options);
   }
-  handleLog(logObj);
+  _handleLog(logObj);
 }
 
-function appStop(receivedFrom) {
+/**
+ * Log an App stop
+ *
+ * @param {String} receivedFrom Who is requesting the app to stop
+ */
+function _appStop(receivedFrom) {
   if (!receivedFrom) {
     receivedFrom = 'UNKNOWN';
   }
-  var logObj = generateLog('STOP', 'APP', 'Received from: ' + receivedFrom);
-  handleLog(logObj);
+  const logObj = _generateLog('STOP', 'APP', 'Received from: ' + receivedFrom);
+  _handleLog(logObj);
 }
 
-function setOptions(options) {
+/**
+ * Sets or updates the options for the logger
+ *
+ * @param {Object} options The options to set
+ */
+function _setOptions(options) {
   if (options.hasOwnProperty('logToFile')) {
     _options.logToFile = options.logToFile;
   }
@@ -81,13 +97,18 @@ function setOptions(options) {
       _options.logLevel.firebase = options.logLevel.firebase;
     }
   }
-  log('LOGGER', 'setOptions', options);
+  _log('LOGGER', 'setOptions', options);
 }
 
-function setFirebaseRef(fbRef) {
+/**
+ * Sets Firebase reference
+ *
+ * @param {Object} fbRef A Firebase reference
+ */
+function _setFirebaseRef(fbRef) {
   if (fbRef) {
     _fbErrors = 0;
-    var logObj = _fbLogCache.shift();
+    let logObj = _fbLogCache.shift();
     while (logObj) {
       fbRef.child(FIREBASE_LOG_PATH).push(logObj);
       logObj = _fbLogCache.shift();
@@ -96,28 +117,42 @@ function setFirebaseRef(fbRef) {
   _fbRef = fbRef;
 }
 
-function stringify(obj) {
+/**
+ * Stringifies an Object
+ *
+ * @param {*} obj The Object to stringify
+ * @return {String} A string representation of the object
+ */
+function _stringify(obj) {
   if (typeof obj === 'string') {
     return obj;
   }
   try {
-    var result = JSON.stringify(obj);
-    return result;
+    return JSON.stringify(obj);
   } catch (ex) {
     return util.inspect(obj, {depth: 3});
   }
 }
 
-function generateLog(level, prefix, message, extra) {
-  var now = Date.now();
-  var nowPretty = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
-  var levelValue = getLogLevelValueByName(level);
-  var msg = '';
+/**
+ * Generate a log object
+ *
+ * @param {String} level The level of the log message
+ * @param {String} prefix Where the message originated
+ * @param {String} message The log message
+ * @param {Object} [extra] Any extra info, including exceptions, etc
+ * @return {Object} The log object
+ */
+function _generateLog(level, prefix, message, extra) {
+  const now = Date.now();
+  const nowPretty = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
+  const levelValue = _getLogLevelValueByName(level);
+  let msg = '';
   if (prefix) {
     msg += '[' + prefix.toUpperCase() + '] ';
   }
-  msg += stringify(message);
-  var result = {
+  msg += _stringify(message);
+  let result = {
     appName: _options.appName,
     date: now,
     dateFormatted: nowPretty,
@@ -126,7 +161,7 @@ function generateLog(level, prefix, message, extra) {
     prefix: prefix,
     message: msg,
     rawMessage: message,
-    version: gitHead.head
+    version: gitHead.head,
   };
   if (extra) {
     if (typeof extra === 'string') {
@@ -141,60 +176,93 @@ function generateLog(level, prefix, message, extra) {
   return result;
 }
 
-function getLogLevelValueByName(levelName) {
-  var logInfo = logLevels[levelName];
+/**
+ * Gets the log level based on the provided name.
+ *   If the level name isn't found, default to 50.
+ *
+ * @param {String} levelName The level name.
+ * @return {Number} The log level value.
+ */
+function _getLogLevelValueByName(levelName) {
+  const logInfo = LOG_LEVELS[levelName];
   if (logInfo) {
     return logInfo.level;
   }
   return 50;
 }
 
-function getLogColorByName(levelName) {
-  var logInfo = logLevels[levelName];
+/**
+ * Get the color of the log levelby name.
+ *   If no level is found, default to green.
+ *
+ * @param {String} levelName The level name.
+ * @return {Object} A colors object with the color
+ */
+function _getLogColorByName(levelName) {
+  const logInfo = LOG_LEVELS[levelName];
   if (logInfo) {
     return logInfo.color;
   }
   return colors.green;
 }
 
-function handleLog(logObj) {
-  var logLevel = getLogLevelValueByName(logObj.level);
+/**
+ * Print/Save to Firebase/Save to File.
+ *
+ * @param {Object} logObj The log object to handle.
+ */
+function _handleLog(logObj) {
+  const logLevel = _getLogLevelValueByName(logObj.level);
   if (logLevel <= _options.logLevel.console) {
-    printLog(logObj);
+    _printLog(logObj);
   }
-  if (_options.logToFirebase === true && logLevel <= _options.logLevel.firebase) {
-    saveLogToFB(logObj);
+  if (_options.logToFirebase === true &&
+      logLevel <= _options.logLevel.firebase) {
+    _saveLogToFB(logObj);
   }
   if (_options.logToFile === true && logLevel <= _options.logLevel.file) {
-    saveLogToFile(logObj);
+    _saveLogToFile(logObj);
   }
 }
 
-function printLog(logObj) {
-  var formattedLevel = ('     ' + logObj.level).slice(-5);
-  var levelColor = getLogColorByName(logObj.level);
-  var msg = [];
+/**
+ * Prints the lob object to the console.
+ *
+ * @param {Object} logObj The log object to print.
+ */
+function _printLog(logObj) {
+  const formattedLevel = ('     ' + logObj.level).slice(-5);
+  const levelColor = _getLogColorByName(logObj.level);
+  let msg = [];
   msg.push(logObj.date_ || logObj.dateFormatted);
   msg.push(levelColor(formattedLevel));
   msg.push(logObj.message);
+  // eslint-disable-next-line no-console
   console.log(msg.join(' | '));
   if (logObj.exceptionMessage) {
-    var exMsg = '                        | ';
+    let exMsg = '                        | ';
     exMsg += colors.red('EXCPT') + ' | ' + logObj.exceptionMessage;
+    // eslint-disable-next-line no-console
     console.log(exMsg);
   }
   if (logObj.extra) {
     if (logObj.extra.stack) {
+      // eslint-disable-next-line no-console
       console.log(logObj.extra.stack);
     } else {
-      var inspectOpt = {colors: true, depth: 3};
-      var extra = util.inspect(logObj.extra, inspectOpt);
-      console.log(extra);
+      const inspectOpt = {colors: true, depth: 3};
+      // eslint-disable-next-line no-console
+      console.log(util.inspect(logObj.extra, inspectOpt));
     }
   }
 }
 
-function saveLogToFB(logObj) {
+/**
+ * Saves a log object to Firebase.
+ *
+ * @param {Object} logObj The log object to save
+ */
+function _saveLogToFB(logObj) {
   if (logObj.levelValue > 50) {
     return;
   }
@@ -203,31 +271,36 @@ function saveLogToFB(logObj) {
       _fbRef.child(FIREBASE_LOG_PATH).push(logObj);
       _fbErrors = 0;
     } catch (ex) {
-      exception('LOGGER', 'Error pushing log item to Firebase', ex);
+      _exception('LOGGER', 'Error pushing log item to Firebase', ex);
       if (_fbErrors++ > 3) {
-        warn('LOGGER', 'Disabling Firebase logging.');
+        _warn('LOGGER', 'Disabling Firebase logging.');
         _options.logToFirebase = false;
       }
     }
   } else {
     _fbLogCache.push(logObj);
     if (_fbLogCache.length > 500) {
-      warn('LOGGER', 'Firebase Log Cache exceeded max capacity.');
+      _warn('LOGGER', 'Firebase Log Cache exceeded max capacity.');
       _options.logToFirebase = false;
     }
   }
 }
 
-function saveLogToFile(logObj) {
+/**
+ * Save a log object to the log file.
+ *
+ * @param {Object} logObj The log object to save.
+ */
+function _saveLogToFile(logObj) {
   if (_options.logFileName) {
-    var msg = logObj.dateFormatted;
-    msg +=  ' | ' + ('     ' + logObj.level).slice(-5) + ' | ';
+    let msg = logObj.dateFormatted;
+    msg += ' | ' + ('     ' + logObj.level).slice(-5) + ' | ';
     msg += logObj.message + '\n';
     if (logObj.extra) {
       if (logObj.extra.stack) {
         msg += logObj.extra.stack + '\n';
       } else {
-        var inspectOpt = {showHidden: false, depth: 3};
+        const inspectOpt = {showHidden: false, depth: 3};
         msg += util.inspect(logObj.extra, inspectOpt) + '\n';
       }
     }
@@ -235,153 +308,225 @@ function saveLogToFile(logObj) {
       fs.appendFile(_options.logFileName, msg, function(err) {
         if (err) {
           _options.logToFile = false;
-          exception('LOGGER', 'Unable to write to log file.', err);
+          _exception('LOGGER', 'Unable to write to log file.', err);
         }
       });
     } catch (ex) {
       _options.logToFile = false;
-      exception('LOGGER', 'Unable to write to log file.', ex);
+      _exception('LOGGER', 'Unable to write to log file.', ex);
     }
   }
 }
 
-function log(prefix, message, extra) {
-  var logObj = generateLog('INFO', prefix, message, extra);
-  handleLog(logObj);
+/**
+ * Logs a message.
+ *
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _log(prefix, message, extra) {
+  _handleLog(_generateLog('INFO', prefix, message, extra));
 }
 
-function warn(prefix, message, extra) {
-  var logObj = generateLog('WARN', prefix, message, extra);
-  handleLog(logObj);
+/**
+ * Logs a warning.
+ *
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _warn(prefix, message, extra) {
+  _handleLog(_generateLog('WARN', prefix, message, extra));
 }
 
-function error(prefix, message, extra) {
-  var logObj = generateLog('ERROR', prefix, message, extra);
-  handleLog(logObj);
+/**
+ * Logs an error.
+ *
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _error(prefix, message, extra) {
+  _handleLog(_generateLog('ERROR', prefix, message, extra));
 }
 
-function exception(prefix, message, extra) {
-  var logObj = generateLog('EXCPT', prefix, message, extra);
-  handleLog(logObj);
+/**
+ * Logs an exception.
+ *
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _exception(prefix, message, extra) {
+  _handleLog(_generateLog('EXCPT', prefix, message, extra));
 }
 
-function debug(prefix, message, extra) {
-  var logObj = generateLog('DEBUG', prefix, message, extra);
-  handleLog(logObj);
+/**
+ * Logs a debug message.
+ *
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _debug(prefix, message, extra) {
+  _handleLog(_generateLog('DEBUG', prefix, message, extra));
 }
 
-function verbose(prefix, message, extra) {
-  var logObj = generateLog('EXTRA', prefix, message, extra);
-  handleLog(logObj);
+/**
+ * Logs a verbose message.
+ *
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _verbose(prefix, message, extra) {
+  _handleLog(_generateLog('EXTRA', prefix, message, extra));
 }
 
-function todo(prefix, message, extra) {
-  var logObj = generateLog('TODO', prefix, message, extra);
-  handleLog(logObj);
+/**
+ * Logs a TO DO message.
+ *
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _todo(prefix, message, extra) {
+  _handleLog(_generateLog('TODO', prefix, message, extra));
 }
 
-function init(prefix, message, extra) {
-  var logObj = generateLog('INIT', prefix, message, extra);
-  handleLog(logObj);
+/**
+ * Logs a init message.
+ *
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _init(prefix, message, extra) {
+  _handleLog(_generateLog('INIT', prefix, message, extra));
 }
 
-function http(method, message, extra) {
-  var logObj = generateLog('HTTP', method, message, extra);
-  handleLog(logObj);
+/**
+ * Logs an HTTP message.
+ *
+ * @param {String} method The type of HTTP request made.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _http(method, message, extra) {
+  _handleLog(_generateLog('HTTP', method, message, extra));
 }
 
-function custom(level, prefix, message, extra) {
+/**
+ * Logs a custom message.
+ *
+ * @param {String} level The level of the message.
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _custom(level, prefix, message, extra) {
   level = level.toUpperCase().substring(0, 5);
-  var logObj = generateLog(level, prefix, message, extra);
-  handleLog(logObj);
+  _handleLog(_generateLog(level, prefix, message, extra));
 }
 
-function cleanFile(logFile) {
+/**
+ * Cleans the log file.
+ *
+ * @param {String} logFile The file to be cleaned.
+ */
+function _cleanFile(logFile) {
   if (!logFile) {
     logFile = _options.logFileName;
   }
-  var msg = 'Cleaning log file: ' + logFile;
+  let msg = 'Cleaning log file: ' + logFile;
   fs.stat(logFile, function(err, stats) {
     if (err) {
       if (err.code === 'ENOENT') {
         msg += ' - file does not exist.';
-        log('LOGGER', msg);
+        _log('LOGGER', msg);
         return;
       }
       msg += ' - Failed.';
-      exception('LOGGER', msg, err);
+      _exception('LOGGER', msg, err);
       return;
     }
     if (stats) {
-      var exceedsAge = false;
-      var exceedsSize = false;
+      let exceedsAge = false;
+      let exceedsSize = false;
       if (stats.size > 250000) {
         exceedsSize = true;
       }
-      var oneWeek = moment().subtract(7, 'days');
+      const oneWeek = moment().subtract(7, 'days');
       exceedsAge = moment(stats.birthtime).isBefore(oneWeek);
       if (exceedsAge || exceedsSize) {
-        log('LOGGER', msg);
+        _log('LOGGER', msg);
         try {
-          var gzip = zlib.createGzip();
-          var inp = fs.createReadStream(logFile);
-          var out = fs.createWriteStream(logFile + '.gz');
+          let gzip = zlib.createGzip();
+          let inp = fs.createReadStream(logFile);
+          let out = fs.createWriteStream(logFile + '.gz');
           inp.pipe(gzip).pipe(out);
           fs.unlinkSync(logFile);
         } catch (ex) {
-          exception('LOGGER', msg + ' - Failed with exception.', ex);
+          _exception('LOGGER', msg + ' - Failed with exception.', ex);
         }
       } else {
-        debug('LOGGER', msg + ' - no action required.');
+        _debug('LOGGER', msg + ' - no action required.');
       }
     }
   });
 }
 
-function cleanLogs(path, maxAgeDays) {
+/**
+ * Cleans/removes old log messages from Firebase.
+ *
+ * @param {String} path The Firebase path to clean.
+ * @param {Number} maxAgeDays Remove any log item older than x days.
+ */
+function _cleanLogs(path, maxAgeDays) {
   if (!_fbRef) {
-    error('LOGGER', 'Cannot clean logs, Firebase reference not set.');
+    _error('LOGGER', 'Cannot clean logs, Firebase reference not set.');
     return;
   }
   if (path.indexOf('logs/') !== 0) {
-    error('LOGGER', 'Cannot clean logs, invalid path provided.');
+    _error('LOGGER', 'Cannot clean logs, invalid path provided.');
     return;
   }
   maxAgeDays = maxAgeDays || 365;
-  var endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
-  var msg = 'Cleaning logs from (' + path + ') older than ';
+  const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
+  let msg = 'Cleaning logs from (' + path + ') older than ';
   msg += moment(endAt).format('YYYY-MM-DDTHH:mm:ss.SSS');
-  log('LOGGER', msg);
+  _log('LOGGER', msg);
   _fbRef.child(path).orderByChild('date').endAt(endAt).once('value',
     function(snapshot) {
-      var itemsRemoved = 0;
+      let itemsRemoved = 0;
       snapshot.forEach(function(item) {
         item.ref().remove();
         itemsRemoved++;
       });
-      var msgCompleted = 'Cleaned logs from (' + path + '), ';
+      let msgCompleted = 'Cleaned logs from (' + path + '), ';
       msgCompleted += 'removed ' + itemsRemoved.toString() + ' items.';
-      log('LOGGER', msgCompleted);
+      _log('LOGGER', msgCompleted);
     }
   );
 }
 
-exports.appStart = appStart;
-exports.appStop = appStop;
-exports.init = init;
-exports.exception = exception;
-exports.error = error;
-exports.warn = warn;
-exports.log = log;
-exports.info = log;
-exports.debug = debug;
-exports.verbose = verbose;
-exports.http = http;
-exports.todo = todo;
-exports.custom = custom;
-exports.cleanLogs = cleanLogs;
-exports.cleanFile = cleanFile;
-exports.setFirebaseRef = setFirebaseRef;
-exports.setOptions = setOptions;
+exports.appStart = _appStart;
+exports.appStop = _appStop;
+exports.init = _init;
+exports.exception = _exception;
+exports.error = _error;
+exports.warn = _warn;
+exports.log = _log;
+exports.info = _log;
+exports.debug = _debug;
+exports.verbose = _verbose;
+exports.http = _http;
+exports.todo = _todo;
+exports.custom = _custom;
+exports.cleanLogs = _cleanLogs;
+exports.cleanFile = _cleanFile;
+exports.setFirebaseRef = _setFirebaseRef;
+exports.setOptions = _setOptions;
 exports.version = gitHead.head;
-exports.printLog = printLog;
+exports.printLog = _printLog;

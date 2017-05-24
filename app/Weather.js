@@ -10,6 +10,7 @@ const LOG_PREFIX = 'WEATHER';
 /**
  * Weather API.
  *
+ * @fires Weather#weather
  * @param {String} latLon Lat/Lon of the location to get weather for.
  * @param {String} key Forecast.io API Key.
 */
