@@ -12,9 +12,9 @@ var fs = require('fs');
 var Harmony = require('./Harmony');
 var Hue = require('./Hue');
 var Presence = require('./Presence');
-var Nest = require('./Nest');
 var ZWave = require('./ZWave');
 var PushBullet = require('./PushBullet');
+const Nest = require('./Nest');
 const Sonos = require('./Sonos');
 const GCMPush = require('./GCMPush');
 const NanoLeaf = require('./NanoLeaf');
@@ -26,12 +26,12 @@ function Home(config, fb) {
   this.state = {};
   var _self = this;
 
-  var nest;
   var hue;
   var harmony;
   var zwave;
   var presence;
   var pushBullet;
+  let nest;
   let sonos;
   let gcmPush;
   let nanoLeaf;
@@ -607,19 +607,20 @@ function Home(config, fb) {
    *
    ****************************************************************************/
 
-  function initNest() {
+  /**
+   * Init Nest
+  */
+  function _initNest() {
     try {
       nest = new Nest.Nest(Keys.nest.token, fb.child('config/HomeOnNode'));
-      nest.on('change', updateNestState);
+      nest.on('change', (data) => {
+        fbSet('state/nest', data);
+      });
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize Nest', ex);
       nest = null;
       return;
     }
-  }
-
-  function updateNestState(data) {
-    fbSet('state/nest', data);
   }
 
   /*****************************************************************************
@@ -900,7 +901,7 @@ function Home(config, fb) {
     gcmPush = new GCMPush(fb);
     initNotifications();
     initZWave();
-    initNest();
+    _initNest();
     initHue();
     _initNanoLeaf();
     _initSonos();
