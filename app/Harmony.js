@@ -247,11 +247,11 @@ function Harmony(uuid) {
    * @param {Number} activityId The Activity ID
   */
   function _activityChanged(activityId) {
-    log.log(LOG_PREFIX, 'activity changed');
     const activity = {
       id: activityId,
       label: _activitiesById[activityId],
     };
+    log.log(LOG_PREFIX, `Activity changed: ${activity.label}`);
     _self.emit('activity_changed', activity);
   }
 
@@ -262,7 +262,6 @@ function Harmony(uuid) {
    * @param {Object} config
   */
   function _configChanged(config) {
-    log.log(LOG_PREFIX, 'config changed');
     const activities = config.activity;
     let activitiesById = {};
     let activitiesByName = {};

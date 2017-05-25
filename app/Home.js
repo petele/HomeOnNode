@@ -464,25 +464,34 @@ function Home(config, fb) {
    *
    * @param {String} file The audio file to play
    * @param {Boolean} force Override doNotDisturb settings
+   * @return {Promise} A promise that resolves to the result of the request
    */
   function _playSound(file, force) {
-    const now = Date.now();
-    if (force === true) {
-      _lastSoundPlayedAt = 0;
-    }
-    if (now - _lastSoundPlayedAt < (20 * 1000)) {
-      log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
-    }
-    _lastSoundPlayedAt = now;
-    log.log(LOG_PREFIX, `playSound('${file}', ${force})`);
-    if (_self.state.doNotDisturb === false || force === true) {
-      const cmd = `mplayer ${file}`;
-      exec(cmd, function(error, stdout, stderr) {
-        if (error) {
-          log.exception(LOG_PREFIX, 'PlaySound Error', error);
-        }
-      });
-    }
+    return new Promise(function(resolve, reject) {
+      const now = Date.now();
+      if (force === true) {
+        _lastSoundPlayedAt = 0;
+      }
+      if (now - _lastSoundPlayedAt < (20 * 1000)) {
+        log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
+        resolve({playSound: false, reason: 'too_soon'});
+        return;
+      }
+      _lastSoundPlayedAt = now;
+      log.log(LOG_PREFIX, `playSound('${file}', ${force})`);
+      if (_self.state.doNotDisturb === false || force === true) {
+        const cmd = `mplayer ${file}`;
+        exec(cmd, function(error, stdout, stderr) {
+          if (error) {
+            log.exception(LOG_PREFIX, 'PlaySound Error', error);
+            resolve({playSound: false, error: error});
+            return;
+          }
+          resolve({playSound: true});
+        });
+      }
+      resolve({playSound: false, reason: 'do_not_disturb'});
+    });
   }
 
   /**
