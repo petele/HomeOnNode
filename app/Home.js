@@ -1,13 +1,13 @@
 'use strict';
 
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-var exec = require('child_process').exec;
-var log = require('./SystemLog2');
-var Keys = require('./Keys').keys;
-var version = require('./version');
-var moment = require('moment');
-var fs = require('fs');
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
+const exec = require('child_process').exec;
+const log = require('./SystemLog2');
+const Keys = require('./Keys').keys;
+const version = require('./version');
+const moment = require('moment');
+const fs = require('fs');
 
 
 var Hue = require('./Hue');
@@ -49,12 +49,12 @@ function Home(config, fb) {
    ****************************************************************************/
 
   function getLightSceneByName(sceneName) {
-    var defaultScene = {bri: 254, ct: 369, on: true};
+    const defaultScene = {bri: 254, ct: 369, on: true};
     sceneName = sceneName.toString();
     if (sceneName) {
       try {
         sceneName = sceneName.toUpperCase();
-        var result = config.lightScenes[sceneName];
+        const result = config.lightScenes[sceneName];
         if (result.hue) {
           return result.hue;
         }
@@ -69,7 +69,7 @@ function Home(config, fb) {
 
   this.handleKeyEntry = function(key, modifier, sender) {
     try {
-      var cmdName = config.keypad.keys[key];
+      const cmdName = config.keypad.keys[key];
       if (cmdName) {
         _self.executeCommandByName(cmdName, modifier, sender);
       } else {
@@ -81,12 +81,7 @@ function Home(config, fb) {
   };
 
   this.executeCommandByName = function(commandName, modifier, source) {
-    var msg = 'executeCommandByName: ' + commandName;
-    if (modifier) {
-      msg += ' (' + modifier + ')';
-    }
-    msg += ' received from: ' + source;
-    var command = config.commands[commandName];
+    let command = config.commands[commandName];
     if (command) {
       command.modifier = modifier;
       _self.executeCommand(command, source);
@@ -96,15 +91,15 @@ function Home(config, fb) {
   };
 
   this.executeCommand = function(command, source) {
-    var modifier = command.modifier;
-    var msg = 'executeCommand ';
+    let cmds;
+    const modifier = command.modifier;
+    let msg = 'executeCommand ';
     msg += '[' + Object.keys(command) + ']';
     if (modifier) {
       msg += ' (' + modifier + ')';
     }
     msg += ' received from: ' + source;
     log.log(LOG_PREFIX, msg, command);
-    var cmds;
 
     // DONE
     if (command.hasOwnProperty('state')) {
@@ -113,7 +108,7 @@ function Home(config, fb) {
 
     // TODO
     if (command.hasOwnProperty('hueScene')) {
-      var scenes = command.hueScene;
+      let scenes = command.hueScene;
       if (Array.isArray(scenes) === false) {
         scenes = [scenes];
       }
@@ -129,7 +124,7 @@ function Home(config, fb) {
         cmds = [cmds];
       }
       cmds.forEach(function(cmd) {
-        var scene;
+        let scene;
         if (modifier) {
           scene = getLightSceneByName(modifier);
         } else if (cmd.lightState) {
@@ -259,11 +254,6 @@ function Home(config, fb) {
     _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
   };
 
-  /*****************************************************************************
-   *
-   * Primary command helpers
-   *
-   ****************************************************************************/
 
   function handleDoorEvent(doorName, doorState, updateState) {
     try {
@@ -275,8 +265,8 @@ function Home(config, fb) {
       // NoOp - if the door wasn't set before, it will be now.
     }
     fbSet('state/doors/' + doorName, doorState);
-    var now = Date.now();
-    var doorLogObj = {
+    const now = Date.now();
+    const doorLogObj = {
       level: 'INFO',
       message: doorName + ' door ' + doorState,
       doorName: doorName,
@@ -291,8 +281,8 @@ function Home(config, fb) {
         _setState('HOME');
       }
     }
-    var cmdName = 'DOOR_' + doorName;
-    var modifier;
+    const cmdName = 'DOOR_' + doorName;
+    let modifier;
     if (doorState === 'CLOSED') {
       modifier = 'OFF';
     }
@@ -319,7 +309,7 @@ function Home(config, fb) {
       clearTimeout(armingTimer);
       armingTimer = null;
     }
-    var armingDelay = config.armingDelay || 90000;
+    const armingDelay = config.armingDelay || 90000;
     if (newState === 'ARMED') {
       armingTimer = setTimeout(function() {
         armingTimer = null;
@@ -331,8 +321,8 @@ function Home(config, fb) {
       return false;
     }
     fbSet('state/systemState', newState);
-    var now = Date.now();
-    var stateLog = {
+    const now = Date.now();
+    const stateLog = {
       level: 'INFO',
       message: newState,
       state: newState,
@@ -490,7 +480,7 @@ function Home(config, fb) {
       presence.addPerson(snapshot.val());
     });
     fb.child(fbPresPath).on('child_removed', function(snapshot) {
-      var uuid = snapshot.val().uuid;
+      const uuid = snapshot.val().uuid;
       presence.removePersonByKey(uuid);
     });
     fb.child(fbPresPath).on('child_changed', function(snapshot) {
@@ -763,16 +753,16 @@ function Home(config, fb) {
   }
 
   function zwaveEvent(nodeId, value) {
-    var device = config.zwave[nodeId];
+    const device = config.zwave[nodeId];
     if (device) {
-      var deviceName = device.label.toUpperCase();
+      const deviceName = device.label.toUpperCase();
       if (device.kind === 'DOOR') {
-        var doorState = value === 255 ? 'OPEN' : 'CLOSED';
+        const doorState = value === 255 ? 'OPEN' : 'CLOSED';
         handleDoorEvent(deviceName, doorState, device.updateState);
       } else if (device.kind === 'MOTION') {
         // Only fire motion events when system is in AWAY mode
         if (_self.state.systemState !== 'HOME') {
-          var cmdName = 'MOTION_' + deviceName;
+          const cmdName = 'MOTION_' + deviceName;
           _self.executeCommandByName(cmdName, null, deviceName);
         }
       } else {

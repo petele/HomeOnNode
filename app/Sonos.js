@@ -105,7 +105,17 @@ function Sonos() {
         return player;
       }
     }
-    return _sonosSystem.getAnyPlayer();
+    try {
+      const uuid = _sonosSystem.zones[0].uuid;
+      player = _sonosSystem.getPlayerByUUID(uuid);
+      if (player) {
+        return player;
+      }
+    } catch (ex) {
+      log.warn(LOG_PREFIX, 'Unable to get zone 0 player');
+      player = _sonosSystem.getAnyPlayer();
+    }
+    return player;
   }
 
   /**
