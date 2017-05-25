@@ -469,28 +469,27 @@ function Home(config, fb) {
   function _playSound(file, force) {
     return new Promise(function(resolve, reject) {
       const now = Date.now();
-      if (force === true) {
-        _lastSoundPlayedAt = 0;
-      }
-      if (now - _lastSoundPlayedAt < (20 * 1000)) {
+      if (now - _lastSoundPlayedAt < (20 * 1000) && force !== true) {
         log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
         resolve({playSound: false, reason: 'too_soon'});
         return;
       }
+      if (_self.state.doNotDisturb === true && force !== true) {
+        log.debug(LOG_PREFIX, 'playSound skipped, do not disturb.');
+        resolve({playSound: false, reason: 'do_not_disturb'});
+        return;
+      }
       _lastSoundPlayedAt = now;
       log.log(LOG_PREFIX, `playSound('${file}', ${force})`);
-      if (_self.state.doNotDisturb === false || force === true) {
-        const cmd = `mplayer ${file}`;
-        exec(cmd, function(error, stdout, stderr) {
-          if (error) {
-            log.exception(LOG_PREFIX, 'PlaySound Error', error);
-            resolve({playSound: false, error: error});
-            return;
-          }
-          resolve({playSound: true});
-        });
-      }
-      resolve({playSound: false, reason: 'do_not_disturb'});
+      const cmd = `mplayer ${file}`;
+      exec(cmd, function(error, stdout, stderr) {
+        if (error) {
+          log.exception(LOG_PREFIX, 'PlaySound Error', error);
+          resolve({playSound: false, reason: 'error', error: error});
+          return;
+        }
+        resolve({playSound: true});
+      });
     });
   }
 
@@ -499,38 +498,47 @@ function Home(config, fb) {
    *
    * @param {String} utterance The words to say
    * @param {Boolean} force Override doNotDisturb settings
+   * @return {Promise} A promise that resolves to the result of the request
    */
   function _sayThis(utterance, force) {
-    log.log(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
-    if (_self.state.doNotDisturb === false || force === true) {
-      const sayObj = {
-        sayAt: Date.now(),
-        utterance: utterance,
-      };
-      _fbPush('sayThis', sayObj);
-    }
+    return new Promise(function(resolve, reject) {
+      log.log(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
+      if (_self.state.doNotDisturb === false || force === true) {
+        const sayObj = {
+          sayAt: Date.now(),
+          utterance: utterance,
+        };
+        _fbPush('sayThis', sayObj);
+        resolve({sayThis: true});
+        return;
+      }
+      resolve({sayThis: false, reason: 'do_not_disturb'});
+    });
   }
 
   /**
    * Sets the Do Not Disturb property
    *
    * @param {String} val Turn do not disturb on/off
+   * @return {Promise} A promise that resolves to the result of the request
    */
   function _setDoNotDisturb(val) {
     log.log(LOG_PREFIX, `setDoNotDisturb('${val}')`);
     const doNotDisturb = val === 'ON' ? true : false;
     _fbSet('state/doNotDisturb', doNotDisturb);
+    return Promise.resolve({doNotDisturb: doNotDisturb});
   }
 
   /**
    * Change the system state (HOME/AWAY/ARMED)
    *
    * @param {String} newState The new state to set the house to
+   * @return {Promise} A promise that resolves to the result of the request
    */
   function _setState(newState) {
     if (_self.state.systemState === newState) {
       log.warn(LOG_PREFIX, 'State already set to ' + newState);
-      return;
+      return Promise.resolve({state: newState});
     }
     log.log(LOG_PREFIX, `setState('${newState}')`);
     // Is there an arming timer running?
@@ -565,6 +573,7 @@ function Home(config, fb) {
     };
     _fbPush('logs/systemState', stateLog);
     _self.executeCommandByName('RUN_ON_' + newState, null, 'SET_STATE');
+    return Promise.resolve({state: newState});
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
