@@ -197,7 +197,7 @@ function NanoLeaf(key, ip, port) {
    * @return {Promise} A promise that resolves to the response.
   */
   function _setEffect(effectName) {
-    log.info(LOG_PREFIX, `setEffect(${effectName})`);
+    log.info(LOG_PREFIX, `setEffect('${effectName}')`);
     if (effectName === 'OFF') {
       return _setPower(false);
     }
@@ -269,7 +269,7 @@ function NanoLeaf(key, ip, port) {
    * @return {Promise} A promise that resolves to the response.
   */
   function _setHueAndSat(hue, sat) {
-    log.info(LOG_PREFIX, `setHueAndSat(${hue, sat})`);
+    log.info(LOG_PREFIX, `setHueAndSat(${hue}, ${sat})`);
     return new Promise(function(resolve, reject) {
       if (_isReady() === false) {
         reject(new Error('not_ready'));

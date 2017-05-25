@@ -35,7 +35,7 @@ function Harmony(uuid) {
   let _discoveryClient;
   let _activitiesByName = {};
   let _activitiesById = {};
-  let _shutdown = false;
+  let _attemptReconnect = true;
 
   /**
    * Start the named activity
@@ -58,7 +58,7 @@ function Harmony(uuid) {
   */
   this.close = function() {
     log.log(LOG_PREFIX, 'Shutting down.');
-    _shutdown = true;
+    _attemptReconnect = false;
     if (_client) {
       try {
         _client.end();
@@ -111,7 +111,7 @@ function Harmony(uuid) {
    * Reset the Harmony connection
   */
   function _resetConnection() {
-    if (_shutdown === true) {
+    if (_attemptReconnect === false) {
       return;
     }
     log.log(LOG_PREFIX, 'Resetting Harmony Hub connection...');
@@ -145,7 +145,7 @@ function Harmony(uuid) {
       return;
     }
     _discoveryClient.on('online', function(hub) {
-      log.debug(LOG_PREFIX, 'Hub found on IP address: ' + hub.ip);
+      log.log(LOG_PREFIX, 'Hub found on IP address: ' + hub.ip);
       _stopDiscoveryClient();
       _connect(hub.ip);
     });
@@ -203,7 +203,6 @@ function Harmony(uuid) {
     log.debug(LOG_PREFIX, 'Connection string', connection);
     _updateConfigRequest();
     _updateActivityRequest();
-    _keepAlive();
   }
 
   /**
@@ -341,7 +340,7 @@ function Harmony(uuid) {
     if (_isReady() !== true) {
       return false;
     }
-    log.debug(LOG_PREFIX, 'getConfig');
+    // log.debug(LOG_PREFIX, 'getConfig');
     let cmd = new XMPP.Stanza.Iq({id: _uuid, type: 'get'})
       .c('oa', {
         'xmlns': 'connect.logitech.com',
@@ -362,7 +361,7 @@ function Harmony(uuid) {
     if (_isReady() !== true) {
       return false;
     }
-    log.debug(LOG_PREFIX, 'getActivity.');
+    // log.debug(LOG_PREFIX, 'getActivity');
     // might need to be client.stanza
     let cmd = new XMPP.Stanza.Iq({id: _uuid})
       .c('oa', {

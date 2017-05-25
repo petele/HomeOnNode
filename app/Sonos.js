@@ -155,7 +155,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _applyPreset(preset) {
-    log.debug(LOG_PREFIX, 'applyPreset()', preset);
+    log.log(LOG_PREFIX, 'applyPreset()', preset);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -168,7 +168,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _play() {
-    log.debug(LOG_PREFIX, 'play()');
+    log.log(LOG_PREFIX, 'play()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -182,7 +182,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _pause() {
-    log.debug(LOG_PREFIX, 'pause()');
+    log.log(LOG_PREFIX, 'pause()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -203,7 +203,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _next() {
-    log.debug(LOG_PREFIX, 'next()');
+    log.log(LOG_PREFIX, 'next()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -217,7 +217,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _previous() {
-    log.debug(LOG_PREFIX, 'previous()');
+    log.log(LOG_PREFIX, 'previous()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -231,7 +231,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _volumeDown() {
-    log.debug(LOG_PREFIX, 'volumeDown()');
+    log.log(LOG_PREFIX, 'volumeDown()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -244,7 +244,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _volumeUp() {
-    log.debug(LOG_PREFIX, 'volumeUp()');
+    log.log(LOG_PREFIX, 'volumeUp()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }

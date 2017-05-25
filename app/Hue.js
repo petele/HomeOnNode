@@ -1,368 +1,366 @@
 'use strict';
 
-var EventEmitter = require('events').EventEmitter;
-var util = require('util');
-var diff = require('deep-diff').diff;
-var request = require('request');
-var log = require('./SystemLog2');
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
+const diff = require('deep-diff').diff;
+const request = require('request');
+const log = require('./SystemLog2');
 
 // Consider adding queue to API to ensure we don't over extend
 
-var LOG_PREFIX = 'HUE';
+const LOG_PREFIX = 'HUE';
 
-function Hue(key, bridgeIP) {
+/**
+ * Philips Hue API.
+ *
+ * @param {String} key Hue authentication key.
+*/
+function Hue(key) {
+  const REQUEST_TIMEOUT = 15 * 1000;
+  const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
+  const GROUPS_REFRESH_INTERVAL = 90 * 1000;
+  const LIGHTS_REFRESH_INTERVAL = 45 * 1000;
+  const _self = this;
+  const _key = key;
+
+  let _bridgeIP;
+  let _ready = false;
+  let _requestsInProgress = 0;
+
   this.lights = {};
   this.groups = {};
   this.config = {};
-  this.requestsInProgress = 0;
-  var ready = false;
-  var requestTimeout = 15 * 1000;
-  var defaultRefreshInterval = 10 * 1000;
-  var lightRefreshInterval = defaultRefreshInterval;
-  var groupRefreshInterval = defaultRefreshInterval;
-  var maxRefreshInterval = 5 * 60 * 1000;
-  var defaultConfigRefreshInterval = 7 * 60 * 1000;
-  var configRefreshInterval = defaultConfigRefreshInterval;
-  var maxConfigRefreshInterval = 10 * 60 * 1000;
-  var defaultBackoff = 5 * 1000;
-  var self = this;
 
-  this.setLights = function(lights, cmd, callback) {
-    if (checkIfReady()) {
-      if (Array.isArray(lights) === false) {
-        lights = [lights];
+  /**
+   * Turn the lights (or groups) on and off, modify the hue and effects.
+   *
+   * @param {Array} lights The lights to set
+   * @param {Object} cmd The state to apply
+   * @return {Promise} A promise that resolves to the response body.
+  */
+  this.setLights = function(lights, cmd) {
+    log.log(LOG_PREFIX, `setLights(${JSON.parse(lights)})`, cmd);
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    if (Array.isArray(lights) === false) {
+      lights = [lights];
+    }
+    return Promise.all(lights.map((light) => {
+      let requestPath = `/lights/${light}/state`;
+      if (light <= 0) {
+        requestPath = `/groups/${Math.abs(light)}/action`;
       }
-      lights.forEach(function(light) {
-        var reqPath;
-        if (light <= 0) {
-          reqPath = '/groups/' + Math.abs(light) + '/action';
-        } else {
-          reqPath = '/lights/' + light + '/state';
-        }
-        var msg = reqPath + ' to ' + JSON.stringify(cmd);
-        log.log(LOG_PREFIX, msg);
-        self.makeHueRequest(reqPath, 'PUT', cmd, true, function(error, result) {
-          if (!error) {
-            updateLights();
-            updateGroups();
-          }
-          if (callback) {
-            callback(error, result);
-          }
+      return _makeHueRequest(requestPath, 'PUT', cmd, true)
+        .then((resp) => {
+          _updateLights();
+          _updateGroups();
+          return resp;
+        })
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'setLights() failed.', err);
+          return err;
         });
+      }));
+  };
+
+  /**
+   * Applies a scene
+   *
+   * @param {String} sceneId The scene ID to set.
+   * @return {Promise} A promise that resolves to the response body.
+  */
+  this.setScene = function(sceneId) {
+    log.log(LOG_PREFIX, `setScene('${sceneId}')`);
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    const requestPath = '/groups/0/action';
+    const cmd = {scene: sceneId};
+    return _makeHueRequest(requestPath, 'PUT', cmd, true)
+      .then((resp) => {
+        _updateLights();
+        _updateGroups();
+        return resp;
+      })
+      .catch((err) => {
+        log.error(LOG_PREFIX, `setScene('${sceneId}')`, err);
+        return err;
       });
-      return true;
-    }
-    return false;
   };
 
-  this.setScene = function(sceneId, callback) {
-    if (checkIfReady()) {
-      var reqPath = '/groups/0/action';
-      var cmd = {scene: sceneId};
-      var msg = reqPath + ' to ' + JSON.stringify(cmd);
-      log.log(LOG_PREFIX, msg);
-      self.makeHueRequest(reqPath, 'PUT', cmd, true, function(error, result) {
-        if (!error) {
-          updateLights();
-          updateGroups();
-        }
-        if (callback) {
-          callback(error, result);
-        }
-      });
-      return true;
+  /**
+   * Create a new scene
+   *
+   * @param {String} name The scene name
+   * @param {Array} lights The list of lights to add to the scene
+   * @return {Promise} A promise that resolves to the response body.
+  */
+  this.createScene = function(name, lights) {
+    log.log(LOG_PREFIX, `createScene('${name}')`, lights);
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
     }
-    return false;
+    const requestPath = '/scenes/';
+    const body = {
+      name: name,
+      lights: lights,
+      appdata: {HomeOnNode: true},
+    };
+    return _makeHueRequest(requestPath, 'POST', body, false);
   };
 
-  this.createScene = function(name, lights, callback) {
-    if (checkIfReady()) {
-      var reqPath = '/scenes/';
-      var body = {
-        name: name,
-        lights: lights,
-        appdata: {
-          HomeOnNode: true
-        }
-      };
-      self.makeHueRequest(reqPath, 'POST', body, false, callback);
-      return true;
+  /**
+   * Delete a scene
+   *
+   * @param {String} id The scene id
+   * @return {Promise} A promise that resolves to the response body.
+  */
+  this.deleteScene = function(id) {
+    log.log(LOG_PREFIX, `deleteScene('${id}')`);
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
     }
-    return false;
+    return _makeHueRequest(`/scenes/${id}`, 'DELETE', null, false);
   };
 
-  this.deleteScene = function(id, callback) {
-    if (checkIfReady()) {
-      self.makeHueRequest('/scenes/' + id, 'DELETE', null, false, callback);
-      return true;
+  /**
+   * Create a new group
+   *
+   * @param {String} name The group name
+   * @param {Array} lights The list of lights to add to the scene
+   * @return {Promise} A promise that resolves to the response body.
+  */
+  this.createGroup = function(name, lights) {
+    log.log(LOG_PREFIX, `createGroup('${name}')`, lights);
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
     }
-    return false;
+    const body = {
+      name: name,
+      lights: lights,
+    };
+    return _makeHueRequest('/groups', 'POST', body, false);
   };
 
-  this.createGroup = function(name, lights, callback) {
-    if (checkIfReady()) {
-      var body = {
-        name: name,
-        lights: lights
-      };
-      self.makeHueRequest('/groups', 'POST', body, false, callback);
-      return true;
+  /**
+   * Delete a group
+   *
+   * @param {String} id The group id
+   * @return {Promise} A promise that resolves to the response body.
+  */
+  this.deleteGroup = function(id) {
+    log.log(LOG_PREFIX, `deleteGroup('${id}')`);
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
     }
-    return false;
+    return _makeHueRequest(`/groups/${id}`, 'DELETE', null, false);
   };
 
-  this.deleteGroup = function(id, callback) {
-    if (checkIfReady()) {
-      self.makeHueRequest('/groups/' + id, 'DELETE', null, false, callback);
-      return true;
-    }
-    return false;
-  };
+  /**
+   * Init the API
+  */
+  function _init() {
+    _findHub()
+    .then((bridgeIP) => {
+      _bridgeIP = bridgeIP;
+      _updateConfig();
+      _updateLights();
+      _updateGroups();
+      _ready = true;
+      log.log(LOG_PREFIX, 'Ready.');
+      setInterval(_updateConfig, CONFIG_REFRESH_INTERVAL);
+      setInterval(_updateGroups, GROUPS_REFRESH_INTERVAL);
+      setInterval(_updateLights, LIGHTS_REFRESH_INTERVAL);
+    });
+  }
 
-  function checkIfReady() {
-    if (ready) {
+  /**
+   * Is API ready?
+   *
+   * @return {Boolean} true if ready, false if not
+  */
+  function _isReady() {
+    if (_ready) {
       return true;
     }
     log.error(LOG_PREFIX, 'Hue not ready.');
     return false;
   }
 
-  function monitorLights() {
-    setTimeout(function() {
-      updateLights(function(error, result) {
-        var tempMsg;
-        if (error && lightRefreshInterval < maxRefreshInterval) {
-          lightRefreshInterval += defaultBackoff;
-          lightRefreshInterval += Math.floor(Math.random() * 5000);
-          tempMsg = Math.floor(lightRefreshInterval / 1000).toString();
-          log.warn(LOG_PREFIX, 'monitorLights backing off to ' + tempMsg, error);
-        } else if (error) {
-          tempMsg = Math.floor(lightRefreshInterval / 1000).toString();
-          log.warn(LOG_PREFIX, 'monitorLights backoff maxed at ' + tempMsg, error);
-        } else {
-          lightRefreshInterval = defaultRefreshInterval;
-          lightRefreshInterval += Math.floor(Math.random() * 750);
-        }
-        monitorLights();
-      });
-    }, lightRefreshInterval);
-  }
-
-  function monitorGroups() {
-    setTimeout(function() {
-      updateGroups(function(error, result) {
-        var tempMsg;
-        if (error && groupRefreshInterval < maxRefreshInterval) {
-          groupRefreshInterval += defaultBackoff;
-          groupRefreshInterval += Math.floor(Math.random() * 5000);
-          tempMsg = Math.floor(groupRefreshInterval / 1000).toString();
-          log.warn(LOG_PREFIX, 'monitorGroups backing off to ' + tempMsg, error);
-        } else if (error) {
-          tempMsg = Math.floor(groupRefreshInterval / 1000).toString();
-          log.warn(LOG_PREFIX, 'monitorGroups backoff maxed at ' + tempMsg, error);
-        } else {
-          groupRefreshInterval = defaultRefreshInterval;
-          groupRefreshInterval += Math.floor(Math.random() * 2000);
-        }
-        monitorGroups();
-      });
-    }, groupRefreshInterval);
-  }
-
-  function monitorConfig() {
-    setTimeout(function() {
-      updateConfig(function(error, result) {
-        var tempMsg;
-        if (error && configRefreshInterval < maxConfigRefreshInterval) {
-          configRefreshInterval += defaultBackoff;
-          configRefreshInterval += Math.floor(Math.random() * 10000);
-          tempMsg = Math.floor(configRefreshInterval / 1000).toString();
-          log.warn(LOG_PREFIX, 'monitorConfig backing off to ' + tempMsg, error);
-        } else if (error) {
-          tempMsg = Math.floor(configRefreshInterval / 1000).toString();
-          log.warn(LOG_PREFIX, 'monitorConfig backoff maxed at ' + tempMsg, error);
-        } else {
-          configRefreshInterval = defaultConfigRefreshInterval;
-          configRefreshInterval += Math.floor(Math.random() * 15000);
-        }
-        monitorConfig();
-      });
-    }, configRefreshInterval);
-  }
-
-  function updateGroups(callback) {
-    var reqPath = '/groups';
-    self.makeHueRequest(reqPath, 'GET', null, false, function(error, groups) {
-      if (error) {
-        var msg = 'Unable to retrieve light groups';
-        log.exception(LOG_PREFIX, msg, error);
-      } else if (diff(self.groups, groups)) {
-        self.groups = groups;
-        self.emit('change_groups', groups);
-      }
-      if (callback) {
-        callback(error, groups);
-      }
-    });
-  }
-
-  function updateLights(callback) {
-    var reqPath = '/lights';
-    self.makeHueRequest(reqPath, 'GET', null, false, function(error, lights) {
-      if (error) {
-        var msg = 'Unable to retrieve lights';
-        log.exception(LOG_PREFIX, msg, error);
-      } else if (diff(self.lights, lights)) {
-        self.lights = lights;
-        self.emit('change_lights', lights);
-      }
-      if (callback) {
-        callback(error, lights);
-      }
-    });
-  }
-
-  function updateConfig(callback) {
-    var reqPath = '';
-    self.makeHueRequest(reqPath, 'GET', null, false, function(error, config) {
-      if (error) {
-        var msg = 'Unable to retrieve config';
-        log.exception(LOG_PREFIX, msg, error);
-      } else {
-        self.config = config;
-        self.emit('config', config);
-      }
-      if (callback) {
-        callback(error, config);
-      }
-    });
-  }
-
-  function findHub(callback) {
-    if (bridgeIP) {
-      callback();
-      return;
+  /**
+   * Helper function to make a Hue request
+   *
+   * @param {String} requestPath the URL/request path to hit
+   * @param {String} method the HTTP method to use
+   * @param {Object} [body] The body to send along with the request
+   * @param {Boolean} [retry] If the request fails, should it retry
+   * @return {Promise} A promise that resolves with the response
+  */
+  function _makeHueRequest(requestPath, method, body, retry) {
+    _requestsInProgress++;
+    let msg = `makeHueRequest (${method}) ${requestPath}`;
+    if (_requestsInProgress >= 5) {
+      let xrpMsg = `Excessive requests in progress (${_requestsInProgress}`;
+      log.warn(LOG_PREFIX, xrpMsg);
     }
-    log.log(LOG_PREFIX, 'Searching for Hue Hub.');
-    var nupnp = {
-      url: 'https://www.meethue.com/api/nupnp',
-      method: 'GET',
-      json: true
-    };
-    request(nupnp, function(err, resp, body) {
-      if (err) {
-        log.exception(LOG_PREFIX, 'NUPNP Search failed', err);
-      } else if (resp && resp.statusCode !== 200) {
-        log.error(LOG_PREFIX, 'NUPNP Search failed, status code:' + resp.statusCode);
-      } else if (Array.isArray(body) === false) {
-        log.error(LOG_PREFIX, 'NUPNP Search failed, no array returned.');
-      } else if (body.length === 0) {
-        log.error(LOG_PREFIX, 'NUPNP Search failed, no hubs found.');
-      } else if (body[0].internalipaddress) {
-        bridgeIP = body[0].internalipaddress;
-        log.log(LOG_PREFIX, 'NUPNP Search completed, bridge at ' + bridgeIP);
-        if (callback) {
-          callback(bridgeIP);
-        }
-        return;
+    // log.debug(LOG_PREFIX, msg);
+    return new Promise(function(resolve, reject) {
+      let requestOptions = {
+        uri: `http://${_bridgeIP}/api/${_key}${requestPath}`,
+        method: method,
+        json: true,
+        timeout: REQUEST_TIMEOUT,
+        agent: false,
+      };
+      if (body) {
+        requestOptions.body = body;
       }
-      log.error(LOG_PREFIX, 'No bridge found, will retry in 2 minutes.');
-      self.emit('no_bridge');
-      setTimeout(function() {
-        findHub();
-      }, 2 * 60 * 1000);
-    });
-  }
-
-  this.makeHueRequest = function(requestPath, method, body, retry, callback) {
-    self.requestsInProgress += 1;
-    if (self.requestsInProgress >= 5) {
-      var warnMsg = 'Excessive requests in progress: ';
-      warnMsg += ' ' + self.requestsInProgress;
-      log.warn(LOG_PREFIX, warnMsg, {requestsInProgress: self.requestInProgress});
-    }
-
-    // agentOptions: {keepAlive: false, maxSockets: 2}
-    var requestOptions = {
-      uri: 'http://' + bridgeIP + '/api/' + key + requestPath,
-      method: method,
-      json: true,
-      timeout: requestTimeout,
-      agent: false
-    };
-    if (body) {
-      requestOptions.body = body;
-    }
-    request(requestOptions, function(error, response, respBody) {
-      self.requestsInProgress -= 1;
-      var msg = 'makeHueRequest (' + requestPath + ') ';
-      var errors = [];
-      if (error) {
-        log.exception(LOG_PREFIX, msg + 'Error', error);
-        errors.push(error);
-      }
-      if (response && response.statusCode !== 200) {
-        log.error(LOG_PREFIX, msg + 'Bad statusCode: ' + response.statusCode);
-        errors.push({statusCode: response.statusCode});
-      }
-      if (response && response.headers['content-type'] !== 'application/json') {
-        var contentType = response.headers['content-type'];
-        log.error(LOG_PREFIX, msg + 'Invalid content type: ' + contentType);
-        errors.push({contentType: contentType});
-      }
-      if (respBody && respBody.error) {
-        log.error(LOG_PREFIX, msg + 'Response error: ' + respBody);
-        errors.push(respBody.error);
-      }
-      if (respBody && Array.isArray(respBody)) {
-        var hasErrors = false;
-        respBody.forEach(function(item) {
-          if (item.error) {
-            hasErrors = true;
-            log.error(LOG_PREFIX, msg + 'Response error: ' + JSON.stringify(item));
+      request(requestOptions, (error, response, respBody) => {
+        _requestsInProgress -= 1;
+        let errors = [];
+        if (error) {
+          log.error(LOG_PREFIX, `${msg} Request error ${error}`, error);
+          if (retry !== true) {
+            reject(error);
+            return;
           }
-        });
-        if (hasErrors) {
-          errors = errors.concat(respBody);
+          errors.push(error);
         }
-      }
-
-      if (errors.length > 0 && retry) {
-        log.warn(LOG_PREFIX, msg + ' - will retry');
-        self.makeHueRequest(requestPath, method, body, false, callback);
-      } else if (callback) {
+        if (respBody) {
+          if (respBody.error) {
+            log.error(LOG_PREFIX, `${msg} Response error ${error}`, error);
+            errors.push(respBody);
+          } else if (Array.isArray(respBody)) {
+            respBody.forEach((item) => {
+              if (item.error) {
+                errors.push(item);
+                let itemErr = `${msg} Response error: ${JSON.stringify(item)}`;
+                log.error(LOG_PREFIX, itemErr);
+              }
+            });
+          }
+        }
         if (errors.length === 0) {
-          errors = null;
+          resolve(respBody);
+          return;
         }
-        callback(errors, respBody);
-      }
-    });
-  };
-
-  function init() {
-    findHub(function() {
-      log.debug(LOG_PREFIX, 'Getting initial config.');
-      updateConfig(function(error, config) {
-        if (config && config.config) {
-          log.log(LOG_PREFIX, 'Ready.');
-          ready = true;
-          self.emit('ready', config);
-          monitorConfig();
-          monitorLights();
-          monitorGroups();
-        } else {
-          log.error(LOG_PREFIX, 'Init failed, will retry in 2 minutes.');
-          bridgeIP = null;
-          setTimeout(function() {
-            init();
-          }, 2 * 60 * 1000);
+        if (retry === true) {
+          log.warn(LOG_PREFIX, `${msg} - will retry.`);
+          resolve(_makeHueRequest(requestPath, method, body, false));
+          return;
         }
+        reject(errors);
       });
     });
   }
 
-  init();
+  /**
+   * Updates this.groups to the latest state from the hub.
+   *
+   * @fires Hue#groups_changed.
+   * @return {Promise} True if updated, false if failed.
+  */
+  function _updateGroups() {
+    // log.log(LOG_PREFIX, '_updateGroups()');
+    const requestPath = '/groups';
+    return _makeHueRequest(requestPath, 'GET', null, false)
+    .then((groups) => {
+      if (diff(_self.groups, groups)) {
+        _self.groups = groups;
+        _self.emit('groups_changed', groups);
+      }
+      return true;
+    })
+    .catch((error) => {
+      log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
+      return false;
+    });
+  }
+
+  /**
+   * Updates this.lights to the latest state from the hub.
+   *
+   * @fires Hue#lights_changed.
+   * @return {Promise} True if updated, false if failed.
+  */
+  function _updateLights() {
+    // log.log(LOG_PREFIX, '_updateLights()');
+    const requestPath = '/lights';
+    return _makeHueRequest(requestPath, 'GET', null, false)
+    .then((lights) => {
+      if (diff(_self.lights, lights)) {
+        _self.lights = lights;
+        _self.emit('lights_changed', lights);
+      }
+      return true;
+    })
+    .catch((error) => {
+      log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
+      return false;
+    });
+  }
+
+  /**
+   * Updates this.config to the latest state from the hub.
+   *
+   * @fires Hue#config_changed.
+   * @return {Promise} True if updated, false if failed.
+   */
+  function _updateConfig() {
+    // log.log(LOG_PREFIX, '_updateConfig()');
+    return _makeHueRequest('', 'GET', null, false)
+    .then((config) => {
+      if (diff(_self.config, config)) {
+        _self.config = config;
+        _self.emit('config_changed', config);
+      }
+      return true;
+    })
+    .catch((error) => {
+      log.exception(LOG_PREFIX, 'Unable to retreive config', error);
+      return false;
+    });
+  }
+
+  /**
+   * Uses NUPNP to find the first Hue Hub on the local network
+   *
+   * @return {Promise} a Promise that resolves with the IP address of the hub
+  */
+  function _findHub() {
+    return new Promise(function(resolve, reject) {
+      log.log(LOG_PREFIX, 'Searching for Hue Hub...');
+      const nupnp = {
+        url: 'https://www.meethue.com/api/nupnp',
+        method: 'GET',
+        json: true,
+      };
+      request(nupnp, (error, response, respBody) => {
+        if (Array.isArray(respBody) &&
+            respBody.length >= 1 &&
+            respBody[0].internalipaddress) {
+          log.log(LOG_PREFIX, `Bridge found: ${respBody[0].internalipaddress}`);
+          resolve(respBody[0].internalipaddress);
+          return;
+        }
+        let errMsg = 'NUPNP search failed:';
+        if (error) {
+          log.exception(LOG_PREFIX, `${errMsg} request error.`, error);
+        } else if (Array.isArray(respBody) && respBody.length === 0) {
+          log.error(LOG_PREFIX, `${errMsg} no hubs found.`);
+        } else {
+          log.error(LOG_PREFIX, `${errMsg} unhandled response.`, respBody);
+        }
+        log.error(LOG_PREFIX, 'No bridge found, will retry in 2 minutes.');
+        setTimeout(() => {
+          resolve(_findHub());
+        }, 2 * 60 * 1000);
+      });
+    });
+  }
+
+  _init();
 }
 
 util.inherits(Hue, EventEmitter);
