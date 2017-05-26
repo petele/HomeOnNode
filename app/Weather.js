@@ -9,6 +9,7 @@ const LOG_PREFIX = 'WEATHER';
 
 /**
  * Weather API.
+ * @constructor
  *
  * @fires Weather#weather
  * @param {String} latLon Lat/Lon of the location to get weather for.
@@ -23,6 +24,7 @@ function Weather(latLon, key) {
    * Init
   */
   function _init() {
+    log.init(LOG_PREFIX, 'Starting...');
     _getWeather();
     setInterval(_getWeather, REFRESH_INTERVAL);
   }
@@ -52,7 +54,11 @@ function Weather(latLon, key) {
           now: fullForecast.currently,
           today: fullForecast.daily.data[0],
         };
-        log.debug(LOG_PREFIX, 'Weather updated.');
+        // log.debug(LOG_PREFIX, 'Weather updated.');
+        /**
+         * Fires when the weather info has changed
+         * @event Weather#weather
+         */
         _self.emit('weather', forecast);
         return;
       } catch (ex) {

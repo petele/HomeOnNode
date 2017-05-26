@@ -10,9 +10,10 @@ const LOG_PREFIX = 'HTTPRequest';
 
 /**
  * Starts the local HTTP server.
+ * @constructor
  *
  * @param {Object} config The config object for the server.
- * @param {Object} home An instance of the Home controller.
+ * @param {Home} home An instance of the Home controller.
 */
 function HTTPServer(config, home) {
   let server;
@@ -28,7 +29,7 @@ function HTTPServer(config, home) {
 
   const exp = express();
 
-  log.init(LOG_PREFIX, 'Init');
+  log.init(LOG_PREFIX, 'Starting...');
   const port = config.httpServerPort || 3000;
   exp.set('port', port);
   exp.use(methodOverride());

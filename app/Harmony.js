@@ -10,10 +10,10 @@ const LOG_PREFIX = 'HARMONY';
 
 /**
  * Harmony Hub API
+ * @constructor
  *
  * @fires Harmony#activity_changed
  * @fires Harmony#config_changed
- *
  * @param {String} uuid Authentication UUID needed by the hub
 */
 function Harmony(uuid) {
@@ -41,16 +41,18 @@ function Harmony(uuid) {
    * Start the named activity
    *
    * @param {String} activityName
-   * @return {Boolean}
+   * @return {Promise}
   */
   this.setActivityByName = function(activityName) {
-    const activityId = _activitiesByName[activityName];
-    if (activityId) {
-      return _setActivityById(activityId);
-    } else {
+    return new Promise(function(resolve, reject) {
+      const activityId = _activitiesByName[activityName];
+      if (activityId && _setActivityById(activityId)) {
+        resolve({setHueActivity: true});
+        return;
+      }
       log.error(LOG_PREFIX, 'Unable to find activity named: ' + activityName);
-      return false;
-    }
+      reject(new Error('activity_not_found'));
+    });
   };
 
   /**
@@ -73,6 +75,7 @@ function Harmony(uuid) {
    * Init
   */
   function _init() {
+    log.init(LOG_PREFIX, 'Starting...');
     _findHarmonyHubs();
     setInterval(_updateConfigRequest, CONFIG_REFRESH_INTERVAL);
     setInterval(_keepAlive, KEEP_ALIVE_INTERVAL);
@@ -84,7 +87,7 @@ function Harmony(uuid) {
    * @param {String} ip
   */
   function _connect(ip) {
-    log.log(LOG_PREFIX, 'Connecting to Harmony using IP: ' + ip);
+    log.debug(LOG_PREFIX, 'Connecting to Harmony...');
     try {
       let _connectionString = {
         jid: uuid + '@connect.logitech.com/gatorade.',
@@ -252,6 +255,11 @@ function Harmony(uuid) {
       label: _activitiesById[activityId],
     };
     log.log(LOG_PREFIX, `Activity changed: ${activity.label}`);
+    /**
+     * Fired when the activity has changed
+     * @event Harmony#activity_changed
+     * @type {Object}
+     */
     _self.emit('activity_changed', activity);
   }
 
@@ -271,6 +279,11 @@ function Harmony(uuid) {
     });
     _activitiesById = activitiesById;
     _activitiesByName = activitiesByName;
+    /**
+     * Fired when the config has changed
+     * @event Harmony#config_changed
+     * @type {Object}
+     */
     _self.emit('config_changed', config);
   }
 
@@ -386,7 +399,7 @@ function Harmony(uuid) {
       log.error(LOG_PREFIX, 'activityId[${activityId}] not found.');
       return false;
     }
-    const msg = `setActivity to: ${activityName} (${activityId})`;
+    const msg = `setActivity('${activityName}')`;
     log.log(LOG_PREFIX, msg);
     let cmdText = 'activityId=' + activityId.toString();
     cmdText += ':timestamp=' + Date.now();

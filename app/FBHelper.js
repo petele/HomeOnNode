@@ -1,5 +1,7 @@
 'use strict';
 
+/** @module */
+
 const os = require('os');
 const Firebase = require('firebase');
 const log = require('./SystemLog2');
@@ -27,7 +29,7 @@ function init(fbAppId, key, appName) {
     if (error) {
       log.exception(LOG_PREFIX, 'Firebase auth failed.', error);
     } else {
-      log.log(LOG_PREFIX, 'Firebase auth success.', authToken);
+      log.log(LOG_PREFIX, 'Firebase auth success.');
     }
   });
 
@@ -152,5 +154,8 @@ function getIPAddresses() {
   return [];
 }
 
+/** Sets up Firebase */
 exports.init = init;
+
+/** Returns the local IP address of the device */
 exports.getIPAddresses = getIPAddresses;

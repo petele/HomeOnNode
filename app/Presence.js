@@ -9,6 +9,10 @@ const LOG_PREFIX = 'PRESENCE';
 
 /**
  * Presence and Bluetooth API
+ * @constructor
+ *
+ * @fires Presence#change
+ * @fires Presence#flic_away
 */
 function Presence() {
   const USER_STATES = {
@@ -129,7 +133,7 @@ function Presence() {
    * Init the service
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Init');
+    log.init(LOG_PREFIX, 'Starting...');
     try {
       _noble = require('noble');
       _startNoble();
@@ -201,6 +205,10 @@ function Presence() {
   */
   function _emitChange(person) {
     log.log(LOG_PREFIX, `${person.name} is ${person.state} (${_numPresent})`);
+    /**
+     * Fired when a persons AWAY/PRESENT status changes
+     * @event Presence#change
+     */
     _self.emit('change', person, _numPresent, _status);
   }
 
@@ -248,6 +256,10 @@ function Presence() {
         msg += timeSinceLastFlic + ' ';
         msg += moment(now).format(TIME_FORMAT);
         log.debug(LOG_PREFIX, msg);
+        /**
+         * Fired when the FLIC away button is pressed
+         * @event Presence#flic_away
+         */
         _self.emit('flic_away');
       }
     }

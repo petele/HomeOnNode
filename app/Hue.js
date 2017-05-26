@@ -12,9 +12,16 @@ const LOG_PREFIX = 'HUE';
 
 /**
  * Philips Hue API.
+ * @constructor
  *
+ * @fires Hue#config_changed
+ * @fires Hue#groups_changed
+ * @fires Hue#lights_changed
+ * @property {Object} lights - List of all lights and their current state
+ * @property {Object} groups - List of all groups and their current state
+ * @property {Object} config - Current Hub configuration
  * @param {String} key Hue authentication key.
-*/
+ */
 function Hue(key) {
   const REQUEST_TIMEOUT = 15 * 1000;
   const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
@@ -39,7 +46,8 @@ function Hue(key) {
    * @return {Promise} A promise that resolves to the response body.
   */
   this.setLights = function(lights, cmd) {
-    log.log(LOG_PREFIX, `setLights(${JSON.parse(lights)})`, cmd);
+    let msg = `setLights(${JSON.parse(lights)}, ${JSON.parse(cmd)})`;
+    log.log(LOG_PREFIX, msg, cmd);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -90,77 +98,10 @@ function Hue(key) {
   };
 
   /**
-   * Create a new scene
-   *
-   * @param {String} name The scene name
-   * @param {Array} lights The list of lights to add to the scene
-   * @return {Promise} A promise that resolves to the response body.
-  */
-  this.createScene = function(name, lights) {
-    log.log(LOG_PREFIX, `createScene('${name}')`, lights);
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
-    }
-    const requestPath = '/scenes/';
-    const body = {
-      name: name,
-      lights: lights,
-      appdata: {HomeOnNode: true},
-    };
-    return _makeHueRequest(requestPath, 'POST', body, false);
-  };
-
-  /**
-   * Delete a scene
-   *
-   * @param {String} id The scene id
-   * @return {Promise} A promise that resolves to the response body.
-  */
-  this.deleteScene = function(id) {
-    log.log(LOG_PREFIX, `deleteScene('${id}')`);
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
-    }
-    return _makeHueRequest(`/scenes/${id}`, 'DELETE', null, false);
-  };
-
-  /**
-   * Create a new group
-   *
-   * @param {String} name The group name
-   * @param {Array} lights The list of lights to add to the scene
-   * @return {Promise} A promise that resolves to the response body.
-  */
-  this.createGroup = function(name, lights) {
-    log.log(LOG_PREFIX, `createGroup('${name}')`, lights);
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
-    }
-    const body = {
-      name: name,
-      lights: lights,
-    };
-    return _makeHueRequest('/groups', 'POST', body, false);
-  };
-
-  /**
-   * Delete a group
-   *
-   * @param {String} id The group id
-   * @return {Promise} A promise that resolves to the response body.
-  */
-  this.deleteGroup = function(id) {
-    log.log(LOG_PREFIX, `deleteGroup('${id}')`);
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
-    }
-    return _makeHueRequest(`/groups/${id}`, 'DELETE', null, false);
-  };
-
-  /**
    * Init the API
   */
   function _init() {
+    log.init(LOG_PREFIX, 'Starting...');
     _findHub()
     .then((bridgeIP) => {
       _bridgeIP = bridgeIP;
@@ -258,9 +199,8 @@ function Hue(key) {
   /**
    * Updates this.groups to the latest state from the hub.
    *
-   * @fires Hue#groups_changed.
    * @return {Promise} True if updated, false if failed.
-  */
+   */
   function _updateGroups() {
     // log.log(LOG_PREFIX, '_updateGroups()');
     const requestPath = '/groups';
@@ -268,6 +208,10 @@ function Hue(key) {
     .then((groups) => {
       if (diff(_self.groups, groups)) {
         _self.groups = groups;
+        /**
+         * see {@link https://developers.meethue.com/documentation/groups-api#21_get_all_groups}
+         * @event Hue#groups_changed
+         */
         _self.emit('groups_changed', groups);
       }
       return true;
@@ -291,6 +235,10 @@ function Hue(key) {
     .then((lights) => {
       if (diff(_self.lights, lights)) {
         _self.lights = lights;
+        /**
+         * see {@link https://developers.meethue.com/documentation/lights-api#11_get_all_lights}
+         * @event Hue#lights_changed
+         */
         _self.emit('lights_changed', lights);
       }
       return true;
@@ -304,7 +252,6 @@ function Hue(key) {
   /**
    * Updates this.config to the latest state from the hub.
    *
-   * @fires Hue#config_changed.
    * @return {Promise} True if updated, false if failed.
    */
   function _updateConfig() {
@@ -313,6 +260,10 @@ function Hue(key) {
     .then((config) => {
       if (diff(_self.config, config)) {
         _self.config = config;
+        /**
+         * see {@link https://developers.meethue.com/documentation/configuration-api#72_get_configuration}
+         * @event Hue#config_changed
+         */
         _self.emit('config_changed', config);
       }
       return true;
@@ -324,7 +275,7 @@ function Hue(key) {
   }
 
   /**
-   * Uses NUPNP to find the first Hue Hub on the local network
+   * Uses NUPNP to find the first Hue Hub on the local network.
    *
    * @return {Promise} a Promise that resolves with the IP address of the hub
   */

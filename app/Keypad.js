@@ -7,6 +7,7 @@ const LOG_PREFIX = 'KEYPAD';
 
 /**
  * Listen for key presses.
+ * @module
  *
  * @param {Object} modifiers Possible modifiers to use.
  * @param {Function} callback Callback to call when a key is pressed.

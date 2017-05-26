@@ -18,7 +18,11 @@ const STATES = {
 
 /**
  * Nest API Wrapper
+ * @constructor
  *
+ * @fires Nest#change
+ * @fires Nest#state
+ * @property {Object} nestData
  * @param {string} authToken Auth Token to use
  * @param {Object} fbRef Firebase Root Reference
  */
@@ -51,7 +55,6 @@ function Nest(authToken, fbRef) {
   let _nestData = {};
   let _structureId;
 
-  this.deviceState = _deviceState;
   this.nestData = _nestData;
 
   /**
@@ -59,7 +62,7 @@ function Nest(authToken, fbRef) {
    *
    * @param {string} roomId Room ID (LR/BR) to adjust
    * @param {Number} minutes Not yet used
-   * @return {Boolean} True if the state was successfully changed
+   * @return {Promise} Resolves to a boolean, with the result of the request
    */
   this.runNestFan = function(roomId, minutes) {
     const thermostatId = _findThermostatId(roomId);
@@ -102,7 +105,7 @@ function Nest(authToken, fbRef) {
    *
    * @param {string} roomId Room ID (LR/BR) to adjust
    * @param {string} direction Direction to adjust the temp (UP/DOWN)
-   * @return {Boolean} True if the state was successfully changed
+   * @return {Promise} Resolves to a boolean, with the result of the request
    */
   this.adjustTemperature = function(roomId, direction) {
     const thermostatId = _findThermostatId(roomId);
@@ -141,7 +144,7 @@ function Nest(authToken, fbRef) {
    *
    * @param {string} roomId Room ID (LR/BR) to adjust
    * @param {Number} temperature Temperature to set the room to
-   * @return {Boolean} True if the state was successfully changed
+   * @return {Promise} Resolves to a boolean, with the result of the request
    */
   this.setTemperature = function(roomId, temperature) {
     const thermostatId = _findThermostatId(roomId);
@@ -165,7 +168,7 @@ function Nest(authToken, fbRef) {
    * Automatically adjust temperature based on config
    *
    * @param {string} value Auto mode to use
-   * @return {Boolean} True if the state was successfully changed
+   * @return {Promise} Resolves to a boolean, with the result of the request
    */
   this.setAutoTemperature = function(value) {
     if (!value) {
@@ -193,7 +196,7 @@ function Nest(authToken, fbRef) {
    * Initialize the API
    */
   function _init() {
-    log.init(LOG_PREFIX, 'Init');
+    log.init(LOG_PREFIX, 'Starting...');
     if (!authToken) {
       log.error(LOG_PREFIX, 'No Nest authToken provided.');
       _setState(STATES.error, 'No Nest authToken provided.');
@@ -219,7 +222,7 @@ function Nest(authToken, fbRef) {
       log.error(LOG_PREFIX, 'Already logged in, aborting new login attempt.');
       return;
     }
-    log.log(LOG_PREFIX, 'Login');
+    log.debug(LOG_PREFIX, 'Authenticating...');
     _fbNest = new Firebase('https://developer-api.nest.com');
     _fbNest.authWithCustomToken(_authToken, function(err, token) {
       if (err) {
@@ -227,11 +230,16 @@ function Nest(authToken, fbRef) {
         log.exception(LOG_PREFIX, 'Authentication Error', err);
         return;
       }
+      log.log(LOG_PREFIX, 'Authenticated.');
       _fbNest.once('value', function(snapshot) {
         let data = snapshot.val();
         _nestData = data;
         _structureId = Object.keys(data.structures)[0];
         _setState(STATES.ready, _nestData);
+        /**
+         * Nest Data has changed
+         * @event Nest#change
+         */
         _self.emit('change', _nestData);
         _initMonitor();
       });
@@ -313,12 +321,16 @@ function Nest(authToken, fbRef) {
    */
   function _setState(newState, extra) {
     if (_deviceState === newState) {
-      log.log(LOG_PREFIX, 'State is already: ' + newState, extra);
+      log.warn(LOG_PREFIX, 'State is already: ' + newState, extra);
       return false;
     }
     _deviceState = newState;
+    /**
+     * Nest state has changed
+     * @event Nest#state
+     */
     _self.emit('state', newState, extra);
-    let msg = 'State changed to: ' + newState;
+    let msg = `setState('${newState}')`;
     if (extra) {
       if (typeof extra === 'string') {
         msg += ` (${extra})`;
@@ -411,12 +423,13 @@ function Nest(authToken, fbRef) {
    */
   function _setHomeAway(state) {
     return new Promise(function(resolve, reject) {
+      let msg = `setHomeAway(${state})`;
       if (_deviceState !== STATES.ready) {
-        log.error(LOG_PREFIX, 'setHomeAway failed, Nest not ready.');
+        log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
         reject(new Error('not_ready'));
         return;
       }
-      log.log(LOG_PREFIX, `setHomeAway to: ${state}`);
+      log.log(LOG_PREFIX, msg);
       const path = `structures/${_structureId}/away`;
       _fbNest.child(path).set(state, (err) => {
         resolve(_onSetComplete(path, err));
@@ -431,15 +444,15 @@ function Nest(authToken, fbRef) {
    * @return {Promise} A promise that resolves to true/false based on result
    */
   function _setCamerasStreaming(state) {
+    let msg = `setCameraStreamingState(${state})`;
     if (_deviceState !== STATES.ready) {
-      log.error(LOG_PREFIX, 'setCamerasStreaming failed, Nest not ready.');
+      log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
       return Promise.reject(new Error('not_ready'));
     }
     let cameras = _nestData.structures[_structureId].cameras;
     return Promise.all(cameras.map((cameraId) => {
       const path = `devices/cameras/${cameraId}/is_streaming`;
-      const cameraName = _nestData.devices.cameras[cameraId].name;
-      log.log(LOG_PREFIX, `setCameraStreamingState (${cameraName}): ${state}`);
+      log.log(LOG_PREFIX, msg);
       return new Promise(function(resolve, reject) {
         _fbNest.child(path).set(state, (err) => {
           resolve(_onSetComplete(path, err));
@@ -459,7 +472,7 @@ function Nest(authToken, fbRef) {
   function _setThermostat(thermostatId, temperature, isRetry) {
     return new Promise(function(resolve, reject) {
       let thermostat = _nestData.devices.thermostats[thermostatId];
-      let msg = `setThermostat in ${thermostat.name} to: ${temperature}°F`;
+      let msg = `setThermostat('${thermostat.name}', ${temperature})`;
       if (_deviceState !== STATES.ready) {
         log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
         reject(new Error('not_ready'));
@@ -491,12 +504,12 @@ function Nest(authToken, fbRef) {
    * @param {String} thermostatId The thermostat to set
    * @param {Number} minutes Only useful for 0 to turn the fan off
    * @param {Boolean} isRetry If the attempt is a retry
-   * @return {Boolean} True if it was set successfully
+   * @return {Promise} Resolves to a boolean, with the result of the request
    */
   function _runHVACFan(thermostatId, minutes, isRetry) {
     return new Promise(function(resolve, reject) {
       let thermostat = _nestData.devices.thermostats[thermostatId];
-      let msg = 'runHVACFan in ' + thermostat.name;
+      let msg = `runHVACFan('${thermostat.name}')`;
       if (_deviceState !== STATES.ready) {
         log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
         reject(new Error('not_ready'));
@@ -515,7 +528,7 @@ function Nest(authToken, fbRef) {
         return;
       }
       let fanOn = minutes === 0 ? false : true;
-      log.log(LOG_PREFIX, msg + ' ' + fanOn);
+      log.log(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${fanOn})`);
       const path = `devices/thermostats/${thermostatId}/fan_timer_active`;
       _fbNest.child(path).set(fanOn, (err) => {
         resolve(_onSetComplete(path, err));

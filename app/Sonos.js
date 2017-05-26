@@ -11,6 +11,12 @@ const LOG_PREFIX = 'SONOS';
 
 /**
  * Sonos API.
+ * @constructor
+ *
+ * @fires Sonos#transport-state
+ * @fires Sonos#player-state
+ * @fires Sonos#topology-changed
+ * @fires Sonos#favorites-changed
 */
 function Sonos() {
   const FAV_INTERVAL = 12 * 60 * 1000;
@@ -21,7 +27,7 @@ function Sonos() {
   /**
    * Execute a Sonos command.
    *
-   * @param {string} command The command to run.
+   * @param {Object} command The command to run.
    * @param {Object} presetOptions The preset options
       from /config/HomeOnNode/sonosPresetOptions
    * @return {Promise} The promise that will be resolved on completion.
@@ -60,20 +66,33 @@ function Sonos() {
    * Init
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting Sonos...');
+    log.init(LOG_PREFIX, 'Starting...');
     _sonosSystem = new SonosSystem();
     _sonosSystem.on('initialized', () => {
       _ready = true;
+      log.log(LOG_PREFIX, 'Ready.');
       _self.emit('ready');
       _getFavorites();
       setInterval(_getFavorites, FAV_INTERVAL);
     });
     _sonosSystem.on('transport-state', (transportState) => {
+      /**
+       * Fired when the transport has changed
+       * @event Sonos#transport-state
+       */
       _self.emit('transport-state', transportState);
       const playerState = transportState.system.zones[0].coordinator.state;
+      /**
+       * Fired when the player state changes
+       * @event Sonos#player-state
+       */
       _self.emit('player-state', playerState);
     });
     _sonosSystem.on('topology-changed', (zones) => {
+      /**
+       * Fired when the player state changes
+       * @event Sonos#topology-changed
+       */
       _self.emit('topology-changed', zones);
     });
   }
@@ -144,6 +163,10 @@ function Sonos() {
     }
     let player = _getPlayer();
     player.system.getFavorites().then((favs) => {
+      /**
+       * Fired when the list of favorites change
+       * @event Sonos#favorites-changed
+       */
       _self.emit('favorites-changed', favs);
     });
   }

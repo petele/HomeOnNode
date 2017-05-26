@@ -1,5 +1,7 @@
 'use strict';
 
+/** @module */
+
 const fs = require('fs');
 const util = require('util');
 const zlib = require('zlib');
@@ -40,6 +42,8 @@ let _options = {
 /**
  * Log an App start
  *
+ * @function appStart
+ * @static
  * @param {String} appName The new state to
  * @param {Object} options Message to attach to the event
  */
@@ -58,6 +62,8 @@ function _appStart(appName, options) {
 /**
  * Log an App stop
  *
+ * @function appStop
+ * @static
  * @param {String} receivedFrom Who is requesting the app to stop
  */
 function _appStop(receivedFrom) {
@@ -71,6 +77,8 @@ function _appStop(receivedFrom) {
 /**
  * Sets or updates the options for the logger
  *
+ * @function setOptions
+ * @static
  * @param {Object} options The options to set
  */
 function _setOptions(options) {
@@ -103,6 +111,8 @@ function _setOptions(options) {
 /**
  * Sets Firebase reference
  *
+ * @function setFirebaseRef
+ * @static
  * @param {Object} fbRef A Firebase reference
  */
 function _setFirebaseRef(fbRef) {
@@ -228,6 +238,8 @@ function _handleLog(logObj) {
 /**
  * Prints the lob object to the console.
  *
+ * @function printLog
+ * @static
  * @param {Object} logObj The log object to print.
  */
 function _printLog(logObj) {
@@ -321,6 +333,8 @@ function _saveLogToFile(logObj) {
 /**
  * Logs a message.
  *
+ * @function log
+ * @static
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -332,6 +346,8 @@ function _log(prefix, message, extra) {
 /**
  * Logs a warning.
  *
+ * @function warn
+ * @static
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -343,6 +359,8 @@ function _warn(prefix, message, extra) {
 /**
  * Logs an error.
  *
+ * @function error
+ * @static
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -354,6 +372,8 @@ function _error(prefix, message, extra) {
 /**
  * Logs an exception.
  *
+ * @function exception
+ * @static
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -365,6 +385,8 @@ function _exception(prefix, message, extra) {
 /**
  * Logs a debug message.
  *
+ * @function debug
+ * @static
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -376,6 +398,8 @@ function _debug(prefix, message, extra) {
 /**
  * Logs a verbose message.
  *
+ * @function verbose
+ * @static
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -387,6 +411,8 @@ function _verbose(prefix, message, extra) {
 /**
  * Logs a TO DO message.
  *
+ * @function todo
+ * @static
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -398,6 +424,8 @@ function _todo(prefix, message, extra) {
 /**
  * Logs a init message.
  *
+ * @function init
+ * @static
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -409,6 +437,8 @@ function _init(prefix, message, extra) {
 /**
  * Logs an HTTP message.
  *
+ * @function http
+ * @static
  * @param {String} method The type of HTTP request made.
  * @param {String} message The log message.
  * @param {Object} [extra] Optional extra information.
@@ -420,6 +450,8 @@ function _http(method, message, extra) {
 /**
  * Logs a custom message.
  *
+ * @function custom
+ * @static
  * @param {String} level The level of the message.
  * @param {String} prefix Where the message originated.
  * @param {String} message The log message.
@@ -433,6 +465,8 @@ function _custom(level, prefix, message, extra) {
 /**
  * Cleans the log file.
  *
+ * @function cleanFile
+ * @static
  * @param {String} logFile The file to be cleaned.
  */
 function _cleanFile(logFile) {
@@ -480,6 +514,8 @@ function _cleanFile(logFile) {
 /**
  * Cleans/removes old log messages from Firebase.
  *
+ * @function cleanLogs
+ * @static
  * @param {String} path The Firebase path to clean.
  * @param {Number} maxAgeDays Remove any log item older than x days.
  */

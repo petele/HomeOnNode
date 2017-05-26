@@ -9,40 +9,43 @@ const version = require('./version');
 const moment = require('moment');
 const fs = require('fs');
 
-var ZWave = require('./ZWave');
-
+const GCMPush = require('./GCMPush');
+const Harmony = require('./Harmony');
 const Hue = require('./Hue');
+const NanoLeaf = require('./NanoLeaf');
+const Nest = require('./Nest');
 const Presence = require('./Presence');
 const PushBullet = require('./PushBullet');
-const Harmony = require('./Harmony');
-const Nest = require('./Nest');
 const Sonos = require('./Sonos');
-const GCMPush = require('./GCMPush');
-const NanoLeaf = require('./NanoLeaf');
 const Weather = require('./Weather');
+const ZWave = require('./ZWave');
 
 const LOG_PREFIX = 'HOME';
 
 /**
  * Home API
+ * @constructor
  *
- * @param {Object} config Default config to start
- * @param {Object} fb Firebase object
+ * @param {Object} initialConfig Default config to start
+ * @param {Object} fbRef Firebase object
 */
-function Home(config, fb) {
+function Home(initialConfig, fbRef) {
   const _self = this;
   _self.state = {};
 
-  var zwave;
+  let _config = initialConfig;
+  let _fb = fbRef;
+
+  let gcmPush;
+  let harmony;
   let hue;
+  let nanoLeaf;
+  let nest;
   let presence;
   let pushBullet;
-  let harmony;
-  let nest;
   let sonos;
-  let gcmPush;
-  let nanoLeaf;
   let weather;
+  let zwave;
 
   let _armingTimer;
   let _lastSoundPlayedAt = 0;
@@ -62,7 +65,7 @@ function Home(config, fb) {
    */
   this.handleKeyEntry = function(key, modifier, source) {
     try {
-      const cmdName = config.keypad.keys[key];
+      const cmdName = _config.keypad.keys[key];
       if (cmdName) {
         _self.executeCommandByName(cmdName, modifier, source);
       } else {
@@ -81,7 +84,7 @@ function Home(config, fb) {
    * @param {String} source The source of the command.
    */
   this.executeCommandByName = function(commandName, modifier, source) {
-    let command = config.commands[commandName];
+    let command = _config.commands[commandName];
     if (command) {
       command.modifier = modifier;
       command.commandName = commandName;
@@ -99,16 +102,13 @@ function Home(config, fb) {
    */
   this.executeCommand = function(command, source) {
     const modifier = command.modifier;
-    let msg = 'executeCommand ';
-    if (modifier) {
-      msg += `*${modifier}* `;
-    }
+    let msg = 'executeCommand';
     if (command.commandName) {
-      msg += `(${command.commandName}) `;
+      msg += `ByName('${command.commandName}', `;
     } else {
-      msg += `[${Object.keys(command)}] `;
+      msg += `([${Object.keys(command)}], `;
     }
-    msg += `received from: ${source}`;
+    msg += `'${modifier}', '${source}')`;
     log.log(LOG_PREFIX, msg);
 
     // systemState
@@ -216,7 +216,7 @@ function Home(config, fb) {
     // Sonos
     if (command.hasOwnProperty('sonos')) {
       if (sonos) {
-          sonos.executeCommand(command.sonos, config.sonosPresetOptions);
+          sonos.executeCommand(command.sonos, _config.sonosPresetOptions);
       } else {
         log.error('[HOME] Sonos command failed, Sonos unavailable.');
       }
@@ -263,7 +263,7 @@ function Home(config, fb) {
    * Shutdown the HOME Service
    */
   this.shutdown = function() {
-    shutdownZWave();
+    _shutdownZWave();
     _shutdownHarmony();
     _shutdownPresence();
     _shutdownPushBullet();
@@ -293,7 +293,7 @@ function Home(config, fb) {
       },
       gitHead: version.head,
     };
-    fb.child('state').once('value', function(snapshot) {
+    _fb.child('state').once('value', function(snapshot) {
       _self.state = snapshot.val();
     });
     _fbSet('state/time/started', _self.state.time.started);
@@ -301,12 +301,12 @@ function Home(config, fb) {
     _fbSet('state/time/started_', _self.state.time.started_);
     _fbSet('state/time/updated_', _self.state.time.started_);
     _fbSet('state/gitHead', _self.state.gitHead);
-    fb.child('config/HomeOnNode').on('value', function(snapshot) {
-      config = snapshot.val();
+    _fb.child('config/HomeOnNode').on('value', function(snapshot) {
+      _config = snapshot.val();
       log.log(LOG_PREFIX, 'Config file updated.');
-      fs.writeFile('config.json', JSON.stringify(config, null, 2));
+      fs.writeFile('config.json', JSON.stringify(_config, null, 2));
     });
-    gcmPush = new GCMPush(fb);
+    gcmPush = new GCMPush(_fb);
     _initNotifications();
     _initNest();
     _initHue();
@@ -316,11 +316,11 @@ function Home(config, fb) {
     _initPresence();
     _initPushBullet();
     _initWeather();
-    initZWave();
+    _initZWave();
     setTimeout(function() {
       log.log(LOG_PREFIX, 'Ready');
       _self.emit('ready');
-      _playSound(config.readySound);
+      _playSound(_config.readySound);
     }, 750);
   }
 
@@ -356,9 +356,9 @@ function Home(config, fb) {
    * @param {Object} value The value to push
    */
   function _fbPush(path, value) {
-    let fbObj = fb;
+    let fbObj = _fb;
     if (path) {
-      fbObj = fb.child(path);
+      fbObj = _fb.child(path);
     }
     try {
       fbObj.push(value, function(err) {
@@ -382,9 +382,9 @@ function Home(config, fb) {
     if (path.indexOf('state/') === 0) {
       _updateLocalState(path, value);
     }
-    let fbObj = fb;
+    let fbObj = _fb;
     if (path) {
-      fbObj = fb.child(path);
+      fbObj = _fb.child(path);
     }
     try {
       if (value === null) {
@@ -407,7 +407,7 @@ function Home(config, fb) {
    */
   function fbSetLastUpdated() {
     const now = Date.now();
-    fb.child('state/time').update({
+    _fb.child('state/time').update({
       lastUpdated: now,
       lastUpdated_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
     });
@@ -437,7 +437,7 @@ function Home(config, fb) {
     _fbSet(`state/doors/${doorName}`, doorState);
     const now = Date.now();
     const nowPretty = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
-    const msg = `{$doorName} door ${doorState} at ${nowPretty}`;
+    const msg = `${doorName} door ${doorState}`;
     const doorLogObj = {
       level: 'INFO',
       message: msg,
@@ -551,7 +551,7 @@ function Home(config, fb) {
       _armingTimer = setTimeout(() => {
         _armingTimer = null;
         _setState('AWAY');
-      }, config.armingDelay || 90000);
+      }, _config.armingDelay || 90000);
     }
     // Set the new state
     _fbSet('state/systemState', newState);
@@ -635,7 +635,7 @@ function Home(config, fb) {
    * @return {Object} The command to send to Hue
    */
   function _getLightReceipeByName(receipeName) {
-    let receipe = config.lightScenes[receipeName];
+    let receipe = _config.lightScenes[receipeName];
     if (receipe && receipe.hue) {
       return receipe.hue;
     }
@@ -656,7 +656,7 @@ function Home(config, fb) {
     let ip = '192.168.86.208';
     let port = 16021;
     nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
-    nanoLeaf.on('state-changed', (state) => {
+    nanoLeaf.on('state_changed', (state) => {
       _fbSet('state/nanoLeaf', state);
     });
   }
@@ -671,7 +671,7 @@ function Home(config, fb) {
    * Init Nest
    */
   function _initNest() {
-    nest = new Nest.Nest(Keys.nest.token, fb.child('config/HomeOnNode'));
+    nest = new Nest.Nest(Keys.nest.token, _fb.child('config/HomeOnNode'));
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
     });
@@ -687,7 +687,7 @@ function Home(config, fb) {
    * Initialize the Notification System
    */
   function _initNotifications() {
-    fb.child('state/hasNotification').on('value', function(snapshot) {
+    _fb.child('state/hasNotification').on('value', function(snapshot) {
       if (snapshot.val() === true) {
         if (_self.state.systemState === 'HOME') {
           _self.executeCommandByName('NEW_NOTIFICATION', null, 'HOME');
@@ -711,7 +711,7 @@ function Home(config, fb) {
     presence = new Presence();
     // Set up the Flic Away button
     const fbPresFlicPath = 'config/HomeOnNode/presence/FlicAway';
-    fb.child(fbPresFlicPath).on('value', function(snapshot) {
+    _fb.child(fbPresFlicPath).on('value', function(snapshot) {
       presence.setFlicAwayUUID(snapshot.val());
     });
     presence.on('flic_away', () => {
@@ -720,14 +720,14 @@ function Home(config, fb) {
     // Set up the presence detection
     presence.on('change', _presenceChanged);
     const fbPresPath = 'config/HomeOnNode/presence/people';
-    fb.child(fbPresPath).on('child_added', function(snapshot) {
+    _fb.child(fbPresPath).on('child_added', function(snapshot) {
       presence.addPerson(snapshot.val());
     });
-    fb.child(fbPresPath).on('child_removed', function(snapshot) {
+    _fb.child(fbPresPath).on('child_removed', function(snapshot) {
       const uuid = snapshot.val().uuid;
       presence.removePersonByKey(uuid);
     });
-    fb.child(fbPresPath).on('child_changed', function(snapshot) {
+    _fb.child(fbPresPath).on('child_changed', function(snapshot) {
       presence.updatePerson(snapshot.val());
     });
   }
@@ -769,8 +769,8 @@ function Home(config, fb) {
     } catch (ex) {
       log.warn(LOG_PREFIX, 'Error attempting to shut down Presence.');
     }
-    fb.child('config/HomeOnNode/presence/people').off();
-    fb.child('config/HomeOnNode/presence/FlicAway').off();
+    _fb.child('config/HomeOnNode/presence/people').off();
+    _fb.child('config/HomeOnNode/presence/FlicAway').off();
     presence = null;
   }
 
@@ -797,7 +797,7 @@ function Home(config, fb) {
   function _receivedPushBulletNotification(msg, count) {
     let cmdName;
     if (msg.application_name) {
-      cmdName = config.pushBulletNotifications[msg.application_name];
+      cmdName = _config.pushBulletNotifications[msg.application_name];
       if (cmdName) {
         _self.executeCommandByName(cmdName, null, 'PushBullet');
       }
@@ -845,7 +845,7 @@ function Home(config, fb) {
    * Init Weather
    */
   function _initWeather() {
-    weather = new Weather(config.weatherLatLong, Keys.forecastIO.key);
+    weather = new Weather(_config.weatherLatLong, Keys.forecastIO.key);
     weather.on('weather', (forecast) => {
       _fbSet('state/weather', forecast);
     });
@@ -857,50 +857,49 @@ function Home(config, fb) {
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
-  function initZWave() {
-    try {
-      zwave = new ZWave();
-    } catch (ex) {
-      log.exception('[HOME] Unable to initialize ZWave', ex);
-      shutdownZWave();
+  /**
+   * Init ZWave
+   */
+  function _initZWave() {
+    zwave = new ZWave();
+    zwave.on('ready', _updateZWaveNodes);
+    zwave.on('nodes_updated', _updateZWaveNodes);
+    zwave.on('node_event', _zwaveEvent);
+  }
+
+  /**
+   * Update the system state with the latest ZWave node info
+   *
+   * @param {Object} nodes
+   */
+  function _updateZWaveNodes(nodes) {
+    _fbSet('state/zwave/nodes', nodes);
+  }
+
+  /**
+   * Handles a ZWave Event
+   *
+   * @param {Number} nodeId
+   * @param {Object} value
+   */
+  function _zwaveEvent(nodeId, value) {
+    const device = _config.zwave[nodeId];
+    if (!device) {
+      log.warn(LOG_PREFIX, `Unknown ZWave Device: ${nodeId} - ${value}`);
       return;
     }
-
-    if (zwave) {
-      zwave.on('zwave_unavailable', shutdownZWave);
-      zwave.on('invalid_network_key', shutdownZWave);
-      zwave.on('error', function(err) {
-        log.error(LOG_PREFIX, 'ZWave Error', err);
-      });
-      zwave.on('ready', function(nodes) {
-        _fbSet('state/zwave/nodes', nodes);
-      });
-      zwave.on('node_event', zwaveEvent);
-    }
-  }
-
-  function zwaveEvent(nodeId, value) {
-    const device = config.zwave[nodeId];
-    if (device) {
-      const deviceName = device.label.toUpperCase();
-      if (device.kind === 'DOOR') {
-        const doorState = value === 255 ? 'OPEN' : 'CLOSED';
-        _handleDoorEvent(deviceName, doorState, device.updateState);
-      } else if (device.kind === 'MOTION') {
-        // Only fire motion events when system is in AWAY mode
-        if (_self.state.systemState !== 'HOME') {
-          const cmdName = 'MOTION_' + deviceName;
-          _self.executeCommandByName(cmdName, null, deviceName);
-        }
-      } else {
-        log.warn(LOG_PREFIX, 'Unknown ZWave device kind: ' + nodeId);
-      }
+    if (device.kind === 'DOOR') {
+      const doorState = value === 255 ? 'OPEN' : 'CLOSED';
+      _handleDoorEvent(device.label, doorState);
     } else {
-      log.warn(LOG_PREFIX, 'Unhandled ZWave Event:' + nodeId + ':' + value);
+      log.warn(LOG_PREFIX, `Unhandled ZWave event for nodeId: ${nodeId}`);
     }
   }
 
-  function shutdownZWave() {
+  /**
+   * Shutdown the ZWave controller
+   */
+  function _shutdownZWave() {
     log.log(LOG_PREFIX, 'Shutting down ZWave.');
     try {
       zwave.disconnect();

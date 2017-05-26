@@ -11,6 +11,7 @@ const LOG_PREFIX = 'GCMPush';
 
 /**
  * Sends a GCM message
+ * @constructor
  *
  * @param {Object} fb Firebase object.
 */
@@ -28,7 +29,7 @@ function GCMPush(fb) {
    * Init
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Init');
+    log.init(LOG_PREFIX, 'Starting...');
     _fb.child('pushSubscribers').on('value', (snapshot) => {
       let subscribers = [];
       snapshot.forEach((subscriberObj) => {

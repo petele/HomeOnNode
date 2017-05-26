@@ -6,13 +6,14 @@ const diff = require('deep-diff').diff;
 const request = require('request');
 const log = require('./SystemLog2');
 
-// Consider adding queue to API to ensure we don't over extend
-
 const LOG_PREFIX = 'NANOLEAF';
 
 /**
  * NanoLeaf API.
+ * @constructor
  *
+ * @fires NanoLeaf#state_changed
+ * @property {Object} state Current state of the NanoLeaf
  * @param {String} key Authentication key.
  * @param {String} ip IP address of the hub.
  * @param {String} port Port of the hub.
@@ -61,7 +62,7 @@ function NanoLeaf(key, ip, port) {
    * Init
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting NanoLeaf...');
+    log.init(LOG_PREFIX, 'Starting...');
     _getState();
     setInterval(_getState, REFRESH_INTERVAL);
   }
@@ -162,9 +163,14 @@ function NanoLeaf(key, ip, port) {
         _state = resp;
         // If we weren't ready before, change to ready & fire ready event
         if (_ready === false) {
+          log.log(LOG_PREFIX, 'Ready.');
           _ready = true;
         }
-        _self.emit('state-changed', resp);
+        /**
+         * State has changed
+         * @event NanoLeaf#state_changed
+         */
+        _self.emit('state_changed', resp);
       }
       return resp;
     });

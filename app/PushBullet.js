@@ -9,8 +9,10 @@ const LOG_PREFIX = 'PUSHBULLET';
 
 /**
  * PushBullet API
+ * @constructor
  *
- * @fires PushBullet#tickle
+ * @fires PushBullet#dismissal
+ * @fires PushBullet#notification
  * @param {String} token - The PushBullet API token
 */
 function PushBullet(token) {
@@ -38,7 +40,7 @@ function PushBullet(token) {
    * Init
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Init');
+    log.init(LOG_PREFIX, 'Starting...');
     if (!WebSocket) {
       log.error(LOG_PREFIX, 'WebSocket library is not available.');
       return;
@@ -101,6 +103,10 @@ function PushBullet(token) {
       logMsg = 'Notification from: ' + msg.push.package_name;
       log.debug(LOG_PREFIX, logMsg);
       // log.debug(LOG_PREFIX, 'Notification', msg.push);
+      /**
+       * Fired when a new message has been received
+       * @event PushBullet#notification
+       */
       _self.emit('notification', msg.push, _currentNotifications);
       return true;
     } else if (msg.push && msg.push.type === 'dismissal') {
@@ -108,6 +114,10 @@ function PushBullet(token) {
       logMsg = 'Dismissal from: ' + msg.push.package_name;
       log.debug(LOG_PREFIX, logMsg);
       // log.debug(LOG_PREFIX, 'Dismissal', msg.push);
+      /**
+       * Fired when a notification has been dismissed.
+       * @event PushBullet#dismissal
+       */
       _self.emit('dismissal', msg.push, _currentNotifications);
       return true;
     }
