@@ -99,8 +99,8 @@ function PushBullet(token) {
   function _handlePush(msg) {
     if (msg.push && msg.push.type === 'mirror') {
       _currentNotifications++;
-      log.debug(LOG_PREFIX, `emit('notification', '${msg.push.package_name}')`);
-      // log.debug(LOG_PREFIX, 'Notification', msg.push);
+      let msg = `notify(${_currentNotifications}, '${msg.push.package_name}')`;
+      log.debug(LOG_PREFIX, msg);
       /**
        * Fired when a new message has been received
        * @event PushBullet#notification
@@ -109,8 +109,8 @@ function PushBullet(token) {
       return true;
     } else if (msg.push && msg.push.type === 'dismissal') {
       if (_currentNotifications >= 1) { _currentNotifications--; }
-      log.debug(LOG_PREFIX, `emit('dismissal', '${msg.push.package_name}')`);
-      // log.debug(LOG_PREFIX, 'Dismissal', msg.push);
+      let msg = `dismiss(${_currentNotifications}, '${msg.push.package_name}')`;
+      log.debug(LOG_PREFIX, msg);
       /**
        * Fired when a notification has been dismissed.
        * @event PushBullet#dismissal

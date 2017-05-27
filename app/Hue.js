@@ -47,7 +47,7 @@ function Hue(key) {
   */
   this.setLights = function(lights, cmd) {
     let msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
-    log.log(LOG_PREFIX, msg, cmd);
+    log.log(LOG_PREFIX, msg);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
