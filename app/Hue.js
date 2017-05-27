@@ -46,7 +46,7 @@ function Hue(key) {
    * @return {Promise} A promise that resolves to the response body.
   */
   this.setLights = function(lights, cmd) {
-    let msg = `setLights(${JSON.parse(lights)}, ${JSON.parse(cmd)})`;
+    let msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
     log.log(LOG_PREFIX, msg, cmd);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
