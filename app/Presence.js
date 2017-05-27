@@ -36,7 +36,7 @@ function Presence() {
    * @param {String} uuid
   */
   this.setFlicAwayUUID = function(uuid) {
-    log.log(LOG_PREFIX, 'Set Flic Away UUID: ' + uuid);
+    log.log(LOG_PREFIX, `setFlicAwayUUID('${uuid}')`);
     _flicUUID = uuid;
   };
 
@@ -47,20 +47,21 @@ function Presence() {
    * @return {Boolean} True is the person was successfully added.
   */
   this.addPerson = function(newPerson) {
+    const msg = `addPerson('${newPerson.name}, ${newPerson.uuid}')`;
     try {
       const uuid = newPerson.uuid;
       let person = _status[uuid];
       if (person) {
-        log.warn(LOG_PREFIX, newPerson.name + ' already exists.');
+        log.warn(LOG_PREFIX, msg + ' already exists.');
         return false;
       }
       _status[uuid] = newPerson;
       _status[uuid].lastSeen = 0;
       _status[uuid].state = USER_STATES.AWAY;
-      log.log(LOG_PREFIX, `Added: ${newPerson.name} (${uuid})`);
+      log.log(LOG_PREFIX, msg);
       return true;
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'Error adding new person.', ex);
+      log.exception(LOG_PREFIX, msg + ' failed with exception.', ex);
       return false;
     }
   };
@@ -72,20 +73,21 @@ function Presence() {
    * @return {Boolean} True is the person was successfully removed.
   */
   this.removePersonByKey = function(uuid) {
+    const msg = `removePersonByKey('${uuid}')`;
     try {
       let person = _status[uuid];
       if (person) {
-        log.log(LOG_PREFIX, `Removed: ${person.name} (${uuid})`);
+        log.log(LOG_PREFIX, msg);
         if (person.state === USER_STATES.PRESENT) {
           _numPresent -= 1;
         }
         delete _status[uuid];
         return true;
       }
-      log.warn(LOG_PREFIX, 'Could not find ' + uuid + ' to remove.');
+      log.warn(LOG_PREFIX, msg + ' UUID not found.');
       return false;
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'Error removing person', ex);
+      log.exception(LOG_PREFIX, msg + ' failed with exception.', ex);
       return false;
     }
   };
