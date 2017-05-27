@@ -254,7 +254,7 @@ function Harmony(uuid) {
       id: activityId,
       label: _activitiesById[activityId],
     };
-    log.log(LOG_PREFIX, `Activity changed: ${activity.label}`);
+    log.log(LOG_PREFIX, `activityChanged(${activityId}, '${activity.label}')`);
     /**
      * Fired when the activity has changed
      * @event Harmony#activity_changed

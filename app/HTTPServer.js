@@ -39,7 +39,11 @@ function HTTPServer(config, home) {
 
   exp.use(function(req, res, next) {
     const msg = req.method + ' ' + req.path + ' from ' + req.ip;
-    log.debug(LOG_PREFIX, msg, req.body);
+    let body = req.body;
+    if (Object.keys(body).length === 0) {
+      body = null;
+    }
+    log.debug(LOG_PREFIX, msg, body);
     next();
   });
 

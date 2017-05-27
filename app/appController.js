@@ -136,10 +136,11 @@ process.on('SIGINT', function() {
  * @param {Function} callback Callback to run once completed.
 */
 function loadAndRunJS(file, callback) {
-  log.debug(LOG_PREFIX, 'loadAndRunJS (' + file + ')');
+  let msg = `loadAndRunJS('${file}')`;
+  log.debug(LOG_PREFIX, msg);
   fs.readFile(file, function(err, data) {
     if (err) {
-      log.exception(LOG_PREFIX, 'loadAndRunJS: Unable to load file.', err);
+      log.exception(LOG_PREFIX, msg + ' Unable to load file.', err);
       if (callback) {
         callback(err, file);
       }
@@ -147,7 +148,7 @@ function loadAndRunJS(file, callback) {
       try {
         eval(data.toString());  // jshint ignore:line
       } catch (ex) {
-        log.exception(LOG_PREFIX, 'loadAndRunJS: Exception on eval.', ex);
+        log.exception(LOG_PREFIX, msg + ' Exception on eval.', ex);
         if (callback) {
           callback(ex, file);
         }
