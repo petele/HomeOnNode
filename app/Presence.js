@@ -47,7 +47,7 @@ function Presence() {
    * @return {Boolean} True is the person was successfully added.
   */
   this.addPerson = function(newPerson) {
-    const msg = `addPerson('${newPerson.name}, ${newPerson.uuid}')`;
+    const msg = `addPerson('${newPerson.name}', '${newPerson.uuid}')`;
     try {
       const uuid = newPerson.uuid;
       let person = _status[uuid];
