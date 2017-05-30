@@ -423,7 +423,7 @@ function Nest(authToken, fbRef) {
    */
   function _setHomeAway(state) {
     return new Promise(function(resolve, reject) {
-      let msg = `setHomeAway(${state})`;
+      let msg = `setHomeAway('${state}')`;
       if (_deviceState !== STATES.ready) {
         log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
         reject(new Error('not_ready'));
