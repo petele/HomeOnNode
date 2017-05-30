@@ -43,6 +43,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
       .grid-two { --app-grid-columns: 2; }
       .grid-three { --app-grid-columns: 3; }
+      .no-link {
+        text-decoration: none;
+        color: var(--primary-text-color);
+      }
     </style>
 
     <send-command id="sendCommand"></send-command>
@@ -63,12 +67,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
         <div class="weather-icon-container">
           <div>
-            <iron-icon icon="hon-icons:[[weather.today.icon]]" class="weather-icon">
-            </iron-icon>
+            <a href="/weather">
+              <iron-icon icon="hon-icons:[[weather.today.icon]]" class="weather-icon">
+              </iron-icon>
+            </a>
           </div>
           <div>
-            [[round(weather.now.apparentTemperature)]] |
-            [[round(weather.today.apparentTemperatureMax)]]
+            <a href="/weather" class="no-link">
+              [[round(weather.now.apparentTemperature)]] |
+              [[round(weather.today.apparentTemperatureMax)]]
+            </a>
           </div>
         </div>
       </div>
