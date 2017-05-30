@@ -54,6 +54,11 @@ function Hue(key) {
     if (Array.isArray(lights) === false) {
       lights = [lights];
     }
+    if (cmd.on === false) {
+      cmd = {on: false};
+    } else {
+      cmd.on = true;
+    }
     return Promise.all(lights.map((light) => {
       let requestPath = `/lights/${light}/state`;
       if (light <= 0) {

@@ -17,7 +17,7 @@ commander
   .version('0.2.0')
   .option('-v, --verbose', 'Verbose output')
   .option('-t, --trial', 'Trial only, don\'t make requests.')
-  .option('-r, --recipes <filename>', 'Recipes [recipes.json]', 'recipes.json');
+  .option('-r, --recipeFile <filename>', 'Recipes [recipes.json]', 'recipes.json');
 
 commander
   .command('set <filename>')
@@ -26,15 +26,15 @@ commander
     setLogLevel(commander.verbose);
     log.info('', 'Setting lights based on %s', filename);
     var sceneObj = readSceneFile(filename);
-    readRecipeFile(commander.recipes);
+    readRecipeFile(commander.recipeFile);
     setLights(sceneObj.lights);
   });
 
 commander
-  .command('receipies')
-  .description('Lists all of the possible receipies')
+  .command('recipes')
+  .description('Lists all of the possible recipes')
   .action(function() {
-    readRecipeFile(commander.recipes);
+    readRecipeFile(commander.recipeFile);
     var keys = Object.keys(recipes);
     keys.forEach(function(key) {
       var k = key + '                            ';
@@ -75,7 +75,7 @@ commander
       log.error('', `Use 'update' instead.`);
       process.exit(1);
     }
-    readRecipeFile(commander.recipes);
+    readRecipeFile(commander.recipeFile);
     setLights(sceneObj.lights, function(lightList) {
       var appDataValue = 'HoN';
       if (sceneObj.showInWebUI) {
@@ -120,7 +120,7 @@ commander
     setLogLevel(commander.verbose);
     log.info('', `Update scene from ${filename}`);
     let sceneObj = readSceneFile(filename);
-    readRecipeFile(commander.recipes);
+    readRecipeFile(commander.recipeFile);
     setLights(sceneObj.lights, function(lightList) {
       let scene = {
         name: sceneObj.sceneName,
@@ -272,7 +272,7 @@ function getRecipe(rName) {
   rName = rName.toUpperCase();
   var result = recipes[rName];
   if (result) {
-    return result;
+    return result.hue;
   } else {
     log.error('getRecipe', 'Recipe not found: %s', rName);
     process.exit(1);
