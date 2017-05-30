@@ -9,3 +9,6 @@ if [ "$1" != "" ]; then
 else
   echo "No app id provided, cannot start!"
 fi
+
+node appOnError.js
+node sendGCMMessage.js
