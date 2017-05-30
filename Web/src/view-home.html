@@ -18,6 +18,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="fb-query.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="send-command.html">
+<link rel="import" href="device-online.html">
 
 <dom-module id="view-home">
   <template>
@@ -52,6 +53,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </fb-document>
     <div class="card">
       <div class="layout horizontal header">
+        <div class="layout vertical center-justified">
+          <device-online device-id="HomeOnNode"></device-online>
+          <device-online device-id="DoorBell"></device-online>
+          <device-online device-id="Bedside"></device-online>
+        </div>
         <div class="flex current-time">
           [[currentTime]]
         </div>
