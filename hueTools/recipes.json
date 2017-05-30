@@ -1,367 +1,806 @@
-[
-  {
-    "cmd": "{\"ct\":320}",
-    "label": "Default",
-    "id": "DEFAULT"
-  },
-  {
-    "cmd": "{\"ct\":160}",
-    "label": "White (Cool)",
-    "id": "WHITE_COOL"
-  },
-  {
-    "cmd": "{\"ct\":250}",
-    "label": "White (Mid)",
-    "id": "WHITE_MID"
-  },
-  {
-    "cmd": "{\"ct\":490}",
-    "label": "White (Warm)",
-    "id": "WHITE_WARM"
-  },
-  {
-    "cmd": "{\"xy\":[0.6126,0.3667]}",
-    "label": "Reading",
-    "id": "READING"
-  },
-  {
-    "cmd": "{\"hue\":0,\"sat\":25}",
-    "label": "White Strip",
-    "id": "WHITE_STRIP"
-  },
-  {
-    "cmd": "{\"hue\":8191,\"sat\":213}",
-    "label": "Peach",
-    "id": "PEACH"
-  },
-  {
-    "cmd": "{\"xy\":[0.2061,0.1166]}",
-    "label": "Aurora 01",
-    "id": "AURORA_01"
-  },
-  {
-    "cmd": "{\"xy\":[0.3589,0.4191]}",
-    "label": "Aurora 02",
-    "id": "AURORA_02"
-  },
-  {
-    "cmd": "{\"xy\":[0.1684,0.0416]}",
-    "label": "Aurora 03",
-    "id": "AURORA_03"
-  },
-  {
-    "cmd": "{\"xy\":[0.2929,0.2887]}",
-    "label": "Aurora 04",
-    "id": "AURORA_04"
-  },
-  {
-    "cmd": "{\"xy\":[0.267,0.2372]}",
-    "label": "Aurora 05",
-    "id": "AURORA_05"
-  },
-  {
-    "cmd": "{\"xy\":[0.1984,0.267]}",
-    "label": "Aurora 06",
-    "id": "AURORA_06"
-  },
-  {
-    "cmd": "{\"xy\":[0.3132,0.3288]}",
-    "label": "Aurora 07",
-    "id": "AURORA_07"
-  },
-  {
-    "cmd": "{\"xy\":[0.1641,0.3552]}",
-    "label": "Aurora 08",
-    "id": "AURORA_08"
-  },
-  {
-    "cmd": "{\"xy\":[0.1693,0.396]}",
-    "label": "Aurora 09",
-    "id": "AURORA_09"
-  },
-  {
-    "cmd": "{\"xy\":[0.1715,0.3561]}",
-    "label": "Aurora 10",
-    "id": "AURORA_10"
-  },
-  {
-    "cmd": "{\"xy\":[0.2058,0.116]}",
-    "label": "Aurora 11",
-    "id": "AURORA_11"
-  },
-  {
-    "cmd": "{\"xy\":[0.2858,0.2747]}",
-    "label": "Aqua",
-    "id": "AQUA"
-  },
-  {
-    "cmd": "{\"xy\":[0.1607,0.3423]}",
-    "label": "Aqua (LightStrip)",
-    "id": "AQUA_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.3237,0.3497]}",
-    "label": "Aquamarine",
-    "id": "AQUAMARINE"
-  },
-  {
-    "cmd": "{\"xy\":[0.2138,0.4051]}",
-    "label": "Aquamarine (LightStrip)",
-    "id": "AQUAMARINE_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.3806,0.3576]}",
-    "label": "Bisque",
-    "id": "BISQUE"
-  },
-  {
-    "cmd": "{\"xy\":[0.168,0.041]}",
-    "label": "Blue",
-    "id": "BLUE"
-  },
-  {
-    "cmd": "{\"xy\":[0.153,0.048]}",
-    "label": "Blue (LightStrip)",
-    "id": "BLUE_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.168,0.041]}",
-    "label": "Blue (Dark)",
-    "id": "BLUE_DARK"
-  },
-  {
-    "cmd": "{\"xy\":[0.153,0.048]}",
-    "label": "Blue (Dark) (LightStrip)",
-    "id": "BLUE_DARK_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.251,0.1056]}",
-    "label": "Blue Violet",
-    "id": "BLUE_VIOLET"
-  },
-  {
-    "cmd": "{\"xy\":[0.5763,0.3486]}",
-    "label": "Coral",
-    "id": "CORAL"
-  },
-  {
-    "cmd": "{\"xy\":[0.5075,0.3145]}",
-    "label": "Coral (Light)",
-    "id": "CORAL_LIGHT"
-  },
-  {
-    "cmd": "{\"xy\":[0.3511,0.3574]}",
-    "label": "Cornsilk",
-    "id": "CORNSILK"
-  },
-  {
-    "cmd": "{\"xy\":[0.6417,0.304]}",
-    "label": "Crimson",
-    "id": "CRIMSON"
-  },
-  {
-    "cmd": "{\"xy\":[0.6508,0.2881]}",
-    "label": "Crimson (LightStrip)",
-    "id": "CRIMSON_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.2858,0.2747]}",
-    "label": "Cyan",
-    "id": "CYAN"
-  },
-  {
-    "cmd": "{\"xy\":[0.1607,0.3423]}",
-    "label": "Cyan (LightStrip)",
-    "id": "CYAN_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.408,0.517]}",
-    "label": "Forest Green",
-    "id": "FOREST_GREEN"
-  },
-  {
-    "cmd": "{\"xy\":[0.1984,0.6746]}",
-    "label": "Forest Green (LightStrip)",
-    "id": "FOREST_GREEN_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.3361,0.3388]}",
-    "label": "Floral White",
-    "id": "FLORAL_WHITE"
-  },
-  {
-    "cmd": "{\"xy\":[0.408,0.517]}",
-    "label": "Green (Dark)",
-    "id": "GREEN_DARK"
-  },
-  {
-    "cmd": "{\"xy\":[0.17,0.7]}",
-    "label": "Green (Dark) (LightStrip)",
-    "id": "GREEN_DARK_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.2437,0.0895]}",
-    "label": "Indigo",
-    "id": "INDIGO"
-  },
-  {
-    "cmd": "{\"xy\":[0.2428,0.0913]}",
-    "label": "Indigo (LightStrip)",
-    "id": "INDIGO_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.3085,0.3071]}",
-    "label": "Lavender",
-    "id": "LAVENDER"
-  },
-  {
-    "cmd": "{\"xy\":[0.3581,0.3284]}",
-    "label": "Misty Rose",
-    "id": "MISTY_ROSE"
-  },
-  {
-    "cmd": "{\"xy\":[0.5916,0.3824]}",
-    "label": "Orange (Dark)",
-    "id": "ORANGE_DARK"
-  },
-  {
-    "cmd": "{\"xy\":[0.5921,0.3831]}",
-    "label": "Orange (Dark) (LightStrip)",
-    "id": "ORANGE_DARK_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.5035,0.3911]}",
-    "label": "Peru",
-    "id": "PERU"
-  },
-  {
-    "cmd": "{\"xy\":[0.5386,0.2468]}",
-    "label": "Pink (Deep)",
-    "id": "PINK_DEEP"
-  },
-  {
-    "cmd": "{\"xy\":[0.5445,0.2369]}",
-    "label": "Pink (Deep) (LightStrip)",
-    "id": "PINK_DEEP_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.302,0.3068]}",
-    "label": "Powder Blue",
-    "id": "POWDER_BLUE"
-  },
-  {
-    "cmd": "{\"xy\":[0.262,0.3269]}",
-    "label": "Powder Blue (LightStrip)",
-    "id": "POWDER_BLUE_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.2725,0.1096]}",
-    "label": "Purple",
-    "id": "PURPLE"
-  },
-  {
-    "cmd": "{\"xy\":[0.2703,0.1398]}",
-    "label": "Rebecca Purple",
-    "id": "REBECCA_PURPLE"
-  },
-  {
-    "cmd": "{\"xy\":[0.674,0.322]}",
-    "label": "Red",
-    "id": "RED"
-  },
-  {
-    "cmd": "{\"xy\":[0.692,0.308]}",
-    "label": "Red (LightStrip)",
-    "id": "RED_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.3612,0.1607]}",
-    "label": "Rose (Deep)",
-    "id": "ROSE_DEEP"
-  },
-  {
-    "cmd": "{\"xy\":[0.3336,0.2649]}",
-    "label": "Rose",
-    "id": "ROSE"
-  },
-  {
-    "cmd": "{\"xy\":[0.5346,0.3247]}",
-    "label": "Salmon",
-    "id": "SALMON"
-  },
-  {
-    "cmd": "{\"xy\":[0.2946,0.292]}",
-    "label": "Sea Green (Light)",
-    "id": "SEA_GREEN_LIGHT"
-  },
-  {
-    "cmd": "{\"xy\":[0.1611,0.3593]}",
-    "label": "Sea Green (Light) (LightStrip)",
-    "id": "SEA_GREEN_LIGHT_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.5714,0.3559]}",
-    "label": "Sienna",
-    "id": "SIENNA"
-  },
-  {
-    "cmd": "{\"xy\":[0.2428,0.1893]}",
-    "label": "Sky Blue (Deep)",
-    "id": "SKY_BLUE_DEEP"
-  },
-  {
-    "cmd": "{\"xy\":[0.158,0.2379]}",
-    "label": "Sky Blue (Deep) (LightStrip)",
-    "id": "SKY_BLUE_DEEP_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.2807,0.2646]}",
-    "label": "Sky Blue",
-    "id": "SKY_BLUE"
-  },
-  {
-    "cmd": "{\"xy\":[0.2206,0.2984]}",
-    "label": "Sky Blue (LightStrip)",
-    "id": "SKY_BLUE_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.2924,0.2877]}",
-    "label": "Slate Gray (Light)",
-    "id": "SLATE_GRAY_LIGHT"
-  },
-  {
-    "cmd": "{\"xy\":[0.2738,0.297]}",
-    "label": "Slate Gray (Light) (LightStrip)",
-    "id": "SLATE_GRAY_LIGHT_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.4317,0.4996]}",
-    "label": "Yellow",
-    "id": "YELLOW"
-  },
-  {
-    "cmd": "{\"xy\":[0.4334,0.5022]}",
-    "label": "Yellow (LightStrip)",
-    "id": "YELLOW_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.2997,0.3022]}",
-    "label": "Turquoise",
-    "id": "TURQUOISE"
-  },
-  {
-    "cmd": "{\"xy\":[0.1702,0.3675]}",
-    "label": "Turquoise (LightStrip)",
-    "id": "TURQUOISE_LS"
-  },
-  {
-    "cmd": "{\"xy\":[0.2835,0.2701]}",
-    "label": "Turquoise (Dark)",
-    "id": "TURQUOISE_DARK"
-  },
-  {
-    "cmd": "{\"xy\":[0.1605,0.3366]}",
-    "label": "Turquoise (Dark) (LightStrip)",
-    "id": "TURQUOISE_DARK_LS"
+{
+  "ALARM": {
+    "hue": {
+      "alert": "lselect",
+      "bri": 254,
+      "hue": 0,
+      "sat": 180
+    }
+  },
+  "ALERT_ON": {
+    "hue": {
+      "alert": "lselect"
+    },
+    "label": "Alert (On)"
+  },
+  "ALERT_OFF": {
+    "hue": {
+      "alert": "none"
+    },
+    "label": "Alert (Off)"
+  },
+  "ALERT_SHORT": {
+    "hue": {
+      "alert": "select"
+    },
+    "label": "Alert (Short)"
+  },
+  "AQUA": {
+    "hue": {
+      "xy": [
+        0.2858,
+        0.2747
+      ]
+    },
+    "label": "Aqua"
+  },
+  "AQUAMARINE": {
+    "hue": {
+      "xy": [
+        0.3237,
+        0.3497
+      ]
+    },
+    "label": "Aquamarine"
+  },
+  "AQUAMARINE_LS": {
+    "hue": {
+      "xy": [
+        0.2138,
+        0.4051
+      ]
+    },
+    "label": "Aquamarine (LightStrip)"
+  },
+  "AQUA_LS": {
+    "hue": {
+      "xy": [
+        0.1607,
+        0.3423
+      ]
+    },
+    "label": "Aqua (LightStrip)"
+  },
+  "AURORA_01": {
+    "hue": {
+      "xy": [
+        0.2061,
+        0.1166
+      ]
+    },
+    "label": "Aurora 01"
+  },
+  "AURORA_02": {
+    "hue": {
+      "xy": [
+        0.3589,
+        0.4191
+      ]
+    },
+    "label": "Aurora 02"
+  },
+  "AURORA_03": {
+    "hue": {
+      "xy": [
+        0.1684,
+        0.0416
+      ]
+    },
+    "label": "Aurora 03"
+  },
+  "AURORA_04": {
+    "hue": {
+      "xy": [
+        0.2929,
+        0.2887
+      ]
+    },
+    "label": "Aurora 04"
+  },
+  "AURORA_05": {
+    "hue": {
+      "xy": [
+        0.267,
+        0.2372
+      ]
+    },
+    "label": "Aurora 05"
+  },
+  "AURORA_06": {
+    "hue": {
+      "xy": [
+        0.1984,
+        0.267
+      ]
+    },
+    "label": "Aurora 06"
+  },
+  "AURORA_07": {
+    "hue": {
+      "xy": [
+        0.3132,
+        0.3288
+      ]
+    },
+    "label": "Aurora 07"
+  },
+  "AURORA_08": {
+    "hue": {
+      "xy": [
+        0.1641,
+        0.3552
+      ]
+    },
+    "label": "Aurora 08"
+  },
+  "AURORA_09": {
+    "hue": {
+      "xy": [
+        0.1693,
+        0.396
+      ]
+    },
+    "label": "Aurora 09"
+  },
+  "AURORA_10": {
+    "hue": {
+      "xy": [
+        0.1715,
+        0.3561
+      ]
+    },
+    "label": "Aurora 10"
+  },
+  "AURORA_11": {
+    "hue": {
+      "xy": [
+        0.2058,
+        0.116
+      ]
+    },
+    "label": "Aurora 11"
+  },
+  "BISQUE": {
+    "hue": {
+      "xy": [
+        0.3806,
+        0.3576
+      ]
+    },
+    "label": "Bisque"
+  },
+  "BLUE": {
+    "hue": {
+      "bri": 254,
+      "hue": 46784,
+      "sat": 254
+    },
+    "label": "Blue"
+  },
+  "BLUE_DARK": {
+    "hue": {
+      "xy": [
+        0.168,
+        0.041
+      ]
+    },
+    "label": "Blue (Dark)"
+  },
+  "BLUE_DARK_LS": {
+    "hue": {
+      "xy": [
+        0.153,
+        0.048
+      ]
+    },
+    "label": "Blue (Dark) (LightStrip)"
+  },
+  "BLUE_LS": {
+    "hue": {
+      "xy": [
+        0.153,
+        0.048
+      ]
+    },
+    "label": "Blue (LightStrip)"
+  },
+  "BLUE_VIOLET": {
+    "hue": {
+      "xy": [
+        0.251,
+        0.1056
+      ]
+    },
+    "label": "Blue Violet"
+  },
+  "COLOR_LOOP_ON": {
+    "hue": {
+      "effect": "colorloop"
+    },
+    "label": "Color Loop (On)"
+  },
+  "COLOR_LOOP_OFF": {
+    "hue": {
+      "effect": "none"
+    },
+    "label": "Color Loop (Off)"
+  },
+  "CORAL": {
+    "hue": {
+      "xy": [
+        0.5763,
+        0.3486
+      ]
+    },
+    "label": "Coral"
+  },
+  "CORAL_LIGHT": {
+    "hue": {
+      "xy": [
+        0.5075,
+        0.3145
+      ]
+    },
+    "label": "Coral (Light)"
+  },
+  "CORNSILK": {
+    "hue": {
+      "xy": [
+        0.3511,
+        0.3574
+      ]
+    },
+    "label": "Cornsilk"
+  },
+  "CRIMSON": {
+    "hue": {
+      "xy": [
+        0.6417,
+        0.304
+      ]
+    },
+    "label": "Crimson"
+  },
+  "CRIMSON_LS": {
+    "hue": {
+      "xy": [
+        0.6508,
+        0.2881
+      ]
+    },
+    "label": "Crimson (LightStrip)"
+  },
+  "CT_2000": {
+    "hue": {
+      "bri": 64,
+      "ct": 500
+    },
+    "label": "Dim/Warm"
+  },
+  "CT_6500": {
+    "hue": {
+      "bri": 64,
+      "ct": 153
+    },
+    "label": "Dim/Cool"
+  },
+  "CT_DOWN": {
+    "hue": {
+      "ct_inc": -20
+    },
+    "label": "Color Temp (Down)"
+  },
+  "CT_UP": {
+    "hue": {
+      "ct_inc": 20
+    },
+    "label": "Color Temp (Up)"
+  },
+  "CYAN": {
+    "hue": {
+      "xy": [
+        0.2858,
+        0.2747
+      ]
+    },
+    "label": "Cyan"
+  },
+  "CYAN_LS": {
+    "hue": {
+      "xy": [
+        0.1607,
+        0.3423
+      ]
+    },
+    "label": "Cyan (LightStrip)"
+  },
+  "DEFAULT": {
+    "hue": {
+      "bri": 254,
+      "ct": 320
+    },
+    "label": "Default"
+  },
+  "DEFAULT_DIM": {
+    "hue": {
+      "bri": 64,
+      "ct": 369
+    },
+    "label": "Default (Dim)"
+  },
+  "DIM_10": {
+    "hue": {
+      "bri": 25
+    },
+    "label": "Dim (10%)"
+  },
+  "DIM_25": {
+    "hue": {
+      "bri": 63
+    },
+    "label": "Dim (25%)"
+  },
+  "DIM_50": {
+    "hue": {
+      "bri": 128
+    },
+    "label": "Dim (50%)"
+  },
+  "DIM_75": {
+    "hue": {
+      "bri": 191
+    },
+    "label": "Dim (75%)"
+  },
+  "DIM_90": {
+    "hue": {
+      "bri": 225
+    },
+    "label": "Dim (90%)"
+  },
+  "DIM_DOWN": {
+    "hue": {
+      "bri_inc": -20
+    },
+    "label": "Dim (Down)"
+  },
+  "DIM_FULL": {
+    "hue": {
+      "bri": 254
+    },
+    "label": "Dim (Full)"
+  },
+  "DIM_UP": {
+    "hue": {
+      "bri_inc": 20
+    },
+    "label": "Dim (Up)"
+  },
+  "FLORAL_WHITE": {
+    "hue": {
+      "xy": [
+        0.3361,
+        0.3388
+      ]
+    },
+    "label": "Floral White"
+  },
+  "FOREST_GREEN": {
+    "hue": {
+      "xy": [
+        0.408,
+        0.517
+      ]
+    },
+    "label": "Forest Green"
+  },
+  "FOREST_GREEN_LS": {
+    "hue": {
+      "xy": [
+        0.1984,
+        0.6746
+      ]
+    },
+    "label": "Forest Green (LightStrip)"
+  },
+  "GREEN_DARK": {
+    "hue": {
+      "xy": [
+        0.408,
+        0.517
+      ]
+    },
+    "label": "Green (Dark)"
+  },
+  "GREEN_DARK_LS": {
+    "hue": {
+      "xy": [
+        0.17,
+        0.7
+      ]
+    },
+    "label": "Green (Dark) (LightStrip)"
+  },
+  "INDIGO": {
+    "hue": {
+      "xy": [
+        0.2437,
+        0.0895
+      ]
+    },
+    "label": "Indigo"
+  },
+  "INDIGO_LS": {
+    "hue": {
+      "xy": [
+        0.2428,
+        0.0913
+      ]
+    },
+    "label": "Indigo (LightStrip)"
+  },
+  "LAVENDER": {
+    "hue": {
+      "xy": [
+        0.3085,
+        0.3071
+      ]
+    },
+    "label": "Lavender"
+  },
+  "MISTY_ROSE": {
+    "hue": {
+      "xy": [
+        0.3581,
+        0.3284
+      ]
+    },
+    "label": "Misty Rose"
+  },
+  "NIGHT_RED": {
+    "hue": {
+      "bri": 10,
+      "xy": [
+        0.674,
+        0.322
+      ]
+    },
+    "label": "Night Red"
+  },
+  "OFF": {
+    "hue": {
+      "on": false
+    },
+    "label": "Off"
+  },
+  "ON": {
+    "hue": {
+      "on": true
+    },
+    "label": "On"
+  },
+  "ORANGE_DARK": {
+    "hue": {
+      "xy": [
+        0.5916,
+        0.3824
+      ]
+    },
+    "label": "Orange (Dark)"
+  },
+  "ORANGE_DARK_LS": {
+    "hue": {
+      "xy": [
+        0.5921,
+        0.3831
+      ]
+    },
+    "label": "Orange (Dark) (LightStrip)"
+  },
+  "PEACH": {
+    "hue": {
+      "bri": 225,
+      "hue": 8191,
+      "sat": 213
+    },
+    "label": "Peach"
+  },
+  "PERU": {
+    "hue": {
+      "xy": [
+        0.5035,
+        0.3911
+      ]
+    },
+    "label": "Peru"
+  },
+  "PINK_DEEP": {
+    "hue": {
+      "xy": [
+        0.5386,
+        0.2468
+      ]
+    },
+    "label": "Pink (Deep)"
+  },
+  "PINK_DEEP_LS": {
+    "hue": {
+      "xy": [
+        0.5445,
+        0.2369
+      ]
+    },
+    "label": "Pink (Deep) (LightStrip)"
+  },
+  "POWDER_BLUE": {
+    "hue": {
+      "xy": [
+        0.302,
+        0.3068
+      ]
+    },
+    "label": "Powder Blue"
+  },
+  "POWDER_BLUE_LS": {
+    "hue": {
+      "xy": [
+        0.262,
+        0.3269
+      ]
+    },
+    "label": "Powder Blue (LightStrip)"
+  },
+  "PURPLE": {
+    "hue": {
+      "xy": [
+        0.2725,
+        0.1096
+      ]
+    },
+    "label": "Purple"
+  },
+  "READING": {
+    "hue": {
+      "bri": 250,
+      "xy": [
+        0.6126,
+        0.3667
+      ]
+    },
+    "label": "Reading"
+  },
+  "REBECCA_PURPLE": {
+    "hue": {
+      "xy": [
+        0.2703,
+        0.1398
+      ]
+    },
+    "label": "Rebecca Purple"
+  },
+  "RED": {
+    "hue": {
+      "xy": [
+        0.674,
+        0.322
+      ]
+    },
+    "label": "Red"
+  },
+  "RED_LS": {
+    "hue": {
+      "xy": [
+        0.692,
+        0.308
+      ]
+    },
+    "label": "Red (LightStrip)"
+  },
+  "ROSE": {
+    "hue": {
+      "xy": [
+        0.3336,
+        0.2649
+      ]
+    },
+    "label": "Rose"
+  },
+  "ROSE_DEEP": {
+    "hue": {
+      "xy": [
+        0.3612,
+        0.1607
+      ]
+    },
+    "label": "Rose (Deep)"
+  },
+  "SALMON": {
+    "hue": {
+      "xy": [
+        0.5346,
+        0.3247
+      ]
+    },
+    "label": "Salmon"
+  },
+  "SEA_GREEN_LIGHT": {
+    "hue": {
+      "xy": [
+        0.2946,
+        0.292
+      ]
+    },
+    "label": "Sea Green (Light)"
+  },
+  "SEA_GREEN_LIGHT_LS": {
+    "hue": {
+      "xy": [
+        0.1611,
+        0.3593
+      ]
+    },
+    "label": "Sea Green (Light) (LightStrip)"
+  },
+  "SIENNA": {
+    "hue": {
+      "xy": [
+        0.5714,
+        0.3559
+      ]
+    },
+    "label": "Sienna"
+  },
+  "SKY_BLUE": {
+    "hue": {
+      "xy": [
+        0.2807,
+        0.2646
+      ]
+    },
+    "label": "Sky Blue"
+  },
+  "SKY_BLUE_DEEP": {
+    "hue": {
+      "xy": [
+        0.2428,
+        0.1893
+      ]
+    },
+    "label": "Sky Blue (Deep)"
+  },
+  "SKY_BLUE_DEEP_LS": {
+    "hue": {
+      "xy": [
+        0.158,
+        0.2379
+      ]
+    },
+    "label": "Sky Blue (Deep) (LightStrip)"
+  },
+  "SKY_BLUE_LS": {
+    "hue": {
+      "xy": [
+        0.2206,
+        0.2984
+      ]
+    },
+    "label": "Sky Blue (LightStrip)"
+  },
+  "SLATE_GRAY_LIGHT": {
+    "hue": {
+      "xy": [
+        0.2924,
+        0.2877
+      ]
+    },
+    "label": "Slate Gray (Light)"
+  },
+  "SLATE_GRAY_LIGHT_LS": {
+    "hue": {
+      "xy": [
+        0.2738,
+        0.297
+      ]
+    },
+    "label": "Slate Gray (Light) (LightStrip)"
+  },
+  "STRIP_WHITE": {
+    "hue": {
+      "bri": 254,
+      "hue": 0,
+      "sat": 25
+    },
+    "label": "Light Strip (Whiteish)"
+  },
+  "TURQUOISE": {
+    "hue": {
+      "xy": [
+        0.2997,
+        0.3022
+      ]
+    },
+    "label": "Turquoise"
+  },
+  "TURQUOISE_DARK": {
+    "hue": {
+      "xy": [
+        0.2835,
+        0.2701
+      ]
+    },
+    "label": "Turquoise (Dark)"
+  },
+  "TURQUOISE_DARK_LS": {
+    "hue": {
+      "xy": [
+        0.1605,
+        0.3366
+      ]
+    },
+    "label": "Turquoise (Dark) (LightStrip)"
+  },
+  "TURQUOISE_LS": {
+    "hue": {
+      "xy": [
+        0.1702,
+        0.3675
+      ]
+    },
+    "label": "Turquoise (LightStrip)"
+  },
+  "VIRGIN_BLUE": {
+    "hue": {
+      "bri": 100,
+      "xy": [
+        0.2591,
+        0.0916
+      ]
+    },
+    "label": "Virgin Blue"
+  },
+  "WHITE_COOL": {
+    "hue": {
+      "bri": 254,
+      "ct": 160
+    },
+    "label": "White (Cool)"
+  },
+  "WHITE_MID": {
+    "hue": {
+      "ct": 250
+    },
+    "label": "White (Mid)"
+  },
+  "WHITE_STRIP": {
+    "hue": {
+      "hue": 0,
+      "sat": 25
+    },
+    "label": "White Strip"
+  },
+  "WHITE_WARM": {
+    "hue": {
+      "bri": 254,
+      "ct": 490
+    },
+    "label": "White (Warm)"
+  },
+  "YELLOW": {
+    "hue": {
+      "xy": [
+        0.4317,
+        0.4996
+      ]
+    },
+    "label": "Yellow"
+  },
+  "YELLOW_LS": {
+    "hue": {
+      "xy": [
+        0.4334,
+        0.5022
+      ]
+    },
+    "label": "Yellow (LightStrip)"
   }
-]
+}

@@ -224,10 +224,7 @@ function readRecipeFile(filename) {
   }
   try {
     log.verbose('readRecipeFile', 'Parsing');
-    scenes = JSON.parse(scenes);
-    scenes.forEach(function(scene) {
-      result[scene.id] = JSON.parse(scene.cmd);
-    });
+    result = JSON.parse(scenes);
   } catch (ex) {
     log.error('readRecipeFile', 'Could not parse receipe file.');
     process.exit(1);
