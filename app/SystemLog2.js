@@ -22,6 +22,7 @@ const LOG_LEVELS = {
   DEBUG: {level: 60, color: colors.blue},
   EXTRA: {level: 70, color: colors.blue},
 };
+const LOG_PREFIX = 'LOGGER';
 
 let _fbRef = null;
 let _fbErrors = 0;
@@ -105,7 +106,7 @@ function _setOptions(options) {
       _options.logLevel.firebase = options.logLevel.firebase;
     }
   }
-  _log('LOGGER', 'setOptions', options);
+  _log(LOG_PREFIX, 'setOptions', options);
 }
 
 /**
@@ -283,16 +284,16 @@ function _saveLogToFB(logObj) {
       _fbRef.child(FIREBASE_LOG_PATH).push(logObj);
       _fbErrors = 0;
     } catch (ex) {
-      _exception('LOGGER', 'Error pushing log item to Firebase', ex);
+      _exception(LOG_PREFIX, 'Error pushing log item to Firebase', ex);
       if (_fbErrors++ > 3) {
-        _warn('LOGGER', 'Disabling Firebase logging.');
+        _warn(LOG_PREFIX, 'Disabling Firebase logging.');
         _options.logToFirebase = false;
       }
     }
   } else {
     _fbLogCache.push(logObj);
     if (_fbLogCache.length > 500) {
-      _warn('LOGGER', 'Firebase Log Cache exceeded max capacity.');
+      _warn(LOG_PREFIX, 'Firebase Log Cache exceeded max capacity.');
       _options.logToFirebase = false;
     }
   }
@@ -320,12 +321,12 @@ function _saveLogToFile(logObj) {
       fs.appendFile(_options.logFileName, msg, function(err) {
         if (err) {
           _options.logToFile = false;
-          _exception('LOGGER', 'Unable to write to log file.', err);
+          _exception(LOG_PREFIX, 'Unable to write to log file.', err);
         }
       });
     } catch (ex) {
       _options.logToFile = false;
-      _exception('LOGGER', 'Unable to write to log file.', ex);
+      _exception(LOG_PREFIX, 'Unable to write to log file.', ex);
     }
   }
 }
@@ -467,47 +468,57 @@ function _custom(level, prefix, message, extra) {
  *
  * @function cleanFile
  * @static
- * @param {String} logFile The file to be cleaned.
+ * @param {String} [logFile] The file to be cleaned.
+ * @return {Promise}
  */
 function _cleanFile(logFile) {
-  if (!logFile) {
-    logFile = _options.logFileName;
-  }
-  let msg = 'Cleaning log file: ' + logFile;
-  fs.stat(logFile, function(err, stats) {
-    if (err) {
-      if (err.code === 'ENOENT') {
-        msg += ' - file does not exist.';
-        _log('LOGGER', msg);
+  return new Promise(function(resolve, reject) {
+    if (!logFile) {
+      logFile = _options.logFileName;
+    }
+    const msg = `cleanFile('${logFile}')`;
+    _log(LOG_PREFIX, msg);
+    fs.stat(logFile, function(err, stats) {
+      if (err) {
+        if (err.code === 'ENOENT') {
+          _warn(LOG_PREFIX, msg + ' - file does not exist.');
+          resolve(false);
+          return;
+        }
+        _exception(LOG_PREFIX, msg + ' - failed to open file.', err);
+        reject(err);
         return;
       }
-      msg += ' - Failed.';
-      _exception('LOGGER', msg, err);
-      return;
-    }
-    if (stats) {
-      let exceedsAge = false;
-      let exceedsSize = false;
-      if (stats.size > 250000) {
-        exceedsSize = true;
-      }
-      const oneWeek = moment().subtract(7, 'days');
-      exceedsAge = moment(stats.birthtime).isBefore(oneWeek);
-      if (exceedsAge || exceedsSize) {
-        _log('LOGGER', msg);
-        try {
-          let gzip = zlib.createGzip();
-          let inp = fs.createReadStream(logFile);
-          let out = fs.createWriteStream(logFile + '.gz');
-          inp.pipe(gzip).pipe(out);
-          fs.unlinkSync(logFile);
-        } catch (ex) {
-          _exception('LOGGER', msg + ' - Failed with exception.', ex);
+      if (stats) {
+        let exceedsAge = false;
+        let exceedsSize = false;
+        if (stats.size > 250000) {
+          exceedsSize = true;
         }
-      } else {
-        _debug('LOGGER', msg + ' - no action required.');
+        const oneWeek = moment().subtract(7, 'days');
+        exceedsAge = moment(stats.birthtime).isBefore(oneWeek);
+        if (exceedsAge || exceedsSize) {
+          try {
+            _debug(LOG_PREFIX, msg + ' - compressing and removing file...');
+            let gzip = zlib.createGzip();
+            let inp = fs.createReadStream(logFile);
+            let out = fs.createWriteStream(logFile + '.gz');
+            inp.pipe(gzip).pipe(out);
+            fs.unlinkSync(logFile);
+            resolve(true);
+            return;
+          } catch (ex) {
+            _exception(LOG_PREFIX, msg + ' - failed.', ex);
+            reject(ex);
+            return;
+          }
+        } else {
+          _debug(LOG_PREFIX, msg + ' - no action required.');
+          resolve(false);
+          return;
+        }
       }
-    }
+    });
   });
 }
 
@@ -517,34 +528,42 @@ function _cleanFile(logFile) {
  * @function cleanLogs
  * @static
  * @param {String} path The Firebase path to clean.
- * @param {Number} maxAgeDays Remove any log item older than x days.
+ * @param {Number} [maxAgeDays] Remove any log item older than x days.
+ * @return {Promise}
  */
 function _cleanLogs(path, maxAgeDays) {
-  if (!_fbRef) {
-    _error('LOGGER', 'Cannot clean logs, Firebase reference not set.');
-    return;
-  }
-  if (path.indexOf('logs/') !== 0) {
-    _error('LOGGER', 'Cannot clean logs, invalid path provided.');
-    return;
-  }
-  maxAgeDays = maxAgeDays || 365;
-  const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
-  let msg = 'Cleaning logs from (' + path + ') older than ';
-  msg += moment(endAt).format('YYYY-MM-DDTHH:mm:ss.SSS');
-  _log('LOGGER', msg);
-  _fbRef.child(path).orderByChild('date').endAt(endAt).once('value',
-    function(snapshot) {
-      let itemsRemoved = 0;
-      snapshot.forEach(function(item) {
-        item.ref().remove();
-        itemsRemoved++;
-      });
-      let msgCompleted = 'Cleaned logs from (' + path + '), ';
-      msgCompleted += 'removed ' + itemsRemoved.toString() + ' items.';
-      _log('LOGGER', msgCompleted);
+  return new Promise(function(resolve, reject) {
+    maxAgeDays = maxAgeDays || 365;
+    let msg = `cleanLogs('${path}', ${maxAgeDays})`;
+    _log(LOG_PREFIX, msg);
+    if (!_fbRef) {
+      _error(LOG_PREFIX, 'Cannot clean logs, Firebase reference not set.');
+      reject(new Error('Firebase reference not set.'));
+      return;
     }
-  );
+    if (path.indexOf('logs/') !== 0) {
+      _error(LOG_PREFIX, 'Cannot clean logs, invalid path provided.');
+      reject(new Error('Path must start with `logs`'));
+      return;
+    }
+    const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
+    const niceDate = moment(endAt).format('YYYY-MM-DDTHH:mm:ss');
+    _debug(LOG_PREFIX, `Removing items older than ${niceDate} from ${path}`);
+    _fbRef.child(path).orderByChild('date').endAt(endAt).once('value',
+      function(snapshot) {
+        const numChildren = snapshot.numChildren();
+        if (numChildren >= 50000) {
+          _warn(LOG_PREFIX, 'cleanLog may fail, too many items!');
+        }
+        _debug(LOG_PREFIX, `Found ${numChildren} items at ${path}`);
+        snapshot.forEach(function(item) {
+          item.ref().remove();
+        });
+        _debug(LOG_PREFIX, `Removed ${numChildren} from ${path}`);
+        resolve({path: path, count: numChildren});
+      }
+    );
+  });
 }
 
 exports.appStart = _appStart;
