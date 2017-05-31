@@ -23,7 +23,7 @@ fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
     log.exception('DUMPLOG', 'Firebase auth failed.', error);
   } else {
     log.log('DUMPLOG', 'Firebase auth success.');
-    let path = process.argv[2] || 'logs';
+    let path = process.argv[2] || 'server';
     log.log('DUMPLOG', `logs/${path}`);
     printLogs(`logs/${path}`);
   }

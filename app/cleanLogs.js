@@ -14,11 +14,15 @@ fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
     log.log(LOG_PREFIX, 'Firebase auth success.');
     log.setFirebaseRef(fb);
     let promises = [];
+    promises.push(log.cleanLogs('logs/bedside', 7));
+    promises.push(log.cleanLogs('logs/doorbell', 7));
     promises.push(log.cleanLogs('logs/doors', 30));
-    promises.push(log.cleanLogs('logs/presence'));
-    promises.push(log.cleanLogs('logs/systemState', 14));
-    promises.push(log.cleanLogs('logs/pushBullet', 5));
+    promises.push(log.cleanLogs('logs/generic', 7));
     promises.push(log.cleanLogs('logs/logs', 7));
+    promises.push(log.cleanLogs('logs/presence'));
+    promises.push(log.cleanLogs('logs/pushBullet', 1));
+    promises.push(log.cleanLogs('logs/server', 7));
+    promises.push(log.cleanLogs('logs/systemState', 30));
     Promise.all(promises)
     .then(() => {
       return log.cleanFile();
