@@ -2,6 +2,7 @@
 
 /** @module */
 
+const os = require('os');
 const fs = require('fs');
 const util = require('util');
 const zlib = require('zlib');
@@ -9,6 +10,7 @@ const colors = require('colors');
 const gitHead = require('./version');
 const moment = require('moment');
 
+const HOSTNAME = os.hostname();
 const DEFAULT_OPTIONS = {
   fileLogLevel: 50,
   fileFilename: './logs/system.log',
@@ -129,6 +131,7 @@ function _generateLog(level, prefix, message, extra) {
   msg += _stringify(message);
   let result = {
     appName: _appName,
+    hostname: HOSTNAME,
     date: now,
     dateFormatted: nowPretty,
     level: level,
@@ -591,8 +594,6 @@ exports.setAppName = _setAppName;
 exports.setOptions = _setOptions;
 exports.setFirebaseRef = _setFirebaseRef;
 
-exports.printLog = _printLog;
-
 exports.appStart = _appStart;
 exports.appStop = _appStop;
 exports.init = _init;
@@ -607,6 +608,7 @@ exports.http = _http;
 exports.todo = _todo;
 exports.custom = _custom;
 
+exports.printLog = _printLog;
 exports.cleanLogs = _cleanLogs;
 exports.cleanFile = _cleanFile;
 
