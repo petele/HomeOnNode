@@ -85,24 +85,46 @@ function init() {
       } catch (ex) {
         log.exception(LOG_PREFIX, 'Error initializing keyboard', ex);
       }
+
+      const cron15m = getCronIntervalValue(15, 5);
+      log.log(LOG_PREFIX, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
       setInterval(function() {
         loadAndRunJS('cron15.js');
-      }, 15 * 60 * 1000);
+      }, cron15m);
+
+      const cron60m = getCronIntervalValue(60, 30);
+      log.log(LOG_PREFIX, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
       setInterval(function() {
         loadAndRunJS('cron60.js');
-      }, 60 * 60 * 1000);
+      }, cron60m);
+
+      const cron24h = getCronIntervalValue(24 * 60, 90);
+      log.log(LOG_PREFIX, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
       setInterval(function() {
         loadAndRunJS('cronDaily.js');
-      }, 24 * 60 * 60 * 1000);
+      }, cron24h);
     }
   });
 }
 
 /**
+ * Generate the interval delay for the daily cron jobs.
+ *
+ * @param {Number} minutes How often the cron job should run, in minutes.
+ * @param {Number} delaySeconds Add up to X number of delay seconds.
+ * @return {Number} The number of milliseconds to wait between calls.
+ */
+function getCronIntervalValue(minutes, delaySeconds) {
+  const delayMS = delaySeconds * 1000;
+  return (minutes * 60 * 1000) + Math.floor(Math.random() * delayMS);
+}
+
+
+/**
  * Exit the app.
  *
  * @param {String} sender Who is requesting the app to exit.
- * @param {Number} exitCode The exit code to use.
+ * @param {Number} [exitCode] The exit code to use.
 */
 function exit(sender, exitCode) {
   if (exitCode === undefined) {
@@ -133,7 +155,7 @@ process.on('SIGINT', function() {
  *   Used for the cron job system.
  *
  * @param {String} file The file to load and run.
- * @param {Function} callback Callback to run once completed.
+ * @param {Function} [callback] Callback to run once completed.
 */
 function loadAndRunJS(file, callback) {
   let msg = `loadAndRunJS('${file}')`;
@@ -146,7 +168,7 @@ function loadAndRunJS(file, callback) {
       }
     } else {
       try {
-        eval(data.toString());  // jshint ignore:line
+        eval(data.toString());
       } catch (ex) {
         log.exception(LOG_PREFIX, msg + ' Exception on eval.', ex);
         if (callback) {

@@ -4,13 +4,7 @@
 
 const cronJob = function() {
   if (home.state.systemState === 'AWAY') {
-    const allOff = {
-      hueCommand: {
-        lights: 0,
-        lightState: {on: false},
-      },
-    };
-    home.executeCommand(allOff, 'AWAY_TIMER');
+    home.executeCommandByName('RUN_ON_AWAY', null, 'AWAY_TIMER');
   }
 };
 
