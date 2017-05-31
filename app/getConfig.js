@@ -8,6 +8,8 @@ const Firebase = require('firebase');
 const LOG_PREFIX = 'GET_CONFIG';
 
 const fb = new Firebase(`https://${Keys.appId}.firebaseio.com/`);
+log.setAppName(LOG_PREFIX);
+log.appStart();
 
 /**
  * Gets the config data from Firebase.
@@ -45,10 +47,9 @@ function _getConfigFromFB(path) {
   }, 30000);
 }
 
-log.appStart('getConfig', false);
 let appId = process.argv[2];
 if (!appId) {
-  log.log('No app id provided, using HomeOnNode');
+  log.warn('No app id provided, using HomeOnNode');
   appId = 'HomeOnNode';
 }
 _getConfigFromFB(appId);

@@ -10,18 +10,15 @@ const Keypad = require('./Keypad');
 
 const LOG_PREFIX = 'APP';
 const APP_NAME = 'HomeOnNode';
-const logOpts = {
-  logFileName: './start.log',
-  logToFile: true,
-  logToFirebase: true,
-};
 
 let config;
 let fb;
 let home;
 let httpServer;
 
-log.appStart(APP_NAME, logOpts);
+log.setAppName(APP_NAME);
+log.setOptions({firebaseLogLevel: 50});
+log.appStart();
 
 /**
  * Init
@@ -29,7 +26,11 @@ log.appStart(APP_NAME, logOpts);
 function init() {
   fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
   log.setFirebaseRef(fb);
-  log.setOptions({logToFile: false});
+
+  fb.child(`config/HomeOnNode/logs`).on('value', (snapshot) => {
+    log.setOptions(snapshot.val());
+    log.debug(LOG_PREFIX, 'Log config updated');
+  });
 
   log.log(LOG_PREFIX, 'Reading local config file.');
   fs.readFile('./config.json', {'encoding': 'utf8'}, function(err, data) {

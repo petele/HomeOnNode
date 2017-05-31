@@ -1,105 +1,165 @@
 'use strict';
 
 const fs = require('fs');
-const Gpio = require('onoff').Gpio;
 const exec = require('child_process').exec;
 const request = require('request');
 const GCMPush = require('./GCMPush');
 const log = require('./SystemLog2');
 const fbHelper = require('./FBHelper');
 const Keys = require('./Keys').keys;
+let GPIO;
 
-let APP_NAME = 'REMOTE';
-let fb;
-let pin;
-let config;
-let gcmPush;
-let lastPushed = 0;
-let lastValue = 1;
-const minTime = 3000;
-
-const LOG_PREFIX = 'DOORBELL';
-const logOpts = {
-  logFileName: './logs/system.log',
-  logToFile: true,
+let APP_NAME = 'DOORBELL';
+let _fb;
+let _pin;
+let _config;
+let _gcmPush;
+let _lastPushed = 0;
+let _lastValue = 1;
+const MIN_TIME = 3000;
+const GCM_DOORBELL_MSG = {
+  title: 'Door Bell',
+  body: 'The doorbell rang at',
+  tag: 'HoN-doorbell',
+  appendTime: true,
 };
+
+log.setAppName(APP_NAME);
+log.setOptions({firebaseLogLevel: 50});
+log.appStart();
+
+try {
+  GPIO = require('onoff').GPIO;
+} catch (ex) {
+  log.exception(APP_NAME, 'Node module `onoff` is not available.', ex);
+  exit('GPIO', 1);
+  return;
+}
+
+_fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
+log.setFirebaseRef(_fb);
+_fb.child('config/Doorbell/logs').on('value', (snapshot) => {
+  log.setOptions(snapshot.val());
+  log.debug(APP_NAME, 'Log config updated.');
+});
+
+/**
+ * Send an HTTP Request to the server
+ *
+ * @param {String} path
+ * @param {String} method
+ * @param {Object} [body]
+ * @return {Promise}
+ */
+function sendHTTPRequest(path, method, body) {
+  return new Promise(function(resolve, reject) {
+    const requestHost = `${_config.controller.ip}:${_config.controller.port}`;
+    const requestURL = `http://${requestHost}/${path}`;
+    method = method || 'POST';
+    const msg = `sendHTTPRequest('${path}', '${method}', ...)`;
+    let requestOptions = {
+      url: requestURL,
+      method: method,
+      json: true,
+    };
+    if (body) {
+      requestOptions.body = body;
+    }
+    log.debug(APP_NAME, msg);
+    request(requestOptions, function(error, response, body) {
+      if (error) {
+        log.exception(APP_NAME, msg + ' - failed.', error);
+        reject(error);
+        return;
+      }
+      resolve(body);
+    });
+  });
+}
+
+/**
+ * Send a command to the server via Firebase
+ *
+ * @param {Object} cmd
+ * @return {Promise}
+ */
+function sendCommandViaFB(cmd) {
+  return new Promise(function(resolve, reject) {
+    const msg = `sendCommandViaFB(${JSON.stringify(cmd)})`;
+    log.debug(APP_NAME, msg);
+    if (!_fb) {
+      reject(new Error('Firebase not available.'));
+      return;
+    }
+    _fb.child('commands').push(cmd, function(error) {
+      if (error) {
+        log.exception(APP_NAME, msg + ' - failed.', error);
+        reject(error);
+      }
+      resolve(true);
+    });
+  });
+}
 
 /**
  * Send a doorbell notification
 */
 function sendDoorbell() {
-  const url = `http://${config.controller.ip}:${config.controller.port}/doorbell`;
-  const ring = {
-    url: url,
-    method: 'POST',
-    json: true,
-  };
-  request(ring, function(error, response, body) {
-    let msg = 'Ring Doorbell via ';
-    if (error) {
-      log.exception(LOG_PREFIX, msg + 'HTTP request failed.', error);
-      if (fb) {
-        fb.child('commands').send({cmdName: 'RUN_ON_DOORBELL'}, function(err) {
-          if (err) {
-            log.exception(LOG_PREFIX, msg + 'FB failed.', err);
-            const cmd = 'sudo reboot';
-            exec(cmd, function() {});
-            return;
-          } else {
-            log.warn(LOG_PREFIX, 'Worked via Firebase');
-            return;
-          }
-        });
+  log.log(APP_NAME, 'Doorbell rang.');
+  sendHTTPRequest('doorbell', 'POST')
+    .catch((err) => {
+      return sendCommandViaFB({cmdName: 'RUN_ON_DOORBELL'});
+    })
+    .catch((err) => {
+      log.error(APP_NAME, 'Attempt to send twice & failed, rebooting');
+      exec('sudo reboot', function() {});
+      return false;
+    })
+    .then(() => {
+      if (!_gcmPush) {
+        return Promise.reject(new Error('GCM Unavailable.'));
       }
-    }
-    log.log(LOG_PREFIX, 'Doorbell rang.');
-  });
-  if (gcmPush) {
-    const gcmMessage = {
-      title: 'Door Bell',
-      body: 'The doorbell rang at',
-      tag: 'HoN-doorbell',
-      appendTime: true,
-    };
-    setTimeout(() => {
-      gcmPush.sendMessage(gcmMessage);
-    }, 250);
-  }
+      return _gcmPush.sendMessage(GCM_DOORBELL_MSG);
+    });
 }
 
 fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
   if (err) {
-    log.exception(LOG_PREFIX, 'Unable to open config file.', err);
-  } else {
-    config = JSON.parse(data);
-    APP_NAME = config.appName;
-    log.appStart(APP_NAME, logOpts);
-    fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
-
-    gcmPush = new GCMPush(fb);
-
-    if (config.doorbellPin) {
-      pin = new Gpio(config.doorbellPin, 'in', 'both');
-      pin.watch(function(error, value) {
-        const now = Date.now();
-        const hasChanged = value !== lastValue ? true : false;
-        const timeOK = now > lastPushed + minTime ? true : false;
-        lastValue = value;
-        if (hasChanged && timeOK && value === 0) {
-          log.log(LOG_PREFIX, 'Ding-dong');
-          lastPushed = now;
-          sendDoorbell();
-        } else {
-          const msg = `v=${value} changed=${hasChanged} time=${timeOK}`;
-          log.log(LOG_PREFIX, 'Debounced. ' + msg);
-        }
-      });
-    }
+    log.exception(APP_NAME, 'Unable to open config file.', err);
+    exit('INIT', 1);
+    return;
   }
+  try {
+    _config = JSON.parse(data);
+  } catch (ex) {
+    log.exception(APP_NAME, 'Unable to parse config file.', ex);
+    exit('INIT', 1);
+    return;
+  }
+  if (!_config.hasOwnProperty('doorbellPin')) {
+    log.error(APP_NAME, '`doorbellPin` not set.');
+    exit('INIT', 1);
+    return;
+  }
+  _gcmPush = new GCMPush(_fb);
+  _pin = new GPIO(_config.doorbellPin, 'in', 'both');
+  _pin.watch(function(error, value) {
+    const now = Date.now();
+    const hasChanged = value !== _lastValue ? true : false;
+    const timeOK = now > _lastPushed + MIN_TIME ? true : false;
+    _lastValue = value;
+    if (hasChanged && timeOK && value === 0) {
+      _lastPushed = now;
+      sendDoorbell();
+    } else {
+      const msg = `v=${value} changed=${hasChanged} time=${timeOK}`;
+      log.debug(APP_NAME, 'Debounced. ' + msg);
+    }
+  });
 });
 
 setInterval(function() {
-  log.cleanFile(logOpts.logFileName);
+  log.cleanFile();
 }, 60 * 60 * 24 * 1000);
 
 /**
@@ -110,13 +170,13 @@ setInterval(function() {
 */
 function exit(sender, exitCode) {
   exitCode = exitCode || 0;
-  log.log(LOG_PREFIX, 'Starting shutdown process');
-  log.log(LOG_PREFIX, 'Will exit with exit code: ' + String(exitCode));
-  if (pin) {
-    log.log(LOG_PREFIX, 'Unwatching pins');
-    pin.unwatchAll();
-    log.log(LOG_PREFIX, 'Unexporting GPIO');
-    pin.unexport();
+  log.log(APP_NAME, 'Starting shutdown process');
+  log.log(APP_NAME, 'Will exit with exit code: ' + String(exitCode));
+  if (_pin) {
+    log.debug(APP_NAME, 'Unwatching pins');
+    _pin.unwatchAll();
+    log.debug(APP_NAME, 'Unexporting GPIO');
+    _pin.unexport();
   }
   setTimeout(function() {
     log.appStop(sender);

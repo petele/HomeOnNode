@@ -10,16 +10,16 @@ const MAX_DISCONNECT = 60 * 60 * 6 * 1000;
 const FB_URL = `https://${Keys.firebase.appId}.firebaseio.com/`;
 
 const fb = new Firebase(FB_URL);
-const deviceName = os.hostname();
-const fbNode = fb.child('monitor/' + deviceName);
+let hostname = os.hostname();
+if (hostname.indexOf('.') >= 0) {
+  hostname = hostname.substring(0, hostname.indexOf('.'));
+}
+const fbNode = fb.child('monitor/' + hostname);
 let fbHeartbeatTime;
 
 const LOG_PREFIX = 'MONITOR';
-const logOpts = {
-  logFileName: './logs/system.log',
-  logToFile: true,
-};
-log.appStart(deviceName, logOpts);
+log.setAppName(LOG_PREFIX);
+log.appStart();
 
 fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
   if (error) {
@@ -87,5 +87,5 @@ function rebootRequest(snapshot) {
 }
 
 setInterval(function() {
-  log.cleanFile(logOpts.logFileName);
+  log.cleanFile();
 }, 60 * 60 * 24 * 1000);

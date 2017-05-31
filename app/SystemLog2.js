@@ -9,7 +9,13 @@ const colors = require('colors');
 const gitHead = require('./version');
 const moment = require('moment');
 
-const FIREBASE_LOG_PATH = 'logs/logs';
+const DEFAULT_OPTIONS = {
+  fileLogLevel: 50,
+  fileFilename: './logs/system.log',
+  consoleLogLevel: 90,
+  firebaseLogLevel: -1,
+  firebasePath: 'logs/generic',
+};
 const LOG_LEVELS = {
   START: {level: 0, color: colors.green},
   STOP: {level: 0, color: colors.red},
@@ -24,55 +30,28 @@ const LOG_LEVELS = {
 };
 const LOG_PREFIX = 'LOGGER';
 
+let _appName = null;
 let _fbRef = null;
-let _fbErrors = 0;
 let _fbLogCache = [];
-let _options = {
-  appName: null,
-  logToFile: false,
-  logFileName: './logs/system.log',
-  logToFirebase: false,
-  logLevel: {
-    console: 90,
-    file: 50,
-    firebase: 50,
-  },
-  verbose: false,
-};
+let _fbErrorCount = 0;
+let _fbLastError = 0;
+let _opts = DEFAULT_OPTIONS;
 
 /**
- * Log an App start
+ * Sets the system wide app name.
  *
- * @function appStart
+ * @function setAppName
  * @static
- * @param {String} appName The new state to
- * @param {Object} options Message to attach to the event
+ * @param {String} appName - The name of the app
  */
-function _appStart(appName, options) {
+function _setAppName(appName) {
   if (!appName) {
-    throw new Error('No appName provided.');
+    throw new Error('`appName` is a required parameter.');
   }
-  _options.appName = appName;
-  const logObj = _generateLog('START', 'APP', `${appName}  (${gitHead.head})`);
-  if (options) {
-    _setOptions(options);
+  if (_appName) {
+    throw new Error('`appName` is already set.');
   }
-  _handleLog(logObj);
-}
-
-/**
- * Log an App stop
- *
- * @function appStop
- * @static
- * @param {String} receivedFrom Who is requesting the app to stop
- */
-function _appStop(receivedFrom) {
-  if (!receivedFrom) {
-    receivedFrom = 'UNKNOWN';
-  }
-  const logObj = _generateLog('STOP', 'APP', 'Received from: ' + receivedFrom);
-  _handleLog(logObj);
+  _appName = appName;
 }
 
 /**
@@ -83,30 +62,16 @@ function _appStop(receivedFrom) {
  * @param {Object} options The options to set
  */
 function _setOptions(options) {
-  if (options.hasOwnProperty('logToFile')) {
-    _options.logToFile = options.logToFile;
+  if (!options) {
+    return;
   }
-  if (options.logFileName) {
-    _options.logFileName = options.logFileName;
-  }
-  if (options.hasOwnProperty('logToFirebase')) {
-    _options.logToFirebase = options.logToFile;
-  }
-  if (options.hasOwnProperty('verbose')) {
-    _options.verbose = options.verbose;
-  }
-  if (options.logLevel) {
-    if (options.logLevel.console) {
-      _options.logLevel.console = options.logLevel.console;
-    }
-    if (options.logLevel.file) {
-      _options.logLevel.file = options.logLevel.file;
-    }
-    if (options.logLevel.firebase) {
-      _options.logLevel.firebase = options.logLevel.firebase;
-    }
-  }
-  _log(LOG_PREFIX, 'setOptions', options);
+  let newOpts = {};
+  const keys = Object.keys(DEFAULT_OPTIONS);
+  keys.forEach(function(key) {
+    newOpts[key] = options[key] || DEFAULT_OPTIONS[key];
+  });
+  _opts = newOpts;
+  _log(LOG_PREFIX, `setOptions(${JSON.stringify(options)})`);
 }
 
 /**
@@ -118,10 +83,9 @@ function _setOptions(options) {
  */
 function _setFirebaseRef(fbRef) {
   if (fbRef) {
-    _fbErrors = 0;
     let logObj = _fbLogCache.shift();
     while (logObj) {
-      fbRef.child(FIREBASE_LOG_PATH).push(logObj);
+      fbRef.child(_opts.firebasePath).push(logObj);
       logObj = _fbLogCache.shift();
     }
   }
@@ -164,7 +128,7 @@ function _generateLog(level, prefix, message, extra) {
   }
   msg += _stringify(message);
   let result = {
-    appName: _options.appName,
+    appName: _appName,
     date: now,
     dateFormatted: nowPretty,
     level: level,
@@ -175,13 +139,18 @@ function _generateLog(level, prefix, message, extra) {
     version: gitHead.head,
   };
   if (extra) {
-    if (typeof extra === 'string') {
-      result.extra = extra;
+    if (extra instanceof Error) {
+      result.exception = {
+        message: extra.message,
+        name: extra.name,
+      };
+      if (extra.stack) {
+        result.exception.stack = extra.stack;
+      }
+    } else if (typeof extra === 'string') {
+      result.extra = 'string';
     } else {
-      result.extra = JSON.stringify(extra);
-    }
-    if (extra.message) {
-      result.exceptionMessage = extra.message;
+      result.extra = JSON.parse(JSON.stringify(extra));
     }
   }
   return result;
@@ -223,17 +192,9 @@ function _getLogColorByName(levelName) {
  * @param {Object} logObj The log object to handle.
  */
 function _handleLog(logObj) {
-  const logLevel = _getLogLevelValueByName(logObj.level);
-  if (logLevel <= _options.logLevel.console) {
-    _printLog(logObj);
-  }
-  if (_options.logToFirebase === true &&
-      logLevel <= _options.logLevel.firebase) {
-    _saveLogToFB(logObj);
-  }
-  if (_options.logToFile === true && logLevel <= _options.logLevel.file) {
-    _saveLogToFile(logObj);
-  }
+  _printLog(logObj);
+  _saveLogToFile(logObj);
+  _saveLogToFirebase(logObj);
 }
 
 /**
@@ -244,6 +205,10 @@ function _handleLog(logObj) {
  * @param {Object} logObj The log object to print.
  */
 function _printLog(logObj) {
+  if (_opts.consoleLogLevel === -1 ||
+      logObj.levelValue > _opts.consoleLogLevel) {
+    return;
+  }
   const formattedLevel = ('     ' + logObj.level).slice(-5);
   const levelColor = _getLogColorByName(logObj.level);
   let msg = [];
@@ -252,20 +217,23 @@ function _printLog(logObj) {
   msg.push(logObj.message);
   // eslint-disable-next-line no-console
   console.log(msg.join(' | '));
-  if (logObj.exceptionMessage) {
-    let exMsg = '                        | ';
-    exMsg += colors.red('EXCPT') + ' | ' + logObj.exceptionMessage;
+  if (logObj.exception) {
+    msg = `                        | ${colors.red('EXCPT')} | `;
+    msg += logObj.exception.message;
     // eslint-disable-next-line no-console
-    console.log(exMsg);
+    console.log(msg);
+    if (logObj.exception.stack) {
+      // eslint-disable-next-line no-console
+      console.log(logObj.exception.stack);
+    }
   }
   if (logObj.extra) {
-    if (logObj.extra.stack) {
+    if (typeof logObj.extra !== 'string') {
       // eslint-disable-next-line no-console
-      console.log(logObj.extra.stack);
+      console.log(util.inspect(logObj.extra, {colors: true, depth: 3}));
     } else {
-      const inspectOpt = {colors: true, depth: 3};
       // eslint-disable-next-line no-console
-      console.log(util.inspect(logObj.extra, inspectOpt));
+      console.log(logObj.extra);
     }
   }
 }
@@ -275,27 +243,43 @@ function _printLog(logObj) {
  *
  * @param {Object} logObj The log object to save
  */
-function _saveLogToFB(logObj) {
-  if (logObj.levelValue > 50) {
+function _saveLogToFirebase(logObj) {
+  if (_opts.firebaseLogLevel === -1 ||
+      logObj.levelValue > _opts.firebaseLogLevel ||
+      !_opts.firebasePath) {
     return;
   }
-  if (_fbRef) {
-    try {
-      _fbRef.child(FIREBASE_LOG_PATH).push(logObj);
-      _fbErrors = 0;
-    } catch (ex) {
-      _exception(LOG_PREFIX, 'Error pushing log item to Firebase', ex);
-      if (_fbErrors++ > 3) {
-        _warn(LOG_PREFIX, 'Disabling Firebase logging.');
-        _options.logToFirebase = false;
-      }
-    }
-  } else {
+  if (!_fbRef) {
     _fbLogCache.push(logObj);
     if (_fbLogCache.length > 500) {
-      _warn(LOG_PREFIX, 'Firebase Log Cache exceeded max capacity.');
-      _options.logToFirebase = false;
+      _warn(LOG_PREFIX, 'Firebase log cache exceeded max capacity.');
+      _opts.firebaseLogLevel = -1;
     }
+    return;
+  }
+  const now = Date.now();
+  if (_fbErrorCount > 0) {
+    if ((now - _fbLastError) > (10 * 60 * 1000)) {
+      _fbErrorCount = 0;
+    } else if (_fbErrorCount > 5) {
+      _opts.firebaseLogLevel = -1;
+      _warn(LOG_PREFIX, 'Firebase error count exceeded.');
+      return;
+    }
+  }
+  try {
+    _fbRef.child(_opts.firebasePath).push(logObj, function(err) {
+      if (err) {
+        _exception(LOG_PREFIX, 'Unable to log item to Firebase', err);
+        _fbErrorCount++;
+        _fbLastError = now;
+        return;
+      }
+    });
+  } catch (ex) {
+    _exception(LOG_PREFIX, 'Exception trying to log to Firebase', ex);
+    _fbErrorCount++;
+    _fbLastError = now;
   }
 }
 
@@ -305,30 +289,67 @@ function _saveLogToFB(logObj) {
  * @param {Object} logObj The log object to save.
  */
 function _saveLogToFile(logObj) {
-  if (_options.logFileName) {
-    let msg = logObj.dateFormatted;
-    msg += ' | ' + ('     ' + logObj.level).slice(-5) + ' | ';
-    msg += logObj.message + '\n';
-    if (logObj.extra) {
-      if (logObj.extra.stack) {
-        msg += logObj.extra.stack + '\n';
-      } else {
-        const inspectOpt = {showHidden: false, depth: 3};
-        msg += util.inspect(logObj.extra, inspectOpt) + '\n';
-      }
-    }
-    try {
-      fs.appendFile(_options.logFileName, msg, function(err) {
-        if (err) {
-          _options.logToFile = false;
-          _exception(LOG_PREFIX, 'Unable to write to log file.', err);
-        }
-      });
-    } catch (ex) {
-      _options.logToFile = false;
-      _exception(LOG_PREFIX, 'Unable to write to log file.', ex);
+  if (_opts.fileLogLevel === -1 ||
+      logObj.levelValue > _opts.fireLogLevel) {
+    return;
+  }
+  let lines = [];
+  let line = [];
+  line.push(logObj.date_ || logObj.dateFormatted);
+  line.push(('     ' + logObj.level).slice(-5));
+  line.push(logObj.message);
+  lines.push(line.join(' | '));
+  if (logObj.exception) {
+    lines.push(`                        | EXCPT | ${logObj.exception.message}`);
+    if (logObj.exception.stack) {
+      lines.push(logObj.exception.stack);
     }
   }
+  if (logObj.extra) {
+    if (typeof logObj.extra !== 'string') {
+      lines.push(util.inspect(logObj.extra, {colors: false, depth: 3}));
+    } else {
+      lines.push(logObj.extra);
+    }
+  }
+  try {
+    lines = lines.join('\n') + '\n';
+    fs.appendFile(_opts.fileFilename, lines, function(err) {
+      if (err) {
+        _opts.fileLogLevel = -1;
+        _exception(LOG_PREFIX, 'Unable to write to log file.', err);
+      }
+    });
+  } catch (ex) {
+    _opts.fileLogLevel = -1;
+    _exception(LOG_PREFIX, 'Exception while writing to log file.', ex);
+  }
+}
+
+/**
+ * Logs a app start message.
+ *
+ * @function appStart
+ * @static
+ */
+function _appStart() {
+  if (!_appName) {
+    throw new Error('`appName` has not been set.');
+  }
+  const message = `${_appName} (${gitHead.head})`;
+  _handleLog(_generateLog('START', 'APP', message));
+}
+
+/**
+ * Log an App stop
+ *
+ * @function appStop
+ * @static
+ * @param {String} [receivedFrom] Who is requesting the app to stop
+ */
+function _appStop(receivedFrom) {
+  receivedFrom = receivedFrom || 'UNKNOWN';
+  _handleLog(_generateLog('STOP', 'APP', `Received from: ${receivedFrom}`));
 }
 
 /**
@@ -474,7 +495,7 @@ function _custom(level, prefix, message, extra) {
 function _cleanFile(logFile) {
   return new Promise(function(resolve, reject) {
     if (!logFile) {
-      logFile = _options.logFileName;
+      logFile = _opts.fileFilename;
     }
     const msg = `cleanFile('${logFile}')`;
     _log(LOG_PREFIX, msg);
@@ -566,22 +587,28 @@ function _cleanLogs(path, maxAgeDays) {
   });
 }
 
+exports.setAppName = _setAppName;
+exports.setOptions = _setOptions;
+exports.setFirebaseRef = _setFirebaseRef;
+
+exports.printLog = _printLog;
+
 exports.appStart = _appStart;
 exports.appStop = _appStop;
 exports.init = _init;
+exports.log = _log;
+exports.info = _log;
 exports.exception = _exception;
 exports.error = _error;
 exports.warn = _warn;
-exports.log = _log;
-exports.info = _log;
 exports.debug = _debug;
 exports.verbose = _verbose;
 exports.http = _http;
 exports.todo = _todo;
 exports.custom = _custom;
+
 exports.cleanLogs = _cleanLogs;
 exports.cleanFile = _cleanFile;
-exports.setFirebaseRef = _setFirebaseRef;
-exports.setOptions = _setOptions;
+
 exports.version = gitHead.head;
-exports.printLog = _printLog;
+

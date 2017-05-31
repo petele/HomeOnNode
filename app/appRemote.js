@@ -7,14 +7,24 @@ const fbHelper = require('./FBHelper');
 const Keys = require('./Keys').keys;
 const Keypad = require('./Keypad');
 
-let fb;
 let config;
 let cmdId = 0;
-let APP_NAME = 'REMOTE';
-const logOpts = {
-  logFileName: './logs/system.log',
-  logToFile: true,
-};
+
+const APP_NAME = process.argv[2];
+if (!APP_NAME) {
+  log.error('REMOTE', 'App Name not provided on command line');
+  process.exit(1);
+}
+log.setAppName(APP_NAME);
+log.setOptions({firebaseLogLevel: 40});
+log.appStart();
+
+const fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
+log.setFirebaseRef(fb);
+fb.child(`config/${APP_NAME}/logs`).on('value', (snapshot) => {
+  log.setOptions(snapshot.val());
+  log.debug(APP_NAME, 'Log config updated.');
+});
 
 /**
  * Send a command
@@ -46,11 +56,8 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     log.exception(APP_NAME, 'Unable to open config file.', err);
   } else {
     config = JSON.parse(data);
-    APP_NAME = config.appName;
-    log.appStart(APP_NAME, logOpts);
-    fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
 
-    const keypadConfigPath = `config/${config.appName}/keypad`;
+    const keypadConfigPath = `config/${APP_NAME}/keypad`;
     fb.child(keypadConfigPath).on('value', function(snapshot) {
       log.log(APP_NAME, 'Keypad settings updated.');
       config.keypad = snapshot.val();
@@ -99,5 +106,5 @@ process.on('SIGINT', function() {
 });
 
 setInterval(function() {
-  log.cleanFile(logOpts.logFileName);
+  log.cleanFile();
 }, 60 * 60 * 24 * 1000);
