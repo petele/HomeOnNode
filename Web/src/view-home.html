@@ -47,6 +47,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         text-decoration: none;
         color: var(--primary-text-color);
       }
+      @media (max-width: 400px) {
+        .current-time { font-size: 3.5em; }
+        .weather-icon-container { margin-top: 0; }
+      }
     </style>
 
     <send-command id="sendCommand"></send-command>
@@ -62,7 +66,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <device-online device-id="DoorBell"></device-online>
           <device-online device-id="Bedside"></device-online>
         </div>
-        <div class="flex current-time">
+        <div class="flex current-time center-justified">
           [[currentTime]]
         </div>
         <div class="weather-icon-container">
