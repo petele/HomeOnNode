@@ -9,7 +9,7 @@ const fbHelper = require('./FBHelper');
 const Keys = require('./Keys').keys;
 let GPIO;
 
-let APP_NAME = 'DOORBELL';
+const APP_NAME = 'DOORBELL';
 let _fb;
 let _pin;
 let _config;
@@ -28,6 +28,13 @@ log.setAppName(APP_NAME);
 log.setOptions({firebaseLogLevel: 50, firebasePath: 'logs/doorbell'});
 log.appStart();
 
+_fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, 'DoorBell');
+log.setFirebaseRef(_fb);
+_fb.child('config/Doorbell/logs').on('value', (snapshot) => {
+  log.setOptions(snapshot.val());
+  log.debug(APP_NAME, 'Log config updated.');
+});
+
 try {
   GPIO = require('onoff').GPIO;
 } catch (ex) {
@@ -35,13 +42,6 @@ try {
   exit('GPIO', 1);
   return;
 }
-
-_fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
-log.setFirebaseRef(_fb);
-_fb.child('config/Doorbell/logs').on('value', (snapshot) => {
-  log.setOptions(snapshot.val());
-  log.debug(APP_NAME, 'Log config updated.');
-});
 
 /**
  * Send an HTTP Request to the server
