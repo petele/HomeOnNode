@@ -16,7 +16,11 @@ if (!APP_NAME) {
   process.exit(1);
 }
 log.setAppName(APP_NAME);
-log.setOptions({firebaseLogLevel: 40});
+const logOpt = {
+  firebaseLogLevel: 40,
+  firebasePath: `logs/${APP_NAME.toLowerCase()}`,
+};
+log.setOptions(logOpt);
 log.appStart();
 
 const fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);

@@ -25,7 +25,7 @@ const GCM_DOORBELL_MSG = {
 };
 
 log.setAppName(APP_NAME);
-log.setOptions({firebaseLogLevel: 50});
+log.setOptions({firebaseLogLevel: 50, firebasePath: 'logs/doorbell'});
 log.appStart();
 
 try {
