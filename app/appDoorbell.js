@@ -36,7 +36,7 @@ _fb.child('config/Doorbell/logs').on('value', (snapshot) => {
 });
 
 try {
-  GPIO = require('onoff').GPIO;
+  GPIO = require('onoff').Gpio;
 } catch (ex) {
   log.exception(APP_NAME, 'Node module `onoff` is not available.', ex);
   exit('GPIO', 1);
