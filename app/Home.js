@@ -796,7 +796,7 @@ function Home(initialConfig, fbRef) {
    */
   function _receivedPushBulletNotification(msg, count) {
     let cmdName;
-    if (msg.application_name) {
+    if (msg.application_name && _self.state.systemState === 'HOME') {
       cmdName = _config.pushBulletNotifications[msg.application_name];
       if (cmdName) {
         _self.executeCommandByName(cmdName, null, 'PushBullet');
