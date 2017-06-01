@@ -141,6 +141,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (!this.path) {
           throw new Error('missing path attribute');
         }
+        document.querySelector('body').appendChild(this.$.detailDialog);
       }
 
       static get observers() {

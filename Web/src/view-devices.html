@@ -61,7 +61,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
     <fb-query path="devices" data="{{devices}}"></fb-query>
 
-    <paper-dialog id="confirmRebootDialog" on-iron-overlay-closed="confirmRebootClosed">
+    <paper-dialog id="confirmRebootDialog" modal on-iron-overlay-closed="confirmRebootClosed">
       <h2>Confirm</h2>
       <p>
         Are you sure you want to reboot [[selectedDevice.appName]]?
@@ -123,6 +123,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return {
           selectedDevice: Object,
         };
+      }
+
+      ready() {
+        super.ready();
+        document.querySelector('body').appendChild(this.$.confirmRebootDialog);
       }
 
       rebootDevice(event) {
