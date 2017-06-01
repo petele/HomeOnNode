@@ -61,10 +61,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <!-- Load your application shell -->
     <link rel="import" href="/src/my-app.html">
-    <link rel="import" href="/src/shared-styles.html">
 
     <!-- Add any global styles for body, document, etc. -->
-    <style include="shared-styles iron-flex">
+    <style>
       body {
         margin: 0;
         font-family: 'Roboto', 'Noto', sans-serif;
@@ -132,38 +131,80 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      .app-grid {
-        padding: 0;
+      dom-repeat, dom-if { display: none; }
+
+      paper-dialog {
+        min-width: 350px;
       }
-      .colorPicker paper-button {
-        border-radius: 0;
-        margin: 0;
-        min-height: 48px;
-        width: 25%;
+      paper-dialog .header {
+        display: flex;
       }
-      .circlex {
+      paper-dialog .header h1 {
+        flex-grow: 1;
+        margin-top: 0;
+      }
+      paper-dialog p:first-of-type {
+        margin-top: 0;
+      }
+
+      #logDetailDialog .date {
+        margin-bottom: 0;
+        text-align: right;
+      }
+      #logDetailDialog .circle {
         border-radius: 50%;
         display: inline-block;
-        font-size: 12px;
+        font-size: 30px;
         height: 64px;
-        line-height: 60px;
         text-align: center;
         width: 64px;
+        margin-top: -12px;
       }
-      paper-icon-button[disabled] {
-        opacity: 0.5;
+      #logDetailDialog iron-icon {
+        color: white;
+        height: 48px;
+        width: 48px;
+        padding-top: 7px;
       }
-      .ctContainer {
+      #logDetailDialog .ERROR,
+      #logDetailDialog .EXCPT,
+      #logDetailDialog .STOP {
+        background-color: var(--paper-red-500);
+      }
+      #logDetailDialog .WARN {
+        background-color: var(--paper-amber-300);
+      }
+      #logDetailDialog .INFO,
+      #logDetailDialog .POST {
+        background-color: var(--paper-blue-500);
+      }
+      #logDetailDialog .INIT,
+      #logDetailDialog .START {
+        background-color: var(--paper-green-500);
+      }
+      #logDetailDialog .TODO {
+        background-color: var(--paper-cyan-300);
+      }
+
+      #colorDialog .colorButtonContainer {
+        display: flex;
+        flex-flow: row wrap;
+      }
+      #colorDialog .colorButtonContainer paper-button {
+        width: 33%;
+        margin: 0;
+        border-radius: 0;
+      }
+      #colorDialog .ctContainer {
         background-image: url(/images/color-temp-map.png);
         background-size: cover;
         margin-left: 24px;
         margin-right: 24px;
       }
-      paper-slider {
+      #colorDialog paper-slider {
         margin-left: -36px;
         width: calc(100% + 72px);
       }
-
     </style>
 
   </head>

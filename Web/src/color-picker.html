@@ -16,6 +16,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+
 <link rel="import" href="shared-styles.html">
 
 <dom-module id="color-picker">
@@ -24,16 +28,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
-      .app-grid {
-        padding: 0;
-      }
-      .colorPicker paper-button {
+      /*.colorPicker paper-button {
         border-radius: 0;
         margin: 0;
         min-height: 48px;
         width: 25%;
-      }
-      .circle {
+      }*/
+      /*.circle {
         border-radius: 50%;
         display: inline-block;
         font-size: 12px;
@@ -41,20 +42,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         line-height: 60px;
         text-align: center;
         width: 64px;
-      }
+      }*/
       paper-icon-button[disabled] {
         opacity: 0.5;
       }
-      .ctContainer {
+      /*.ctContainer {
         background-image: url(/images/color-temp-map.png);
         background-size: cover;
         margin-left: 24px;
         margin-right: 24px;
-      }
-      paper-slider {
+      }*/
+      /*paper-slider {
         margin-left: -36px;
         width: calc(100% + 72px);
-      }
+      }*/
     </style>
 
     <paper-icon-button 
@@ -65,12 +66,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </paper-icon-button>
 
     <paper-dialog id="colorDialog" modal>
-      <div class="layout horizontal">
-        <h1 class="flex">Color</h1>
-      </div>
-
+      <h1>Color</h1>
       <div>
-        <div class="colorPicker layout horizontal wrap">
+        <div class="colorButtonContainer">
           <paper-button class="button" on-tap="tapReset">
             Reset
           </paper-button>
@@ -81,19 +79,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </template>
         </div>
       </div>
+
+      <paper-dropdown-menu id="pdmEffects" 
+        style="margin-top: 0;width:calc(100% - 48px);"
+        label="Effects">
+        <paper-listbox
+          id="effectsList"
+          slot="dropdown-content"
+          selected="0"
+          on-iron-select="effectSelected">
+            <paper-item></paper-item>
+            <paper-item value='{"effect": "colorloop"}'>Color Loop (On)</paper-item>
+            <paper-item value='{"effect": "none"}'>Color Loop (Off)</paper-item>
+            <paper-item value='{"alert": "lselect"}'>Select (Long)</paper-item>
+            <paper-item value='{"alert": "select"}'>Select (Short)</paper-item>
+            <paper-item value='{"alert": "none"}'>Select (Off)</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu>
+
       <div class="ctContainer">
         <paper-slider value="{{ctMired}}" min="153" max="500">
         </paper-slider>
       </div>
-      <!--
-      <div>
-        <paper-checkbox checked="{{colorCycle}}" on-change="tapColorCycle">
-          Color Cycle
-        </paper-checkbox>
-      </div>
-      -->
+
       <div class="buttons">
-        <!-- <paper-button dialog-dismiss>Cancel</paper-button> -->
         <paper-button dialog-confirm autofocus>Close</paper-button>
       </div>
     </paper-dialog>
@@ -161,6 +170,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       showDialog() {
         window.lastUserInput = Date.now();
+        this.$.effectsList.selected = 0;
         this.$.colorDialog.open();
       }
 
@@ -191,9 +201,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       tapReset() {
         window.lastUserInput = Date.now();
+        this.ctMired = 153;
         this.color = {};
         this.colorInfo = '';
         this.colorValue = '#CCCCCC';
+      }
+
+      effectSelected(event) {
+        window.lastUserInput = Date.now();
+        let effect = event.target.selectedItem.getAttribute('value');
+        if (effect) {
+          effect = JSON.parse(effect);
+          this.color = effect;
+          this.colorValue = '#000';
+          this.$.colorDialog.close();
+        }
       }
 
     }

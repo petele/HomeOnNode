@@ -28,13 +28,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
         padding: 0 8px;
       }
-      .label {
-        border-radius: 0.25em;
-        color: var(--app-light-color);
-        font-size: 0.75em;
-        margin-right: 1em;
-        padding: 0.2em 0.6em 0.3em;
-      }
       .ERROR, .EXCPT, .STOP {
         background-color: var(--paper-red-500);
       }
@@ -50,16 +43,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .TODO {
         background-color: var(--paper-cyan-300);
       }
+      .label {
+        border-radius: 0.25em;
+        color: var(--app-light-color);
+        font-size: 0.75em;
+        margin-right: 1em;
+        padding: 0.2em 0.6em 0.3em;
+      }
       paper-item {
         border-bottom: 1px solid var(--divider-color);
         cursor: -webkit-grab;
         padding-left: 0;
         padding-right: 0;
       }
-      paper-dialog {
+      /*paper-dialog {
         min-width: 350px;
-      }
-      .circle {
+      }*/
+      /*.circle {
         border-radius: 50%;
         display: inline-block;
         font-size: 30px;
@@ -67,12 +67,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         line-height: 60px;
         text-align: center;
         width: 64px;
-      }
-      iron-icon {
+      }*/
+      /*iron-icon {
         color: var(--app-light-color);
         height: 48px;
         width: 48px;
-      }
+      }*/
     </style>
 
     <firebase-query
@@ -82,9 +82,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         limit-to-last="[[MAX_ITEMS]]">
     </firebase-query>
 
-    <paper-dialog id="detailDialog">
-      <div class="layout horizontal">
-        <h1 class="flex">[[getHeading(selectedLogItem)]]</h1>
+    <paper-dialog modal id="logDetailDialog">
+      <div class="header">
+        <h1>[[getHeading(selectedLogItem)]]</h1>
         <div class$="[[getClass(selectedLogItem.level)]]">
           <iron-icon icon="[[getIcon(selectedLogItem.level)]]">
           </iron-icon>
@@ -93,7 +93,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <p>
         [[getMessage(selectedLogItem)]]
       </p>
-      <p>
+      <template is="dom-if" if="[[selectedLogItem.exception]]">
+        <p><b><code>[[selectedLogItem.exception.message]]</code></b></p>
+        <template is="dom-if" if="[[selectedLogItem.exception.stack]]">
+          <pre>[[selectedLogItem.exception.stack]]</pre>
+        </template>
+      </template>
+      <template is="dom-if" if="[[selectedLogItem.extra]]">
+        <pre>[[getExtra(selectedLogItem.extra)]]</pre>
+      </template>
+      <p class="date">
         [[formatDate(selectedLogItem.date)]]
       </p>
       <div class="buttons">
@@ -141,7 +150,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (!this.path) {
           throw new Error('missing path attribute');
         }
-        document.querySelector('body').appendChild(this.$.detailDialog);
+        document.querySelector('body').appendChild(this.$.logDetailDialog);
       }
 
       static get observers() {
@@ -192,6 +201,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return result;
       }
 
+      getExtra(extra) {
+        if (typeof extra === 'string') {
+          return extra;
+        }
+        return JSON.stringify(extra, null, 2);
+      }
+
       getClass(level) {
         return 'circle ' + level;
       }
@@ -214,7 +230,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       tapLogItem(event) {
         this.selectedLogItem = event.model.item;
-        this.$.detailDialog.open();
+        this.$.logDetailDialog.open();
       }
 
     }

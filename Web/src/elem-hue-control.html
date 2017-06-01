@@ -36,10 +36,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         background-color: white;
       }
 
+      color-picker {
+        margin: 28px 12px 0;
+      }
+
     </style>
 
     <div class="layout horizontal">
-      <paper-dropdown-menu id="pdmAction" label="Action">
+      <paper-dropdown-menu id="pdmAction" label="Action" style="flex-grow:1;">
         <paper-listbox
           slot="dropdown-content"
           selected="0"
@@ -52,7 +56,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       <color-picker disabled="{{disablePickers}}" color="{{color}}"></color-picker>
 
-      <paper-dropdown-menu id="pdmBri" 
+      <paper-dropdown-menu id="pdmBri" style="flex-grow:1;"
         label="Brightness" disabled="{{disablePickers}}">
         <paper-listbox
           slot="dropdown-content"
