@@ -24,7 +24,7 @@ function Presence() {
   const _self = this;
   let _noble;
   let _nobleStarted = false;
-  let _status = {};
+  let _people = {};
   let _flicUUID;
   let _lastFlics = [];
   let _flicPushed = false;
@@ -36,7 +36,7 @@ function Presence() {
    * @param {String} uuid
   */
   this.setFlicAwayUUID = function(uuid) {
-    log.log(LOG_PREFIX, `setFlicAwayUUID('${uuid}')`);
+    log.debug(LOG_PREFIX, `setFlicAwayUUID('${uuid}')`);
     _flicUUID = uuid;
   };
 
@@ -50,14 +50,14 @@ function Presence() {
     const msg = `addPerson('${newPerson.name}', '${newPerson.uuid}')`;
     try {
       const uuid = newPerson.uuid;
-      let person = _status[uuid];
+      let person = _people[uuid];
       if (person) {
         log.warn(LOG_PREFIX, msg + ' already exists.');
         return false;
       }
-      _status[uuid] = newPerson;
-      _status[uuid].lastSeen = 0;
-      _status[uuid].state = USER_STATES.AWAY;
+      _people[uuid] = newPerson;
+      _people[uuid].lastSeen = 0;
+      _people[uuid].state = USER_STATES.AWAY;
       log.log(LOG_PREFIX, msg);
       return true;
     } catch (ex) {
@@ -75,13 +75,13 @@ function Presence() {
   this.removePersonByKey = function(uuid) {
     const msg = `removePersonByKey('${uuid}')`;
     try {
-      let person = _status[uuid];
+      let person = _people[uuid];
       if (person) {
         log.log(LOG_PREFIX, msg);
         if (person.state === USER_STATES.PRESENT) {
           _numPresent -= 1;
         }
-        delete _status[uuid];
+        delete _people[uuid];
         return true;
       }
       log.warn(LOG_PREFIX, msg + ' UUID not found.');
@@ -98,10 +98,11 @@ function Presence() {
    * @param {Object} uPerson The person object to update.
    * @return {Boolean} True is the person was successfully updated.
   */
-  this.updatePersonByKey = function(uPerson) {
+  this.updatePerson = function(uPerson) {
+    const msg = `updatePerson(${JSON.stringify(uPerson)})`;
     try {
       const uuid = uPerson.uuid;
-      let person = _status[uuid];
+      let person = _people[uuid];
       if (person) {
         person.name = uPerson.name;
         person.track = uPerson.track;
@@ -109,13 +110,13 @@ function Presence() {
           _numPresent -= 1;
           person.state = USER_STATES.AWAY;
         }
-        log.log(LOG_PREFIX, `Updated: ${person.name} (${uuid})`);
+        log.log(LOG_PREFIX, msg);
         return true;
       }
-      log.warn(LOG_PREFIX, 'Could not find ' + uuid + ' to update.');
+      log.warn(LOG_PREFIX, msg + ' - failed. Could not find person.');
       return false;
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'Error updating person.', ex);
+      log.exception(LOG_PREFIX, msg + ' - exception occured.', ex);
       return false;
     }
   };
@@ -127,7 +128,6 @@ function Presence() {
     if (_noble) {
       _noble.stopScanning();
     }
-    _nobleStarted = false;
     log.log(LOG_PREFIX, 'Shut down.');
   };
 
@@ -155,24 +155,21 @@ function Presence() {
         _noble.startScanning([], true);
       } else {
         _noble.stopScanning();
-        _self.emit('adapter_error', {'adapterState': state});
         log.exception(LOG_PREFIX, 'Unknown adapter state.', state);
       }
     });
     _noble.on('scanStart', function() {
       log.log(LOG_PREFIX, 'Noble Scanning Started.');
       _nobleStarted = true;
-      _self.emit('scan_started');
     });
     _noble.on('scanStop', function() {
       log.log(LOG_PREFIX, 'Noble Scanning Stopped.');
       _nobleStarted = false;
-      _self.emit('scan_stopped');
+    });
+    _noble.on('warning', (message) => {
+      log.warn(LOG_PREFIX, 'Noble warning: ' + message);
     });
     _noble.on('discover', sawPerson);
-    if (_nobleStarted === false) {
-      _noble.startScanning([], true);
-    }
   }
 
   /**
@@ -185,11 +182,17 @@ function Presence() {
       _sawFlic(peripheral);
       return;
     }
-    let person = _status[peripheral.uuid];
+    let person = _people[peripheral.uuid];
     if (person && person.track === true) {
       const now = Date.now();
       person.lastSeen = now;
-      person.lastSeen_ = moment(now).format(TIME_FORMAT);
+      person.lastSeenFormatted = moment(now).format(TIME_FORMAT);
+      if (peripheral.rssi) {
+        person.rssi = peripheral.rssi;
+      }
+      if (peripheral.advertisement && peripheral.advertisement.localName) {
+        person.localName = peripheral.advertisement.localName;
+      }
       if (person.state === USER_STATES.AWAY) {
         person.state = USER_STATES.PRESENT;
         _numPresent += 1;
@@ -206,12 +209,12 @@ function Presence() {
    * @param {Object} person The person who's state has changed.
   */
   function _emitChange(person) {
-    log.log(LOG_PREFIX, `${person.name} is ${person.state} (${_numPresent})`);
+    log.log(LOG_PREFIX, `${person.name} is ${person.state}`);
     /**
      * Fired when a persons AWAY/PRESENT status changes
      * @event Presence#change
      */
-    _self.emit('change', person, _numPresent, _status);
+    _self.emit('change', person, _numPresent, _people);
   }
 
   /**
@@ -222,8 +225,8 @@ function Presence() {
       return;
     }
     const now = Date.now();
-    Object.keys(_status).forEach((key) => {
-      let person = _status[key];
+    Object.keys(_people).forEach((key) => {
+      let person = _people[key];
       if (person.track === true) {
         const timeSinceLastSeen = (now - person.lastSeen);
         if ((timeSinceLastSeen > MAX_AWAY) &&
@@ -258,10 +261,6 @@ function Presence() {
         msg += timeSinceLastFlic + ' ';
         msg += moment(now).format(TIME_FORMAT);
         log.debug(LOG_PREFIX, msg);
-        /**
-         * Fired when the FLIC away button is pressed
-         * @event Presence#flic_away
-         */
         _self.emit('flic_away');
       }
     }

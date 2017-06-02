@@ -746,7 +746,6 @@ function Home(initialConfig, fbRef) {
       name: person.name,
       state: person.state,
       date: person.lastSeen,
-      date_: person.lastSeen_,
     };
     _fbPush('logs/presence', presenceLog);
     _fbSet('state/presence', who);

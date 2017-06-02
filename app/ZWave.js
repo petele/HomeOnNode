@@ -61,24 +61,10 @@ function ZWave() {
   }
 
   /**
-   * Checks if system is ready
-   *
-   * @return {Boolean} true if system is ready, false if not.
-   */
-  function _isReady() {
-    if (OZWave && _zwave && _ready === true) {
-      return true;
-    }
-    log.error(LOG_PREFIX, 'ZWave not ready.');
-    return false;
-  }
-
-
-  /**
    * Connect to the ZWave Device via USB
    */
   function _connect() {
-    if (_isReady() === true) {
+    if (OZWave && _zwave && _ready === true) {
       log.warn(LOG_PREFIX, 'Already connected.');
       return;
     }
