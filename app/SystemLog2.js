@@ -122,7 +122,7 @@ function _stringify(obj) {
  */
 function _generateLog(level, prefix, message, extra) {
   const now = Date.now();
-  const nowPretty = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
+  const nowPretty = _formatTime(now);
   const levelValue = _getLogLevelValueByName(level);
   let msg = '';
   if (prefix) {
@@ -327,6 +327,23 @@ function _saveLogToFile(logObj) {
     _opts.fileLogLevel = -1;
     _exception(LOG_PREFIX, 'Exception while writing to log file.', ex);
   }
+}
+
+/**
+ * Formats Date.now() into YYYY-MM-DDTHH:mm:ss[.SSS]
+ *
+ * @function formatTime
+ * @static
+ *
+ * @param {Integer} now Date.now() Epoch time to convert
+ * @param {Boolean} [short] Exclude MS in time
+ * @return {String} YYYY-MM-DDTHH:mm:ss.SSS
+ */
+function _formatTime(now, short) {
+  if (short === true) {
+    return moment(now).format('YYYY-MM-DDTHH:mm:ss');
+  }
+  return moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
 }
 
 /**
@@ -571,7 +588,7 @@ function _cleanLogs(path, maxAgeDays) {
       return;
     }
     const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
-    const niceDate = moment(endAt).format('YYYY-MM-DDTHH:mm:ss');
+    const niceDate = _formatTime(endAt);
     _debug(LOG_PREFIX, `Removing items older than ${niceDate} from ${path}`);
     _fbRef.child(path).orderByChild('date').endAt(endAt).once('value',
       function(snapshot) {
@@ -594,6 +611,8 @@ exports.setAppName = _setAppName;
 exports.setOptions = _setOptions;
 exports.setFirebaseRef = _setFirebaseRef;
 
+exports.formatTime = _formatTime;
+
 exports.appStart = _appStart;
 exports.appStop = _appStop;
 exports.init = _init;
@@ -613,4 +632,3 @@ exports.cleanLogs = _cleanLogs;
 exports.cleanFile = _cleanFile;
 
 exports.version = gitHead.head;
-

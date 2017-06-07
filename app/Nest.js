@@ -483,11 +483,14 @@ function Nest(authToken, fbRef) {
         msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
         if (isRetry !== true) {
           msg += '. Will retry.';
-          log.log(LOG_PREFIX, msg);
+          log.warn(LOG_PREFIX, msg);
           setTimeout(() => {
             resolve(_setThermostat(thermostatId, temperature, true));
           }, RETRY_DELAY);
+          return;
         }
+        log.warn(LOG_PREFIX, msg);
+        reject(new Error('incompatible_hvac_mode'));
         return;
       }
       log.log(LOG_PREFIX, msg);
@@ -520,11 +523,14 @@ function Nest(authToken, fbRef) {
         msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
         if (isRetry !== true) {
           msg += '. Will retry.';
-          log.log(LOG_PREFIX, msg);
+          log.warn(LOG_PREFIX, msg);
           setTimeout(() => {
             resolve(_runHVACFan(thermostatId, minutes, true));
           }, RETRY_DELAY);
+          return;
         }
+        log.warn(LOG_PREFIX, msg);
+        reject(new Error('incompatible_hvac_mode'));
         return;
       }
       let fanOn = minutes === 0 ? false : true;

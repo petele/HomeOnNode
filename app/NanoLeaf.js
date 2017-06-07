@@ -142,7 +142,7 @@ function NanoLeaf(key, ip, port) {
       }
       return val;
     } catch (ex) {
-      log.error(LOG_PREFIX, 'Brightness must be an integer.');
+      log.error(LOG_PREFIX, `${label} must be an integer.`);
       return null;
     }
   }

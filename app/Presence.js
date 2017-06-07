@@ -3,7 +3,6 @@
 const EventEmitter = require('events').EventEmitter;
 const log = require('./SystemLog2');
 const util = require('util');
-const moment = require('moment');
 
 const LOG_PREFIX = 'PRESENCE';
 
@@ -19,7 +18,6 @@ function Presence() {
     AWAY: 'AWAY',
     PRESENT: 'PRESENT',
   };
-  const TIME_FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSS';
   const MAX_AWAY = 3 * 60 * 1000;
   const _self = this;
   let _noble;
@@ -186,7 +184,7 @@ function Presence() {
     if (person && person.track === true) {
       const now = Date.now();
       person.lastSeen = now;
-      person.lastSeenFormatted = moment(now).format(TIME_FORMAT);
+      person.lastSeenFormatted = log.formatTime(now);
       if (peripheral.rssi) {
         person.rssi = peripheral.rssi;
       }
@@ -258,8 +256,7 @@ function Presence() {
           _flicPushed = false;
         }, 45000);
         let msg = 'Flic Button Pushed: ';
-        msg += timeSinceLastFlic + ' ';
-        msg += moment(now).format(TIME_FORMAT);
+        msg += timeSinceLastFlic + ' ' + log.formatTime(now);
         log.debug(LOG_PREFIX, msg);
         _self.emit('flic_away');
       }

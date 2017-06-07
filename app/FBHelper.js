@@ -5,7 +5,6 @@
 const os = require('os');
 const Firebase = require('firebase');
 const log = require('./SystemLog2');
-const moment = require('moment');
 const version = require('./version');
 const exec = require('child_process').exec;
 
@@ -21,7 +20,6 @@ const LOG_PREFIX = 'FB_HELPER';
  */
 function init(fbAppId, key, appName) {
   log.init(LOG_PREFIX, fbAppId + ' for ' + appName);
-  const timeFormat = 'YYYY-MM-DDTHH:mm:ss.SSS';
   const fbURL = `https://${fbAppId}.firebaseio.com/`;
   let fb = new Firebase(fbURL);
 
@@ -34,7 +32,7 @@ function init(fbAppId, key, appName) {
   });
 
   const now = Date.now();
-  const startedAt = moment(now).format(timeFormat);
+  const startedAt = log.formatTime(now);
   let def = {
     appName: appName,
     startedAt: now,
@@ -66,7 +64,7 @@ function init(fbAppId, key, appName) {
       const now = Date.now();
       const def = {
         heartbeat: now,
-        heartbeat_: moment(now).format(timeFormat),
+        heartbeat_: log.formatTime(now),
         online: true,
         shutdownAt: null,
       };
@@ -88,8 +86,7 @@ function init(fbAppId, key, appName) {
 
   setInterval(function() {
     const now = Date.now();
-    fb.child(`devices/${appName}/heartbeat_`)
-      .set(moment(now).format(timeFormat));
+    fb.child(`devices/${appName}/heartbeat_`).set(log.formatTime(now));
     fb.child(`devices/${appName}/heartbeat`).set(now);
   }, 1 * 60 * 1000);
 

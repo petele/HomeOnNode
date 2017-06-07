@@ -6,7 +6,6 @@ const exec = require('child_process').exec;
 const log = require('./SystemLog2');
 const Keys = require('./Keys').keys;
 const version = require('./version');
-const moment = require('moment');
 const fs = require('fs');
 
 const GCMPush = require('./GCMPush');
@@ -287,9 +286,9 @@ function Home(initialConfig, fbRef) {
       systemState: 'AWAY',
       time: {
         started: now,
-        started_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        started_: log.formatTime(now),
         lastUpdated: now,
-        lastUpdated_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+        lastUpdated_: log.formatTime(now),
       },
       gitHead: version.head,
     };
@@ -409,7 +408,7 @@ function Home(initialConfig, fbRef) {
     const now = Date.now();
     _fb.child('state/time').update({
       lastUpdated: now,
-      lastUpdated_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+      lastUpdated_: log.formatTime(now),
     });
   }
 
@@ -436,7 +435,7 @@ function Home(initialConfig, fbRef) {
     }
     _fbSet(`state/doors/${doorName}`, doorState);
     const now = Date.now();
-    const nowPretty = moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS');
+    const nowPretty = log.formatTime(now);
     const msg = `${doorName} door ${doorState}`;
     const doorLogObj = {
       level: 'INFO',
@@ -569,7 +568,7 @@ function Home(initialConfig, fbRef) {
       message: newState,
       state: newState,
       date: now,
-      date_: moment(now).format('YYYY-MM-DDTHH:mm:ss.SSS'),
+      date_: log.formatTime(now),
     };
     _fbPush('logs/systemState', stateLog);
     _self.executeCommandByName('RUN_ON_' + newState, null, 'SET_STATE');
