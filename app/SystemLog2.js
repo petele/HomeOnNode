@@ -6,7 +6,7 @@ const os = require('os');
 const fs = require('fs');
 const util = require('util');
 const zlib = require('zlib');
-const colors = require('colors');
+const chalk = require('chalk');
 const gitHead = require('./version');
 const moment = require('moment');
 
@@ -19,16 +19,16 @@ const DEFAULT_OPTIONS = {
   firebasePath: 'logs/generic',
 };
 const LOG_LEVELS = {
-  START: {level: 0, color: colors.green},
-  STOP: {level: 0, color: colors.red},
-  INIT: {level: 0, color: colors.green},
-  EXCPT: {level: 0, color: colors.red},
-  ERROR: {level: 10, color: colors.red},
-  WARN: {level: 40, color: colors.yellow},
-  INFO: {level: 50, color: colors.cyan},
-  TODO: {level: 60, color: colors.magenta},
-  DEBUG: {level: 60, color: colors.blue},
-  EXTRA: {level: 70, color: colors.blue},
+  START: {level: 0, color: chalk.green},
+  STOP: {level: 0, color: chalk.red},
+  INIT: {level: 0, color: chalk.green},
+  EXCPT: {level: 0, color: chalk.red},
+  ERROR: {level: 10, color: chalk.red},
+  WARN: {level: 40, color: chalk.yellow},
+  INFO: {level: 50, color: chalk.cyan},
+  TODO: {level: 60, color: chalk.magenta},
+  DEBUG: {level: 60, color: chalk.blue},
+  EXTRA: {level: 70, color: chalk.blue},
 };
 const LOG_PREFIX = 'LOGGER';
 
@@ -186,7 +186,7 @@ function _getLogColorByName(levelName) {
   if (logInfo) {
     return logInfo.color;
   }
-  return colors.green;
+  return chalk.green;
 }
 
 /**
@@ -195,50 +195,53 @@ function _getLogColorByName(levelName) {
  * @param {Object} logObj The log object to handle.
  */
 function _handleLog(logObj) {
-  _printLog(logObj);
-  _saveLogToFile(logObj);
-  _saveLogToFirebase(logObj);
+  const stringifiedLogObj = _stringifyLog(logObj);
+  if (logObj.levelValue <= _opts.consoleLogLevel) {
+    // eslint-disable-next-line no-console
+    console.log(stringifiedLogObj);
+  }
+  if (logObj.levelValue <= _opts.fileLogLevel) {
+    _saveLogToFile(stringifiedLogObj);
+  }
+  if (logObj.levelValue <= _opts.firebaseLogLevel) {
+    _saveLogToFirebase(logObj);
+  }
 }
 
 /**
- * Prints the lob object to the console.
+ * Stringifies a logObj into a string.
  *
- * @function printLog
+ * @function stringifyLog
  * @static
  * @param {Object} logObj The log object to print.
+ * @return {String}
  */
-function _printLog(logObj) {
-  if (_opts.consoleLogLevel === -1 ||
-      logObj.levelValue > _opts.consoleLogLevel) {
-    return;
-  }
-  const formattedLevel = ('     ' + logObj.level).slice(-5);
+function _stringifyLog(logObj) {
+  const dt = logObj.date_ || logObj.dateFormatted;
   const levelColor = _getLogColorByName(logObj.level);
-  let msg = [];
-  msg.push(logObj.date_ || logObj.dateFormatted);
-  msg.push(levelColor(formattedLevel));
-  msg.push(logObj.message);
-  // eslint-disable-next-line no-console
-  console.log(msg.join(' | '));
+  const level = levelColor(('     ' + logObj.level).slice(-5));
+  let result = `${dt} | ${level} | ${logObj.message}`;
+  let extra = [];
+  let prefix = `                        | ${level} | `;
   if (logObj.exception) {
-    msg = `                        | ${colors.red('EXCPT')} | `;
-    msg += logObj.exception.message;
-    // eslint-disable-next-line no-console
-    console.log(msg);
     if (logObj.exception.stack) {
-      // eslint-disable-next-line no-console
-      console.log(logObj.exception.stack);
+      logObj.exception.stack.split('\n').forEach((l) => {
+        extra.push(`${prefix} ${l}`);
+      });
+    } else {
+      extra.push(`${prefix} ${logObj.exception.message}`);
     }
   }
   if (logObj.extra) {
-    if (typeof logObj.extra !== 'string') {
-      // eslint-disable-next-line no-console
-      console.log(util.inspect(logObj.extra, {colors: true, depth: 3}));
-    } else {
-      // eslint-disable-next-line no-console
-      console.log(logObj.extra);
-    }
+    const opts = {colors: true, depth: 5};
+    util.inspect(logObj.extra, opts).split('\n').forEach((l) => {
+      extra.push(`${prefix} ${l}`);
+    });
   }
+  if (extra.length > 0) {
+    result += '\n' + extra.join('\n');
+  }
+  return result;
 }
 
 /**
@@ -289,34 +292,11 @@ function _saveLogToFirebase(logObj) {
 /**
  * Save a log object to the log file.
  *
- * @param {Object} logObj The log object to save.
+ * @param {String} stringifiedLogObj The log object to save.
  */
-function _saveLogToFile(logObj) {
-  if (_opts.fileLogLevel === -1 ||
-      logObj.levelValue > _opts.fireLogLevel) {
-    return;
-  }
-  let lines = [];
-  let line = [];
-  line.push(logObj.date_ || logObj.dateFormatted);
-  line.push(('     ' + logObj.level).slice(-5));
-  line.push(logObj.message);
-  lines.push(line.join(' | '));
-  if (logObj.exception) {
-    lines.push(`                        | EXCPT | ${logObj.exception.message}`);
-    if (logObj.exception.stack) {
-      lines.push(logObj.exception.stack);
-    }
-  }
-  if (logObj.extra) {
-    if (typeof logObj.extra !== 'string') {
-      lines.push(util.inspect(logObj.extra, {colors: false, depth: 3}));
-    } else {
-      lines.push(logObj.extra);
-    }
-  }
+function _saveLogToFile(stringifiedLogObj) {
   try {
-    lines = lines.join('\n') + '\n';
+    let lines = chalk.stripColor(stringifiedLogObj) + '\n';
     fs.appendFile(_opts.fileFilename, lines, function(err) {
       if (err) {
         _opts.fileLogLevel = -1;
@@ -612,6 +592,7 @@ exports.setOptions = _setOptions;
 exports.setFirebaseRef = _setFirebaseRef;
 
 exports.formatTime = _formatTime;
+exports.stringifyLog = _stringifyLog;
 
 exports.appStart = _appStart;
 exports.appStop = _appStop;
@@ -627,7 +608,6 @@ exports.http = _http;
 exports.todo = _todo;
 exports.custom = _custom;
 
-exports.printLog = _printLog;
 exports.cleanLogs = _cleanLogs;
 exports.cleanFile = _cleanFile;
 

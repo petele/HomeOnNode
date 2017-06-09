@@ -12,7 +12,9 @@ const log = require('./SystemLog2');
 function printLogs(path) {
   fb.child(path).orderByChild('date').limitToLast(100).on('child_added',
     function(snapshot) {
-      log.printLog(snapshot.val());
+      let msg = log.stringifyLog(snapshot.val());
+      // eslint-disable-next-line no-console
+      console.log(msg);
     }
   );
 }
