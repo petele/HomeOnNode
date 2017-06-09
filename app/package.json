@@ -27,7 +27,13 @@
     "ws": "^1.1.1"
   },
   "devDependencies": {
+    "chai": "^4.0.2",
     "eslint": "^3.19.0",
-    "eslint-config-google": "^0.7.1"
+    "eslint-config-google": "^0.7.1",
+    "mocha": "^3.4.2"
+  },
+  "scripts": {
+    "test": "mocha ./tests/*.js",
+    "lint": "eslint --ignore-pattern '/tests/' ."
   }
 }

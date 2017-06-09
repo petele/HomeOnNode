@@ -108,6 +108,11 @@ function Nest(authToken, fbRef) {
    * @return {Promise} Resolves to a boolean, with the result of the request
    */
   this.adjustTemperature = function(roomId, direction) {
+    let msg = `adjustTemperature('${roomId}', '${direction}')`;
+    if (_deviceState !== STATES.ready) {
+      log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
+      return Promise.reject(new Error('not_ready'));
+    }
     const thermostatId = _findThermostatId(roomId);
     if (!thermostatId) {
       return Promise.reject(new Error('room_id_not_found'));
@@ -125,16 +130,17 @@ function Nest(authToken, fbRef) {
       } else if (direction === 'DOWN' || direction === 'DIM_DOWN') {
         temperature--;
       } else {
-        let msg = 'adjustTemperature failed, unknown direction: ' + direction;
+        msg += ' failed, unknown direction.';
         log.warn(LOG_PREFIX, msg);
+        return Promise.reject(new Error('unknown_direction'));
       }
       if (temperature > 90 || temperature < 60) {
-        log.warn(LOG_PREFIX, 'adjustTemperature failed, limit exceeded.');
+        log.warn(LOG_PREFIX, msg + ' failed, limit exceeded.');
         return Promise.reject(new Error('temperature_limit_exceeded'));
       }
       return _setThermostat(thermostatId, temperature);
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'adjustTemperature failed', ex);
+      log.exception(LOG_PREFIX, msg + ' failed', ex);
       return Promise.reject(ex);
     }
   };
@@ -471,11 +477,15 @@ function Nest(authToken, fbRef) {
    */
   function _setThermostat(thermostatId, temperature, isRetry) {
     return new Promise(function(resolve, reject) {
-      let thermostat = _nestData.devices.thermostats[thermostatId];
-      let msg = `setThermostat('${thermostat.name}', ${temperature})`;
+      let msg = `setThermostat('${thermostatId}', ${temperature})`;
       if (_deviceState !== STATES.ready) {
         log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
         reject(new Error('not_ready'));
+        return;
+      }
+      let thermostat = _getThermostat(thermostatId);
+      if (!thermostat) {
+        reject(new Error('thermostat_not_found'));
         return;
       }
       let hvacMode = thermostat['hvac_mode'];
@@ -511,11 +521,15 @@ function Nest(authToken, fbRef) {
    */
   function _runHVACFan(thermostatId, minutes, isRetry) {
     return new Promise(function(resolve, reject) {
-      let thermostat = _nestData.devices.thermostats[thermostatId];
-      let msg = `runHVACFan('${thermostat.name}')`;
+      let msg = `runHVACFan('${thermostatId}', ${minutes}, ${isRetry})`;
       if (_deviceState !== STATES.ready) {
         log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
         reject(new Error('not_ready'));
+        return;
+      }
+      const thermostat = _getThermostat(thermostatId);
+      if (!thermostat) {
+        reject(new Error('thermostat_not_found'));
         return;
       }
       let hvacMode = thermostat['hvac_mode'];

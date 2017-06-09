@@ -151,7 +151,7 @@ function _generateLog(level, prefix, message, extra) {
         result.exception.stack = extra.stack;
       }
     } else if (typeof extra === 'string') {
-      result.extra = 'string';
+      result.extra = extra;
     } else {
       result.extra = JSON.parse(JSON.stringify(extra));
     }

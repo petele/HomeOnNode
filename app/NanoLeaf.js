@@ -37,19 +37,19 @@ function NanoLeaf(key, ip, port) {
     if (modifier === 'OFF') {
       return _setPower(false);
     }
-    if (command.effect) {
+    if (command.hasOwnProperty('effect')) {
       return _setEffect(command.effect);
     }
-    if (command.brightness) {
+    if (command.hasOwnProperty('brightness')) {
       return _setBrightness(command.brightness);
     }
-    if (command.colorTemp) {
+    if (command.hasOwnProperty('colorTemp')) {
       return _setColorTemperature(command.colorTemp);
     }
-    if (command.hasOwnProperty('hue') && command.hasOwnProperty('hue')) {
+    if (command.hasOwnProperty('hue') && command.hasOwnProperty('sat')) {
       return _setHueAndSat(command.hue, command.sat);
     }
-    if (command.authorize) {
+    if (command.hasOwnProperty('authorize')) {
       return _makeLeafRequest('new', 'POST').then((resp) => {
         log.log(LOG_PREFIX, resp);
         return resp;
@@ -119,7 +119,7 @@ function NanoLeaf(key, ip, port) {
         if (requestPath !== '') {
           _getState();
         }
-        resolve(respBody);
+        resolve({statusCode: response.statusCode, body: respBody});
       });
     });
   }
@@ -232,7 +232,7 @@ function NanoLeaf(key, ip, port) {
         return;
       }
       level = _validateInput(level, 0, 100, 'Brightness');
-      if (!level) {
+      if (level === null) {
         reject(new Error('value_out_of_range'));
         return;
       }
@@ -256,7 +256,7 @@ function NanoLeaf(key, ip, port) {
         return;
       }
       ct = _validateInput(ct, 1200, 6500, 'Color Temperature');
-      if (!ct) {
+      if (ct === null) {
         reject(new Error('value_out_of_range'));
         return;
       }
@@ -283,7 +283,7 @@ function NanoLeaf(key, ip, port) {
       }
       hue = _validateInput(hue, 0, 359, 'Hue');
       sat = _validateInput(sat, 0, 100, 'Sat');
-      if (!hue || !sat) {
+      if (hue === null || sat === null) {
         reject(new Error('value_out_of_range'));
         return;
       }

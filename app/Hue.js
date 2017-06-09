@@ -21,8 +21,9 @@ const LOG_PREFIX = 'HUE';
  * @property {Object} groups - List of all groups and their current state
  * @property {Object} config - Current Hub configuration
  * @param {String} key Hue authentication key.
+ * @param {String} [explicitIPAddress] IP Address of the Hub
  */
-function Hue(key) {
+function Hue(key, explicitIPAddress) {
   const REQUEST_TIMEOUT = 15 * 1000;
   const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
   const GROUPS_REFRESH_INTERVAL = 90 * 1000;
@@ -286,6 +287,13 @@ function Hue(key) {
   */
   function _findHub() {
     return new Promise(function(resolve, reject) {
+      if (explicitIPAddress) {
+        log.log(LOG_PREFIX, `Using provided IP address: ${explicitIPAddress}`);
+        let ip = explicitIPAddress;
+        explicitIPAddress = null;
+        resolve(ip);
+        return;
+      }
       log.log(LOG_PREFIX, 'Searching for Hue Hub...');
       const nupnp = {
         url: 'https://www.meethue.com/api/nupnp',

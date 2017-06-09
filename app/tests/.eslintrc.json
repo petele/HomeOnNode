@@ -1,0 +1,25 @@
+{
+  "extends": ["eslint:recommended", "google"],
+  "parserOptions": {
+    "ecmaVersion": 6
+  },
+  "env": {
+    "node": true,
+    "es6": true,
+    "mocha": true
+  },
+  "plugins": [
+    "mocha"
+  ],
+  "rules": {
+    "brace-style": ["warn", "1tbs", {"allowSingleLine": true }],
+    "new-cap": ["error", { "capIsNewExceptions": ["Polymer"] }],
+    "no-var": "warn",
+    "no-console": ["error"],
+    "valid-jsdoc": "warn",
+    "strict": ["error", "global"]
+  },
+  "globals": {
+
+  }
+}
