@@ -158,9 +158,10 @@ function NanoLeaf(key, ip, port) {
       log.error(LOG_PREFIX, err.message);
     })
     .then((resp) => {
+      let state = resp.body;
       // Has the state changed since last time?
-      if (diff(_state, resp)) {
-        _state = resp;
+      if (diff(_state, state)) {
+        _state = state;
         // If we weren't ready before, change to ready & fire ready event
         if (_ready === false) {
           log.log(LOG_PREFIX, 'Ready.');
@@ -170,7 +171,7 @@ function NanoLeaf(key, ip, port) {
          * State has changed
          * @event NanoLeaf#state_changed
          */
-        _self.emit('state_changed', resp);
+        _self.emit('state_changed', state);
       }
       return resp;
     });
