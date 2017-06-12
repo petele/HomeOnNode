@@ -16,7 +16,7 @@ describe('Hue', function() {
   ];
 
   const WAIT_FOR_READY = 5 * 1000;
-  const TEST_TIMEOUT = WAIT_FOR_READY + WAIT_FOR_UPDATE_TICKS + (5 * 60 * 1000);
+  const TEST_TIMEOUT = WAIT_FOR_READY + (5 * 60 * 1000);
   this.timeout(TEST_TIMEOUT);
 
   const _validLightCommand = {
@@ -151,7 +151,8 @@ describe('Hue', function() {
   describe('Hue Status', function() {
     it('should have data for config, lights and groups', function() {
       assert.isNotEmpty(_config);
-      assert.containsAllKeys(_config, CONFIG_KEYS);
+      assert.containsAllKeys(_config, ['config', 'groups', 'lights', 'rules']);
+      assert.containsAllKeys(_config.config, CONFIG_KEYS);
       assert.closeTo(_lightsChangedCount, _expectedLightsCount, 4);
       assert.isNotEmpty(_lights);
       assert.closeTo(_lightsChangedCount, _expectedLightsCount, 4);
