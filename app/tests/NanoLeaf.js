@@ -156,8 +156,10 @@ describe('NanoLeaf', function() {
   });
 
   describe('NanoLeaf Status', function() {
-    it('should have a complete state object', function() {
+    it('state object should be complete', function() {
       assert.isNotEmpty(_state);
+      assert.containsAllKeys(_state, ['effects', 'state', 'model', 'name']);
+      assert.propertyVal(_state, 'model', 'NL22');
       assert.closeTo(_stateChangedCount, _expectedStateCount, 4);
     });
   });

@@ -174,7 +174,16 @@ function Home(initialConfig, fbRef) {
     // Nest Thermostat Auto
     if (command.hasOwnProperty('nestThermostatAuto')) {
       if (nest) {
-        nest.setAutoTemperature(command.nestThermostatAuto);
+        const autoMode = command.nestThermostatAuto.toUpperCase();
+        const temperatures = _config.hvac.auto[autoMode];
+        if (temperatures) {
+          Object.keys(temperatures).forEach((roomId) => {
+            let temperature = temperatures[roomId];
+            nest.setTemperature(roomId, temperature);
+          });
+        } else {
+          log.warn(LOG_PREFIX, `Nest auto mode '${autoMode}' not found.`);
+        }
       } else {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
@@ -670,7 +679,7 @@ function Home(initialConfig, fbRef) {
    * Init Nest
    */
   function _initNest() {
-    nest = new Nest.Nest(Keys.nest.token, _fb.child('config/HomeOnNode'));
+    nest = new Nest.Nest(Keys.nest.token, _config.hvac.thermostats);
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
     });

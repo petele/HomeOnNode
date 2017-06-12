@@ -24,34 +24,22 @@ const STATES = {
  * @fires Nest#state
  * @property {Object} nestData
  * @param {string} authToken Auth Token to use
- * @param {Object} fbRef Firebase Root Reference
+ * @param {Object} [roomIdMap] Hash table that maps roomId to thermostatId
  */
-function Nest(authToken, fbRef) {
+function Nest(authToken, roomIdMap) {
   const RETRY_DELAY = 18 * 1000;
   const MAX_DISCONNECT = 5 * 60 * 1000;
   const RECONNECT_TIMEOUT = 1 * 60 * 1000;
+  const FAN_TIMES = [0, 15, 30, 45, 60, 120, 240, 480, 960];
   const _self = this;
-  let _fbRef;
-  let _fbNest;
-  let _config = {
-    auto: {
-      DAY: {
-        LR: 70,
-        BR: 70,
-      },
-      SLEEP: {
-        LR: 62,
-        BR: 62,
-      },
-    },
-    thermostats: {
-      BR: 'dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1',
-      LR: 'dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1',
-    },
+  const _roomIdMap = roomIdMap || {
+    BR: 'dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1',
+    LR: 'dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1',
   };
-  let _disconnectedTimer;
   const _authToken = authToken;
-  let _deviceState = 'start';
+  let _fbNest;
+  let _disconnectedTimer;
+  let _deviceState = STATES.preInit;
   let _nestData = {};
   let _structureId;
 
@@ -171,50 +159,14 @@ function Nest(authToken, fbRef) {
   };
 
   /**
-   * Automatically adjust temperature based on config
-   *
-   * @param {string} value Auto mode to use
-   * @return {Promise} Resolves to a boolean, with the result of the request
-   */
-  this.setAutoTemperature = function(value) {
-    if (!value) {
-      return Promise.reject(new Error('invalid_input'));
-    }
-    try {
-      const temperatures = _config.auto[value.toUpperCase()];
-      if (!temperatures) {
-        let msg = 'setAutoTemperature failed, unable to find settings for: ';
-        msg += value;
-        log.error(LOG_PREFIX, msg);
-        return Promise.reject(new Error('no_settings_for_mode'));
-      }
-      const keys = Object.keys(temperatures);
-      return Promise.all(keys.map((key) => {
-        return this.setTemperature(key, temperatures[key]);
-      }));
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'setAutoTemperature failed', ex);
-      return Promise.reject(ex);
-    }
-  };
-
-  /**
    * Initialize the API
    */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     if (!authToken) {
-      log.error(LOG_PREFIX, 'No Nest authToken provided.');
-      _setState(STATES.error, 'No Nest authToken provided.');
-    }
-    if (!fbRef) {
-      log.warn(LOG_PREFIX, 'No Firebase reference provided.');
-    }
-    if (fbRef) {
-      _fbRef = fbRef.child('hvac');
-      _fbRef.on('value', function(snapshot) {
-        _config = snapshot.val();
-      });
+      let msg = 'No Nest authToken provided.';
+      log.error(LOG_PREFIX, msg);
+      _setState(STATES.error, msg);
     }
     _setState(STATES.init);
     _login();
@@ -242,10 +194,6 @@ function Nest(authToken, fbRef) {
         _nestData = data;
         _structureId = Object.keys(data.structures)[0];
         _setState(STATES.ready, _nestData);
-        /**
-         * Nest Data has changed
-         * @event Nest#change
-         */
         _self.emit('change', _nestData);
         _initMonitor();
       });
@@ -331,10 +279,6 @@ function Nest(authToken, fbRef) {
       return false;
     }
     _deviceState = newState;
-    /**
-     * Nest state has changed
-     * @event Nest#state
-     */
     _self.emit('state', newState, extra);
     let msg = `setState('${newState}')`;
     if (extra) {
@@ -353,24 +297,6 @@ function Nest(authToken, fbRef) {
   }
 
   /**
-   * Post SET debug logger
-   *   Called when the Nest Firebase object has been updated.
-   *
-   * @param {string} path Path used to set the parameter.
-   * @param {Object} err Error (if any)
-   * @return {Boolean} True if the state was successfully changed
-   */
-  function _onSetComplete(path, err) {
-    if (err) {
-      log.exception(LOG_PREFIX, err.message + ' at path: ' + path, err);
-      return false;
-    } else {
-      log.debug(LOG_PREFIX, 'setComplete: ' + path);
-      return true;
-    }
-  }
-
-  /**
    * Get the Nest ThermostatId for the specified roomId
    *
    * @param {string} roomId Room ID to look up.
@@ -385,7 +311,7 @@ function Nest(authToken, fbRef) {
     }
     let thermostatId;
     try {
-      thermostatId = _config.thermostats[roomId];
+      thermostatId = _roomIdMap[roomId];
     } catch (ex) {
       log.exception(LOG_PREFIX, msg, ex);
       return null;
@@ -438,7 +364,13 @@ function Nest(authToken, fbRef) {
       log.log(LOG_PREFIX, msg);
       const path = `structures/${_structureId}/away`;
       _fbNest.child(path).set(state, (err) => {
-        resolve(_onSetComplete(path, err));
+        if (err) {
+          log.exception(LOG_PREFIX, `${err.message} at ${path}`, err);
+          reject(err);
+          return;
+        }
+        log.debug(LOG_PREFIX, `${path}: ${state}`);
+        resolve(true);
       });
     });
   }
@@ -461,7 +393,13 @@ function Nest(authToken, fbRef) {
       log.log(LOG_PREFIX, msg);
       return new Promise(function(resolve, reject) {
         _fbNest.child(path).set(state, (err) => {
-          resolve(_onSetComplete(path, err));
+          if (err) {
+            log.exception(LOG_PREFIX, `${err.message} at ${path}`, err);
+            reject(err);
+            return;
+          }
+          log.debug(LOG_PREFIX, `${path}: ${state}`);
+          resolve(true);
         });
       });
     }));
@@ -506,7 +444,13 @@ function Nest(authToken, fbRef) {
       log.log(LOG_PREFIX, msg);
       const path = `devices/thermostats/${thermostatId}/target_temperature_f`;
       _fbNest.child(path).set(temperature, (err) => {
-        resolve(_onSetComplete(path, err));
+        if (err) {
+          log.exception(LOG_PREFIX, `${err.message} at ${path}`, err);
+          reject(err);
+          return;
+        }
+        log.debug(LOG_PREFIX, `${path}: ${temperature}`);
+        resolve(true);
       });
     });
   }
@@ -529,7 +473,13 @@ function Nest(authToken, fbRef) {
       }
       const thermostat = _getThermostat(thermostatId);
       if (!thermostat) {
+        log.error(LOG_PREFIX, msg + ' failed, thermostat not found.');
         reject(new Error('thermostat_not_found'));
+        return;
+      }
+      if (FAN_TIMES.indexOf(minutes) === -1) {
+        log.error(LOG_PREFIX, msg + ' failed, invalid fan timer length.');
+        reject(new Error('invalid_fan_time'));
         return;
       }
       let hvacMode = thermostat['hvac_mode'];
@@ -547,11 +497,23 @@ function Nest(authToken, fbRef) {
         reject(new Error('incompatible_hvac_mode'));
         return;
       }
-      let fanOn = minutes === 0 ? false : true;
-      log.log(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${fanOn})`);
-      const path = `devices/thermostats/${thermostatId}/fan_timer_active`;
-      _fbNest.child(path).set(fanOn, (err) => {
-        resolve(_onSetComplete(path, err));
+      log.log(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
+      let opts = {
+        fan_timer_active: false,
+      };
+      if (minutes !== 0) {
+        opts.fan_timer_active = true;
+        opts.fan_timer_duration = minutes;
+      }
+      const path = `devices/thermostats/${thermostatId}/`;
+      _fbNest.child(path).update(opts, (err) => {
+        if (err) {
+          log.exception(LOG_PREFIX, `${err.message} at ${path}`, err);
+          reject(err);
+          return;
+        }
+        log.debug(LOG_PREFIX, `${path}: ${JSON.stringify(opts)}`);
+        resolve(true);
       });
     });
   }

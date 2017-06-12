@@ -176,6 +176,8 @@ describe('Sonos', function() {
   describe('Sonos Status', function() {
     it('should have a complete state object', function() {
       assert.isNotEmpty(_state);
+      assert.containsAllKeys(_state, ['favorites', 'state']);
+      assert.containsAllKeys(_state.state, ['currentTrack', 'playbackState']);
       assert.closeTo(_stateChangedCount, _expectedStateCount, 4);
     });
   });
