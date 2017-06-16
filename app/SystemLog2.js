@@ -556,7 +556,7 @@ function _cleanLogs(path, maxAgeDays) {
   return new Promise(function(resolve, reject) {
     maxAgeDays = maxAgeDays || 365;
     let msg = `cleanLogs('${path}', ${maxAgeDays})`;
-    _log(LOG_PREFIX, msg);
+    _debug(LOG_PREFIX, msg);
     if (!_fbRef) {
       _error(LOG_PREFIX, 'Cannot clean logs, Firebase reference not set.');
       reject(new Error('Firebase reference not set.'));
@@ -574,13 +574,13 @@ function _cleanLogs(path, maxAgeDays) {
       function(snapshot) {
         const numChildren = snapshot.numChildren();
         if (numChildren >= 50000) {
-          _warn(LOG_PREFIX, 'cleanLog may fail, too many items!');
+          _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
         }
-        _debug(LOG_PREFIX, `Found ${numChildren} items at ${path}`);
+        _debug(LOG_PREFIX, `${msg} - found ${numChildren} items`);
         snapshot.forEach(function(item) {
           item.ref().remove();
         });
-        _debug(LOG_PREFIX, `Removed ${numChildren} from ${path}`);
+        _log(LOG_PREFIX, `${msg} - removed ${numChildren} items`);
         resolve({path: path, count: numChildren});
       }
     );
