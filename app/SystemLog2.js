@@ -217,7 +217,7 @@ function _handleLog(logObj) {
  * @return {String}
  */
 function _stringifyLog(logObj) {
-  const dt = logObj.date_ || logObj.dateFormatted;
+  const dt = _formatTime(logObj.date);
   const levelColor = _getLogColorByName(logObj.level);
   const level = levelColor(('     ' + logObj.level).slice(-5));
   let result = `${dt} | ${level} | ${logObj.message}`;
