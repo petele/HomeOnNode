@@ -19,7 +19,7 @@ const LOG_PREFIX = 'NANOLEAF';
  * @param {String} port Port of the hub.
 */
 function NanoLeaf(key, ip, port) {
-  const _hubAddress = `http://${ip}:${port}/api/beta/${key}/`;
+  const _hubAddress = `http://${ip}:${port}/api/v1/${key}/`;
   const REFRESH_INTERVAL = 45 * 1000;
   const _self = this;
   let _ready = false;

@@ -87,6 +87,7 @@ function GCMPush(fb) {
         webpush.sendNotification(subscriber, payload, _options)
         .then((resp) => {
           log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
+          log.debug(LOG_PREFIX, '', resp);
           resolve(true);
         })
         .catch((err) => {
