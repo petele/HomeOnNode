@@ -36,6 +36,7 @@ function Harmony(uuid) {
   let _activitiesByName = {};
   let _activitiesById = {};
   let _attemptReconnect = true;
+  let _attemptingReconnect = false;
 
   /**
    * Start the named activity
@@ -117,6 +118,11 @@ function Harmony(uuid) {
     if (_attemptReconnect === false) {
       return;
     }
+    if (_attemptingReconnect === true) {
+      log.log(LOG_PREFIX, 'Reset already in progres...');
+      return;
+    }
+    _attemptingReconnect = true;
     log.log(LOG_PREFIX, 'Resetting Harmony Hub connection...');
     if (_client) {
       try {
@@ -127,6 +133,7 @@ function Harmony(uuid) {
       _client = null;
     }
     setTimeout(() => {
+      _attemptingReconnect = false;
       _connect();
     }, RECONNECT_DELAY);
   }
@@ -291,8 +298,8 @@ function Harmony(uuid) {
    * XMPP connection has gone offline, potentially reconnect
   */
   function _handleOffline() {
-    log.debug(LOG_PREFIX, 'Offline.');
-    _resetConnection();
+    log.warn(LOG_PREFIX, 'Offline.');
+    // _resetConnection();
   }
 
   /**
@@ -316,6 +323,7 @@ function Harmony(uuid) {
   */
   function _handleDisconnect() {
     log.warn(LOG_PREFIX, 'Disconnected.');
+    _resetConnection();
   }
 
   /**
