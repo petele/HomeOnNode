@@ -88,6 +88,8 @@ function init(fbAppId, key, appName) {
     const now = Date.now();
     fb.child(`devices/${appName}/heartbeat_`).set(log.formatTime(now));
     fb.child(`devices/${appName}/heartbeat`).set(now);
+    fb.child(`devices/${appName}/online`).set(true);
+    fb.child(`devices/${appName}/shutdownAt`).remove();
   }, 1 * 60 * 1000);
 
   fb.child(`devices/${appName}/restart`).on('value', function(snapshot) {
