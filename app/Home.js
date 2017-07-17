@@ -161,12 +161,17 @@ function Home(initialConfig, fbRef) {
     // Nest Thermostat
     if (command.hasOwnProperty('nestThermostat')) {
       if (nest) {
-        let cmd = command.nestThermostat;
-        if (modifier) {
-          nest.adjustTemperature(cmd.roomId, modifier);
-        } else {
-          nest.setTemperature(cmd.roomId, cmd.temperature);
+        let cmds = command.nestThermostat;
+        if (Array.isArray(cmds) === false) {
+          cmds = [cmds];
         }
+        cmds.forEach((cmd) => {
+          if (modifier) {
+            nest.adjustTemperature(cmd.roomId, modifier);
+          } else {
+            nest.setTemperature(cmd.roomId, cmd.temperature);
+          }
+        });
       } else {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
