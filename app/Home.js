@@ -158,6 +158,20 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'NanoLeaf unavailable.');
       }
     }
+    // Nest Home State
+    if (command.hasOwnProperty('nestState')) {
+      if (nest) {
+        if (command.nestState === 'HOME') {
+          nest.setHome();
+        } else if (command.nestState === 'AWAY') {
+          nest.setAway();
+        } else {
+          log.warn(LOG_PREFIX, `Unknown Nest state: ${command.nestState}`);
+        }
+      } else {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+      }
+    }
     // Nest Thermostat
     if (command.hasOwnProperty('nestThermostat')) {
       if (nest) {
