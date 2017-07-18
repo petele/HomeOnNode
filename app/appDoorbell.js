@@ -17,12 +17,6 @@ let _gcmPush;
 let _lastPushed = 0;
 let _lastValue = 1;
 const MIN_TIME = 3000;
-const GCM_DOORBELL_MSG = {
-  title: 'Door Bell',
-  body: 'The doorbell rang at',
-  tag: 'HoN-doorbell',
-  appendTime: true,
-};
 
 log.setAppName(APP_NAME);
 log.setOptions({firebaseLogLevel: 50, firebasePath: 'logs/doorbell'});
@@ -105,6 +99,12 @@ function sendCommandViaFB(cmd) {
  * Send a doorbell notification
 */
 function sendDoorbell() {
+  const doorbellMsg = {
+    title: 'Door Bell',
+    body: 'The doorbell rang at',
+    tag: 'HoN-doorbell',
+    appendTime: true,
+  };
   log.log(APP_NAME, 'Doorbell rang.');
   sendHTTPRequest('doorbell', 'POST')
     .catch((err) => {
@@ -119,7 +119,7 @@ function sendDoorbell() {
       if (!_gcmPush) {
         return Promise.reject(new Error('GCM Unavailable.'));
       }
-      return _gcmPush.sendMessage(GCM_DOORBELL_MSG);
+      return _gcmPush.sendMessage(doorbellMsg);
     });
 }
 
