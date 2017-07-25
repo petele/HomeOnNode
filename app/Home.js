@@ -8,13 +8,15 @@ const Keys = require('./Keys').keys;
 const version = require('./version');
 const fs = require('fs');
 
+const FlicMonitor = require('./Bluetooth').FlicMonitor;
 const GCMPush = require('./GCMPush');
 const Harmony = require('./Harmony');
 const Hue = require('./Hue');
 const NanoLeaf = require('./NanoLeaf');
 const Nest = require('./Nest');
-const Presence = require('./Presence');
+const Presence = require('./Bluetooth').Presence;
 const PushBullet = require('./PushBullet');
+const Rise = require('./Bluetooth').Rise;
 const Sonos = require('./Sonos');
 const Weather = require('./Weather');
 const ZWave = require('./ZWave');
@@ -35,6 +37,7 @@ function Home(initialConfig, fbRef) {
   let _config = initialConfig;
   let _fb = fbRef;
 
+  let flicMonitor;
   let gcmPush;
   let harmony;
   let hue;
@@ -42,6 +45,7 @@ function Home(initialConfig, fbRef) {
   let nest;
   let presence;
   let pushBullet;
+  let rise;
   let sonos;
   let weather;
   let zwave;
@@ -228,6 +232,26 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
     }
+    // Rise Blinds
+    if (command.hasOwnProperty('riseBlinds')) {
+      if (rise) {
+        let cmds = command.riseBlinds;
+        if (Array.isArray(cmds) === false) {
+          cmds = [cmds];
+        }
+        cmds.forEach((cmd) => {
+          if (cmd.position === 'OPEN') {
+            rise.open(cmd.blindId);
+          } else if (cmd.position === 'CLOSED') {
+            rise.close(cmd.blindId);
+          } else {
+            rise.setPosition(cmd.blindId, parseInt(cmd.position, 10));
+          }
+        });
+      } else {
+        log.warn(LOG_PREFIX, 'Rise unavailable.');
+      }
+    }
     // Harmony Activity
     if (command.hasOwnProperty('harmonyActivity')) {
       if (harmony) {
@@ -292,7 +316,6 @@ function Home(initialConfig, fbRef) {
   this.shutdown = function() {
     _shutdownZWave();
     _shutdownHarmony();
-    _shutdownPresence();
     _shutdownPushBullet();
   };
 
@@ -340,7 +363,9 @@ function Home(initialConfig, fbRef) {
     _initNanoLeaf();
     _initSonos();
     _initHarmony();
+    _initFlic();
     _initPresence();
+    // _initRise();
     _initPushBullet();
     _initWeather();
     _initZWave();
@@ -605,6 +630,26 @@ function Home(initialConfig, fbRef) {
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
+ * Flic Monitor API
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the Flic API
+   */
+  function _initFlic() {
+    flicMonitor = new FlicMonitor();
+    const fbPresFlicPath = 'config/HomeOnNode/flicAway';
+    _fb.child(fbPresFlicPath).on('value', function(snapshot) {
+      flicMonitor.setFlicAwayUUID(snapshot.val());
+    });
+    flicMonitor.on('flic_away', () => {
+      _self.executeCommand({state: 'ARMED'}, 'Flic');
+    });
+  }
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
  * Harmony API
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
@@ -727,7 +772,7 @@ function Home(initialConfig, fbRef) {
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
- * Presence & Bluetooth API
+ * Presence API
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
@@ -736,14 +781,6 @@ function Home(initialConfig, fbRef) {
    */
   function _initPresence() {
     presence = new Presence();
-    // Set up the Flic Away button
-    const fbPresFlicPath = 'config/HomeOnNode/presence/FlicAway';
-    _fb.child(fbPresFlicPath).on('value', function(snapshot) {
-      presence.setFlicAwayUUID(snapshot.val());
-    });
-    presence.on('flic_away', () => {
-      _self.executeCommand({state: 'ARMED'}, 'Flic');
-    });
     // Set up the presence detection
     presence.on('change', _presenceChanged);
     const fbPresPath = 'config/HomeOnNode/presence/people';
@@ -781,23 +818,6 @@ function Home(initialConfig, fbRef) {
       cmdName = 'PRESENCE_NONE';
     }
     _self.executeCommandByName(cmdName, null, 'PRESENCE');
-  }
-
-  /**
-   * Shutdown the Presence API
-   */
-  function _shutdownPresence() {
-    log.log(LOG_PREFIX, 'Shutting down Presence.');
-    try {
-      if (presence) {
-        presence.shutdown();
-      }
-    } catch (ex) {
-      log.warn(LOG_PREFIX, 'Error attempting to shut down Presence.');
-    }
-    _fb.child('config/HomeOnNode/presence/people').off();
-    _fb.child('config/HomeOnNode/presence/FlicAway').off();
-    presence = null;
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -838,6 +858,28 @@ function Home(initialConfig, fbRef) {
       pushBullet.shutdown();
     }
     pushBullet = null;
+  }
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
+ * Rise API
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the Rise API
+   */
+  function _initRise() {
+    const fbRiseConfigPath = 'config/HomeOnNode/rise';
+    _fb.child(fbRiseConfigPath).once('value', function(snapshot) {
+      rise = new Rise(snapshot.val());
+      rise.on('level', function(id, value) {
+        _fbSet(`state/blinds/${id}/level`, value);
+      });
+      rise.on('battery', function(id, value) {
+        _fbSet(`state/blinds/${id}/battery`, value);
+      });
+    });
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **

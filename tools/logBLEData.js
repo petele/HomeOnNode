@@ -1,6 +1,6 @@
 'use strict';
 
-var noble = require('noble');
+var noble = require('../app/node_modules/noble');
 var fs = require('fs');
 var readline = require('readline');
 var mac;
@@ -21,13 +21,14 @@ rl.question('UUID to watch: ', function(answer) {
   } else {
     mac = '*';
   }
-  noble.startScanning([], true);
+  noble.startScanning([], false);
 });
 
 noble.on('discover', function(peripheral) {
   if ((mac === '*') || (peripheral.uuid.toUpperCase() === mac)) {
-    var line = peripheral.uuid + ',' + peripheral.rssi;
-    line = line + ',' + Date.now() + ',' + new Date();
+    let line = peripheral.uuid + ', ' + peripheral.advertisement.localName;
+    line += ', ' + JSON.stringify(peripheral.advertisement.serviceUuids);
+    line += ', ' + peripheral.connectable + ', ' + peripheral.rssi;
     console.log(line);
     result.push(line);
   }
