@@ -676,7 +676,7 @@ function Rise(idToUUID) {
     log.info(_logPrefix, `open(${id})`);
     const svcUUID = MOTOR_SERVICE.uuid;
     const charUUID = MOTOR_SERVICE.characteristic.direction;
-    return _setValue(id, svcUUID, charUUID, 0x69, true);
+    return _setValue(id, svcUUID, charUUID, new Buffer([0x69]), true);
   };
 
   /**
@@ -689,7 +689,7 @@ function Rise(idToUUID) {
     log.info(_logPrefix, `close(${id})`);
     const svcUUID = MOTOR_SERVICE.uuid;
     const charUUID = MOTOR_SERVICE.characteristic.direction;
-    return _setValue(id, svcUUID, charUUID, 0x96, true);
+    return _setValue(id, svcUUID, charUUID, new Buffer([0x96]), true);
   };
 
   /**

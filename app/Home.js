@@ -365,7 +365,7 @@ function Home(initialConfig, fbRef) {
     _initHarmony();
     _initFlic();
     _initPresence();
-    // _initRise();
+    _initRise();
     _initPushBullet();
     _initWeather();
     _initZWave();
