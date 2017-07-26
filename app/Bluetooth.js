@@ -44,6 +44,7 @@ function Bluetooth() {
     _self.noble.on('scanStop', function() {
       log.log(_logPrefix, 'Noble Scanning Stopped.');
       _self.started = false;
+      _self.noble.startScanning([], true);
     });
     _self.noble.on('warning', (message) => {
       log.warn(_logPrefix, 'Noble warning: ' + message);
