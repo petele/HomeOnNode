@@ -16,7 +16,7 @@ const NanoLeaf = require('./NanoLeaf');
 const Nest = require('./Nest');
 const Presence = require('./Bluetooth').Presence;
 const PushBullet = require('./PushBullet');
-const Rise = require('./Bluetooth').Rise;
+const SomaSmartShades = require('./Bluetooth').SomaSmartShades;
 const Sonos = require('./Sonos');
 const Weather = require('./Weather');
 const ZWave = require('./ZWave');
@@ -45,7 +45,7 @@ function Home(initialConfig, fbRef) {
   let nest;
   let presence;
   let pushBullet;
-  let rise;
+  let soma;
   let sonos;
   let weather;
   let zwave;
@@ -232,24 +232,24 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
     }
-    // Rise Blinds
-    if (command.hasOwnProperty('riseBlinds')) {
-      if (rise) {
-        let cmds = command.riseBlinds;
+    // SOMA Smart Shades
+    if (command.hasOwnProperty('somaSmartShades')) {
+      if (soma) {
+        let cmds = command.somaSmartShades;
         if (Array.isArray(cmds) === false) {
           cmds = [cmds];
         }
         cmds.forEach((cmd) => {
           if (cmd.position === 'OPEN') {
-            rise.open(cmd.blindId);
-          } else if (cmd.position === 'CLOSED') {
-            rise.close(cmd.blindId);
+            soma.open(cmd.blindId);
+          } else if (cmd.position === 'CLOSE') {
+            soma.close(cmd.blindId);
           } else {
-            rise.setPosition(cmd.blindId, parseInt(cmd.position, 10));
+            soma.setPosition(cmd.blindId, parseInt(cmd.position, 10));
           }
         });
       } else {
-        log.warn(LOG_PREFIX, 'Rise unavailable.');
+        log.warn(LOG_PREFIX, 'SOMA unavailable.');
       }
     }
     // Harmony Activity
@@ -365,7 +365,7 @@ function Home(initialConfig, fbRef) {
     _initHarmony();
     _initFlic();
     _initPresence();
-    _initRise();
+    _initSoma();
     _initPushBullet();
     _initWeather();
     _initZWave();
@@ -862,22 +862,22 @@ function Home(initialConfig, fbRef) {
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
- * Rise API
+ * SOMA Smart Shades API
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
-   * Init the Rise API
+   * Init the SOMA Smart Shades API
    */
-  function _initRise() {
-    const fbRiseConfigPath = 'config/HomeOnNode/rise';
-    _fb.child(fbRiseConfigPath).once('value', function(snapshot) {
-      rise = new Rise(snapshot.val());
-      rise.on('level', function(id, value) {
-        _fbSet(`state/blinds/${id}/level`, value);
+  function _initSoma() {
+    const fbSomaConfigPath = 'config/HomeOnNode/somaSmartShades';
+    _fb.child(fbSomaConfigPath).once('value', function(snapshot) {
+      soma = new SomaSmartShades(snapshot.val());
+      soma.on('level', function(id, value) {
+        _fbSet(`state/somaSmartShades/${id}/level`, value);
       });
-      rise.on('battery', function(id, value) {
-        _fbSet(`state/blinds/${id}/battery`, value);
+      soma.on('battery', function(id, value) {
+        _fbSet(`state/somaSmartShades/${id}/battery`, value);
       });
     });
   }

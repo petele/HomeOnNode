@@ -303,35 +303,27 @@ function Presence() {
 util.inherits(Presence, EventEmitter);
 
 /**
- * SOMA Rise Blinds API
+ * SOMA Smart Shades API
  * @constructor
  *
  * @param {Object} idToUUID Object that maps IDs to UUIDs
  */
-function Rise(idToUUID) {
-  const _logPrefix = 'RISE';
+function SomaSmartShades(idToUUID) {
+  const _logPrefix = 'SOMA_SS';
   const _self = this;
   const _idToUUID = idToUUID;
   let _uuidToId = {};
-  let _riseDevices = {};
-  let _riseConnectionStatus = {};
+  let _somaDevices = {};
+  let _somaConnectionStatus = {};
 
   const UPDATE_REFRESH_INTERVAL = 20 * 60 * 1000;
-  // Reference - https://bitbucket.org/jeremynoel476/smartblinds-diy/src
-  /**
-   * battery service uuid: 0000180f-0000-1000-8000-00805f9b34fb
-   * battery service char: 00002a19-0000-1000-8000-00805f9b34fb
-   * - returns battery value in percentage format, 0-100
-   */
   const BATTERY_SERVICE = {
     uuid: '180f',
     characteristic: '2a19',
   };
-  // const BATTERY_SERVICE = {
-  //   uuid: '0000180f00001000800000805f9b34fb',
-  //   characteristic: '00002a1900001000800000805f9b34fb',
-  // };
   /**
+   * Reference - https://bitbucket.org/jeremynoel476/smartblinds-diy/src
+   *
    * motor service uuid:   00001861-B87F-490C-92CB-11BA5EA5167C
    * motor state val char: 00001525-B87F-490C-92CB-11BA5EA5167C
    * - returns an array, the first value is the motor position in percentage
@@ -340,15 +332,6 @@ function Rise(idToUUID) {
    * motor state value char: 00001526-B87F-490C-92CB-11BA5EA5167C
    * - write 0x00 - 0x69, (0 - 100 represented as % in base10)
    */
-  // const MOTOR_SERVICE = {
-  //   uuid: '00001861-b87f-490c-92cb-11ba5ea5167c',
-  //   characteristic: {
-  //     current: '00001525-b87f-490c-92cb-11ba5ea5167c',
-  //     direction: '00001530-b87f-490c-92cb-11ba5ea5167c',
-  //     target: '00001526-b87f-490c-92cb-11ba5ea5167c',
-  //   },
-  // };
-
   const MOTOR_SERVICE = {
     uuid: '00001861b87f490c92cb11ba5ea5167c',
     characteristic: {
@@ -359,7 +342,7 @@ function Rise(idToUUID) {
   };
 
   /**
-   * Init the Rise API
+   * Init the SOMA Smart Shades API
    */
   function _init() {
     log.init(_logPrefix, 'Starting...');
@@ -373,40 +356,44 @@ function Rise(idToUUID) {
     });
     _bluetooth.on('discover', (peripheral) => {
       const uuid = peripheral.uuid;
+      const deviceName = peripheral.advertisement.localName;
       let deviceId = _uuidToId[uuid];
       if (!deviceId) {
         return;
       }
-      if (peripheral.advertisement.localName.indexOf('RISE') !== 0) {
+      if (deviceName.indexOf('RISE') !== 0) {
         return;
       }
-      if (_riseDevices[deviceId]) {
+      if (_somaDevices[deviceId]) {
         return;
       }
-      _riseDevices[deviceId] = peripheral;
-      _riseConnectionStatus[deviceId] = false;
-      log.log(_logPrefix, `Found rise(${deviceId}) at ${uuid}`);
+      const btAddress = peripheral.address;
+      _somaDevices[deviceId] = peripheral;
+      _somaConnectionStatus[deviceId] = false;
+      const msg = `Found ${deviceName} (${deviceId})`;
+      const addr = `${btAddress} with UUID: ${uuid}`;
+      log.log(_logPrefix, msg + ' at ' + addr);
       peripheral.on('connect', () => {
-        _riseConnectionStatus[deviceId] = true;
-        log.debug(_logPrefix, `Connected to ${deviceId}.`);
+        _somaConnectionStatus[deviceId] = true;
+        log.debug(_logPrefix, `Connected to '${deviceId}'.`);
       });
       peripheral.on('disconnect', () => {
-        _riseConnectionStatus[deviceId] = false;
-        log.debug(_logPrefix, `Disconnected from ${deviceId}.`);
+        _somaConnectionStatus[deviceId] = false;
+        log.debug(_logPrefix, `Disconnected from '${deviceId}'.`);
       });
-      _updateRise(deviceId, peripheral);
+      _updateDevice(deviceId, peripheral);
     });
     setInterval(_updateTick, UPDATE_REFRESH_INTERVAL);
   }
 
   /**
-   * Updates the details for a SOMA Rise
+   * Updates the details for a SOMA Smart Shade
    *
    * @param {String} deviceId The local device id (BR_L) to use.
    * @param {Object} peripheral The Noble peripheral device to use.
    * @return {Promise} A completed promise when the task finishes
    */
-  function _updateRise(deviceId, peripheral) {
+  function _updateDevice(deviceId, peripheral) {
     return _connect(deviceId, peripheral)
       .then(() => {
         return _self.getBattery(deviceId).then((val) => {
@@ -427,13 +414,13 @@ function Rise(idToUUID) {
   /**
    * Checks the status for all of the blinds
    *
-   * @fires Rise#battery.
-   * @fires Rise#level.
+   * @fires SomaSmartShade#battery.
+   * @fires SomaSmartShade#level.
    */
   function _updateTick() {
-    Object.keys(_riseDevices).forEach((deviceId) => {
-      const peripheral = _getRiseDevice(deviceId);
-      _updateRise(deviceId, peripheral);
+    Object.keys(_somaDevices).forEach((deviceId) => {
+      const peripheral = _getDevice(deviceId);
+      _updateDevice(deviceId, peripheral);
     });
   }
 
@@ -445,13 +432,13 @@ function Rise(idToUUID) {
    * @return {Promise} Result of the connection attempt.
    */
   function _connect(id, peripheral) {
-    if (_riseConnectionStatus[id] === true) {
+    if (_somaConnectionStatus[id] === true) {
       return Promise.resolve();
     }
     return new Promise(function(resolve, reject) {
       peripheral.connect((err) => {
         if (err) {
-          log.error(_logPrefix, `Unable to connected to ${id}`, err);
+          log.error(_logPrefix, `Unable to connected to '${id}'`, err);
           reject(err);
           return;
         }
@@ -468,13 +455,13 @@ function Rise(idToUUID) {
    * @return {Promise} Result of the disconnection attempt.
    */
   function _disconnect(id, peripheral) {
-    if (_riseConnectionStatus[id] !== true) {
+    if (_somaConnectionStatus[id] !== true) {
       return Promise.resolve();
     }
     return new Promise(function(resolve, reject) {
       peripheral.disconnect((err) => {
         if (err) {
-          log.error(_logPrefix, `Unable to disconnected from ${id}`, err);
+          log.error(_logPrefix, `Unable to disconnected from '${id}'`, err);
           reject(err);
           return;
         }
@@ -536,14 +523,13 @@ function Rise(idToUUID) {
    * Writes a value to the specified characteristic
    *
    * @param {Object} characteristic The characteristic to write.
-   * @param {Boolean} woResponse Without Response.
    * @param {*} value The value to write.
    * @return {Promise} Result of the write attempt.
    */
-  function _writeCharacteristic(characteristic, woResponse, value) {
+  function _writeCharacteristic(characteristic, value) {
     return new Promise(function(resolve, reject) {
-      const msg = `writeChar(${characteristic.uuid}, ${woResponse}, ${value})`;
-      characteristic.write(value, woResponse, (err) => {
+      const msg = `writeChar(${characteristic.uuid}, ${value})`;
+      characteristic.write(value, false, (err) => {
         if (err) {
           log.error(_logPrefix, `${msg} failed`, err);
           reject(err);
@@ -555,16 +541,16 @@ function Rise(idToUUID) {
   }
 
   /**
-   * Finds the Rise peripheral based on the device ID
+   * Finds the SOMA Smart Shade based on the device ID
    *
    * @param {String} id The local device id (BR_L) to use to.
    * @return {Object|Error} The peripheral or an error if it's not found.
    */
-  function _getRiseDevice(id) {
-    let peripheral = _riseDevices[id];
+  function _getDevice(id) {
+    let peripheral = _somaDevices[id];
     if (!peripheral) {
-      log.error(_logPrefix, `Unable to find device with id: ${id}`);
-      return new Error('rise_device_not_found');
+      log.error(_logPrefix, `Unable to find device with id: '${id}'`);
+      return new Error('device_not_found');
     }
     return peripheral;
   }
@@ -578,7 +564,7 @@ function Rise(idToUUID) {
    * @return {Promise} Data read from the characteristic.
    */
   function _getValue(id, svcUUID, charUUID) {
-    let peripheral = _getRiseDevice(id);
+    let peripheral = _getDevice(id);
     if (peripheral instanceof Error) {
       return Promise.reject(peripheral);
     }
@@ -598,11 +584,10 @@ function Rise(idToUUID) {
    * @param {String} svcUUID The service UUID to read from.
    * @param {String} charUUID The characteristic UUID to read from.
    * @param {*} value The value to write.
-   * @param {Boolean} woResponse Without Response
    * @return {Promise} Result of the write attempt.
    */
-  function _setValue(id, svcUUID, charUUID, value, woResponse) {
-    let peripheral = _getRiseDevice(id);
+  function _setValue(id, svcUUID, charUUID, value) {
+    let peripheral = _getDevice(id);
     if (peripheral instanceof Error) {
       return Promise.reject(peripheral);
     }
@@ -612,29 +597,7 @@ function Rise(idToUUID) {
       })
       .then((svcAndChar) => {
         const characteristic = svcAndChar.characteristic;
-        return _writeCharacteristic(characteristic, woResponse, value);
-      });
-  }
-
-  /**
-   * Gets the service and characteristic data from a peripheral
-   */
-  this.getPeripheralDetails = function(id) {
-    const peripheral = _getRiseDevice(id);
-    if (!peripheral) {
-      console.log(`${id} not found`);
-      return;
-    }
-    _connect(id, peripheral)
-      .then(() => {
-        peripheral.discoverAllServicesAndCharacteristics((error, services, char) => {
-          services.forEach((service) => {
-            console.log('* Service', service.uuid, service.name, service.type);
-            service.characteristics.forEach((char) => {
-              console.log(' * ', char.uuid, char.name, char.type, char.properties);
-            });
-          });
-        });
+        return _writeCharacteristic(characteristic, value);
       });
   }
 
@@ -682,7 +645,10 @@ function Rise(idToUUID) {
     log.info(_logPrefix, `open(${id})`);
     const svcUUID = MOTOR_SERVICE.uuid;
     const charUUID = MOTOR_SERVICE.characteristic.direction;
-    return _setValue(id, svcUUID, charUUID, new Buffer([0x69]), true);
+    return _setValue(id, svcUUID, charUUID, Buffer.from([0x69]))
+      .then(() => {
+        _self.emit('level', id, 0);
+      });
   };
 
   /**
@@ -695,7 +661,10 @@ function Rise(idToUUID) {
     log.info(_logPrefix, `close(${id})`);
     const svcUUID = MOTOR_SERVICE.uuid;
     const charUUID = MOTOR_SERVICE.characteristic.direction;
-    return _setValue(id, svcUUID, charUUID, new Buffer([0x96]), true);
+    return _setValue(id, svcUUID, charUUID, Buffer.from([0x96]))
+      .then(() => {
+        _self.emit('level', id, 100);
+      });
   };
 
   /**
@@ -711,16 +680,18 @@ function Rise(idToUUID) {
     if (level < 0 || level > 100) {
       return Promise.reject(new Error('out_of_range'));
     }
-    const hexLevel = parseInt(level, 16);
     const svcUUID = MOTOR_SERVICE.uuid;
     const charUUID = MOTOR_SERVICE.characteristic.target;
-    return _setValue(id, svcUUID, charUUID, new Buffer([hexLevel]), true);
+    return _setValue(id, svcUUID, charUUID, Buffer.from([level]))
+      .then(() => {
+        _self.emit('level', id, level);
+      });
   };
 
   _init();
 }
-util.inherits(Rise, EventEmitter);
+util.inherits(SomaSmartShades, EventEmitter);
 
-exports.Rise = Rise;
+exports.SomaSmartShades = SomaSmartShades;
 exports.Presence = Presence;
 exports.FlicMonitor = FlicMonitor;
