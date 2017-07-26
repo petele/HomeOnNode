@@ -315,8 +315,7 @@ function Rise(idToUUID) {
   let _riseDevices = {};
   let _riseConnectionStatus = {};
 
-  const BATTERY_REFRESH_INTERVAL = 60 * 60 * 1000;
-  const BLIND_LEVEL_REFRESH_INTERVAL = 60 * 6 * 1000;
+  const UPDATE_REFRESH_INTERVAL = 20 * 60 * 1000;
   // Reference - https://bitbucket.org/jeremynoel476/smartblinds-diy/src
   /**
    * battery service uuid: 0000180f-0000-1000-8000-00805f9b34fb
@@ -324,8 +323,8 @@ function Rise(idToUUID) {
    * - returns battery value in percentage format, 0-100
    */
   const BATTERY_SERVICE = {
-    uuid: '0000180f-0000-1000-8000-00805f9b34fb',
-    characteristic: '00002a19-0000-1000-8000-00805f9b34fb',
+    uuid: '180f',
+    characteristic: '2a19',
   };
   /**
    * motor service uuid:   00001861-B87F-490C-92CB-11BA5EA5167C
@@ -369,63 +368,67 @@ function Rise(idToUUID) {
     });
     _bluetooth.on('discover', (peripheral) => {
       const uuid = peripheral.uuid;
-      const deviceId = _uuidToId[uuid];
-      if (deviceId && !_riseDevices[deviceId]) {
-        log.log(_logPrefix, `Found rise(${deviceId}) at ${uuid}`);
-        _riseDevices[deviceId] = peripheral;
-        peripheral.on('connect', () => {
-          log.debug(_logPrefix, `Connected to ${deviceId}.`);
-          _riseConnectionStatus[deviceId] = true;
-        });
-        peripheral.on('disconnect', () => {
-          log.debug(_logPrefix, `Disconnected from ${deviceId}.`);
-          _riseConnectionStatus[deviceId] = false;
-        });
-        _connect(deviceId, peripheral)
-          .then(() => {
-            return _self.getBattery(deviceId).then((val) => {
-              _self.emit('battery', deviceId, val);
-            });
-          })
-          .then(() => {
-            return _self.getPosition(deviceId).then((val) => {
-              _self.emit('level', deviceId, val);
-            })
-          })
-          .then(() => {
-            return _disconnect(deviceId, peripheral);
-          });
+      let deviceId = _uuidToId[uuid];
+      if (!deviceId) {
+        return;
       }
+      if (peripheral.advertisement.localName.indexOf('RISE') !== 0) {
+        return;
+      }
+      if (_riseDevices[deviceId]) {
+        return;
+      }
+      _riseDevices[deviceId] = peripheral;
+      _riseConnectionStatus[deviceId] = false;
+      log.log(_logPrefix, `Found rise(${deviceId}) at ${uuid}`);
+      peripheral.on('connect', () => {
+        _riseConnectionStatus[deviceId] = true;
+        log.debug(_logPrefix, `Connected to ${deviceId}.`);
+      });
+      peripheral.on('disconnect', () => {
+        _riseConnectionStatus[deviceId] = false;
+        log.debug(_logPrefix, `Disconnected from ${deviceId}.`);
+      });
+      _updateRise(deviceId, peripheral);
     });
-    setInterval(_batteryTick, BATTERY_REFRESH_INTERVAL);
-    setInterval(_blindLevelTick, BLIND_LEVEL_REFRESH_INTERVAL);
+    setInterval(_updateTick, UPDATE_REFRESH_INTERVAL);
   }
 
   /**
-   * Checks the battery level for all of the blinds
+   * Updates the details for a SOMA Rise
+   *
+   * @param {String} deviceId The local device id (BR_L) to use.
+   * @param {Object} peripheral The Noble peripheral device to use.
+   * @return {Promise} A completed promise when the task finishes
+   */
+  function _updateRise(deviceId, peripheral) {
+    return _connect(deviceId, peripheral)
+      .then(() => {
+        return _self.getBattery(deviceId).then((val) => {
+          _self.emit('battery', deviceId, val);
+        });
+      })
+      .then(() => {
+        return _self.getPosition(deviceId).then((val) => {
+          _self.emit('level', deviceId, val);
+        });
+      })
+      .then(() => {
+        return _disconnect(deviceId, peripheral);
+      });
+  }
+
+
+  /**
+   * Checks the status for all of the blinds
    *
    * @fires Rise#battery.
-   */
-  function _batteryTick() {
-    Object.keys(_riseDevices).forEach((deviceId) => {
-      _self.getBattery(deviceId)
-        .then((value) => {
-          _self.emit('battery', deviceId, value);
-        });
-    });
-  }
-
-  /**
-   * Checks the height for all of the blinds
-   *
    * @fires Rise#level.
    */
-  function _blindLevelTick() {
+  function _updateTick() {
     Object.keys(_riseDevices).forEach((deviceId) => {
-      _self.getPosition(deviceId)
-        .then((value) => {
-          _self.emit('level', deviceId, value);
-        });
+      const peripheral = _getRiseDevice(deviceId);
+      _updateRise(deviceId, peripheral);
     });
   }
 
@@ -637,10 +640,8 @@ function Rise(idToUUID) {
    * @return {Promise} The battery level of the device.
    */
   this.getBattery = function(id) {
-    // const svcUUID = BATTERY_SERVICE.uuid;
-    // const charUUID = BATTERY_SERVICE.characteristic;
-    const svcUUID = '180f';
-    const charUUID = '2a19';
+    const svcUUID = BATTERY_SERVICE.uuid;
+    const charUUID = BATTERY_SERVICE.characteristic;
     return _getValue(id, svcUUID, charUUID)
       .then((buf) => {
         const val = parseInt(buf.readUInt8(0), 16);
@@ -660,7 +661,7 @@ function Rise(idToUUID) {
     const charUUID = MOTOR_SERVICE.characteristic.current;
     return _getValue(id, svcUUID, charUUID)
       .then((buf) => {
-        const val = parseInt(buf.readUInt8(0), 16);
+        const val = parseInt(buf.readUInt8(0), 10);
         log.debug(_logPrefix, `getPosition(${id}): ${val}`);
         return val;
       });
