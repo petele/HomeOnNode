@@ -37,12 +37,12 @@ function Bluetooth() {
       }
     });
     _self.noble.on('scanStart', function() {
-      log.log(_logPrefix, 'Noble Scanning Started.');
+      log.debug(_logPrefix, 'Noble Scanning Started.');
       _self.started = true;
       _self.emit('ready');
     });
     _self.noble.on('scanStop', function() {
-      log.log(_logPrefix, 'Noble Scanning Stopped.');
+      log.debug(_logPrefix, 'Noble Scanning Stopped.');
       _self.started = false;
       _self.noble.startScanning([], true);
     });
@@ -327,6 +327,10 @@ function Rise(idToUUID) {
     uuid: '180f',
     characteristic: '2a19',
   };
+  // const BATTERY_SERVICE = {
+  //   uuid: '0000180f00001000800000805f9b34fb',
+  //   characteristic: '00002a1900001000800000805f9b34fb',
+  // };
   /**
    * motor service uuid:   00001861-B87F-490C-92CB-11BA5EA5167C
    * motor state val char: 00001525-B87F-490C-92CB-11BA5EA5167C
@@ -645,7 +649,7 @@ function Rise(idToUUID) {
     const charUUID = BATTERY_SERVICE.characteristic;
     return _getValue(id, svcUUID, charUUID)
       .then((buf) => {
-        const val = parseInt(buf.readUInt8(0), 16);
+        const val = parseInt(buf.readInt8(0), 10);
         log.debug(_logPrefix, `getBattery(${id}): ${val}`);
         return val;
       });
