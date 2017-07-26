@@ -37,14 +37,12 @@ function Bluetooth() {
       }
     });
     _self.noble.on('scanStart', function() {
-      log.debug(_logPrefix, 'Noble Scanning Started.');
       _self.started = true;
-      _self.emit('ready');
+      _self.emit('scan_started');
     });
     _self.noble.on('scanStop', function() {
-      log.debug(_logPrefix, 'Noble Scanning Stopped.');
       _self.started = false;
-      _self.noble.startScanning([], true);
+      _self.emit('scan_stopped');
     });
     _self.noble.on('warning', (message) => {
       log.warn(_logPrefix, 'Noble warning: ' + message);
@@ -53,6 +51,16 @@ function Bluetooth() {
       _self.emit('discover', device);
     });
   }
+
+  this.startScanning = function() {
+    log.debug(_logPrefix, 'Stanning started.');
+    _self.noble.startScanning([], true);
+  };
+
+  this.stopScanning = function() {
+    log.debug(_logPrefix, 'Stanning stopped.');
+    _self.noble.stopScanning();
+  };
 
   _init();
 }
@@ -315,6 +323,7 @@ function SomaSmartShades(idToUUID) {
   let _uuidToId = {};
   let _somaDevices = {};
   let _somaConnectionStatus = {};
+  let _devicesConnected = 0;
 
   const UPDATE_REFRESH_INTERVAL = 20 * 60 * 1000;
   const BATTERY_SERVICE = {
@@ -374,12 +383,17 @@ function SomaSmartShades(idToUUID) {
       const addr = `${btAddress} with UUID: ${uuid}`;
       log.log(_logPrefix, msg + ' at ' + addr);
       peripheral.on('connect', () => {
+        _devicesConnected += 1;
         _somaConnectionStatus[deviceId] = true;
         log.debug(_logPrefix, `Connected to '${deviceId}'.`);
       });
       peripheral.on('disconnect', () => {
+        _devicesConnected -= 1;
         _somaConnectionStatus[deviceId] = false;
         log.debug(_logPrefix, `Disconnected from '${deviceId}'.`);
+        if (_devicesConnected === 0) {
+          _bluetooth.startScanning();
+        }
       });
       _updateDevice(deviceId, peripheral);
     });
@@ -436,6 +450,7 @@ function SomaSmartShades(idToUUID) {
       return Promise.resolve();
     }
     return new Promise(function(resolve, reject) {
+      _bluetooth.stopScanning();
       peripheral.connect((err) => {
         if (err) {
           log.error(_logPrefix, `Unable to connected to '${id}'`, err);
