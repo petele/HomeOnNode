@@ -466,12 +466,15 @@ function SomaSmartShades(idToUUID) {
    * Disconnect from a peripheral
    *
    * @param {String} id The local device id (BR_L) to use to.
-   * @param {Object} peripheral The Noble peripheral device to use.
+   * @param {Object} [peripheral] The Noble peripheral device to use.
    * @return {Promise} Result of the disconnection attempt.
    */
   function _disconnect(id, peripheral) {
     if (_somaConnectionStatus[id] !== true) {
       return Promise.resolve();
+    }
+    if (!peripheral) {
+      peripheral = _somaDevices[id];
     }
     return new Promise(function(resolve, reject) {
       peripheral.disconnect((err) => {
@@ -522,7 +525,7 @@ function SomaSmartShades(idToUUID) {
    */
   function _readCharacteristic(characteristic) {
     return new Promise(function(resolve, reject) {
-      const msg = `readChar(${characteristic.uuid})`;
+      const msg = `readChar('${characteristic.uuid}')`;
       characteristic.read((err, data) => {
         if (err) {
           log.error(_logPrefix, `${msg} failed`, err);
@@ -543,7 +546,7 @@ function SomaSmartShades(idToUUID) {
    */
   function _writeCharacteristic(characteristic, value) {
     return new Promise(function(resolve, reject) {
-      const msg = `writeChar(${characteristic.uuid}, ${value})`;
+      const msg = `writeChar('${characteristic.uuid}', ${value})`;
       characteristic.write(value, false, (err) => {
         if (err) {
           log.error(_logPrefix, `${msg} failed`, err);
@@ -620,15 +623,19 @@ function SomaSmartShades(idToUUID) {
    * Reads the current battery charge level
    *
    * @param {String} id The local device id (BR_L) to use to.
+   * @param {Boolean} [disconnectAfter] Should the API disconnect once done.
    * @return {Promise} The battery level of the device.
    */
-  this.getBattery = function(id) {
+  this.getBattery = function(id, disconnectAfter) {
     const svcUUID = BATTERY_SERVICE.uuid;
     const charUUID = BATTERY_SERVICE.characteristic;
     return _getValue(id, svcUUID, charUUID)
       .then((buf) => {
         const val = parseInt(buf.readInt8(0), 10);
-        log.debug(_logPrefix, `getBattery(${id}): ${val}`);
+        log.debug(_logPrefix, `getBattery('${id}'): ${val}`);
+        if (disconnectAfter === true) {
+          _disconnect(id);
+        }
         return val;
       });
   };
@@ -637,15 +644,19 @@ function SomaSmartShades(idToUUID) {
    * Reads the current position of the blinds
    *
    * @param {String} id The local device id (BR_L) to use to.
+   * @param {Boolean} [disconnectAfter] Should the API disconnect once done.
    * @return {Promise} The position of the device.
    */
-  this.getPosition = function(id) {
+  this.getPosition = function(id, disconnectAfter) {
     const svcUUID = MOTOR_SERVICE.uuid;
     const charUUID = MOTOR_SERVICE.characteristic.current;
     return _getValue(id, svcUUID, charUUID)
       .then((buf) => {
         const val = parseInt(buf.readUInt8(0), 10);
-        log.debug(_logPrefix, `getPosition(${id}): ${val}`);
+        log.debug(_logPrefix, `getPosition('${id}'): ${val}`);
+        if (disconnectAfter === true) {
+          _disconnect(id);
+        }
         return val;
       });
   };
@@ -654,15 +665,19 @@ function SomaSmartShades(idToUUID) {
    * Opens the blinds completely.
    *
    * @param {String} id The local device id (BR_L) to use to.
+   * @param {Boolean} [disconnectAfter] Should the API disconnect once done.
    * @return {Promise} The result of opening the blinds.
    */
-  this.open = function(id) {
-    log.info(_logPrefix, `open(${id})`);
+  this.open = function(id, disconnectAfter) {
+    log.info(_logPrefix, `open('${id}')`);
     const svcUUID = MOTOR_SERVICE.uuid;
     const charUUID = MOTOR_SERVICE.characteristic.direction;
     return _setValue(id, svcUUID, charUUID, Buffer.from([0x69]))
       .then(() => {
         _self.emit('level', id, 0);
+        if (disconnectAfter === true) {
+          _disconnect(id);
+        }
       });
   };
 
@@ -670,15 +685,19 @@ function SomaSmartShades(idToUUID) {
    * Closes the blinds completely.
    *
    * @param {String} id The local device id (BR_L) to use to.
+   * @param {Boolean} [disconnectAfter] Should the API disconnect once done.
    * @return {Promise} The result of closing the blinds.
    */
-  this.close = function(id) {
-    log.info(_logPrefix, `close(${id})`);
+  this.close = function(id, disconnectAfter) {
+    log.info(_logPrefix, `close('${id}')`);
     const svcUUID = MOTOR_SERVICE.uuid;
     const charUUID = MOTOR_SERVICE.characteristic.direction;
     return _setValue(id, svcUUID, charUUID, Buffer.from([0x96]))
       .then(() => {
         _self.emit('level', id, 100);
+        if (disconnectAfter === true) {
+          _disconnect(id);
+        }
       });
   };
 
@@ -687,11 +706,12 @@ function SomaSmartShades(idToUUID) {
    *
    * @param {String} id The local device id (BR_L) to use to.
    * @param {Number} level The percentage CLOSED, from 0 to 100.
+   * @param {Boolean} [disconnectAfter] Should the API disconnect once done.
    * @return {Promise} The result of the action.
    */
-  this.setPosition = function(id, level) {
+  this.setPosition = function(id, level, disconnectAfter) {
     level = parseInt(level, 10);
-    log.info(_logPrefix, `setPosition(${id}, ${level})`);
+    log.info(_logPrefix, `setPosition('${id}', ${level})`);
     if (level < 0 || level > 100) {
       return Promise.reject(new Error('out_of_range'));
     }
@@ -700,6 +720,9 @@ function SomaSmartShades(idToUUID) {
     return _setValue(id, svcUUID, charUUID, Buffer.from([level]))
       .then(() => {
         _self.emit('level', id, level);
+        if (disconnectAfter === true) {
+          _disconnect(id);
+        }
       });
   };
 

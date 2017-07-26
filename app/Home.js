@@ -241,11 +241,11 @@ function Home(initialConfig, fbRef) {
         }
         cmds.forEach((cmd) => {
           if (cmd.position === 'OPEN') {
-            soma.open(cmd.blindId);
+            soma.open(cmd.blindId, true);
           } else if (cmd.position === 'CLOSE') {
-            soma.close(cmd.blindId);
+            soma.close(cmd.blindId, true);
           } else {
-            soma.setPosition(cmd.blindId, parseInt(cmd.position, 10));
+            soma.setPosition(cmd.blindId, parseInt(cmd.position, 10), true);
           }
         });
       } else {
