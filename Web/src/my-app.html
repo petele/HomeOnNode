@@ -32,6 +32,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="push-subscription.html">
 
+<link rel="import" href="view-settings.html">
+
 <dom-module id="my-app">
   <template>
     <style include="shared-styles">
@@ -129,7 +131,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="view404"
             role="main">
-          <view-home name="home"></view-home>
+          <view-home name="home" view="{{view}}"></view-home>
           <view-lights name="lights" page="{{page}}"></view-lights>
           <view-nanoleaf name="nanoleaf" page="{{page}}"></view-nanoleaf>
           <view-hue-lights name="hue-lights" page="{{page}}"></view-hue-lights>
@@ -140,7 +142,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <view-devices name="devices"></view-devices>
           <view-weather name="weather"></view-weather>
           <view-hvac name="hvac"></view-hvac>
-          <view-settings name="settings"></view-settings>
+          <view-settings name="settings" view="{{view}}"></view-settings>
           <view-system-logs name="system-logs"></view-system-logs>
           <view-presence-logs name="presence-logs"></view-presence-logs>
           <view-door-logs name="door-logs"></view-door-logs>
@@ -163,6 +165,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             reflectToAttribute: true,
             observer: '_pageChanged',
           },
+          view: String,
           routeData: Object,
           subroute: String,
         };

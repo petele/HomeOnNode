@@ -12,6 +12,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="fb-document.html">
@@ -43,6 +44,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
       .grid-two { --app-grid-columns: 2; }
       .grid-three { --app-grid-columns: 3; }
+      .grid-four { --app-grid-columns: 4; }
       .no-link {
         text-decoration: none;
         color: var(--primary-text-color);
@@ -59,6 +61,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       disableCacheSave="true"
       disableCacheLoad="true">
     </fb-document>
+    <fb-document path="state/doNotDisturb" data="{{dataDnD}}"></fb-document>
+    <fb-document path="state/systemState" data="{{dataSystemState}}"></fb-document>
+    <fb-document 
+      path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ/is_streaming"
+      data="{{dataNestCam}}">
+    </fb-document>
+    <fb-document path="config/WebUI/[[view]]" data="{{buttonsForView}}">
+    </fb-document>
+
     <div class="card">
       <div class="layout horizontal header">
         <div class="layout vertical center-justified">
@@ -86,45 +97,73 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
-    <fb-document path="state/doNotDisturb" data="{{dataDnD}}"></fb-document>
-    <fb-document path="state/systemState" data="{{dataSystemState}}"></fb-document>
-    <fb-document 
-      path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ/is_streaming"
-      data="{{dataNestCam}}">
-    </fb-document>
     <div class="card">
       <div class="app-grid grid-three">
-        <paper-button on-tap="toggleDoNotDisturb" class="button">
-          <iron-icon icon="[[doNotDisturbIcon]]">
+        <paper-button on-tap="toggleDoNotDisturb" class$="[[doNotDisturbClass]]">
+          <iron-icon icon="[[doNotDisturbIcon]]"></iron-icon>
         </paper-button>
-        <paper-button on-tap="toggleState" class="button">
-          <iron-icon icon="[[systemStateIcon]]">
+        <paper-button on-tap="toggleState" class$="[[systemStateClass]]">
+          <iron-icon icon="[[systemStateIcon]]"></iron-icon>
         </paper-button>
-        <paper-button on-tap="toggleNestCam" class="button">
-          <iron-icon icon="[[nestCamIcon]]">
+        <paper-button on-tap="toggleNestCam" class$="[[nestCamClass]]">
+          <iron-icon icon="[[nestCamIcon]]"></iron-icon>
         </paper-button>
       </div>
+
+      <template is="dom-if" if="[[buttonsForView.row1]]">
+        <div class$="app-grid [[buttonsForView.row1.class]]">
+          <template is="dom-repeat" items="[[buttonsForView.row1.items]]">
+            <template is="dom-if" if="[[item]]">
+            <paper-button class="button flex" on-tap="myTap">
+              [[item.label]]
+            </paper-button>
+            </template>
+          </template>  
+        </div>
+      </template>
     </div>
 
-    <fb-query path="config/WebUI/home/topRow" data="{{topRowButtons}}">
-    </fb-query>
-    <fb-query path="config/WebUI/home/buttons" data="{{buttons}}"></fb-query>
-    <div class="card">
-      <div class="app-grid grid-two">
-        <template is="dom-repeat" items="[[topRowButtons]]">
-          <paper-button class="button flex" on-tap="myTap">
-            [[item.label]]
-          </paper-button>
-        </template>  
+    <template is="dom-if" if="[[buttonsForView.row2]]">
+      <div class="card">
+        <div class$="app-grid [[buttonsForView.row2.class]]">
+          <template is="dom-repeat" items="[[buttonsForView.row2.items]]">
+            <template is="dom-if" if="[[item]]">
+            <paper-button class="button flex" on-tap="myTap">
+              [[item.label]]
+            </paper-button>
+            </template>
+          </template>  
+        </div>
       </div>
-      <div class="app-grid grid-very-wide">
-        <template is="dom-repeat" items="[[buttons]]">
-          <paper-button class="button" on-tap="myTap">
-            [[item.label]]
-          </paper-button>
-        </template>
+    </template>
+      
+    <template is="dom-if" if="[[buttonsForView.row3]]">
+      <div class="card">
+        <div class$="app-grid [[buttonsForView.row3.class]]">
+          <template is="dom-repeat" items="[[buttonsForView.row3.items]]">
+            <template is="dom-if" if="[[item]]">
+            <paper-button class="button" on-tap="myTap">
+              [[item.label]]
+            </paper-button>
+            </template>
+          </template>
+        </div>
       </div>
-    </div>
+    </template>
+
+    <template is="dom-if" if="[[buttonsForView.row4]]">
+      <div class="card">
+        <div class$="app-grid [[buttonsForView.row4.class]]">
+          <template is="dom-repeat" items="[[buttonsForView.row4.items]]">
+            <template is="dom-if" if="[[item]]">
+            <paper-button class="button" on-tap="myTap">
+              [[item.label]]
+            </paper-button>
+            </template>
+          </template>
+        </div>
+      </div>
+    </template>
 
   </template>
 
@@ -135,11 +174,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get properties() {
         return {
           currentTime: String,
+          view: String,
           dataDnD: Boolean,
           dataSystemState: String,
           dataNestCam: Boolean,
+          doNotDisturbClass: String,
           doNotDisturbIcon: String,
+          systemStateClass: String,
           systemStateIcon: String,
+          nestCamClass: String,
           nestCamIcon: String,
         };
       }
@@ -175,10 +218,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (newVal === undefined) {
           return;
         }
+        let cls = 'button';
         let icon = 'hon-icons:camera-off';
         if (newVal === true) {
+          cls += ' toggle-on';
           icon = 'hon-icons:camera-on';
         }
+        this.nestCamClass = cls;
         this.nestCamIcon = icon;
       }
 
@@ -186,10 +232,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (newVal === undefined) {
           return;
         }
+        let cls = 'button toggle-on';
         let icon = 'hon-icons:alerts-on';
         if (newVal === true) {
+          cls = 'button red';
           icon = 'hon-icons:alerts-off';
         }
+        this.doNotDisturbClass = cls;
         this.doNotDisturbIcon = icon;
       }
 
@@ -197,12 +246,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (!newVal) {
           return;
         }
+        let cls = 'button';
         let icon = 'hon-icons:state-home';
         if (newVal === 'ARMED') {
+          cls += ' amber';
           icon = 'hon-icons:state-armed';
         } else if (newVal === 'AWAY') {
+          cls += ' red';
           icon = 'hon-icons:state-away';
         }
+        this.systemStateClass = cls;
         this.systemStateIcon = icon;
       }
 
