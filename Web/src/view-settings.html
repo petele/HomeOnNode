@@ -11,8 +11,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="shared-styles.html">
+<link rel="import" href="fb-query.html">
 
 <dom-module id="view-settings">
   <template>
@@ -20,7 +24,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
-      .grid-two { --app-grid-columns: 2; }
     </style>
 
     <div class="card">
@@ -44,13 +47,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
+    <fb-query path="config/WebUI" data="{{views}}">
+    </fb-query>
     <div class="card">
       <div>View</div>
-      <paper-input 
-          on-change="viewChanged"
-          no-label-float="true"
-          value="{{view}}">
-      </paper-input>
+      <paper-dropdown-menu no-label-float="true" label="view">
+        <paper-listbox
+          on-selected-changed="viewChanged"
+          slot="dropdown-content"
+          class="dropdown-content"
+          attr-for-selected="value"
+          selected="{{view}}">
+          <template is="dom-repeat" items="[[views]]">
+            <paper-item value="[[item.$key]]">[[item.$key]]</paper-item>
+          </template>
+        </paper-listbox>
+      </paper-dropdown-menu>
+
     </div>
 
   </template>
@@ -78,8 +91,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      viewChanged() {
-        localStorage.setItem('currentView', this.view);
+      viewChanged(e) {
+        let view = e.detail.value;
+        this.view = view;
+        localStorage.setItem('currentView', view);
       }
 
       tapSignIn() {

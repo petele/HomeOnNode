@@ -726,6 +726,19 @@ function SomaSmartShades(idToUUID) {
       });
   };
 
+  // this.setName = function(id, disconnectAfter) {
+  //   let n = 'Bedroom R      ';
+  //   const bufName = Buffer.from(n);
+  //   const svcUUID = '00001890b87f490c92cb11ba5ea5167c';
+  //   const charUUID = '00001892b87f490c92cb11ba5ea5167c';
+  //   return _setValue(id, svcUUID, charUUID, bufName)
+  //     .then(() => {
+  //       if (disconnectAfter === true) {
+  //         _disconnect(id);
+  //       }
+  //     });
+  // };
+
   _init();
 }
 util.inherits(SomaSmartShades, EventEmitter);
