@@ -8,15 +8,16 @@ const Keys = require('./Keys').keys;
 const version = require('./version');
 const fs = require('fs');
 
-const FlicMonitor = require('./Bluetooth').FlicMonitor;
+const Bluetooth = require('./Bluetooth');
+const FlicMonitor = require('./FlicMonitor');
 const GCMPush = require('./GCMPush');
 const Harmony = require('./Harmony');
 const Hue = require('./Hue');
 const NanoLeaf = require('./NanoLeaf');
 const Nest = require('./Nest');
-const Presence = require('./Bluetooth').Presence;
+const Presence = require('./Presence');
 const PushBullet = require('./PushBullet');
-const SomaSmartShades = require('./Bluetooth').SomaSmartShades;
+const SomaSmartShades = require('./SomaSmartShades');
 const Sonos = require('./Sonos');
 const Weather = require('./Weather');
 const ZWave = require('./ZWave');
@@ -37,7 +38,8 @@ function Home(initialConfig, fbRef) {
   let _config = initialConfig;
   let _fb = fbRef;
 
-  let flicMonitor;
+  let bluetooth;
+  let flicAway;
   let gcmPush;
   let harmony;
   let hue;
@@ -244,6 +246,8 @@ function Home(initialConfig, fbRef) {
             soma.open(cmd.blindId, true);
           } else if (cmd.position === 'CLOSE') {
             soma.close(cmd.blindId, true);
+          } else if (cmd.position === 'TOGGLE') {
+            soma.toggle(cmd.blindId, true);
           } else {
             soma.setPosition(cmd.blindId, parseInt(cmd.position, 10), true);
           }
@@ -357,6 +361,7 @@ function Home(initialConfig, fbRef) {
       fs.writeFile('config.json', JSON.stringify(_config, null, 2));
     });
     gcmPush = new GCMPush(_fb);
+    _initBluetooth();
     _initNotifications();
     _initNest();
     _initHue();
@@ -630,6 +635,25 @@ function Home(initialConfig, fbRef) {
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
+ * Bluetooth API
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the Bluetooth API
+   */
+  function _initBluetooth() {
+    bluetooth = new Bluetooth();
+    bluetooth.on('scanning', (scanning) => {
+      _fbSet('state/bluetooth/scanning', scanning);
+    });
+    bluetooth.on('adapter_state', (adapterState) => {
+      _fbSet('state/bluetooth/adapterState', adapterState);
+    });
+  }
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
  * Flic Monitor API
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
@@ -638,14 +662,25 @@ function Home(initialConfig, fbRef) {
    * Init the Flic API
    */
   function _initFlic() {
-    flicMonitor = new FlicMonitor();
-    const fbPresFlicPath = 'config/HomeOnNode/flicAway';
-    _fb.child(fbPresFlicPath).on('value', function(snapshot) {
-      flicMonitor.setFlicAwayUUID(snapshot.val());
+    const flicCfgPath = `config/HomeOnNode/flic`;
+    flicAway = new FlicMonitor(bluetooth);
+    _fb.child(`${flicCfgPath}/away`).on('value', function(snapshot) {
+      flicAway.setFlicUUID(snapshot.val());
     });
-    flicMonitor.on('flic_away', () => {
-      _self.executeCommand({state: 'ARMED'}, 'Flic');
+    flicAway.on('flic_pushed', () => {
+      _self.executeCommand({state: 'ARMED'}, 'FlicAway');
     });
+    // flicBlindsBR = new FlicMonitor(bluetooth, 15 * 1000);
+    // _fb.child(`${flicCfgPath}/blinds_br`).on('value', function(snapshot) {
+    //   flicBlindsBR.setFlicUUID(snapshot.val());
+    // });
+    // flicBlindsBR.on('flic_pushed', () => {
+    //   const cmd = {somaSmartShades: [
+    //     {blindId: 'BR_L', position: 'TOGGLE'},
+    //     {blindId: 'BR_R', position: 'TOGGLE'},
+    //   ]};
+    //   _self.executeCommand(cmd, 'FlicBlindsBR');
+    // });
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -780,7 +815,7 @@ function Home(initialConfig, fbRef) {
    * Init Presence
    */
   function _initPresence() {
-    presence = new Presence();
+    presence = new Presence(bluetooth);
     // Set up the presence detection
     presence.on('change', _presenceChanged);
     const fbPresPath = 'config/HomeOnNode/presence/people';
@@ -872,7 +907,7 @@ function Home(initialConfig, fbRef) {
   function _initSoma() {
     const fbSomaConfigPath = 'config/HomeOnNode/somaSmartShades';
     _fb.child(fbSomaConfigPath).once('value', function(snapshot) {
-      soma = new SomaSmartShades(snapshot.val());
+      soma = new SomaSmartShades(bluetooth, snapshot.val());
       soma.on('level', function(id, value) {
         _fbSet(`state/somaSmartShades/${id}/level`, value);
       });
