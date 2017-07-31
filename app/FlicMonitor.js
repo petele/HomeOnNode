@@ -67,9 +67,7 @@ function FlicMonitor(bt, hitTimeout) {
         setTimeout(function() {
           _flicPushed = false;
         }, _hitTimeout);
-        let msg = 'Flic Button Pushed: ';
-        msg += timeSinceLastFlic + ' ' + log.formatTime(now);
-        log.log(LOG_PREFIX, msg);
+        log.log(LOG_PREFIX, '_sawFlic(true)');
         _self.emit('flic_pushed');
       }
     }
