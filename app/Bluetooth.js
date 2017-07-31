@@ -351,6 +351,21 @@ function SomaSmartShades(idToUUID) {
   };
 
   /**
+   * device settings uuid: 00001890-b87f-490c-92cb-11ba5ea5167c
+   * device name char: 00001892-b87f-490c-92cb-11ba5ea5167c
+   * - must be ascii, 15 bytes in length
+   * room name char: 00001893-b87f-490c-92cb-11ba5ea5167c
+   * - must be ascii, 15 bytes in length
+   */
+  const DEVICE_SETTINGS = {
+    uuid: '00001890b87f490c92cb11ba5ea5167c',
+    characteristic: {
+      name: '00001892b87f490c92cb11ba5ea5167c',
+      room: '00001893b87f490c92cb11ba5ea5167c',
+    },
+  };
+
+  /**
    * Init the SOMA Smart Shades API
    */
   function _init() {
@@ -494,7 +509,7 @@ function SomaSmartShades(idToUUID) {
    * @param {Object} peripheral The Noble peripheral device to use.
    * @param {String} svcUUID The UUID of the service to query.
    * @param {String} charUUID The UUID of the characteristic to query.
-   * @return {Promise} Object that contains the service & charactersitic.
+   * @return {Promise} Object that contains the service & characterstic.
    */
   function _getServiceAndCharacteristic(peripheral, svcUUID, charUUID) {
     return new Promise(function(resolve, reject) {
@@ -507,7 +522,8 @@ function SomaSmartShades(idToUUID) {
             return;
           }
           if (!s || s.length !== 1 || !c || c.length !== 1) {
-            log.error(_logPrefix, `${msg} failed: service or char missing.`);
+            const result = {svc: s, char: c};
+            log.error(_logPrefix, `${msg} failed: bad return.`, result);
             reject(new Error('service_or_char_not_found'));
             return;
           }
@@ -633,6 +649,9 @@ function SomaSmartShades(idToUUID) {
       .then((buf) => {
         const val = parseInt(buf.readInt8(0), 10);
         log.debug(_logPrefix, `getBattery('${id}'): ${val}`);
+        return val;
+      }, () => {})
+      .then((val) => {
         if (disconnectAfter === true) {
           _disconnect(id);
         }
@@ -654,6 +673,9 @@ function SomaSmartShades(idToUUID) {
       .then((buf) => {
         const val = parseInt(buf.readUInt8(0), 10);
         log.debug(_logPrefix, `getPosition('${id}'): ${val}`);
+        return val;
+      }, () => {})
+      .then((val) => {
         if (disconnectAfter === true) {
           _disconnect(id);
         }
@@ -675,9 +697,13 @@ function SomaSmartShades(idToUUID) {
     return _setValue(id, svcUUID, charUUID, Buffer.from([0x69]))
       .then(() => {
         _self.emit('level', id, 0);
+        return 0;
+      }, () => {})
+      .then((val) => {
         if (disconnectAfter === true) {
           _disconnect(id);
         }
+        return val;
       });
   };
 
@@ -695,9 +721,13 @@ function SomaSmartShades(idToUUID) {
     return _setValue(id, svcUUID, charUUID, Buffer.from([0x96]))
       .then(() => {
         _self.emit('level', id, 100);
+        return 100;
+      }, () => {})
+      .then((val) => {
         if (disconnectAfter === true) {
           _disconnect(id);
         }
+        return val;
       });
   };
 
@@ -720,24 +750,50 @@ function SomaSmartShades(idToUUID) {
     return _setValue(id, svcUUID, charUUID, Buffer.from([level]))
       .then(() => {
         _self.emit('level', id, level);
+        return level;
+      }, () => {})
+      .then((val) => {
+        if (disconnectAfter === true) {
+          _disconnect(id);
+        }
+        return val;
+      });
+  };
+
+  /**
+   * Sets the name and room of the blinds.
+   *
+   * @param {String} id The local device id (BR_L) to use to.
+   * @param {String} name The name of the blinds.
+   * @param {String} room The room the blinds are in.
+   * @param {Boolean} [disconnectAfter] Should the API disconnect once done.
+   * @return {Promise} The result of the action.
+   */
+  this.setNameAndRoom = function(id, name, room, disconnectAfter) {
+    if (!name || name.length > 15 || name.length < 4) {
+      return Promise.reject(new Error('invalid_name'));
+    }
+    if (!room || room.length > 15 || room.length < 4) {
+      return Promise.reject(new Error('invalid_room'));
+    }
+    const paddedName = (name + '                        ').substr(0, 15);
+    const paddedRoom = (room + '                        ').substr(0, 15);
+    const bufName = Buffer.from(paddedName);
+    const bufRoom = Buffer.from(paddedRoom);
+    const svcUUID = DEVICE_SETTINGS.uuid;
+    const nameUUID = DEVICE_SETTINGS.characteristic.name;
+    const roomUUID = DEVICE_SETTINGS.characteristic.room;
+    return _setValue(id, svcUUID, nameUUID, bufName)
+      .then(() => {
+        return _setValue(id, svcUUID, roomUUID, bufRoom);
+      })
+      .catch(() => {})
+      .then(() => {
         if (disconnectAfter === true) {
           _disconnect(id);
         }
       });
   };
-
-  // this.setName = function(id, disconnectAfter) {
-  //   let n = 'Bedroom R      ';
-  //   const bufName = Buffer.from(n);
-  //   const svcUUID = '00001890b87f490c92cb11ba5ea5167c';
-  //   const charUUID = '00001892b87f490c92cb11ba5ea5167c';
-  //   return _setValue(id, svcUUID, charUUID, bufName)
-  //     .then(() => {
-  //       if (disconnectAfter === true) {
-  //         _disconnect(id);
-  //       }
-  //     });
-  // };
 
   _init();
 }
