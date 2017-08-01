@@ -266,7 +266,17 @@ function Home(initialConfig, fbRef) {
     }
     // Harmony Key
     if (command.hasOwnProperty('harmonyKey')) {
-      log.warn(LOG_PREFIX, 'DEPRECATED: harmonyKey');
+      if (harmony) {
+        let cmds = command.harmonyKey;
+        if (Array.isArray(cmds) === false) {
+          cmds = [cmds];
+        }
+        cmds.forEach((cmd) => {
+          harmony.sendKey(cmd);
+        });
+      } else {
+        log.warn(LOG_PREFIX, 'Harmony unavailable.');
+      }
     }
     // Sonos
     if (command.hasOwnProperty('sonos')) {

@@ -56,6 +56,17 @@ function Harmony(uuid) {
     });
   };
 
+  this.sendKey = function(keyCmd) {
+    return new Promise(function(resolve, reject) {
+      if (_sendHarmonyKey(keyCmd)) {
+        resolve({sendCommand: true});
+        return;
+      }
+      log.error(LOG_PREFIX, 'Unable to send key command.');
+      reject(new Error('send_key_failed'));
+    });
+  };
+
   /**
    * Close the Harmony Hub connection and shut down
   */
@@ -420,28 +431,28 @@ function Harmony(uuid) {
     return true;
   }
 
-  // /**
-  //  * Send a key command
-  //  *
-  //  * @param {Object} cmd
-  //  * @return {Boolean}
-  // */
-  // function _sendHarmonyKey(cmd) {
-  //   if (_isReady() !== true) {
-  //     return false;
-  //   }
-  //   log.log(LOG_PREFIX, 'sendCommand: ' + cmd.command);
-  //   cmd = JSON.stringify(cmd);
-  //   cmd = cmd.replace(/:/g, '::');
-  //   const cmdText = 'action=' + cmd + ':status=press';
-  //   let cmdStanza = new XMPP.Stanza.Iq({iq: _uuid, type: 'get'})
-  //     .c('oa', {
-  //       xmlns: 'connect.logitech.com',
-  //       mime: COMMAND_STRINGS.HOLD_ACTION,
-  //     }).t(cmdText);
-  //   _client.send(cmdStanza);
-  //   return true;
-  // }
+  /**
+   * Send a key command
+   *
+   * @param {Object} cmd
+   * @return {Boolean}
+  */
+  function _sendHarmonyKey(cmd) {
+    if (_isReady() !== true) {
+      return false;
+    }
+    log.log(LOG_PREFIX, 'sendCommand: ' + cmd.command);
+    cmd = JSON.stringify(cmd);
+    cmd = cmd.replace(/:/g, '::');
+    const cmdText = 'action=' + cmd + ':status=press';
+    let cmdStanza = new XMPP.Stanza.Iq({iq: _uuid, type: 'get'})
+      .c('oa', {
+        xmlns: 'connect.logitech.com',
+        mime: COMMAND_STRINGS.HOLD_ACTION,
+      }).t(cmdText);
+    _client.send(cmdStanza);
+    return true;
+  }
 
   _init();
 }
