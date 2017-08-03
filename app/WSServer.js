@@ -38,8 +38,26 @@ function WSServer(name, port) {
     log.log(_logPrefix, 'WebSocket server started...');
     _wss.on('connection', _wsConnection);
     _wss.on('error', _wsError);
-    _wss.on('message', _wsMessage);
     setInterval(_pingClients, PING_INTERVAL);
+  }
+
+  /**
+   * Handles incoming connection
+   *
+   * @param {Object} ws WebSocket connection.
+   * @param {Object} request Original HTTP Request.
+   */
+  function _wsConnection(ws, request) {
+    ws.isAlive = true;
+    ws.on('pong', () => {
+      ws.isAlive = true;
+    });
+    ws.on('message', _wsMessage);
+    let fromIP = 'unknown';
+    if (request && request.connection && request.connection.remoteAddress) {
+      fromIP = request.connection.remoteAddress;
+    }
+    log.log(_logPrefix, `Client connected from ${fromIP}`);
   }
 
   /**
@@ -56,24 +74,6 @@ function WSServer(name, port) {
     }
     log.verbose(_logPrefix, 'Message received.', msg);
     _self.emit('message', msg);
-  }
-
-  /**
-   * Handles incoming connection
-   *
-   * @param {Object} ws WebSocket connection.
-   * @param {Object} request Original HTTP Request.
-   */
-  function _wsConnection(ws, request) {
-    ws.isAlive = true;
-    ws.on('pong', () => {
-      ws.isAlive = true;
-    });
-    let fromIP = 'unknown';
-    if (request && request.connection && request.connection.remoteAddress) {
-      fromIP = request.connection.remoteAddress;
-    }
-    log.log(_logPrefix, `Client connected from ${fromIP}`);
   }
 
   /**
