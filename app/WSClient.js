@@ -114,7 +114,7 @@ function WSClient(host, retry) {
           reject(err);
           return;
         }
-        log.verbose(LOG_PREFIX, 'Message sent.', msg);
+        log.verbose(LOG_PREFIX, 'Message sent.', JSON.parse(msg));
         resolve();
       });
     });

@@ -73,14 +73,13 @@ function init() {
     });
 
     wss = new WSServer('CMD', 3003);
-    wss.on('message', (cmd) => {
-      log.verbose(LOG_PREFIX, 'WS Message received.', cmd);
+    wss.on('message', (cmd, source) => {
       if (cmd.hasOwnProperty('doorbell')) {
-        home.ringDoorbell(cmd.sender);
+        home.ringDoorbell(source);
       } else if (cmd.hasOwnProperty('cmdName')) {
-        home.executeCommandByName(cmd.cmdName, cmd.modifier, cmd.sender);
+        home.executeCommandByName(cmd.cmdName, cmd.modifier, source);
       } else {
-        home.executeCommand(cmd, cmd.sender);
+        home.executeCommand(cmd, source);
       }
     });
 

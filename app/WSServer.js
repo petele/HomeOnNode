@@ -52,11 +52,14 @@ function WSServer(name, port) {
     ws.on('pong', () => {
       ws.isAlive = true;
     });
-    ws.on('message', _wsMessage);
     let fromIP = 'unknown';
     if (request && request.connection && request.connection.remoteAddress) {
       fromIP = request.connection.remoteAddress;
     }
+    fromIP = 'ws://' + fromIP;
+    ws.on('message', (msg) => {
+      _wsMessage(msg, fromIP);
+    });
     log.log(_logPrefix, `Client connected from ${fromIP}`);
   }
 
@@ -64,16 +67,17 @@ function WSServer(name, port) {
    * Handles an incoming message
    *
    * @param {String} msg Incoming message, expect JSON-able string.
+   * @param {String} fromIP Incoming IP address of the request.
    */
-  function _wsMessage(msg) {
+  function _wsMessage(msg, fromIP) {
     try {
       msg = JSON.parse(msg);
     } catch (ex) {
       log.error(_logPrefix, `Unable to parse message ${msg}`, ex);
       return;
     }
-    log.verbose(_logPrefix, 'Message received.', msg);
-    _self.emit('message', msg);
+    log.verbose(_logPrefix, `Message received from ${fromIP}.`, msg);
+    _self.emit('message', msg, fromIP);
   }
 
   /**
