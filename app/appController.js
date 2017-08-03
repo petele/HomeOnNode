@@ -18,6 +18,7 @@ let httpServer;
 
 log.setAppName(APP_NAME);
 log.setOptions({firebaseLogLevel: 50, firebasePath: 'logs/server'});
+log.startWSS();
 log.appStart();
 
 /**

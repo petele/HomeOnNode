@@ -19,6 +19,7 @@ let fbHeartbeatTime;
 
 const LOG_PREFIX = 'MONITOR';
 log.setAppName(LOG_PREFIX);
+log.startWSS(8882);
 log.appStart();
 
 fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {

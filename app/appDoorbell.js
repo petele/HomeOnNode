@@ -20,6 +20,7 @@ const MIN_TIME = 3000;
 
 log.setAppName(APP_NAME);
 log.setOptions({firebaseLogLevel: 50, firebasePath: 'logs/doorbell'});
+log.startWSS();
 log.appStart();
 
 _fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, 'DoorBell');

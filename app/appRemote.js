@@ -21,6 +21,7 @@ const logOpt = {
   firebasePath: `logs/${APP_NAME.toLowerCase()}`,
 };
 log.setOptions(logOpt);
+log.startWSS();
 log.appStart();
 
 const fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);

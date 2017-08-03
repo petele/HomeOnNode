@@ -7,8 +7,9 @@ const fs = require('fs');
 const util = require('util');
 const zlib = require('zlib');
 const chalk = require('chalk');
-const gitHead = require('./version');
+const WebSocket = require('ws');
 const moment = require('moment');
+const gitHead = require('./version');
 
 const HOSTNAME = os.hostname();
 const DEFAULT_OPTIONS = {
@@ -38,6 +39,55 @@ let _fbLogCache = [];
 let _fbErrorCount = 0;
 let _fbLastError = 0;
 let _opts = DEFAULT_OPTIONS;
+let _wss;
+
+
+/**
+ * Sets up the WebSocket logging server.
+ *
+ * @static
+ * @param {Number} [port] - The port to use.
+ */
+function _startWSS(port) {
+  if (_wss) {
+    _error(LOG_PREFIX, 'WebSocket server is already running.');
+    return;
+  }
+  if (!port) {
+    port = 8881;
+  }
+  try {
+    _init(LOG_PREFIX, `Starting WebSocket server on port ${port}`);
+    _wss = new WebSocket.Server({port: port});
+  } catch (ex) {
+    _error(LOG_PREFIX, 'Unable to start WebSocket server', ex);
+    return;
+  }
+  _log(LOG_PREFIX, 'WebSocket server started...');
+  _wss.on('connection', (ws, req) => {
+    ws.isAlive = true;
+    ws.on('pong', () => {
+      ws.isAlive = true;
+    });
+    let fromIP = 'unknown';
+    if (req && req.connection && req.connection.remoteAddress) {
+      fromIP = req.connection.remoteAddress;
+    }
+    _log(LOG_PREFIX, `WebSocket client connected from ${fromIP}`);
+  });
+  _wss.on('error', (err) => {
+    _error(LOG_PREFIX, 'Error on WebSocket Server', err);
+  });
+  setInterval(() => {
+    _wss.clients.forEach((ws) => {
+      if (ws.isAlive === false) {
+        return ws.terminate();
+      }
+      ws.isAlive = false;
+      ws.ping('', false, true);
+    });
+  }, 30000);
+}
 
 /**
  * Sets the system wide app name.
@@ -206,6 +256,7 @@ function _handleLog(logObj) {
   if (logObj.levelValue <= _opts.firebaseLogLevel) {
     _saveLogToFirebase(logObj);
   }
+  _sendLogToWSS(logObj);
 }
 
 /**
@@ -307,6 +358,32 @@ function _saveLogToFile(stringifiedLogObj) {
     _opts.fileLogLevel = -1;
     _exception(LOG_PREFIX, 'Exception while writing to log file.', ex);
   }
+}
+
+/**
+ * Sends a log object to web socket server.
+ *
+ * @param {Object} logObj The log object to save.
+ */
+function _sendLogToWSS(logObj) {
+  if (!_wss) {
+    return;
+  }
+  _wss.clients.forEach((ws) => {
+    if (ws.readyState === WebSocket.OPEN && ws.isAlive === true) {
+      try {
+        ws.send(JSON.stringify(logObj), (err) => {
+          if (err) {
+            ws.isAlive = false;
+            _error(LOG_PREFIX, 'Error sending message to WS client', err);
+          }
+        });
+      } catch (ex) {
+        ws.isAlive = false;
+        _exception(LOG_PREFIX, 'Exception sending message to WS client.', ex);
+      }
+    }
+  });
 }
 
 /**
@@ -589,6 +666,7 @@ function _cleanLogs(path, maxAgeDays) {
 
 exports.setAppName = _setAppName;
 exports.setOptions = _setOptions;
+exports.startWSS = _startWSS;
 exports.setFirebaseRef = _setFirebaseRef;
 
 exports.formatTime = _formatTime;
