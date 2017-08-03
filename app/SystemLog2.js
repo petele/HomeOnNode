@@ -7,9 +7,9 @@ const fs = require('fs');
 const util = require('util');
 const zlib = require('zlib');
 const chalk = require('chalk');
-const WebSocket = require('ws');
 const moment = require('moment');
 const gitHead = require('./version');
+const WSServer = require('./WSServer');
 
 const HOSTNAME = os.hostname();
 const DEFAULT_OPTIONS = {
@@ -56,37 +56,8 @@ function _startWSS(port) {
   if (!port) {
     port = 8881;
   }
-  try {
-    _init(LOG_PREFIX, `Starting WebSocket server on port ${port}`);
-    _wss = new WebSocket.Server({port: port});
-  } catch (ex) {
-    _error(LOG_PREFIX, 'Unable to start WebSocket server', ex);
-    return;
-  }
-  _log(LOG_PREFIX, 'WebSocket server started...');
-  _wss.on('connection', (ws, req) => {
-    ws.isAlive = true;
-    ws.on('pong', () => {
-      ws.isAlive = true;
-    });
-    let fromIP = 'unknown';
-    if (req && req.connection && req.connection.remoteAddress) {
-      fromIP = req.connection.remoteAddress;
-    }
-    _log(LOG_PREFIX, `WebSocket client connected from ${fromIP}`);
-  });
-  _wss.on('error', (err) => {
-    _error(LOG_PREFIX, 'Error on WebSocket Server', err);
-  });
-  setInterval(() => {
-    _wss.clients.forEach((ws) => {
-      if (ws.isAlive === false) {
-        return ws.terminate();
-      }
-      ws.isAlive = false;
-      ws.ping('', false, true);
-    });
-  }, 30000);
+  _init(LOG_PREFIX, `Starting WebSocket server on port ${port}`);
+  _wss = new WSServer('LOG', port);
 }
 
 /**
@@ -366,24 +337,10 @@ function _saveLogToFile(stringifiedLogObj) {
  * @param {Object} logObj The log object to save.
  */
 function _sendLogToWSS(logObj) {
-  if (!_wss) {
+  if (!_wss || _wss.running !== true) {
     return;
   }
-  _wss.clients.forEach((ws) => {
-    if (ws.readyState === WebSocket.OPEN && ws.isAlive === true) {
-      try {
-        ws.send(JSON.stringify(logObj), (err) => {
-          if (err) {
-            ws.isAlive = false;
-            _error(LOG_PREFIX, 'Error sending message to WS client', err);
-          }
-        });
-      } catch (ex) {
-        ws.isAlive = false;
-        _exception(LOG_PREFIX, 'Exception sending message to WS client.', ex);
-      }
-    }
-  });
+  _wss.broadcast(JSON.stringify(logObj));
 }
 
 /**

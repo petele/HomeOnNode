@@ -7,6 +7,8 @@ const GCMPush = require('./GCMPush');
 const log = require('./SystemLog2');
 const fbHelper = require('./FBHelper');
 const Keys = require('./Keys').keys;
+const WSClient = require('./WSClient');
+
 let GPIO;
 
 const APP_NAME = 'DOORBELL';
@@ -14,6 +16,7 @@ let _fb;
 let _pin;
 let _config;
 let _gcmPush;
+let _wsClient;
 let _lastPushed = 0;
 let _lastValue = 1;
 const MIN_TIME = 3000;
@@ -97,6 +100,16 @@ function sendCommandViaFB(cmd) {
 }
 
 /**
+ * Send a command to the server via the WebSocket
+ *
+ * @return {Promise}
+ */
+function sendWSMessage() {
+  const msg = {doorbell: true};
+  return _wsClient.send(JSON.stringify(msg));
+}
+
+/**
  * Send a doorbell notification
 */
 function sendDoorbell() {
@@ -107,7 +120,10 @@ function sendDoorbell() {
     appendTime: true,
   };
   log.log(APP_NAME, 'Doorbell rang.');
-  sendHTTPRequest('doorbell', 'POST')
+  sendWSMessage()
+    .catch((err) => {
+      return sendHTTPRequest('doorbell', 'POST');
+    })
     .catch((err) => {
       return sendCommandViaFB({cmdName: 'RUN_ON_DOORBELL'});
     })
@@ -142,6 +158,7 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     exit('INIT', 1);
     return;
   }
+  _wsClient = new WSClient('rpi-server:3003', true);
   _gcmPush = new GCMPush(_fb);
   _pin = new GPIO(_config.doorbellPin, 'in', 'both');
   _pin.watch(function(error, value) {

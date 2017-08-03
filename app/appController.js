@@ -7,11 +7,13 @@ const Keys = require('./Keys').keys;
 const HTTPServer = require('./HTTPServer');
 const fbHelper = require('./FBHelper');
 const Keypad = require('./Keypad');
+const WSServer = require('./WSServer');
 
 const LOG_PREFIX = 'APP';
 const APP_NAME = 'HomeOnNode';
 
 let fb;
+let wss;
 let home;
 let config;
 let httpServer;
@@ -68,6 +70,17 @@ function init() {
     });
     httpServer.on('doorbell', (sender) => {
       home.ringDoorbell(sender);
+    });
+
+    wss = new WSServer('CMD', 3003);
+    wss.on('message', (cmd) => {
+      if (cmd.hasOwnProperty('doorbell')) {
+        home.ringDoorbell(cmd.sender);
+      } else if (cmd.hasOwnProperty('cmdName')) {
+        home.executeCommandByName(cmd.cmdName, cmd.modifier, cmd.sender);
+      } else {
+        home.executeCommand(cmd, cmd.sender);
+      }
     });
 
     fb.child('config/HomeOnNode').on('value', function(snapshot) {

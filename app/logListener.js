@@ -2,12 +2,12 @@
 
 'use strict';
 
-const WebSocket = require('ws');
+// const WebSocket = require('ws');
+const WSClient = require('./WSClient');
 const log = require('./SystemLog2');
 const commander = require('commander');
 
-let _interval;
-let _host = 'rpi-server.local:8881';
+let _host = 'rpi-server:8881';
 
 let _ws;
 
@@ -24,49 +24,14 @@ commander
 /**
  * Prints a log message.
  *
- * @param {String} message The incoming message.
+ * @param {Object} logObj The incoming log object.
 */
-function printLog(message) {
-  const logObj = JSON.parse(message);
+function printLog(logObj) {
   if (logObj.levelValue <= commander.level) {
     // eslint-disable-next-line no-console
     console.log(log.stringifyLog(logObj));
   }
 }
 
-/**
- * Connects to the server.
- *
- * @param {String} message The incoming message.
-*/
-function connect() {
-  log.log('WSS', `Connecting to ws://${_host}`);
-  _ws = new WebSocket(`ws://${_host}`);
-  _ws.on('open', () => {
-    log.log('WSS', 'WebSocket opened');
-    _interval = setInterval(() => {
-      _ws.ping('', false, true);
-    }, 30 * 1000);
-  });
-  _ws.on('close', () => {
-    if (_interval) {
-      clearInterval(_interval);
-      _interval = null;
-    }
-    if (commander.retry === true) {
-      log.log('WSS', 'Will retry in 2 seconds...');
-      setTimeout(() => {
-        connect();
-      }, 2000);
-    } else {
-      log.log('WSS', 'WebSocket closed.');
-    }
-  });
-  _ws.on('message', printLog);
-  _ws.on('error', (err) => {
-    log.error('WSS', 'Socket error occured', err);
-  });
-}
-
-connect();
-
+_ws = new WSClient(_host, commander.retry);
+_ws.on('message', printLog);
