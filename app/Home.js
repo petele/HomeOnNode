@@ -6,7 +6,6 @@ const exec = require('child_process').exec;
 const log = require('./SystemLog2');
 const Keys = require('./Keys').keys;
 const version = require('./version');
-const fs = require('fs');
 
 const Bluetooth = require('./Bluetooth');
 const FlicMonitor = require('./FlicMonitor');
@@ -62,23 +61,18 @@ function Home(initialConfig, fbRef) {
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
-   * Handles a single key entry and executes the corrosponding command.
+   * Updates the system config.
    *
-   * @param {String} key Key pressed
-   * @param {String} modifier Any applied modifier
-   * @param {String} source The source of the command.
+   * @param {Object} config New config data.
    */
-  this.handleKeyEntry = function(key, modifier, source) {
-    try {
-      const cmdName = _config.keypad.keys[key];
-      if (cmdName) {
-        _self.executeCommandByName(cmdName, modifier, source);
-      } else {
-        log.warn(LOG_PREFIX, 'Unknown key pressed: ' + key);
-      }
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Error handling key entry.', ex);
+  this.updateConfig = function(config) {
+    if (config && config._version >= 2) {
+      _config = config;
+      log.log(LOG_PREFIX, 'Config updated.');
+      return;
     }
+    const msg = 'Config not updated, invalid config provided.';
+    log.error(LOG_PREFIX, msg, config);
   };
 
   /**
@@ -365,11 +359,6 @@ function Home(initialConfig, fbRef) {
     _fbSet('state/time/started_', _self.state.time.started_);
     _fbSet('state/time/updated_', _self.state.time.started_);
     _fbSet('state/gitHead', _self.state.gitHead);
-    _fb.child('config/HomeOnNode').on('value', function(snapshot) {
-      _config = snapshot.val();
-      log.log(LOG_PREFIX, 'Config file updated.');
-      fs.writeFile('config.json', JSON.stringify(_config, null, 2));
-    });
     gcmPush = new GCMPush(_fb);
     _initBluetooth();
     _initNotifications();

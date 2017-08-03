@@ -11,9 +11,9 @@ const Keypad = require('./Keypad');
 const LOG_PREFIX = 'APP';
 const APP_NAME = 'HomeOnNode';
 
-let config;
 let fb;
 let home;
+let config;
 let httpServer;
 
 log.setAppName(APP_NAME);
@@ -29,83 +29,117 @@ function init() {
   log.setFirebaseRef(fb);
 
   fb.child(`config/HomeOnNode/logs`).on('value', (snapshot) => {
-    log.setOptions(snapshot.val());
-    log.debug(LOG_PREFIX, 'Log config updated');
+    const logOpts = snapshot.val();
+    log.setOptions(logOpts);
+    log.debug(LOG_PREFIX, 'Log config updated', logOpts);
   });
 
-  log.log(LOG_PREFIX, 'Reading local config file.');
+  log.log(LOG_PREFIX, `Reading local config.`);
   fs.readFile('./config.json', {'encoding': 'utf8'}, function(err, data) {
     if (err) {
-      log.exception(LOG_PREFIX, 'Error reading local config.json', err);
+      log.exception(LOG_PREFIX, `Error reading 'config.json' file.`, err);
       exit('ConfigError', 1);
-    } else {
-      try {
-        config = JSON.parse(data);
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Error parsing local config.json ', ex);
-        exit('ConfigError', 1);
-      }
-
-      try {
-        home = new Home(config, fb);
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Error initializing home modules ', ex);
-        exit('HomeInitError', 1);
-      }
-
-      home.on('ready', function() {
-        httpServer = new HTTPServer(config, home);
-      });
-
-      fb.child('commands').on('child_added', function(snapshot) {
-        let cmd;
-        try {
-          cmd = snapshot.val();
-          if (cmd.hasOwnProperty('cmdName')) {
-            home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
-          } else {
-            home.executeCommand(cmd, 'FB');
-          }
-        } catch (ex) {
-          let msg = 'Unable to execute Firebase Command: ';
-          msg += JSON.stringify(cmd);
-          log.exception(LOG_PREFIX, msg, ex);
-        }
-        snapshot.ref().remove();
-      });
-
-      try {
-        Keypad.listen(config.keypad.modifiers,
-          function(key, modifier, exitApp) {
-            if (exitApp) {
-              exit('SIGINT', 0);
-            } else {
-              home.handleKeyEntry(key, modifier, 'KEYPAD');
-            }
-          }
-        );
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Error initializing keyboard', ex);
-      }
-
-      const cron15m = getCronIntervalValue(15, 30);
-      log.log(LOG_PREFIX, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
-      setInterval(function() {
-        loadAndRunJS('cron15.js');
-      }, cron15m);
-
-      const cron60m = getCronIntervalValue(60, 2 * 60);
-      log.log(LOG_PREFIX, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
-      setInterval(function() {
-        loadAndRunJS('cron60.js');
-      }, cron60m);
-
-      const cron24h = getCronIntervalValue(24 * 60, 5 * 60);
-      log.log(LOG_PREFIX, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
-      setInterval(function() {
-        loadAndRunJS('cronDaily.js');
-      }, cron24h);
+      return;
     }
+
+    try {
+      log.verbose(LOG_PREFIX, `Parsing 'config.json'.`);
+      config = JSON.parse(data);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Error parsing 'config.json' file.`, ex);
+      exit('ConfigError', 1);
+      return;
+    }
+
+    try {
+      home = new Home(config, fb);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Error initializing 'home' module.`, ex);
+      exit('HomeInitError', 1);
+      return;
+    }
+
+    httpServer = new HTTPServer();
+    httpServer.on('executeCommandByName', (name, modifier, sender) => {
+      home.executeCommandByName(name, modifier, sender);
+    });
+    httpServer.on('executeCommand', (cmd, sender) => {
+      home.executeCommand(cmd, sender);
+    });
+    httpServer.on('doorbell', (sender) => {
+      home.ringDoorbell(sender);
+    });
+
+    fb.child('config/HomeOnNode').on('value', function(snapshot) {
+      config = snapshot.val();
+      home.updateConfig(config);
+      fs.writeFile('config.json', JSON.stringify(config, null, 2), (err) => {
+        if (err) {
+          log.exception(LOG_PREFIX, `Unable to save 'config.json'`, err);
+          return;
+        }
+        log.debug(LOG_PREFIX, `Updated config saved to 'config.json'`);
+      });
+    });
+
+    fb.child('commands').on('child_added', function(snapshot) {
+      let cmd;
+      try {
+        cmd = snapshot.val();
+        if (cmd.hasOwnProperty('cmdName')) {
+          home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
+        } else {
+          home.executeCommand(cmd, 'FB');
+        }
+      } catch (ex) {
+        let msg = 'Unable to execute Firebase Command: ';
+        msg += JSON.stringify(cmd);
+        log.exception(LOG_PREFIX, msg, ex);
+      }
+      snapshot.ref().remove();
+    });
+
+    try {
+      Keypad.listen(config.keypad.modifiers,
+        function(key, modifier, exitApp) {
+          if (exitApp) {
+            exit('SIGINT', 0);
+            return;
+          }
+          const cmdName = config.keypad.keys[key];
+          if (cmdName) {
+            home.executeCommandByName(cmdName, modifier, 'KEYPAD');
+            return;
+          }
+          const details = {
+            key: key,
+            modifier: modifier,
+            exitApp: exitApp,
+          };
+          log.warn(LOG_PREFIX, `Unknown key pressed.`, details);
+        }
+      );
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Error initializing keyboard', ex);
+    }
+
+    const cron15m = getCronIntervalValue(15, 30);
+    log.log(LOG_PREFIX, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
+    setInterval(function() {
+      loadAndRunJS('cron15.js');
+    }, cron15m);
+
+    const cron60m = getCronIntervalValue(60, 2 * 60);
+    log.log(LOG_PREFIX, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
+    setInterval(function() {
+      loadAndRunJS('cron60.js');
+    }, cron60m);
+
+    const cron24h = getCronIntervalValue(24 * 60, 5 * 60);
+    log.log(LOG_PREFIX, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
+    setInterval(function() {
+      loadAndRunJS('cronDaily.js');
+    }, cron24h);
   });
 }
 

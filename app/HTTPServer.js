@@ -5,18 +5,19 @@ const path = require('path');
 const log = require('./SystemLog2');
 const methodOverride = require('method-override');
 const bodyParser = require('body-parser');
+const EventEmitter = require('events').EventEmitter;
+const util = require('util');
 
 const LOG_PREFIX = 'HTTPRequest';
+const PORT = 3000;
 
 /**
  * Starts the local HTTP server.
  * @constructor
- *
- * @param {Object} config The config object for the server.
- * @param {Home} home An instance of the Home controller.
 */
-function HTTPServer(config, home) {
+function HTTPServer() {
   let server;
+  const _self = this;
 
   this.shutdown = function() {
     if (server) {
@@ -29,9 +30,8 @@ function HTTPServer(config, home) {
 
   const exp = express();
 
-  log.init(LOG_PREFIX, 'Starting...');
-  const port = config.httpServerPort || 3000;
-  exp.set('port', port);
+  log.init(LOG_PREFIX, `Starting HTTP Server on port :${PORT}...`);
+  exp.set('port', PORT);
   exp.use(methodOverride());
   exp.use(bodyParser.json());
   exp.use(bodyParser.urlencoded({extended: true}));
@@ -51,49 +51,13 @@ function HTTPServer(config, home) {
     res.sendFile(path.join(__dirname, '/web/favicon.ico'));
   });
 
-  exp.post('/shutdown', function(req, res) {
-    let body = req.body;
-    if (typeof body === 'string') {
-      body = JSON.parse(body);
-    }
-    if (body.confirmation === 'shutdown') {
-      const timeout = 5000;
-      home.shutdown();
-      res.send({'shutdown': true, 'timeout': timeout});
-      log.appStop('HTTP [' + req.ip + ']');
-      setTimeout(function() {
-        process.exit();
-      }, timeout);
-    } else {
-      res.send({'shutdown': false});
-      log.error(LOG_PREFIX, 'System shutdown attempted, but not confirmed.');
-    }
-  });
-
-  exp.get('/state', function(req, res) {
-    res.send(home.state);
-  });
-
-  exp.post('/execute/state/:state', function(req, res) {
-    const state = req.params.state.toUpperCase();
-    if (state === 'AWAY' || state === 'HOME' || state === 'ARMED') {
-      const sender = '[HTTP ' + req.ip + ']';
-      home.executeCommand({state: state}, sender);
-      res.status(202);
-      res.send({result: 'done'});
-    } else {
-      res.status(400);
-      res.send({result: 'failed', error: 'unknown state'});
-    }
-  });
-
   exp.post('/execute/name', function(req, res) {
     let body = req.body;
     if (typeof body === 'string') {
       body = JSON.parse(body);
     }
     const sender = '[HTTP ' + req.ip + ']';
-    home.executeCommandByName(body.cmdName, body.modifier, sender);
+    _self.emit('executeCommandByName', body.cmdName, body.modifier, sender);
     res.send({result: 'done'});
   });
 
@@ -103,13 +67,13 @@ function HTTPServer(config, home) {
       body = JSON.parse(body);
     }
     const sender = '[HTTP ' + req.ip + ']';
-    home.executeCommand(body, sender);
+    _self.emit('executeCommand', body, sender);
     res.send({result: 'done'});
   });
 
   exp.post('/doorbell', function(req, res) {
     const sender = '[HTTP ' + req.ip + ']';
-    home.ringDoorbell(sender);
+    _self.emit('doorbell', sender);
     res.send({result: 'done'});
   });
 
@@ -131,5 +95,6 @@ function HTTPServer(config, home) {
     log.log(LOG_PREFIX, 'Express server started on port ' + exp.get('port'));
   });
 }
+util.inherits(HTTPServer, EventEmitter);
 
 module.exports = HTTPServer;
