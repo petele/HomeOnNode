@@ -6,8 +6,6 @@ echo ""
 node getConfig.js Doorbell
 echo ""
 node appDoorbell.js
-echo ""
-echo "Doorbell exited."
 
-node appOnError.js
-node sendGCMMessage.js
+node appOnError.js >> ./logs/system.log
+node sendGCMMessage.js >> ./logs/system.log

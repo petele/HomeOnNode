@@ -204,10 +204,10 @@ function NanoLeaf(key, ip, port) {
    * @return {Promise} A promise that resolves to the response.
   */
   function _setEffect(effectName) {
-    log.info(LOG_PREFIX, `setEffect('${effectName}')`);
     if (effectName === 'OFF') {
       return _setPower(false);
     }
+    log.info(LOG_PREFIX, `setEffect('${effectName}')`);
     return new Promise(function(resolve, reject) {
       if (_isReady() === false) {
         reject(new Error('not_ready'));

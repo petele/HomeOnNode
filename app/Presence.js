@@ -152,7 +152,7 @@ function Presence(bt) {
    * @param {Object} person The person who's state has changed.
   */
   function _emitChange(person) {
-    log.log(LOG_PREFIX, `${person.name} is ${person.state}`);
+    log.log(LOG_PREFIX, `${person.name} is ${person.state}`, person);
     _self.emit('change', person, _numPresent, _people);
   }
 

@@ -114,7 +114,7 @@ function SomaSmartShades(bt, idToUUID) {
       return false;
     }
     if (!peripheral) {
-      log.error(LOG_PREFIX, `isReady() failed: peripheral not provided.`);
+      log.error(LOG_PREFIX, `isReady() failed: peripheral not provided/found.`);
       return false;
     }
     return true;

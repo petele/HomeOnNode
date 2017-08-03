@@ -6,8 +6,6 @@ echo ""
 node getConfig.js HomeOnNode
 echo ""
 node appController.js
-echo ""
-echo "HomeOnNode exited."
 
-node appOnError.js
-node sendGCMMessage.js
+node appOnError.js >> ./logs/system.log
+node sendGCMMessage.js >> ./logs/system.log

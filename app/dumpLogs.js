@@ -9,7 +9,7 @@ const commander = require('commander');
 
 commander
   .version('0.2.0')
-  .option('-n, --number <value>', 'Number of log items to show', 100)
+  .option('-n, --number <value>', 'Number of log items to show (100)', 100)
   .option('-p, --path <value>', 'Log path to use', 'server')
   .option('-q, --quit', 'Quit after completion')
   .parse(process.argv);

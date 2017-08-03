@@ -87,19 +87,19 @@ function init() {
         log.exception(LOG_PREFIX, 'Error initializing keyboard', ex);
       }
 
-      const cron15m = getCronIntervalValue(15, 5);
+      const cron15m = getCronIntervalValue(15, 30);
       log.log(LOG_PREFIX, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
       setInterval(function() {
         loadAndRunJS('cron15.js');
       }, cron15m);
 
-      const cron60m = getCronIntervalValue(60, 30);
+      const cron60m = getCronIntervalValue(60, 2 * 60);
       log.log(LOG_PREFIX, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
       setInterval(function() {
         loadAndRunJS('cron60.js');
       }, cron60m);
 
-      const cron24h = getCronIntervalValue(24 * 60, 90);
+      const cron24h = getCronIntervalValue(24 * 60, 5 * 60);
       log.log(LOG_PREFIX, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
       setInterval(function() {
         loadAndRunJS('cronDaily.js');
@@ -112,12 +112,19 @@ function init() {
  * Generate the interval delay for the daily cron jobs.
  *
  * @param {Number} minutes How often the cron job should run, in minutes.
- * @param {Number} delaySeconds Add up to X number of delay seconds.
+ * @param {Number} delaySeconds Add/subtract up to X number of delay seconds.
  * @return {Number} The number of milliseconds to wait between calls.
  */
 function getCronIntervalValue(minutes, delaySeconds) {
+  const baseDelay = minutes * 60 * 1000;
   const delayMS = delaySeconds * 1000;
-  return (minutes * 60 * 1000) + Math.floor(Math.random() * delayMS);
+  const minimumDelay = delayMS / 2;
+  const randomDelay = Math.random() * minimumDelay;
+  const totalDelay = Math.round(minimumDelay + randomDelay);
+  if (Math.random() > 0.5) {
+    return baseDelay + totalDelay;
+  }
+  return baseDelay - totalDelay;
 }
 
 

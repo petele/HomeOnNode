@@ -67,7 +67,14 @@ function FlicMonitor(bt, hitTimeout) {
         setTimeout(function() {
           _flicPushed = false;
         }, _hitTimeout);
-        log.log(LOG_PREFIX, '_sawFlic(true)');
+        const extra = {
+          uuid: _flicUUID,
+          id: peripheral.id,
+          address: peripheral.address,
+          rssi: peripheral.rssi,
+          name: peripheral.advertisement.localName,
+        };
+        log.log(LOG_PREFIX, `sawFlic('${_flicUUID}')`, extra);
         _self.emit('flic_pushed');
       }
     }

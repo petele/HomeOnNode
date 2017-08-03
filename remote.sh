@@ -10,5 +10,5 @@ else
   echo "No app id provided, cannot start!"
 fi
 
-node appOnError.js
-node sendGCMMessage.js
+node appOnError.js >> ./logs/system.log
+node sendGCMMessage.js >> ./logs/system.log
