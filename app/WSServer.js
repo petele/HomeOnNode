@@ -54,6 +54,7 @@ function WSServer(name, port) {
       log.error(_logPrefix, `Unable to parse message ${msg}`, ex);
       return;
     }
+    log.verbose(_logPrefix, 'Message received.', msg);
     _self.emit('message', msg);
   }
 

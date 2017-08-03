@@ -94,6 +94,7 @@ function WSClient(host, retry) {
    * Sends a message
    *
    * @param {String} msg Message to send to the server.
+   * @return {Promise} A promise with the result of the request.
    */
   this.send = function(msg) {
     return new Promise(function(resolve, reject) {
@@ -113,6 +114,7 @@ function WSClient(host, retry) {
           reject(err);
           return;
         }
+        log.verbose(LOG_PREFIX, 'Message sent.', msg);
         resolve();
       });
     });

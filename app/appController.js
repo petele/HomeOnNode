@@ -74,6 +74,7 @@ function init() {
 
     wss = new WSServer('CMD', 3003);
     wss.on('message', (cmd) => {
+      log.verbose(LOG_PREFIX, 'WS Message received.', cmd);
       if (cmd.hasOwnProperty('doorbell')) {
         home.ringDoorbell(cmd.sender);
       } else if (cmd.hasOwnProperty('cmdName')) {
