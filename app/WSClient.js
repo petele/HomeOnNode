@@ -42,6 +42,7 @@ function WSClient(host, retry) {
     _ws = new WebSocket(`ws://${host}`);
     _ws.on('open', () => {
       _self.connected = true;
+      _self.emit('connect');
       log.debug(LOG_PREFIX, 'WebSocket opened');
       _interval = setInterval(() => {
         _ws.ping('', false, true);
@@ -49,6 +50,7 @@ function WSClient(host, retry) {
     });
     _ws.on('close', () => {
       _self.connected = false;
+      _self.emit('disconnect');
       if (_interval) {
         clearInterval(_interval);
         _interval = null;
