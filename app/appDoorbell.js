@@ -18,7 +18,7 @@ let _config;
 let _gcmPush;
 let _wsClient;
 let _lastPushed = 0;
-let _lastValue = 1;
+let _lastValue = null;
 const MIN_TIME = 3000;
 
 log.setAppName(APP_NAME);
@@ -166,7 +166,7 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
     const hasChanged = value !== _lastValue ? true : false;
     const timeOK = now > _lastPushed + MIN_TIME ? true : false;
     _lastValue = value;
-    if (hasChanged && timeOK && value === 0) {
+    if (hasChanged && timeOK && value === 1) {
       _lastPushed = now;
       sendDoorbell();
     } else {
