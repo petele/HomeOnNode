@@ -302,7 +302,7 @@ function Harmony(uuid) {
      * @type {Object}
      */
     _self.emit('config_changed', config);
-    log.verbose(LOG_PREFIX, 'Config changed.', config);
+    log.verbose(LOG_PREFIX, 'Config changed.');
   }
 
   /**

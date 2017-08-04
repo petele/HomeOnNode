@@ -109,7 +109,7 @@ function NanoLeaf(key, ip, port) {
           reject(error);
           return;
         }
-        log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`, respBody);
+        log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
         if (response &&
             response.statusCode !== 200 && response.statusCode !== 204) {
               reject(new Error('Bad statusCode: ' + response.statusCode));
