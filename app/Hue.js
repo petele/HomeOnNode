@@ -26,8 +26,8 @@ const LOG_PREFIX = 'HUE';
 function Hue(key, explicitIPAddress) {
   const REQUEST_TIMEOUT = 15 * 1000;
   const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
-  const GROUPS_REFRESH_INTERVAL = 90 * 1000;
-  const LIGHTS_REFRESH_INTERVAL = 45 * 1000;
+  const GROUPS_REFRESH_INTERVAL = 100 * 1000;
+  const LIGHTS_REFRESH_INTERVAL = 40 * 1000;
   const _self = this;
   const _key = key;
 
