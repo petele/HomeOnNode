@@ -87,6 +87,7 @@ function Sonos() {
        * @event Sonos#player-state
        */
       _self.emit('player-state', playerState);
+      log.verbose(LOG_PREFIX, 'Player State Changed', playerState);
     });
     _sonosSystem.on('topology-changed', (zones) => {
       /**
@@ -94,6 +95,7 @@ function Sonos() {
        * @event Sonos#topology-changed
        */
       _self.emit('topology-changed', zones);
+      log.verbose(LOG_PREFIX, 'Topology changed', zones);
     });
   }
 
@@ -168,6 +170,7 @@ function Sonos() {
        * @event Sonos#favorites-changed
        */
       _self.emit('favorites-changed', favs);
+      log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
     });
   }
 

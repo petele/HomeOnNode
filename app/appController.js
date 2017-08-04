@@ -139,18 +139,21 @@ function init() {
     const cron15m = getCronIntervalValue(15, 30);
     log.log(LOG_PREFIX, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
     setInterval(function() {
+      log.verbose(LOG_PREFIX, 'CRON 15');
       loadAndRunJS('cron15.js');
     }, cron15m);
 
     const cron60m = getCronIntervalValue(60, 2 * 60);
     log.log(LOG_PREFIX, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
     setInterval(function() {
+      log.verbose(LOG_PREFIX, 'CRON Hourly');
       loadAndRunJS('cron60.js');
     }, cron60m);
 
     const cron24h = getCronIntervalValue(24 * 60, 5 * 60);
     log.log(LOG_PREFIX, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
     setInterval(function() {
+      log.verbose(LOG_PREFIX, 'CRON Daily');
       loadAndRunJS('cronDaily.js');
     }, cron24h);
   });

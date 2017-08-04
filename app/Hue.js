@@ -146,12 +146,12 @@ function Hue(key, explicitIPAddress) {
   */
   function _makeHueRequest(requestPath, method, body, retry) {
     _requestsInProgress++;
-    let msg = `makeHueRequest (${method}) ${requestPath}`;
+    let msg = `makeHueRequest('${method}', '${requestPath}')`;
     if (_requestsInProgress >= 5) {
       let xrpMsg = `Excessive requests in progress (${_requestsInProgress}`;
       log.warn(LOG_PREFIX, xrpMsg);
     }
-    // log.debug(LOG_PREFIX, msg);
+    log.verbose(LOG_PREFIX, msg, body);
     return new Promise(function(resolve, reject) {
       let requestOptions = {
         uri: `http://${_bridgeIP}/api/${_key}${requestPath}`,
@@ -165,6 +165,7 @@ function Hue(key, explicitIPAddress) {
       }
       request(requestOptions, (error, response, respBody) => {
         _requestsInProgress -= 1;
+        log.verbose(LOG_PREFIX,  `${msg}: ${response.statusCode}`, respBody);
         let errors = [];
         if (error) {
           log.error(LOG_PREFIX, `${msg} Request error ${error}`, error);

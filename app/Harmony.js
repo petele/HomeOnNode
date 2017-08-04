@@ -220,8 +220,7 @@ function Harmony(uuid) {
    * @param {Object} connection Connection string
   */
   function _handleOnline(connection) {
-    log.log(LOG_PREFIX, 'Online.');
-    log.debug(LOG_PREFIX, 'Connection string', connection);
+    log.log(LOG_PREFIX, 'Online.', connection);
     _updateConfigRequest();
     _updateActivityRequest();
   }
@@ -303,6 +302,7 @@ function Harmony(uuid) {
      * @type {Object}
      */
     _self.emit('config_changed', config);
+    log.verbose(LOG_PREFIX, 'Config changed.', config);
   }
 
   /**

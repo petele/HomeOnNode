@@ -90,6 +90,7 @@ function NanoLeaf(key, ip, port) {
   */
   function _makeLeafRequest(requestPath, method, body) {
     return new Promise(function(resolve, reject) {
+      const msg = `makeLeafRequest('${method}', '${requestPath}')`;
       let requestOptions = {
         uri: _hubAddress + requestPath,
         method: method,
@@ -102,11 +103,13 @@ function NanoLeaf(key, ip, port) {
       if (body) {
         requestOptions.body = body;
       }
+      log.verbose(LOG_PREFIX, msg, body);
       request(requestOptions, function(error, response, respBody) {
         if (error) {
           reject(error);
           return;
         }
+        log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`, respBody);
         if (response &&
             response.statusCode !== 200 && response.statusCode !== 204) {
               reject(new Error('Bad statusCode: ' + response.statusCode));

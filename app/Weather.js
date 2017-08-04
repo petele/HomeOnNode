@@ -54,12 +54,12 @@ function Weather(latLon, key) {
           now: fullForecast.currently,
           today: fullForecast.daily.data[0],
         };
-        // log.debug(LOG_PREFIX, 'Weather updated.');
         /**
          * Fires when the weather info has changed
          * @event Weather#weather
          */
         _self.emit('weather', forecast);
+        log.verbose(LOG_PREFIX, 'Weather updated.', forecast);
         return;
       } catch (ex) {
         log.exception(LOG_PREFIX, 'Unable to parse forecast.io response', ex);
