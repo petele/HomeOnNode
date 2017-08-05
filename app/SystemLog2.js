@@ -10,6 +10,7 @@ const chalk = require('chalk');
 const moment = require('moment');
 const gitHead = require('./version');
 const WSServer = require('./WSServer');
+const stripAnsi = require('strip-ansi');
 
 const HOSTNAME = os.hostname();
 const DEFAULT_OPTIONS = {
@@ -20,16 +21,16 @@ const DEFAULT_OPTIONS = {
   firebasePath: 'logs/generic',
 };
 const LOG_LEVELS = {
-  START: {level: 0, color: chalk.green},
-  STOP: {level: 0, color: chalk.red},
-  INIT: {level: 0, color: chalk.green},
-  EXCPT: {level: 0, color: chalk.red},
-  ERROR: {level: 10, color: chalk.red},
-  WARN: {level: 40, color: chalk.yellow},
-  INFO: {level: 50, color: chalk.cyan},
-  TODO: {level: 60, color: chalk.magenta},
-  DEBUG: {level: 60, color: chalk.blue},
-  EXTRA: {level: 70, color: chalk.blue},
+  START: {level: 0, color: chalk.hex('#388E3C')},
+  STOP: {level: 0, color: chalk.hex('#b71c1c')},
+  INIT: {level: 0, color: chalk.hex('#388E3C')},
+  EXCPT: {level: 0, color: chalk.hex('#b71c1c')},
+  ERROR: {level: 10, color: chalk.hex('#f44336')},
+  WARN: {level: 40, color: chalk.hex('#ff9800')},
+  INFO: {level: 50, color: chalk.hex('#03a9f4')},
+  TODO: {level: 60, color: chalk.hex('#9c27b0')},
+  DEBUG: {level: 60, color: chalk.hex('#1976d2')},
+  EXTRA: {level: 70, color: chalk.hex('#546e7a')},
 };
 const LOG_PREFIX = 'LOGGER';
 
@@ -318,7 +319,8 @@ function _saveLogToFirebase(logObj) {
  */
 function _saveLogToFile(stringifiedLogObj) {
   try {
-    let lines = chalk.stripColor(stringifiedLogObj) + '\n';
+    const lines = stripAnsi(stringifiedLogObj) + '\n';
+    // let lines = chalk.stripColor(stringifiedLogObj) + '\n';
     fs.appendFile(_opts.fileFilename, lines, function(err) {
       if (err) {
         _opts.fileLogLevel = -1;

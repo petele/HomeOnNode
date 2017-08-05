@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "body-parser": "^1.6.5",
-    "chalk": "^1.1.3",
+    "chalk": "^2.0.1",
     "commander": "^2.10.0",
     "deep-diff": "^0.2.0",
     "express": "^4.15.3",
@@ -24,6 +24,7 @@
     "openzwave-shared": "^1.1.4",
     "request": "^2.69.0",
     "sonos-discovery": "github:jishi/node-sonos-discovery#v1.4.1",
+    "strip-ansi": "^4.0.0",
     "web-push": "^3.2.2",
     "ws": "^3.1.0"
   },
