@@ -21,16 +21,16 @@ const DEFAULT_OPTIONS = {
   firebasePath: 'logs/generic',
 };
 const LOG_LEVELS = {
-  START: {level: 0, color: chalk.hex('#388E3C')},
-  STOP: {level: 0, color: chalk.hex('#b71c1c')},
-  INIT: {level: 0, color: chalk.hex('#388E3C')},
-  EXCPT: {level: 0, color: chalk.hex('#b71c1c')},
-  ERROR: {level: 10, color: chalk.hex('#f44336')},
-  WARN: {level: 40, color: chalk.hex('#ff9800')},
-  INFO: {level: 50, color: chalk.hex('#03a9f4')},
-  TODO: {level: 60, color: chalk.hex('#9c27b0')},
-  DEBUG: {level: 60, color: chalk.hex('#1976d2')},
-  EXTRA: {level: 70, color: chalk.hex('#546e7a')},
+  START: {level: 0, color: chalk.hex('#388e3c')},  // green 700
+  STOP: {level: 0, color: chalk.hex('#b71c1c')},   // red 900
+  INIT: {level: 0, color: chalk.hex('#388e3c')},   // green 700
+  EXCPT: {level: 0, color: chalk.hex('#b71c1c')},  // red 900
+  ERROR: {level: 10, color: chalk.hex('#f44336')}, // red 500
+  WARN: {level: 40, color: chalk.hex('#ff9800')},  // orange 500
+  INFO: {level: 50, color: chalk.hex('#03a9f4')},  // l.blue 500
+  TODO: {level: 60, color: chalk.hex('#9c27b0')},  // purple 500
+  DEBUG: {level: 60, color: chalk.hex('#0d47a1')}, // blue 800
+  EXTRA: {level: 70, color: chalk.hex('#546e7a')}, // bluegray 600
 };
 const LOG_PREFIX = 'LOGGER';
 
@@ -320,7 +320,6 @@ function _saveLogToFirebase(logObj) {
 function _saveLogToFile(stringifiedLogObj) {
   try {
     const lines = stripAnsi(stringifiedLogObj) + '\n';
-    // let lines = chalk.stripColor(stringifiedLogObj) + '\n';
     fs.appendFile(_opts.fileFilename, lines, function(err) {
       if (err) {
         _opts.fileLogLevel = -1;
