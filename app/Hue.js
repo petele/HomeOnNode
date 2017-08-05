@@ -166,7 +166,7 @@ function Hue(key, explicitIPAddress) {
         log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
         let errors = [];
         if (error) {
-          log.error(LOG_PREFIX, `${msg} Request error ${error}`, error);
+          log.verbose(LOG_PREFIX, `${msg} Response error: request`, error);
           if (retry !== true) {
             reject(error);
             return;
@@ -175,14 +175,13 @@ function Hue(key, explicitIPAddress) {
         }
         if (respBody) {
           if (respBody.error) {
-            log.error(LOG_PREFIX, `${msg} Response error ${error}`, error);
+            log.verbose(LOG_PREFIX, `${msg} Response error: body.`, error);
             errors.push(respBody);
           } else if (Array.isArray(respBody)) {
             respBody.forEach((item) => {
               if (item.error) {
                 errors.push(item);
-                let itemErr = `${msg} Response error: ${JSON.stringify(item)}`;
-                log.error(LOG_PREFIX, itemErr);
+                log.verbose(LOG_PREFIX, `${msg} Response error: item.`, item);
               }
             });
           }
