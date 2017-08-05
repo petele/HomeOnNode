@@ -12,8 +12,14 @@ let _fb;
 let _hostname;
 let _deviceMonitor;
 
+const logOpts = {
+  fileLogLevel: 45,
+  fileFilename: './logs/monitor.log',
+  consoleLogLevel: 20,
+}
 
 log.setAppName(LOG_PREFIX);
+log.setOptions(logOpts);
 log.startWSS(8882);
 log.appStart();
 
@@ -48,7 +54,7 @@ function init() {
   });
 
   setInterval(function() {
-    log.cleanFile();
+    log.cleanFile(logOpts.fileFilename);
   }, 60 * 60 * 24 * 1000);
 }
 
