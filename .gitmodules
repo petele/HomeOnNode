@@ -1,3 +1,0 @@
-[submodule "app/sonos-discovery"]
-	path = app/sonos-discovery
-	url = https://github.com/petele/node-sonos-discovery.git

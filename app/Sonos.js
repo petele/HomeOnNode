@@ -1,9 +1,9 @@
 'use strict';
 
-const log = require('./SystemLog2');
-const EventEmitter = require('events').EventEmitter;
 const util = require('util');
+const log = require('./SystemLog2');
 const SonosSystem = require('sonos-discovery');
+const EventEmitter = require('events').EventEmitter;
 
 // Based on https://github.com/jishi/node-sonos-discovery
 

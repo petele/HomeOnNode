@@ -3,23 +3,23 @@
 const EventEmitter = require('events').EventEmitter;
 const util = require('util');
 const exec = require('child_process').exec;
+
+const Hue = require('./Hue');
+const Nest = require('./Nest');
+const Sonos = require('./Sonos');
+const ZWave = require('./ZWave');
 const log = require('./SystemLog2');
 const Keys = require('./Keys').keys;
-const version = require('./version');
-
-const Bluetooth = require('./Bluetooth');
-const FlicMonitor = require('./FlicMonitor');
 const GCMPush = require('./GCMPush');
 const Harmony = require('./Harmony');
-const Hue = require('./Hue');
-const NanoLeaf = require('./NanoLeaf');
-const Nest = require('./Nest');
-const Presence = require('./Presence');
-const PushBullet = require('./PushBullet');
-const SomaSmartShades = require('./SomaSmartShades');
-const Sonos = require('./Sonos');
 const Weather = require('./Weather');
-const ZWave = require('./ZWave');
+const version = require('./version');
+const NanoLeaf = require('./NanoLeaf');
+const Presence = require('./Presence');
+const Bluetooth = require('./Bluetooth');
+const PushBullet = require('./PushBullet');
+const FlicMonitor = require('./FlicMonitor');
+const SomaSmartShades = require('./SomaSmartShades');
 
 const LOG_PREFIX = 'HOME';
 
@@ -322,6 +322,8 @@ function Home(initialConfig, fbRef) {
    * Shutdown the HOME Service
    */
   this.shutdown = function() {
+    log.log(LOG_PREFIX, 'Shutting down...');
+    _shutdownBluetooth();
     _shutdownZWave();
     _shutdownHarmony();
     _shutdownPushBullet();
@@ -651,6 +653,13 @@ function Home(initialConfig, fbRef) {
     });
   }
 
+  /**
+   * Shutdown the Bluetooth Services
+   */
+  function _shutdownBluetooth() {
+    bluetooth.stopScanning();
+  }
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
  * Flic Monitor API
@@ -872,9 +881,8 @@ function Home(initialConfig, fbRef) {
    * Handle incoming PushBullet notification
    *
    * @param {Object} msg Incoming message
-   * @param {Number} count Number of visible messages
    */
-  function _receivedPushBulletNotification(msg, count) {
+  function _receivedPushBulletNotification(msg) {
     let cmdName;
     if (msg.application_name && _self.state.systemState === 'HOME') {
       cmdName = _config.pushBulletNotifications[msg.application_name];

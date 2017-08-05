@@ -1,22 +1,23 @@
 'use strict';
 
 const fs = require('fs');
-const log = require('./SystemLog2');
 const Home = require('./Home');
-const Keys = require('./Keys').keys;
-const HTTPServer = require('./HTTPServer');
-const fbHelper = require('./FBHelper');
 const Keypad = require('./Keypad');
+const log = require('./SystemLog2');
+const Keys = require('./Keys').keys;
+const Firebase = require('firebase');
 const WSServer = require('./WSServer');
+const HTTPServer = require('./HTTPServer');
+const DeviceMonitor = require('./DeviceMonitor');
 
-const LOG_PREFIX = 'APP';
 const APP_NAME = 'HomeOnNode';
 
-let fb;
-let wss;
-let home;
-let config;
-let httpServer;
+let _fb;
+let _wss;
+let _home;
+let _config;
+let _httpServer;
+let _deviceMonitor;
 
 log.setAppName(APP_NAME);
 log.setOptions({firebaseLogLevel: 50, firebasePath: 'logs/server'});
@@ -27,136 +28,163 @@ log.appStart();
  * Init
 */
 function init() {
-  fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
-  log.setFirebaseRef(fb);
+  _fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
+  _fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
+    if (error) {
+      log.exception(APP_NAME, 'Firebase auth failed.', error);
+    } else {
+      log.log(APP_NAME, 'Firebase auth success.');
+    }
+  });
+  log.setFirebaseRef(_fb);
+  _deviceMonitor = new DeviceMonitor(_fb.child('devices'), APP_NAME);
+  _deviceMonitor.on('restart_request', () => {
+    _deviceMonitor.restart();
+  });
+  _deviceMonitor.on('shutdown_request', () => {
+    _exit('FB', 0);
+  });
 
-  fb.child(`config/HomeOnNode/logs`).on('value', (snapshot) => {
+  _fb.child(`config/HomeOnNode/logs`).on('value', (snapshot) => {
     const logOpts = snapshot.val();
     log.setOptions(logOpts);
-    log.debug(LOG_PREFIX, 'Log config updated', logOpts);
+    log.debug(APP_NAME, 'Log config updated', logOpts);
   });
 
-  log.log(LOG_PREFIX, `Reading local config.`);
-  fs.readFile('./config.json', {'encoding': 'utf8'}, function(err, data) {
-    if (err) {
-      log.exception(LOG_PREFIX, `Error reading 'config.json' file.`, err);
-      exit('ConfigError', 1);
-      return;
-    }
+  let data;
+  try {
+    log.debug(APP_NAME, `Reading 'config.json'.`);
+    data = fs.readFileSync('config.json', {encoding: 'utf8'});
+  } catch (ex) {
+    log.exception(APP_NAME, `Error reading 'config.json' file.`, ex);
+    _exit('read_config', 1);
+    return;
+  }
 
-    try {
-      log.verbose(LOG_PREFIX, `Parsing 'config.json'.`);
-      config = JSON.parse(data);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, `Error parsing 'config.json' file.`, ex);
-      exit('ConfigError', 1);
-      return;
-    }
+  try {
+    log.debug(APP_NAME, `Parsing 'config.json'.`);
+    _config = JSON.parse(data);
+  } catch (ex) {
+    log.exception(APP_NAME, `Error parsing 'config.json' file.`, ex);
+    _exit('parse_config', 1);
+    return;
+  }
 
-    try {
-      home = new Home(config, fb);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, `Error initializing 'home' module.`, ex);
-      exit('HomeInitError', 1);
-      return;
-    }
+  try {
+    _home = new Home(_config, _fb);
+  } catch (ex) {
+    log.exception(APP_NAME, `Error initializing 'home' module.`, ex);
+    _exit('home_init_error', 1);
+    return;
+  }
 
-    httpServer = new HTTPServer();
-    httpServer.on('executeCommandByName', (name, modifier, sender) => {
-      home.executeCommandByName(name, modifier, sender);
+  if (_config.cmdPorts.http) {
+    _httpServer = new HTTPServer(_config.cmdPorts.http);
+    _httpServer.on('executeCommandByName', (name, modifier, sender) => {
+      _home.executeCommandByName(name, modifier, sender);
     });
-    httpServer.on('executeCommand', (cmd, sender) => {
-      home.executeCommand(cmd, sender);
+    _httpServer.on('executeCommand', (cmd, sender) => {
+      _home.executeCommand(cmd, sender);
     });
-    httpServer.on('doorbell', (sender) => {
-      home.ringDoorbell(sender);
+    _httpServer.on('doorbell', (sender) => {
+      _home.ringDoorbell(sender);
     });
+  }
 
-    wss = new WSServer('CMD', 3003);
-    wss.on('message', (cmd, source) => {
+  if (_config.cmdPorts.wss) {
+    _wss = new WSServer('CMD', _config.cmdPorts.wss);
+    _wss.on('message', (cmd, source) => {
       if (cmd.hasOwnProperty('doorbell')) {
-        home.ringDoorbell(source);
+        _home.ringDoorbell(source);
       } else if (cmd.hasOwnProperty('cmdName')) {
-        home.executeCommandByName(cmd.cmdName, cmd.modifier, source);
+        _home.executeCommandByName(cmd.cmdName, cmd.modifier, source);
       } else {
-        home.executeCommand(cmd, source);
+        _home.executeCommand(cmd, source);
       }
     });
+  }
 
-    fb.child('config/HomeOnNode').on('value', function(snapshot) {
-      config = snapshot.val();
-      home.updateConfig(config);
-      fs.writeFile('config.json', JSON.stringify(config, null, 2), (err) => {
-        if (err) {
-          log.exception(LOG_PREFIX, `Unable to save 'config.json'`, err);
-          return;
-        }
-        log.debug(LOG_PREFIX, `Updated config saved to 'config.json'`);
-      });
-    });
-
-    fb.child('commands').on('child_added', function(snapshot) {
-      let cmd;
-      try {
-        cmd = snapshot.val();
-        if (cmd.hasOwnProperty('cmdName')) {
-          home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
-        } else {
-          home.executeCommand(cmd, 'FB');
-        }
-      } catch (ex) {
-        let msg = 'Unable to execute Firebase Command: ';
-        msg += JSON.stringify(cmd);
-        log.exception(LOG_PREFIX, msg, ex);
+  _fb.child('config/HomeOnNode').on('value', function(snapshot) {
+    _config = snapshot.val();
+    _home.updateConfig(_config);
+    fs.writeFile('config.json', JSON.stringify(_config, null, 2), (err) => {
+      if (err) {
+        log.exception(APP_NAME, `Unable to save 'config.json'`, err);
+        return;
       }
-      snapshot.ref().remove();
+      log.debug(APP_NAME, `Updated config saved to 'config.json'`);
     });
-
-    try {
-      Keypad.listen(config.keypad.modifiers,
-        function(key, modifier, exitApp) {
-          if (exitApp) {
-            exit('SIGINT', 0);
-            return;
-          }
-          const cmdName = config.keypad.keys[key];
-          if (cmdName) {
-            home.executeCommandByName(cmdName, modifier, 'KEYPAD');
-            return;
-          }
-          const details = {
-            key: key,
-            modifier: modifier,
-            exitApp: exitApp,
-          };
-          log.warn(LOG_PREFIX, `Unknown key pressed.`, details);
-        }
-      );
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Error initializing keyboard', ex);
-    }
-
-    const cron15m = getCronIntervalValue(15, 30);
-    log.log(LOG_PREFIX, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
-    setInterval(function() {
-      log.verbose(LOG_PREFIX, 'CRON 15');
-      loadAndRunJS('cron15.js');
-    }, cron15m);
-
-    const cron60m = getCronIntervalValue(60, 2 * 60);
-    log.log(LOG_PREFIX, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
-    setInterval(function() {
-      log.verbose(LOG_PREFIX, 'CRON Hourly');
-      loadAndRunJS('cron60.js');
-    }, cron60m);
-
-    const cron24h = getCronIntervalValue(24 * 60, 5 * 60);
-    log.log(LOG_PREFIX, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
-    setInterval(function() {
-      log.verbose(LOG_PREFIX, 'CRON Daily');
-      loadAndRunJS('cronDaily.js');
-    }, cron24h);
   });
+
+  _fb.child('commands').on('child_added', function(snapshot) {
+    const cmd = snapshot.val();
+    try {
+      if (cmd.hasOwnProperty('cmdName')) {
+        _home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
+      } else {
+        _home.executeCommand(cmd, 'FB');
+      }
+    } catch (ex) {
+      let msg = 'Unable to execute Firebase Command: ';
+      msg += JSON.stringify(cmd);
+      log.exception(APP_NAME, msg, ex);
+    }
+    snapshot.ref().remove();
+  });
+
+  Keypad.listen(_config.keypad.modifiers, _handleKeyPress);
+
+  const cron15m = _getCronIntervalValue(15, 30);
+  log.log(APP_NAME, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
+  setInterval(function() {
+    log.verbose(APP_NAME, 'CRON 15');
+    _loadAndRunJS('cron15.js');
+  }, cron15m);
+
+  const cron60m = _getCronIntervalValue(60, 2 * 60);
+  log.log(APP_NAME, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
+  setInterval(function() {
+    log.verbose(APP_NAME, 'CRON Hourly');
+    _loadAndRunJS('cron60.js');
+  }, cron60m);
+
+  const cron24h = _getCronIntervalValue(24 * 60, 5 * 60);
+  log.log(APP_NAME, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
+  setInterval(function() {
+    log.verbose(APP_NAME, 'CRON Daily');
+    _loadAndRunJS('cronDaily.js');
+  }, cron24h);
+}
+
+
+/**
+ * Handles a key press
+ *
+ * @param {String} key Character hit by the user.
+ * @param {String} modifier If a modifier is used.
+ * @param {Boolean} exitApp If the app should exit.
+ */
+function _handleKeyPress(key, modifier, exitApp) {
+  const details = {
+    key: key,
+    modifier: modifier,
+    exitApp: exitApp,
+  };
+  log.verbose(APP_NAME, 'Key pressed', details);
+  if (exitApp) {
+    log.log(APP_NAME, 'Exit requested.');
+    _exit('SIGINT', 0);
+    return;
+  }
+  const cmd = _config.keypad.keys[key];
+  if (cmd && cmd.hasOwnProperty('cmdName')) {
+    _home.executeCommandByName(cmd.cmdName, modifier, 'KEYPAD');
+    return;
+  }
+  if (cmd) {
+    _home.executeCommand(cmd, modifier, 'KEYPAD');
+    return;
+  }
 }
 
 /**
@@ -166,7 +194,7 @@ function init() {
  * @param {Number} delaySeconds Add/subtract up to X number of delay seconds.
  * @return {Number} The number of milliseconds to wait between calls.
  */
-function getCronIntervalValue(minutes, delaySeconds) {
+function _getCronIntervalValue(minutes, delaySeconds) {
   const baseDelay = minutes * 60 * 1000;
   const delayMS = delaySeconds * 1000;
   const minimumDelay = delayMS / 2;
@@ -178,37 +206,6 @@ function getCronIntervalValue(minutes, delaySeconds) {
   return baseDelay - totalDelay;
 }
 
-
-/**
- * Exit the app.
- *
- * @param {String} sender Who is requesting the app to exit.
- * @param {Number} [exitCode] The exit code to use.
-*/
-function exit(sender, exitCode) {
-  if (exitCode === undefined) {
-    exitCode = 0;
-  }
-  log.log(LOG_PREFIX, 'Starting shutdown process');
-  log.log(LOG_PREFIX, 'Will exit with error code: ' + String(exitCode));
-  if (home) {
-    log.log(LOG_PREFIX, 'Shutting down [HOME]');
-    home.shutdown();
-  }
-  if (httpServer) {
-    log.log(LOG_PREFIX, 'Shutting down [HTTP]');
-    httpServer.shutdown();
-  }
-  setTimeout(function() {
-    log.appStop(sender);
-    process.exit(exitCode);
-  }, 2500);
-}
-
-process.on('SIGINT', function() {
-  exit('SIGINT', 0);
-});
-
 /**
  * Load and run a JavaScript file.
  *   Used for the cron job system.
@@ -216,12 +213,12 @@ process.on('SIGINT', function() {
  * @param {String} file The file to load and run.
  * @param {Function} [callback] Callback to run once completed.
 */
-function loadAndRunJS(file, callback) {
+function _loadAndRunJS(file, callback) {
   let msg = `loadAndRunJS('${file}')`;
-  log.debug(LOG_PREFIX, msg);
+  log.debug(APP_NAME, msg);
   fs.readFile(file, function(err, data) {
     if (err) {
-      log.exception(LOG_PREFIX, msg + ' Unable to load file.', err);
+      log.exception(APP_NAME, msg + ' Unable to load file.', err);
       if (callback) {
         callback(err, file);
       }
@@ -229,7 +226,7 @@ function loadAndRunJS(file, callback) {
       try {
         eval(data.toString());
       } catch (ex) {
-        log.exception(LOG_PREFIX, msg + ' Exception on eval.', ex);
+        log.exception(APP_NAME, msg + ' Exception on eval.', ex);
         if (callback) {
           callback(ex, file);
         }
@@ -240,5 +237,34 @@ function loadAndRunJS(file, callback) {
     }
   });
 }
+
+/**
+ * Exit the app.
+ *
+ * @param {String} sender Who is requesting the app to exit.
+ * @param {Number} [exitCode] The exit code to use.
+*/
+function _exit(sender, exitCode) {
+  exitCode = exitCode || 0;
+  const details = {
+    exitCode: exitCode,
+    sender: sender,
+  };
+  log.log(APP_NAME, 'Starting shutdown process', details);
+  if (_home) {
+    _home.shutdown();
+  }
+  if (_deviceMonitor) {
+    _deviceMonitor.shutdown(sender);
+  }
+  setTimeout(function() {
+    log.appStop(sender);
+    process.exit(exitCode);
+  }, 2500);
+}
+
+process.on('SIGINT', function() {
+  _exit('SIGINT', 0);
+});
 
 init();

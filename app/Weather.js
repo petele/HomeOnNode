@@ -1,9 +1,9 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
+const util = require('util');
 const request = require('request');
 const log = require('./SystemLog2');
-const util = require('util');
+const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'WEATHER';
 

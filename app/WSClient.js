@@ -1,9 +1,9 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
-const log = require('./SystemLog2');
 const util = require('util');
 const WebSocket = require('ws');
+const log = require('./SystemLog2');
+const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'WS_CLIENT';
 
@@ -20,52 +20,74 @@ function WSClient(host, retry) {
   const _self = this;
   this.connected = false;
   let _ws;
+  let _retry = retry;
   let _interval;
 
   /**
-   * Init the WebSocket Server
+   * Init the WebSocket Client and connect to the server
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
     if (!host) {
       log.error(LOG_PREFIX, 'No hostname provided.');
       return;
     }
-    _connect();
+    let wsURL = `ws://${host}`;
+    if (host.indexOf('ws://') === 0 || host.indexOf('wss://') === 0) {
+      wsURL = host;
+    }
+    log.init(LOG_PREFIX, `Connecting to ${wsURL}`);
+    _ws = new WebSocket(wsURL);
+    _ws.on('open', _wsOpen);
+    _ws.on('close', _wsClose);
+    _ws.on('message', _wsMessage);
+    _ws.on('error', _wsError);
+    _ws.on('ping', _wsPing);
+    _ws.on('pong', _wsPong);
   }
 
   /**
-   * Connect to the WebSocket Server
+   * Handles the ping event
    */
-  function _connect() {
-    log.log(LOG_PREFIX, `Connecting to ws://${host}`);
-    _ws = new WebSocket(`ws://${host}`);
-    _ws.on('open', () => {
-      _self.connected = true;
-      _self.emit('connect');
-      log.debug(LOG_PREFIX, 'WebSocket opened');
-      _interval = setInterval(() => {
-        _ws.ping('', false, true);
-      }, PING_INTERVAL);
-    });
-    _ws.on('close', () => {
-      _self.connected = false;
-      _self.emit('disconnect');
-      if (_interval) {
-        clearInterval(_interval);
-        _interval = null;
-      }
-      if (retry === true) {
-        log.debug(LOG_PREFIX, 'Will retry in 2 seconds...');
-        setTimeout(() => {
-          _connect();
-        }, 2000);
-      } else {
-        log.log(LOG_PREFIX, 'WebSocket closed.');
-      }
-    });
-    _ws.on('message', _wsMessage);
-    _ws.on('error', _wsError);
+  function _wsPing() {
+    log.verbose(LOG_PREFIX, 'Ping.');
+    _self.emit('ping');
+  }
+
+  /**
+   * Handles the ping event
+   */
+  function _wsPong() {
+    log.verbose(LOG_PREFIX, 'Pong.');
+    _self.emit('pong');
+  }
+
+  /**
+   * Handles the close event
+   */
+  function _wsClose() {
+    _self.connected = false;
+    _self.emit('disconnect');
+    _clearPingPong();
+    if (_retry === true) {
+      log.debug(LOG_PREFIX, 'Will retry in 2 seconds...');
+      setTimeout(() => {
+        _init();
+      }, 2000);
+    } else {
+      log.log(LOG_PREFIX, 'WebSocket closed.');
+    }
+  }
+
+  /**
+   * Handles the open event
+   */
+  function _wsOpen() {
+    _self.connected = true;
+    _self.emit('connect');
+    log.debug(LOG_PREFIX, 'WebSocket opened');
+    _interval = setInterval(() => {
+      _ws.ping('', false, true);
+    }, PING_INTERVAL);
   }
 
   /**
@@ -89,7 +111,17 @@ function WSClient(host, retry) {
    * @param {Error} err The incoming error.
    */
   function _wsError(err) {
-    log.error(LOG_PREFIX, 'Unknown error', err);
+    log.error(LOG_PREFIX, 'Client error.', err);
+  }
+
+  /**
+   * Clears the ping/pong interval
+   */
+  function _clearPingPong() {
+    if (_interval) {
+      clearInterval(_interval);
+      _interval = null;
+    }
   }
 
   /**
@@ -120,6 +152,25 @@ function WSClient(host, retry) {
         resolve();
       });
     });
+  };
+
+  /**
+   * Shutdown the WebSocket client connection
+   */
+  this.shutdown = function() {
+    log.log(LOG_PREFIX, 'Shutting down...');
+    _retry = false;
+    _clearPingPong();
+    if (_ws) {
+      _ws.removeAllListeners('open');
+      _ws.removeAllListeners('close');
+      _ws.removeAllListeners('message');
+      _ws.removeAllListeners('ping');
+      _ws.removeAllListeners('pong');
+      _ws.close();
+      _ws.removeAllListeners('error');
+    }
+    _self.emit('shutdown');
   };
 
   _init();

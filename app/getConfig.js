@@ -2,8 +2,8 @@
 
 const fs = require('fs');
 const log = require('./SystemLog2');
-const Keys = require('./Keys').keys.firebase;
 const Firebase = require('firebase');
+const Keys = require('./Keys').keys.firebase;
 
 const LOG_PREFIX = 'GET_CONFIG';
 

@@ -1,10 +1,10 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
 const util = require('util');
-const diff = require('deep-diff').diff;
 const request = require('request');
 const log = require('./SystemLog2');
+const diff = require('deep-diff').diff;
+const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'NANOLEAF';
 

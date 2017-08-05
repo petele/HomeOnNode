@@ -1,16 +1,20 @@
 'use strict';
 
 const fs = require('fs');
-const request = require('request');
-const log = require('./SystemLog2');
-const fbHelper = require('./FBHelper');
-const Keys = require('./Keys').keys;
 const Keypad = require('./Keypad');
-
-let config;
-let cmdId = 0;
+const log = require('./SystemLog2');
+const Keys = require('./Keys').keys;
+const Firebase = require('firebase');
+const WSClient = require('./WSClient');
+const DeviceMonitor = require('./DeviceMonitor');
 
 const APP_NAME = process.argv[2];
+
+let _fb;
+let _config;
+let _wsClient;
+let _deviceMonitor;
+
 if (!APP_NAME) {
   log.error('REMOTE', 'App Name not provided on command line');
   process.exit(1);
@@ -24,71 +28,110 @@ log.setOptions(logOpt);
 log.startWSS();
 log.appStart();
 
-const fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, APP_NAME);
-log.setFirebaseRef(fb);
-fb.child(`config/${APP_NAME}/logs`).on('value', (snapshot) => {
-  log.setOptions(snapshot.val());
-  log.debug(APP_NAME, 'Log config updated.');
-});
+/**
+ * Init
+ */
+function init() {
+  _fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
+  _fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
+    if (error) {
+      log.exception(APP_NAME, 'Firebase auth failed.', error);
+    } else {
+      log.log(APP_NAME, 'Firebase auth success.');
+    }
+  });
+  log.setFirebaseRef(_fb);
+  _deviceMonitor = new DeviceMonitor(_fb.child('devices'), APP_NAME);
+  _deviceMonitor.on('restart_request', () => {
+    _deviceMonitor.restart();
+  });
+  _deviceMonitor.on('shutdown_request', () => {
+    _exit('FB', 0);
+  });
+
+  _fb.child(`config/${APP_NAME}/logs`).on('value', (snapshot) => {
+    log.setOptions(snapshot.val());
+    log.debug(APP_NAME, 'Log config updated.');
+  });
+
+  let data;
+  try {
+    log.debug(APP_NAME, `Reading 'config.json'.`);
+    data = fs.readFileSync('config.json', {encoding: 'utf8'});
+  } catch (ex) {
+    log.exception(APP_NAME, `Error reading 'config.json' file.`, ex);
+    _exit('read_config', 1);
+    return;
+  }
+
+  try {
+    log.debug(APP_NAME, `Parsing 'config.json'.`);
+    _config = JSON.parse(data);
+  } catch (ex) {
+    log.exception(APP_NAME, `Error parsing 'config.json' file.`, ex);
+    _exit('parse_config', 1);
+    return;
+  }
+
+  if (_config.enabled !== true) {
+    log.error(APP_NAME, 'Disabled by config.', _config);
+    _exit('disabled_by_config', 1);
+    return;
+  }
+
+  _wsClient = new WSClient(_config.wsServer, true);
+
+  _fb.child(`config/${APP_NAME}/keypad`).on('value', function(snapshot) {
+    _config.keypad = snapshot.val();
+    log.log(APP_NAME, 'Keypad settings updated.');
+  });
+
+  Keypad.listen(_config.keypad.modifiers, _handleKeyPress);
+  setInterval(function() {
+    log.cleanFile();
+  }, 60 * 60 * 24 * 1000);
+}
 
 /**
  * Send a command
  *
  * @param {Object} command Command to send.
- * @param {String} path The URL path to send the command.
+ * @return {Promise} The result of the ws send command.
 */
-function sendCommand(command, path) {
-  const prefix = 'sendCommand (' + cmdId++ + ')';
-  const url = `http://${config.controller.ip}:${config.controller.port}${path}`;
-  const cmd = {
-    uri: url,
-    method: 'POST',
-    json: true,
-    body: command,
-  };
-  log.log(prefix, 'Send', command);
-  request(cmd, function(error, response, body) {
-    if (error) {
-      log.exception(prefix, 'Failed', error);
-    } else {
-      log.log(prefix, 'Completed', body);
-    }
-  });
+function _sendCommand(command) {
+  if (_wsClient) {
+    return _wsClient.send(JSON.stringify(command));
+  }
+  log.error(APP_NAME, `WebSocket client not ready.`);
 }
 
-fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
-  if (err) {
-    log.exception(APP_NAME, 'Unable to open config file.', err);
-  } else {
-    config = JSON.parse(data);
-
-    const keypadConfigPath = `config/${APP_NAME}/keypad`;
-    fb.child(keypadConfigPath).on('value', function(snapshot) {
-      log.log(APP_NAME, 'Keypad settings updated.');
-      config.keypad = snapshot.val();
-    });
-
-    if ((config.keypad) && (config.keypad.enabled === true)) {
-      Keypad.listen(config.keypad.modifiers, function(key, modifier, exitApp) {
-        if (exitApp) {
-          exit('SIGINT', 0);
-        } else {
-          const cmd = config.keypad.keys[key];
-          if (cmd) {
-            cmd.modifier = modifier;
-            let path = '/execute';
-            if (cmd.hasOwnProperty('cmdName')) {
-              path = '/execute/name';
-            }
-            sendCommand(cmd, path);
-          } else {
-            log.warn(APP_NAME, 'Unknown key pressed: ' + key);
-          }
-        }
-      });
-    }
+/**
+ * Handles a key press
+ *
+ * @param {String} key Character hit by the user.
+ * @param {String} modifier If a modifier is used.
+ * @param {Boolean} exitApp If the app should exit.
+ */
+function _handleKeyPress(key, modifier, exitApp) {
+  const details = {
+    key: key,
+    modifier: modifier,
+    exitApp: exitApp,
+  };
+  log.verbose(APP_NAME, 'Key pressed', details);
+  if (exitApp) {
+    log.log(APP_NAME, 'Exit requested.');
+    _exit('KEYPAD', 0);
+    return;
   }
-});
+  let cmd = _config.keypad.keys[key];
+  if (cmd) {
+    cmd.modifier = modifier;
+    _sendCommand(cmd);
+    return;
+  }
+  log.warn(APP_NAME, `Unknown key pressed.`, details);
+}
 
 /**
  * Exit the app.
@@ -96,10 +139,19 @@ fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
  * @param {String} sender Who is requesting the app to exit.
  * @param {Number} exitCode The exit code to use.
 */
-function exit(sender, exitCode) {
+function _exit(sender, exitCode) {
   exitCode = exitCode || 0;
-  log.log(APP_NAME, 'Starting shutdown process');
-  log.log(APP_NAME, 'Will exit with error code: ' + String(exitCode));
+  const details = {
+    exitCode: exitCode,
+    sender: sender,
+  };
+  log.log(APP_NAME, 'Starting shutdown process', details);
+  if (_wsClient) {
+    _wsClient.shutdown();
+  }
+  if (_deviceMonitor) {
+    _deviceMonitor.shutdown(sender);
+  }
   setTimeout(function() {
     log.appStop(sender);
     process.exit(exitCode);
@@ -107,9 +159,7 @@ function exit(sender, exitCode) {
 }
 
 process.on('SIGINT', function() {
-  exit('SIGINT', 0);
+  _exit('SIGINT', 0);
 });
 
-setInterval(function() {
-  log.cleanFile();
-}, 60 * 60 * 24 * 1000);
+init();

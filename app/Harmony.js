@@ -1,9 +1,9 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
 const util = require('util');
-const XMPP = require('node-xmpp-client');
 const log = require('./SystemLog2');
+const XMPP = require('node-xmpp-client');
+const EventEmitter = require('events').EventEmitter;
 const HarmonyHubDiscovery = require('harmonyhubjs-discover');
 
 const LOG_PREFIX = 'HARMONY';

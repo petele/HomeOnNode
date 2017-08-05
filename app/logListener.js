@@ -2,14 +2,12 @@
 
 'use strict';
 
-// const WebSocket = require('ws');
-const WSClient = require('./WSClient');
 const log = require('./SystemLog2');
+const WSClient = require('./WSClient');
 const commander = require('commander');
 
-let _host = 'rpi-server:8881';
-
 let _ws;
+let _host = 'rpi-server:8881';
 
 commander
   .version('0.2.0')

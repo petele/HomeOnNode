@@ -1,10 +1,11 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
 const util = require('util');
 const log = require('./SystemLog2');
 const Firebase = require('firebase');
 const deepDiff = require('deep-diff').diff;
+const EventEmitter = require('events').EventEmitter;
+
 const LOG_PREFIX = 'NEST';
 
 const STATES = {

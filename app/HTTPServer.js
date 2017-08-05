@@ -1,22 +1,24 @@
 'use strict';
 
-const express = require('express');
 const path = require('path');
-const log = require('./SystemLog2');
-const methodOverride = require('method-override');
-const bodyParser = require('body-parser');
-const EventEmitter = require('events').EventEmitter;
 const util = require('util');
+const express = require('express');
+const log = require('./SystemLog2');
+const bodyParser = require('body-parser');
+const methodOverride = require('method-override');
+const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'HTTPRequest';
-const PORT = 3000;
 
 /**
  * Starts the local HTTP server.
  * @constructor
+ *
+ * @param {Number} [port] The port to listen on, defaults to 3000.
 */
-function HTTPServer() {
+function HTTPServer(port) {
   let server;
+  const _port = port || 3000;
   const _self = this;
 
   this.shutdown = function() {
@@ -30,8 +32,8 @@ function HTTPServer() {
 
   const exp = express();
 
-  log.init(LOG_PREFIX, `Starting HTTP Server on port :${PORT}...`);
-  exp.set('port', PORT);
+  log.init(LOG_PREFIX, `Starting HTTP Server on port :${_port}...`);
+  exp.set('port', _port);
   exp.use(methodOverride());
   exp.use(bodyParser.json());
   exp.use(bodyParser.urlencoded({extended: true}));

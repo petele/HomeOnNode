@@ -1,8 +1,8 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
-const log = require('./SystemLog2');
 const util = require('util');
+const log = require('./SystemLog2');
+const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'SOMA_SS';
 const BATTERY_SERVICE = {

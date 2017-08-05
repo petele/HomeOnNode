@@ -2,9 +2,9 @@
 
 'use strict';
 
+const log = require('./SystemLog2');
 const Keys = require('./Keys').keys;
 const Firebase = require('firebase');
-const log = require('./SystemLog2');
 const commander = require('commander');
 
 commander

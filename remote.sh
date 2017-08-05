@@ -11,4 +11,4 @@ else
 fi
 
 node appOnError.js >> ./logs/system.log
-node sendGCMMessage.js >> ./logs/system.log
+node appSendNotification.js >> ./logs/system.log

@@ -1,10 +1,10 @@
 'use strict';
 
 const os = require('os');
-const GCMPush = require('./GCMPush');
-const Keys = require('./Keys').keys;
-const Firebase = require('firebase');
 const log = require('./SystemLog2');
+const Keys = require('./Keys').keys;
+const GCMPush = require('./GCMPush');
+const Firebase = require('firebase');
 
 let hostname = os.hostname().toUpperCase();
 if (hostname.indexOf('.') >= 0) {
@@ -20,7 +20,7 @@ const DEFAULT_MESSAGE = {
 
 /**
  * Send default message to all users
-*/
+ */
 function _sendMessage() {
   const fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com`);
   fb.authWithCustomToken(Keys.firebase.key, function(error) {

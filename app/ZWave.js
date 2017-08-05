@@ -1,8 +1,8 @@
 'use strict';
 
+const util = require('util');
 const log = require('./SystemLog2');
 const EventEmitter = require('events').EventEmitter;
-const util = require('util');
 
 const LOG_PREFIX = 'ZWAVE';
 

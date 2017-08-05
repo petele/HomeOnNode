@@ -1,14 +1,17 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
-const log = require('./SystemLog2');
 const util = require('util');
+const log = require('./SystemLog2');
+const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'BLUETOOTH';
 
 /**
  * Bluetooth API
  * @constructor
+ * @property {String} adapterState - Current adapter state.
+ * @property {Boolean} ready - Is the bluetooth API ready.
+ * @property {Boolean} scanning - Is it currently scanning.
  */
 function Bluetooth() {
   const MAX_CONNECTIONS = 5;

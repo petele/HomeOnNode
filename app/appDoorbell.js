@@ -1,17 +1,16 @@
 'use strict';
 
 const fs = require('fs');
-const exec = require('child_process').exec;
-const request = require('request');
-const GCMPush = require('./GCMPush');
 const log = require('./SystemLog2');
-const fbHelper = require('./FBHelper');
 const Keys = require('./Keys').keys;
+const GCMPush = require('./GCMPush');
+const Firebase = require('firebase');
 const WSClient = require('./WSClient');
+const DeviceMonitor = require('./DeviceMonitor');
 
 let GPIO;
-
 const APP_NAME = 'DOORBELL';
+
 let _fb;
 let _pin;
 let _config;
@@ -19,6 +18,7 @@ let _gcmPush;
 let _wsClient;
 let _lastPushed = 0;
 let _lastValue = null;
+let _deviceMonitor;
 const MIN_TIME = 3000;
 
 log.setAppName(APP_NAME);
@@ -26,93 +26,120 @@ log.setOptions({firebaseLogLevel: 50, firebasePath: 'logs/doorbell'});
 log.startWSS();
 log.appStart();
 
-_fb = fbHelper.init(Keys.firebase.appId, Keys.firebase.key, 'DoorBell');
-log.setFirebaseRef(_fb);
-_fb.child('config/Doorbell/logs').on('value', (snapshot) => {
-  log.setOptions(snapshot.val());
-  log.debug(APP_NAME, 'Log config updated.');
-});
-
-try {
-  GPIO = require('onoff').Gpio;
-} catch (ex) {
-  log.exception(APP_NAME, 'Node module `onoff` is not available.', ex);
-  exit('GPIO', 1);
-  return;
-}
-
 /**
- * Send an HTTP Request to the server
- *
- * @param {String} path
- * @param {String} method
- * @param {Object} [body]
- * @return {Promise}
+ * Init
  */
-function sendHTTPRequest(path, method, body) {
-  return new Promise(function(resolve, reject) {
-    const requestHost = `${_config.controller.ip}:${_config.controller.port}`;
-    const requestURL = `http://${requestHost}/${path}`;
-    method = method || 'POST';
-    const msg = `sendHTTPRequest('${path}', '${method}', ...)`;
-    let requestOptions = {
-      url: requestURL,
-      method: method,
-      json: true,
-    };
-    if (body) {
-      requestOptions.body = body;
+function init() {
+  _fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
+  _fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
+    if (error) {
+      log.exception(APP_NAME, 'Firebase auth failed.', error);
+    } else {
+      log.log(APP_NAME, 'Firebase auth success.');
     }
-    log.debug(APP_NAME, msg);
-    request(requestOptions, function(error, response, body) {
-      if (error) {
-        log.exception(APP_NAME, msg + ' - failed.', error);
-        reject(error);
-        return;
-      }
-      resolve(body);
-    });
   });
+  log.setFirebaseRef(_fb);
+  _deviceMonitor = new DeviceMonitor(_fb.child('devices'), APP_NAME);
+  _deviceMonitor.on('restart_request', () => {
+    _deviceMonitor.restart();
+  });
+  _deviceMonitor.on('shutdown', () => {
+    _exit('FB', 0);
+  });
+
+  if (loadGPIO() === false) {
+    _exit('GPIO', 1);
+    return;
+  }
+
+  _fb.child('config/Doorbell/logs').on('value', (snapshot) => {
+    log.setOptions(snapshot.val());
+    log.debug(APP_NAME, 'Log config updated.');
+  });
+
+  let data;
+  try {
+    log.debug(APP_NAME, `Reading 'config.json'.`);
+    data = fs.readFileSync('config.json', {encoding: 'utf8'});
+  } catch (ex) {
+    log.exception(APP_NAME, `Error reading 'config.json' file.`, ex);
+    _exit('read_config', 1);
+    return;
+  }
+
+  try {
+    log.debug(APP_NAME, `Parsing 'config.json'.`);
+    _config = JSON.parse(data);
+  } catch (ex) {
+    log.exception(APP_NAME, `Error parsing 'config.json' file.`, ex);
+    _exit('parse_config', 1);
+    return;
+  }
+
+  if (_config.enabled !== true) {
+    log.error(APP_NAME, 'Disabled by config.', _config);
+    _exit('disabled_by_config', 1);
+    return;
+  }
+
+  if (_config.hasOwnProperty('doorbellPin') === false) {
+    log.error(APP_NAME, 'Doorbell pin not specified', _config);
+    _exit('bad_config', 1);
+    return;
+  }
+
+  _wsClient = new WSClient(_config.wsServer, true);
+  _gcmPush = new GCMPush(_fb);
+  _pin = new GPIO(_config.doorbellPin, 'in', 'both');
+  _pin.watch(_pinChanged);
+  setInterval(function() {
+    log.cleanFile();
+  }, 60 * 60 * 24 * 1000);
 }
 
 /**
- * Send a command to the server via Firebase
+ * Event handler for pin changed.
  *
- * @param {Object} cmd
- * @return {Promise}
+ * @param {Object} err Error object
+ * @param {Number} value New value
  */
-function sendCommandViaFB(cmd) {
-  return new Promise(function(resolve, reject) {
-    const msg = `sendCommandViaFB(${JSON.stringify(cmd)})`;
-    log.debug(APP_NAME, msg);
-    if (!_fb) {
-      reject(new Error('Firebase not available.'));
-      return;
-    }
-    _fb.child('commands').push(cmd, function(error) {
-      if (error) {
-        log.exception(APP_NAME, msg + ' - failed.', error);
-        reject(error);
-      }
-      resolve(true);
-    });
-  });
+function _pinChanged(err, value) {
+  if (err) {
+    log.error(APP_NAME, 'Error on pin changed', err);
+  }
+  const now = Date.now();
+  const hasChanged = value !== _lastValue ? true : false;
+  const timeOK = now > _lastPushed + MIN_TIME ? true : false;
+  _lastValue = value;
+  if (hasChanged && timeOK && value === 1) {
+    _lastPushed = now;
+    ringDoorbell();
+    return;
+  }
+  // const msg = `v=${value} changed=${hasChanged} time=${timeOK}`;
+  // log.debug(APP_NAME, 'Debounced. ' + msg);
 }
 
 /**
- * Send a command to the server via the WebSocket
+ * Loads the GPIO components
  *
- * @return {Promise}
+ * @return {Boolean} true if loaded, false if not.
  */
-function sendWSMessage() {
-  const msg = {doorbell: true};
-  return _wsClient.send(JSON.stringify(msg));
+function loadGPIO() {
+  try {
+    GPIO = require('onoff').Gpio;
+    return true;
+  } catch (ex) {
+    log.exception(APP_NAME, 'Node module `onoff` is not available.', ex);
+    return false;
+  }
 }
 
 /**
  * Send a doorbell notification
 */
-function sendDoorbell() {
+function ringDoorbell() {
+  const doorbellCmd = {doorbell: true};
   const doorbellMsg = {
     title: 'Door Bell',
     body: 'The doorbell rang at',
@@ -120,65 +147,13 @@ function sendDoorbell() {
     appendTime: true,
   };
   log.log(APP_NAME, 'Doorbell rang.');
-  sendWSMessage()
-    .catch((err) => {
-      return sendHTTPRequest('doorbell', 'POST');
-    })
-    .catch((err) => {
-      return sendCommandViaFB({cmdName: 'RUN_ON_DOORBELL'});
-    })
-    .catch((err) => {
-      log.error(APP_NAME, 'Attempt to send twice & failed, rebooting');
-      exec('sudo reboot', function() {});
-      return false;
-    })
-    .then(() => {
-      if (!_gcmPush) {
-        return Promise.reject(new Error('GCM Unavailable.'));
-      }
-      return _gcmPush.sendMessage(doorbellMsg);
-    });
+  if (_wsClient) {
+    _wsClient.send(JSON.stringify(doorbellCmd));
+  }
+  if (_gcmPush) {
+    _gcmPush.sendMessage(doorbellMsg);
+  }
 }
-
-fs.readFile('config.json', {'encoding': 'utf8'}, function(err, data) {
-  if (err) {
-    log.exception(APP_NAME, 'Unable to open config file.', err);
-    exit('INIT', 1);
-    return;
-  }
-  try {
-    _config = JSON.parse(data);
-  } catch (ex) {
-    log.exception(APP_NAME, 'Unable to parse config file.', ex);
-    exit('INIT', 1);
-    return;
-  }
-  if (!_config.hasOwnProperty('doorbellPin')) {
-    log.error(APP_NAME, '`doorbellPin` not set.');
-    exit('INIT', 1);
-    return;
-  }
-  _wsClient = new WSClient('rpi-server:3003', true);
-  _gcmPush = new GCMPush(_fb);
-  _pin = new GPIO(_config.doorbellPin, 'in', 'both');
-  _pin.watch(function(error, value) {
-    const now = Date.now();
-    const hasChanged = value !== _lastValue ? true : false;
-    const timeOK = now > _lastPushed + MIN_TIME ? true : false;
-    _lastValue = value;
-    if (hasChanged && timeOK && value === 1) {
-      _lastPushed = now;
-      sendDoorbell();
-    } else {
-      const msg = `v=${value} changed=${hasChanged} time=${timeOK}`;
-      log.debug(APP_NAME, 'Debounced. ' + msg);
-    }
-  });
-});
-
-setInterval(function() {
-  log.cleanFile();
-}, 60 * 60 * 24 * 1000);
 
 /**
  * Exit the app.
@@ -186,15 +161,24 @@ setInterval(function() {
  * @param {String} sender Who is requesting the app to exit.
  * @param {Number} exitCode The exit code to use.
 */
-function exit(sender, exitCode) {
+function _exit(sender, exitCode) {
   exitCode = exitCode || 0;
-  log.log(APP_NAME, 'Starting shutdown process');
-  log.log(APP_NAME, 'Will exit with exit code: ' + String(exitCode));
+  const details = {
+    exitCode: exitCode,
+    sender: sender,
+  };
+  log.log(APP_NAME, 'Starting shutdown process', details);
   if (_pin) {
     log.debug(APP_NAME, 'Unwatching pins');
     _pin.unwatchAll();
     log.debug(APP_NAME, 'Unexporting GPIO');
     _pin.unexport();
+  }
+  if (_wsClient) {
+    _wsClient.shutdown();
+  }
+  if (_deviceMonitor) {
+    _deviceMonitor.shutdown(sender);
   }
   setTimeout(function() {
     log.appStop(sender);
@@ -203,5 +187,7 @@ function exit(sender, exitCode) {
 }
 
 process.on('SIGINT', function() {
-  exit('SIGINT', 0);
+  _exit('SIGINT', 0);
 });
+
+init();

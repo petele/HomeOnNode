@@ -1,9 +1,9 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
-const log = require('./SystemLog2');
 const util = require('util');
 const WebSocket = require('ws');
+const log = require('./SystemLog2');
+const EventEmitter = require('events').EventEmitter;
 
 /**
  * WebSocket Server
@@ -102,6 +102,11 @@ function WSServer(name, port) {
     });
   }
 
+  /**
+   * Sends a message to all attached clients.
+   *
+   * @param {String} msg The message to send.
+   */
   this.broadcast = function(msg) {
     if (!_wss) {
       log.error(_logPrefix, 'Unable to broadcast, server is not running.');

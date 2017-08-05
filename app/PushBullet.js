@@ -1,9 +1,9 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
-const log = require('./SystemLog2');
 const util = require('util');
-const WebSocket = require('ws');
+const log = require('./SystemLog2');
+const WSClient = require('./WSClient');
+const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'PUSHBULLET';
 
@@ -11,28 +11,27 @@ const LOG_PREFIX = 'PUSHBULLET';
  * PushBullet API
  * @constructor
  *
+ * @fires PushBullet#auth_error
+ * @fires PushBullet#tickle
  * @fires PushBullet#dismissal
  * @fires PushBullet#notification
  * @param {String} token - The PushBullet API token
 */
 function PushBullet(token) {
-  const RECONNECT_TIMEOUT = 3;
   const PUSHBULLET_URL = 'wss://stream.pushbullet.com/websocket/';
-  let _ws;
   const _self = this;
-  let _currentNotifications;
+  let _wsClient;
   const _pushBulletToken = token;
-  let _shouldAttemptReconnect = true;
+
 
   /**
    * Shutdown the web socket.
   */
   this.shutdown = function() {
     log.log(LOG_PREFIX, 'Shutdown received.');
-    if (_ws) {
-      _shouldAttemptReconnect = false;
+    if (_wsClient) {
       log.debug(LOG_PREFIX, 'Closing WebSocket connection...');
-      _ws.close();
+      _wsClient.shutdown();
     }
   };
 
@@ -41,178 +40,61 @@ function PushBullet(token) {
   */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
-    if (!WebSocket) {
-      log.error(LOG_PREFIX, 'WebSocket library is not available.');
-      return;
-    }
-    if (_pushBulletToken) {
-      try {
-        _currentNotifications = 0;
-        _ws = new WebSocket(PUSHBULLET_URL + _pushBulletToken);
-        _ws.on('error', _wsError);
-        _ws.on('close', _wsClose);
-        _ws.on('message', _wsMessageReceived);
-        _ws.on('ping', _wsPingReceived);
-        _ws.on('pong', _wsPongReceived);
-        _ws.on('open', _wsSocketOpened);
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Unable to initialize PushBullet', ex);
-        _attemptReconnect();
-      }
-    } else {
+    if (!_pushBulletToken) {
       log.error(LOG_PREFIX, 'No API token provided.');
       _self.emit('auth_error');
+      return;
     }
-  }
-
-  /**
-   * Ignore the message and do nothing
-   *
-   * @param {Object} msg PushBullet message
-   * @return {Boolean} Always returns false.
-  */
-  function _handleNop(msg) {
-    return false;
-  }
-
-  /**
-   * Handle an incoming tickle
-   *
-   * @fires PushBullet#tickle
-   * @param {Object} msg PushBullet message
-   * @return {Boolean} Always returns true.
-  */
-  function _handleTickle(msg) {
-    log.debug(LOG_PREFIX, 'Tickle', msg);
-    _self.emit('tickle', msg);
-    return true;
+    const wsURL = PUSHBULLET_URL + _pushBulletToken;
+    _wsClient = new WSClient(wsURL, true);
+    _wsClient.on('message', _wsMessageReceived);
   }
 
   /**
    * Handle an incoming push message
    *
-   * @fires PushBullet#notification
-   * @fires PushBullet#dismissal
    * @param {Object} msg PushBullet message
-   * @return {Boolean} True if handled, false if unknown message type
   */
   function _handlePush(msg) {
-    if (msg && msg.push) {
-      log.verbose(LOG_PREFIX, `handlePush()`, msg.push);
+    const details = {
+      type: msg.push.type,
+      title: msg.push.title,
+      body: msg.push.body,
+      appName: msg.push.application_name,
+      pkgName: msg.push.package_name,
+    };
+    log.verbose(LOG_PREFIX, `handlePush()`, details);
+    if (msg.push.type === 'mirror') {
+      _self.emit('notification', msg.push);
+      return;
     }
-    if (msg.push && msg.push.type === 'mirror') {
-      _currentNotifications++;
-      /**
-       * Fired when a new message has been received
-       * @event PushBullet#notification
-       */
-      _self.emit('notification', msg.push, _currentNotifications);
-      return true;
-    } else if (msg.push && msg.push.type === 'dismissal') {
-      if (_currentNotifications >= 1) { _currentNotifications--; }
-      /**
-       * Fired when a notification has been dismissed.
-       * @event PushBullet#dismissal
-       */
-      _self.emit('dismissal', msg.push, _currentNotifications);
-      return true;
+    if (msg.push.type === 'dismissal') {
+      _self.emit('dismissal', msg.push);
+      return;
     }
     log.warn(LOG_PREFIX, 'Unknown push notification', msg);
-    return false;
-  }
-
-  /**
-   * Handle a Web Socket error
-   *
-   * @param {Object} error The WebSocket error
-   * @return {Boolean} Always returns false.
-  */
-  function _wsError(error) {
-    let msg = 'Socket Error';
-    if (error.message) {
-      msg += ': ' + error.message;
-    }
-    log.error(LOG_PREFIX, msg, error);
-    return false;
-  }
-
-  /**
-   * Closes the web socket
-   *
-   * @param {Number} code The error code
-   * @param {String} message The error message.
-  */
-  function _wsClose(code, message) {
-    log.log(LOG_PREFIX, `Closed (${code}) ${message}`);
-    _ws = null;
-    _self.emit('closed');
-    _attemptReconnect();
+    return;
   }
 
   /**
    * Web Socket Message Received
    *
-   * @param {Object} data WebSocket message.
-   * @param {Object} flags Not used.
-   * @return {Boolean} True if the message was used or false if thrown away.
+   * @param {Object} message WebSocket message.
   */
-  function _wsMessageReceived(data, flags) {
-    let message = {};
-    try {
-      message = JSON.parse(data);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to parse message: ' + data, ex);
+  function _wsMessageReceived(message) {
+    if (message.type === 'nop') {
       return;
     }
-    if (message.type === 'nop') {
-      return _handleNop(message);
-    } else if (message.type === 'tickle') {
-      return _handleTickle(message);
-    } else if (message.type === 'push') {
-      return _handlePush(message);
+    if (message.type === 'tickle') {
+      log.verbose(LOG_PREFIX, 'Tickle', message);
+      _self.emit('tickle', message);
+      return;
     }
-    log.warn(LOG_PREFIX, 'Unknown message type: ' + data);
-  }
-
-  /**
-   * Web Socket Ping Received
-   *
-   * @param {Object} data WebSocket message.
-   * @param {Object} flags Not used.
-  */
-  function _wsPingReceived(data, flags) {
-    log.debug(LOG_PREFIX, 'Ping received - ' + data, flags);
-  }
-
-  /**
-   * Web Socket Pong Received
-   *
-   * @param {Object} data WebSocket message.
-   * @param {Object} flags Not used.
-  */
-  function _wsPongReceived(data, flags) {
-    log.debug(LOG_PREFIX, 'Pong received - ' + data, flags);
-  }
-
-  /**
-   * Web Socket Opened.
-  */
-  function _wsSocketOpened() {
-    log.log(LOG_PREFIX, 'Socket opened.');
-    _self.emit('ready');
-  }
-
-  /**
-   * Attempt to reconnect to the PushBullet WebSocket
-  */
-  function _attemptReconnect() {
-    if (_shouldAttemptReconnect === true) {
-      const msg = `Will attempt reconnect in ${RECONNECT_TIMEOUT} minutes.`;
-      log.log(LOG_PREFIX, msg);
-      setTimeout(function() {
-        _init();
-      }, RECONNECT_TIMEOUT * 60 * 1000);
+    if (message.type === 'push' && message.push) {
+      _handlePush(message);
+      return;
     }
+    log.warn(LOG_PREFIX, `Unknown message type: ${message.type}`, message);
   }
 
   _init();

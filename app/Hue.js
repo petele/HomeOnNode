@@ -1,12 +1,10 @@
 'use strict';
 
-const EventEmitter = require('events').EventEmitter;
 const util = require('util');
-const diff = require('deep-diff').diff;
 const request = require('request');
 const log = require('./SystemLog2');
-
-// Consider adding queue to API to ensure we don't over extend
+const diff = require('deep-diff').diff;
+const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'HUE';
 
@@ -165,7 +163,7 @@ function Hue(key, explicitIPAddress) {
       }
       request(requestOptions, (error, response, respBody) => {
         _requestsInProgress -= 1;
-        log.verbose(LOG_PREFIX,  `${msg}: ${response.statusCode}`);
+        log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
         let errors = [];
         if (error) {
           log.error(LOG_PREFIX, `${msg} Request error ${error}`, error);
