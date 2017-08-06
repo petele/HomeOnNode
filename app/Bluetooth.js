@@ -51,12 +51,12 @@ function Bluetooth() {
     });
     _noble.on('scanStart', function() {
       _self.scanning = true;
-      log.debug(LOG_PREFIX, 'Stanning started.');
+      log.debug(LOG_PREFIX, 'Scanning started.');
       _self.emit('scanning', true);
     });
     _noble.on('scanStop', function() {
       _self.scanning = false;
-      log.debug(LOG_PREFIX, 'Stanning stopped.');
+      log.debug(LOG_PREFIX, 'Scanning stopped.');
       _self.emit('scanning', false);
     });
     _noble.on('warning', (message) => {

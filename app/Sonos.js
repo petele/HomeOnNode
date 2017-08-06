@@ -76,26 +76,14 @@ function Sonos() {
       setInterval(_getFavorites, FAV_INTERVAL);
     });
     _sonosSystem.on('transport-state', (transportState) => {
-      /**
-       * Fired when the transport has changed
-       * @event Sonos#transport-state
-       */
       _self.emit('transport-state', transportState);
       const playerState = transportState.system.zones[0].coordinator.state;
-      /**
-       * Fired when the player state changes
-       * @event Sonos#player-state
-       */
       _self.emit('player-state', playerState);
-      log.verbose(LOG_PREFIX, 'Player State Changed');
+      log.verbose(LOG_PREFIX, 'Player State Changed', playerState);
     });
     _sonosSystem.on('topology-changed', (zones) => {
-      /**
-       * Fired when the player state changes
-       * @event Sonos#topology-changed
-       */
       _self.emit('topology-changed', zones);
-      log.verbose(LOG_PREFIX, 'Topology changed');
+      log.verbose(LOG_PREFIX, 'Topology changed', zones);
     });
   }
 
@@ -165,12 +153,8 @@ function Sonos() {
     }
     let player = _getPlayer();
     player.system.getFavorites().then((favs) => {
-      /**
-       * Fired when the list of favorites change
-       * @event Sonos#favorites-changed
-       */
       _self.emit('favorites-changed', favs);
-      log.verbose(LOG_PREFIX, 'Favorites changed.');
+      log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
     });
   }
 
