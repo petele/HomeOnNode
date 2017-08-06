@@ -175,7 +175,12 @@ function _generateLog(level, prefix, message, extra) {
     } else if (typeof extra === 'string') {
       result.extra = extra;
     } else {
-      result.extra = JSON.parse(JSON.stringify(extra));
+      try {
+        result.extra = JSON.parse(JSON.stringify(extra));
+      } catch (ex) {
+        result.extra = {circular: true};
+        _exception(LOG_PREFIX, 'generateLog() circular exception', ex);
+      }
     }
   }
   return result;
