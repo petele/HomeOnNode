@@ -139,7 +139,7 @@ function ZWave() {
     let debouncer = _debouncers[nodeId];
     if (!debouncer) {
       debouncer = _debounce(function(nodeId, value) {
-        log.debug(LOG_PREFIX, `nodeEvent(${nodeId}, ${value})`);
+        log.verbose(LOG_PREFIX, `nodeEvent(${nodeId}, ${value})`);
         _self.emit('node_event', nodeId, value);
       }, 500);
       _debouncers[nodeId] = debouncer;

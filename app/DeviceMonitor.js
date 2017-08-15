@@ -124,7 +124,7 @@ function DeviceMonitor(fb, deviceName) {
    */
   function _restartRequest(snapshot) {
     if (snapshot.val() === true) {
-      log.log(LOG_PREFIX, 'Restart requested via FB.');
+      log.verbose(LOG_PREFIX, 'Restart requested via FB.');
       snapshot.ref().remove();
       _self.emit('restart_request', RESTART_TIMEOUT);
     }
@@ -137,7 +137,7 @@ function DeviceMonitor(fb, deviceName) {
    */
   function _shutdownRequest(snapshot) {
     if (snapshot.val() === true) {
-      log.log(LOG_PREFIX, 'Shutdown requested via FB.');
+      log.verbose(LOG_PREFIX, 'Shutdown requested via FB.');
       snapshot.ref().remove();
       _self.emit('shutdown_request');
     }
@@ -257,7 +257,6 @@ function DeviceMonitor(fb, deviceName) {
       exec('sudo reboot', function(error, stdout, stderr) {});
     }, timeout);
   };
-
 
   _init();
 }
