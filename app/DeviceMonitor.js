@@ -23,7 +23,7 @@ const LOG_PREFIX = 'DEVICE';
 */
 function DeviceMonitor(fb, deviceName) {
   const RESTART_TIMEOUT = 2500;
-  const MAX_DISCONNECT = 2 * 60 * 1000;
+  const MAX_DISCONNECT = 12 * 60 * 60 * 1000;
   const _fb = fb;
   const _deviceName = deviceName;
   const _self = this;
@@ -72,6 +72,7 @@ function DeviceMonitor(fb, deviceName) {
     _fb.root().child(`.info/connected`).on('value', _connectionChanged);
     _fb.child(`${_deviceName}/restart`).on('value', _restartRequest);
     _fb.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
+    _fb.root().onAuth(_authChanged);
     _heartbeatInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
     _ipAddressInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
   }
@@ -170,6 +171,20 @@ function DeviceMonitor(fb, deviceName) {
     _fb.child(`${_deviceName}/shutdownAt`).onDisconnect()
       .set(Firebase.ServerValue.TIMESTAMP);
   }
+
+  /**
+   * Handles a Firebase authentication state change.
+   *
+   * @param {Object} authData Firebase authentication data.
+   */
+  function _authChanged(authData) {
+    if (authData) {
+      log.log(LOG_PREFIX, 'Firebase client authenticated.', authData);
+      return;
+    }
+    log.warn(LOG_PREFIX, 'Firebase client unauthenticated.');
+  }
+
 
   /**
    * Get's the hostname from the device.
