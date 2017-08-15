@@ -39,7 +39,7 @@ function init() {
   log.setFirebaseRef(_fb);
   _deviceMonitor = new DeviceMonitor(_fb.child('devices'), APP_NAME);
   _deviceMonitor.on('restart_request', () => {
-    _deviceMonitor.restart();
+    _deviceMonitor.restart('FB', false);
   });
   _deviceMonitor.on('shutdown_request', () => {
     _exit('FB', 0);

@@ -13,10 +13,12 @@ let _hostname;
 let _deviceMonitor;
 
 const logOpts = {
+  consoleLogLevel: 20,
+  firebaseLogLevel: 45,
+  firebasePath: 'logs/monitor',
   fileLogLevel: 45,
   fileFilename: './logs/monitor.log',
-  consoleLogLevel: 20,
-}
+};
 
 log.setAppName(LOG_PREFIX);
 log.setOptions(logOpts);
@@ -44,13 +46,13 @@ function init() {
 
   _deviceMonitor = new DeviceMonitor(_fb.child('monitor'), _hostname);
   _deviceMonitor.on('restart_request', () => {
-    _deviceMonitor.restart();
+    _deviceMonitor.restart('FB', false);
   });
   _deviceMonitor.on('shutdown_request', () => {
     _exit('FB', 0);
   });
   _deviceMonitor.on('connection_timedout', () => {
-    _deviceMonitor.restart();
+    _deviceMonitor.restart('CNX_Timeout', false);
   });
 
   setInterval(function() {

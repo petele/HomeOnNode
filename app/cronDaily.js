@@ -13,6 +13,7 @@ const cronJob = function() {
   promises.push(log.cleanLogs('logs/pushBullet', 1));
   promises.push(log.cleanLogs('logs/server', 7));
   promises.push(log.cleanLogs('logs/systemState', 30));
+  promises.push(log.cleanLogs('logs/monitor', 2));
   Promise.all(promises)
   .then(() => {
     return log.cleanFile();

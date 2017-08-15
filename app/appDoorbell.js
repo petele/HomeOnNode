@@ -41,7 +41,7 @@ function init() {
   log.setFirebaseRef(_fb);
   _deviceMonitor = new DeviceMonitor(_fb.child('devices'), 'DoorBell');
   _deviceMonitor.on('restart_request', () => {
-    _deviceMonitor.restart();
+    _deviceMonitor.restart('FB', false);
   });
   _deviceMonitor.on('shutdown', () => {
     _exit('FB', 0);

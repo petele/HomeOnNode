@@ -163,7 +163,6 @@ function Hue(key, explicitIPAddress) {
       }
       request(requestOptions, (error, response, respBody) => {
         _requestsInProgress -= 1;
-        log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
         let errors = [];
         if (error) {
           log.verbose(LOG_PREFIX, `${msg} Response error: request`, error);
@@ -172,6 +171,9 @@ function Hue(key, explicitIPAddress) {
             return;
           }
           errors.push(error);
+        }
+        if (response && response.statusCode) {
+          log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
         }
         if (respBody) {
           if (respBody.error) {

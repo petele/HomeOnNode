@@ -30,7 +30,7 @@ function DeviceMonitor(fb, deviceName) {
   let _ipAddresses;
   let _heartbeatInterval;
   let _ipAddressInterval;
-  let _lastWrite;
+  let _lastWrite = Date.now();
   let _hasExceededTimeout = false;
 
   /**
@@ -107,7 +107,12 @@ function DeviceMonitor(fb, deviceName) {
     const timeSinceLastWrite = now - _lastWrite;
     if (timeSinceLastWrite > MAX_DISCONNECT && _hasExceededTimeout === false) {
       _hasExceededTimeout = true;
-      log.warn(LOG_PREFIX, 'Time since last successful write exceeded.');
+      const info = {
+        now: now,
+        msSinceLastWrite: timeSinceLastWrite,
+        maxDisconnect: MAX_DISCONNECT,
+      };
+      log.warn(LOG_PREFIX, 'Time since last successful write exceeded.', info);
       _self.emit('connection_timedout');
     }
   }
@@ -119,7 +124,7 @@ function DeviceMonitor(fb, deviceName) {
    */
   function _restartRequest(snapshot) {
     if (snapshot.val() === true) {
-      log.verbose(LOG_PREFIX, 'Restart requested.');
+      log.log(LOG_PREFIX, 'Restart requested via FB.');
       snapshot.ref().remove();
       _self.emit('restart_request', RESTART_TIMEOUT);
     }
@@ -132,7 +137,7 @@ function DeviceMonitor(fb, deviceName) {
    */
   function _shutdownRequest(snapshot) {
     if (snapshot.val() === true) {
-      log.verbose(LOG_PREFIX, 'Shutdown requested.');
+      log.log(LOG_PREFIX, 'Shutdown requested via FB.');
       snapshot.ref().remove();
       _self.emit('shutdown_request');
     }
@@ -234,10 +239,23 @@ function DeviceMonitor(fb, deviceName) {
 
   /**
    * Restarts the computer
+   *
+   * @param {String} sender Who requested the restart.
+   * @param {Boolean} immediate if the reboot should happen immediately.
    */
-  this.restart = function() {
-    log.warn(LOG_PREFIX, 'Restarting now...');
-    exec('sudo reboot', function(error, stdout, stderr) {});
+  this.restart = function(sender, immediate) {
+    let timeout = 3000;
+    if (immediate === true) {
+      timeout = 0;
+    }
+    let info = {
+      sender: sender,
+      immediate: immediate,
+    };
+    log.warn(LOG_PREFIX, 'Restart imminent!', info);
+    setTimeout(() => {
+      exec('sudo reboot', function(error, stdout, stderr) {});
+    }, timeout);
   };
 
 

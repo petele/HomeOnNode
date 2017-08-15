@@ -20,6 +20,7 @@ function WSClient(host, retry) {
   const _self = this;
   this.connected = false;
   let _ws;
+  let _wsURL;
   let _retry = retry;
   let _interval;
 
@@ -31,12 +32,12 @@ function WSClient(host, retry) {
       log.error(LOG_PREFIX, 'No hostname provided.');
       return;
     }
-    let wsURL = `ws://${host}`;
-    if (host.indexOf('ws://') === 0 || host.indexOf('wss://') === 0) {
-      wsURL = host;
+    _wsURL = host;
+    if ((host.indexOf('ws://') === -1) && (host.indexOf('wss://') === -1)) {
+      _wsURL = `ws://${host}`;
     }
-    log.init(LOG_PREFIX, `Connecting to ${wsURL}`);
-    _ws = new WebSocket(wsURL);
+    log.init(LOG_PREFIX, `Connecting to ${_wsURL}`);
+    _ws = new WebSocket(_wsURL);
     _ws.on('open', _wsOpen);
     _ws.on('close', _wsClose);
     _ws.on('message', _wsMessage);
@@ -111,7 +112,7 @@ function WSClient(host, retry) {
    * @param {Error} err The incoming error.
    */
   function _wsError(err) {
-    log.error(LOG_PREFIX, 'Client error.', err);
+    log.error(LOG_PREFIX, `Client error on ${_wsURL}`, err);
   }
 
   /**
