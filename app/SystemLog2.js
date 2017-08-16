@@ -25,6 +25,7 @@ const LOG_LEVELS = {
   STOP: {level: 0, color: chalk.hex('#b71c1c')},   // red 900
   INIT: {level: 0, color: chalk.hex('#388e3c')},   // green 700
   EXCPT: {level: 0, color: chalk.hex('#b71c1c')},  // red 900
+  FATAL: {level: 0, color: chalk.hex('#b71c1c')},  // red 900
   ERROR: {level: 10, color: chalk.hex('#f44336')}, // red 500
   WARN: {level: 40, color: chalk.hex('#ff9800')},  // orange 500
   INFO: {level: 50, color: chalk.hex('#03a9f4')},  // l.blue 500
@@ -445,6 +446,19 @@ function _exception(prefix, message, extra) {
 }
 
 /**
+ * Logs an fatal exception.
+ *
+ * @function fatal
+ * @static
+ * @param {String} prefix Where the message originated.
+ * @param {String} message The log message.
+ * @param {Object} [extra] Optional extra information.
+ */
+function _fatal(prefix, message, extra) {
+  _handleLog(_generateLog('FATAL', prefix, message, extra));
+}
+
+/**
  * Logs a debug message.
  *
  * @function debug
@@ -641,6 +655,7 @@ exports.init = _init;
 exports.log = _log;
 exports.info = _log;
 exports.exception = _exception;
+exports.fatal = _fatal;
 exports.error = _error;
 exports.warn = _warn;
 exports.debug = _debug;

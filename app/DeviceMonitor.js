@@ -75,6 +75,33 @@ function DeviceMonitor(fb, deviceName) {
     _fb.root().onAuth(_authChanged);
     _heartbeatInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
     _ipAddressInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
+    _initUncaught();
+    _initUnRejected();
+  }
+
+  /**
+   * Setup the Uncaught Exception Handler
+   */
+  function _initUncaught() {
+    process.on('uncaughtException', (err) => {
+      log.fatal(_deviceName, 'A fatal exception occured.', err);
+      setTimeout(() => {
+        process.exit(1);
+      }, RESTART_TIMEOUT);
+    });
+  }
+
+  /**
+   * Setup the Unhandled Rejection Handler
+   */
+  function _initUnRejected() {
+    process.on('unhandledRejection', (reason, p) => {
+      const info = {
+        reason: reason,
+        promise: p,
+      };
+      log.warn(_deviceName, 'An unhandled rejection occured', info);
+    });
   }
 
   /**
@@ -259,7 +286,7 @@ function DeviceMonitor(fb, deviceName) {
    * @param {Boolean} immediate if the reboot should happen immediately.
    */
   this.restart = function(sender, immediate) {
-    let timeout = 3000;
+    let timeout = RESTART_TIMEOUT;
     if (immediate === true) {
       timeout = 0;
     }
