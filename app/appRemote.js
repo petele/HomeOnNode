@@ -43,10 +43,12 @@ function init() {
   log.setFirebaseRef(_fb);
   _deviceMonitor = new DeviceMonitor(_fb.child('devices'), APP_NAME);
   _deviceMonitor.on('restart_request', () => {
-    _deviceMonitor.restart();
+    _close();
+    _deviceMonitor.restart('FB', 'restart_request', false);
   });
   _deviceMonitor.on('shutdown_request', () => {
-    _exit('FB', 0);
+    _close();
+    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
   });
 
   _fb.child(`config/${APP_NAME}/logs`).on('value', (snapshot) => {
@@ -59,8 +61,10 @@ function init() {
     log.debug(APP_NAME, `Reading 'config.json'.`);
     data = fs.readFileSync('config.json', {encoding: 'utf8'});
   } catch (ex) {
-    log.exception(APP_NAME, `Error reading 'config.json' file.`, ex);
-    _exit('read_config', 1);
+    const msg = `Error reading 'config.json' file.`;
+    log.exception(APP_NAME, msg, ex);
+    _close();
+    _deviceMonitor.shutdown('read_config', msg, 1);
     return;
   }
 
@@ -68,14 +72,18 @@ function init() {
     log.debug(APP_NAME, `Parsing 'config.json'.`);
     _config = JSON.parse(data);
   } catch (ex) {
-    log.exception(APP_NAME, `Error parsing 'config.json' file.`, ex);
-    _exit('parse_config', 1);
+    const msg = `Error parsing 'config.json' file.`;
+    log.exception(APP_NAME, msg, ex);
+    _close();
+    _deviceMonitor.shutdown('parse_config', msg, 1);
     return;
   }
 
   if (_config.enabled !== true) {
-    log.error(APP_NAME, 'Disabled by config.', _config);
-    _exit('disabled_by_config', 1);
+    const msg = 'Disabled by config.';
+    log.error(APP_NAME, msg, _config);
+    _close();
+    _deviceMonitor.shutdown('disabled_by_config', msg, 1);
     return;
   }
 
@@ -120,8 +128,8 @@ function _handleKeyPress(key, modifier, exitApp) {
   };
   log.verbose(APP_NAME, 'Key pressed', details);
   if (exitApp) {
-    log.log(APP_NAME, 'Exit requested.');
-    _exit('KEYPAD', 0);
+    _close();
+    _deviceMonitor.shutdown('USER', 'exit_key', 0);
     return;
   }
   let cmd = _config.keypad.keys[key];
@@ -139,27 +147,15 @@ function _handleKeyPress(key, modifier, exitApp) {
  * @param {String} sender Who is requesting the app to exit.
  * @param {Number} exitCode The exit code to use.
 */
-function _exit(sender, exitCode) {
-  exitCode = exitCode || 0;
-  const details = {
-    exitCode: exitCode,
-    sender: sender,
-  };
-  log.log(APP_NAME, 'Starting shutdown process', details);
+function _close() {
   if (_wsClient) {
     _wsClient.shutdown();
   }
-  if (_deviceMonitor) {
-    _deviceMonitor.shutdown(sender);
-  }
-  setTimeout(function() {
-    log.appStop(sender);
-    process.exit(exitCode);
-  }, 1500);
 }
 
 process.on('SIGINT', function() {
-  _exit('SIGINT', 0);
+  _close();
+  _deviceMonitor.shutdown('SIGINT', 'shutdown_request', 0);
 });
 
 init();

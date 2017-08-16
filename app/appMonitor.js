@@ -46,13 +46,13 @@ function init() {
 
   _deviceMonitor = new DeviceMonitor(_fb.child('monitor'), _hostname);
   _deviceMonitor.on('restart_request', () => {
-    _deviceMonitor.restart('FB', false);
+    _deviceMonitor.restart('FB', 'restart_request', false);
   });
   _deviceMonitor.on('shutdown_request', () => {
-    _exit('FB', 0);
+    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
   });
   _deviceMonitor.on('connection_timedout', () => {
-    _deviceMonitor.restart('CNX_Timeout', false);
+    _deviceMonitor.restart('FB', 'connection_timedout', false);
   });
 
   setInterval(function() {
@@ -60,30 +60,8 @@ function init() {
   }, 60 * 60 * 24 * 1000);
 }
 
-/**
- * Exit the app.
- *
- * @param {String} sender Who is requesting the app to exit.
- * @param {Number} [exitCode] The exit code to use.
-*/
-function _exit(sender, exitCode) {
-  exitCode = exitCode || 0;
-  const details = {
-    exitCode: exitCode,
-    sender: sender,
-  };
-  log.log(LOG_PREFIX, 'Starting shutdown process', details);
-  if (_deviceMonitor) {
-    _deviceMonitor.shutdown(sender);
-  }
-  setTimeout(function() {
-    log.appStop(sender);
-    process.exit(exitCode);
-  }, 2500);
-}
-
 process.on('SIGINT', function() {
-  _exit('SIGINT', 0);
+  _deviceMonitor.shutdown('SIGINT', 'shutdown_request', 0);
 });
 
 init();

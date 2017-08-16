@@ -129,6 +129,25 @@ function WSServer(name, port) {
     });
   };
 
+  /**
+   * Shuts down the web socket server
+   *
+   * @return {Promise} Resolves when the server has closed.
+   */
+  this.shutdown = function() {
+    if (!_wss) {
+      log.error(_logPrefix, 'Unable to broadcast, server is not running.');
+      return;
+    }
+    _self.running = false;
+    return new Promise(function(resolve, reject) {
+      _wss.close(() => {
+        _wss = null;
+        resolve();
+      });
+    });
+  };
+
   _init();
 }
 util.inherits(WSServer, EventEmitter);

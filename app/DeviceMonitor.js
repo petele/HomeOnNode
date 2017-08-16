@@ -254,10 +254,12 @@ function DeviceMonitor(fb, deviceName) {
   /**
    * Shuts down the Firebase device logging info
    *
-   * @param {String} reason The reason the device is being shutdown.
+   * @param {Object} exitDetails The details about the exiting the app.
+   * @return {Promise} called when synchronization to the Firebase servers has
+   *   completed.
    */
-  this.shutdown = function(reason) {
-    log.log(LOG_PREFIX, 'Shutting down...', {reason: reason});
+  function _beforeExit(exitDetails) {
+    log.appStop(exitDetails.sender, exitDetails);
     if (_heartbeatInterval) {
       clearInterval(_heartbeatInterval);
       _heartbeatInterval = null;
@@ -270,30 +272,55 @@ function DeviceMonitor(fb, deviceName) {
     const details = {
       online: false,
       shutdownAt: now,
-      shutdownBy: reason,
     };
-    _fb.child(`${_deviceName}`).update(details);
+    return _fb.child(`${_deviceName}`).update(details);
+  }
+
+  /**
+   * Shuts down the Firebase device logging info
+   *
+   * @param {String} sender The requestor that initiated the shutdown.
+   * @param {String} reason The reason the device is being shutdown.
+   * @param {Number} exitCode The exit code to exit with.
+   */
+  this.shutdown = function(sender, reason, exitCode) {
+    const exitDetails = {
+      shutdown: true,
+      sender: sender,
+      reason: reason,
+      exitCode: exitCode,
+    };
+    _beforeExit(exitDetails)
+    .then(() => {
+      process.exit(exitCode);
+    });
   };
 
   /**
    * Restarts the computer
    *
    * @param {String} sender Who requested the restart.
+   * @param {String} reason The reason the device is being shutdown.
    * @param {Boolean} immediate if the reboot should happen immediately.
    */
-  this.restart = function(sender, immediate) {
-    let timeout = RESTART_TIMEOUT;
-    if (immediate === true) {
-      timeout = 0;
-    }
-    let info = {
+  this.restart = function(sender, reason, immediate) {
+    const exitDetails = {
+      restart: true,
       sender: sender,
+      reason: reason,
       immediate: immediate,
     };
-    log.warn(LOG_PREFIX, 'Restart imminent!', info);
-    setTimeout(() => {
-      exec('sudo reboot', function(error, stdout, stderr) {});
-    }, timeout);
+    _beforeExit(exitDetails)
+    .then(() => {
+      let timeout = 0;
+      if (immediate !== true) {
+        timeout = RESTART_TIMEOUT;
+        log.debug(LOG_PREFIX, `Will reboot in ${timeout} ms...`);
+      }
+      setTimeout(() => {
+        exec('sudo reboot', function(error, stdout, stderr) {});
+      }, timeout);
+    });
   };
 
   _init();

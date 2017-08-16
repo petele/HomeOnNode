@@ -41,14 +41,17 @@ function init() {
   log.setFirebaseRef(_fb);
   _deviceMonitor = new DeviceMonitor(_fb.child('devices'), 'DoorBell');
   _deviceMonitor.on('restart_request', () => {
-    _deviceMonitor.restart('FB', false);
+    _close();
+    _deviceMonitor.restart('FB', 'restart_request', false);
   });
   _deviceMonitor.on('shutdown', () => {
-    _exit('FB', 0);
+    _close();
+    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
   });
 
   if (loadGPIO() === false) {
-    _exit('GPIO', 1);
+    _close();
+    _deviceMonitor.shutdown('GPIO', 'unavailable', 1);
     return;
   }
 
@@ -62,8 +65,10 @@ function init() {
     log.debug(APP_NAME, `Reading 'config.json'.`);
     data = fs.readFileSync('config.json', {encoding: 'utf8'});
   } catch (ex) {
-    log.exception(APP_NAME, `Error reading 'config.json' file.`, ex);
-    _exit('read_config', 1);
+    const msg = `Error reading 'config.json' file.`;
+    log.exception(APP_NAME, msg, ex);
+    _close();
+    _deviceMonitor.shutdown('read_config', msg, 1);
     return;
   }
 
@@ -71,20 +76,26 @@ function init() {
     log.debug(APP_NAME, `Parsing 'config.json'.`);
     _config = JSON.parse(data);
   } catch (ex) {
-    log.exception(APP_NAME, `Error parsing 'config.json' file.`, ex);
-    _exit('parse_config', 1);
+    const msg = `Error parsing 'config.json' file.`;
+    log.exception(APP_NAME, msg, ex);
+    _close();
+    _deviceMonitor.shutdown('parse_config', msg, 1);
     return;
   }
 
   if (_config.enabled !== true) {
-    log.error(APP_NAME, 'Disabled by config.', _config);
-    _exit('disabled_by_config', 1);
+    const msg = 'Disabled by config.';
+    log.error(APP_NAME, msg, _config);
+    _close();
+    _deviceMonitor.shutdown('disabled_by_config', msg, 1);
     return;
   }
 
   if (_config.hasOwnProperty('doorbellPin') === false) {
-    log.error(APP_NAME, 'Doorbell pin not specified', _config);
-    _exit('bad_config', 1);
+    const msg = 'Doorbell pin not specified';
+    log.error(APP_NAME, msg, _config);
+    _close();
+    _deviceMonitor.shutdown('bad_config', msg, 1);
     return;
   }
 
@@ -116,8 +127,6 @@ function _pinChanged(err, value) {
     ringDoorbell();
     return;
   }
-  // const msg = `v=${value} changed=${hasChanged} time=${timeOK}`;
-  // log.debug(APP_NAME, 'Debounced. ' + msg);
 }
 
 /**
@@ -157,17 +166,8 @@ function ringDoorbell() {
 
 /**
  * Exit the app.
- *
- * @param {String} sender Who is requesting the app to exit.
- * @param {Number} exitCode The exit code to use.
 */
-function _exit(sender, exitCode) {
-  exitCode = exitCode || 0;
-  const details = {
-    exitCode: exitCode,
-    sender: sender,
-  };
-  log.log(APP_NAME, 'Starting shutdown process', details);
+function _close() {
   if (_pin) {
     log.debug(APP_NAME, 'Unwatching pins');
     _pin.unwatchAll();
@@ -177,17 +177,11 @@ function _exit(sender, exitCode) {
   if (_wsClient) {
     _wsClient.shutdown();
   }
-  if (_deviceMonitor) {
-    _deviceMonitor.shutdown(sender);
-  }
-  setTimeout(function() {
-    log.appStop(sender);
-    process.exit(exitCode);
-  }, 1500);
 }
 
 process.on('SIGINT', function() {
-  _exit('SIGINT', 0);
+  _close();
+  _deviceMonitor.shutdown('SIGINT', 'shutdown_request', 0);
 });
 
 init();

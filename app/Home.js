@@ -670,6 +670,24 @@ function Home(initialConfig, fbRef) {
    * Init the Flic API
    */
   function _initFlic() {
+    /*
+    let _flics = {};
+    _fb.child('config/HomeOnNode/flic').on('child_added', function(snapshot) {
+      const flicUUID = snapshot.key();
+      const flicCmd = snapshot.val();
+      const flic = new FlicMonitor(bluetooth);
+      flic.setFlicUUID(flicUUID);
+      flic.on('flic_pushed', () => {
+        _self.executeCommand(flicCmd, `Flic-${flicUUID}`);
+      });
+      _flics[flicUUID] = flic;
+    });
+    _fb.child('config/HomeOnNode/flic').on('child_removed', function(snapshot) {
+      const flicUUID = snapshot.key();
+      _flics[flicUUID].setFlicUUID(null);
+      _flics[flicUUID] = null;
+    });
+    */
     const flicCfgPath = `config/HomeOnNode/flic`;
     flicAway = new FlicMonitor(bluetooth);
     _fb.child(`${flicCfgPath}/away`).on('value', function(snapshot) {
@@ -678,17 +696,6 @@ function Home(initialConfig, fbRef) {
     flicAway.on('flic_pushed', () => {
       _self.executeCommand({state: 'ARMED'}, 'FlicAway');
     });
-    // flicBlindsBR = new FlicMonitor(bluetooth, 15 * 1000);
-    // _fb.child(`${flicCfgPath}/blinds_br`).on('value', function(snapshot) {
-    //   flicBlindsBR.setFlicUUID(snapshot.val());
-    // });
-    // flicBlindsBR.on('flic_pushed', () => {
-    //   const cmd = {somaSmartShades: [
-    //     {blindId: 'BR_L', position: 'TOGGLE'},
-    //     {blindId: 'BR_R', position: 'TOGGLE'},
-    //   ]};
-    //   _self.executeCommand(cmd, 'FlicBlindsBR');
-    // });
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **

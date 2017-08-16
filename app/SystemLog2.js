@@ -21,6 +21,7 @@ const DEFAULT_OPTIONS = {
   firebasePath: 'logs/generic',
 };
 const LOG_LEVELS = {
+  /* eslint-disable no-multi-spaces */
   START: {level: 0, color: chalk.hex('#388e3c')},  // green 700
   STOP: {level: 0, color: chalk.hex('#b71c1c')},   // red 900
   INIT: {level: 0, color: chalk.hex('#388e3c')},   // green 700
@@ -28,10 +29,11 @@ const LOG_LEVELS = {
   FATAL: {level: 0, color: chalk.hex('#b71c1c')},  // red 900
   ERROR: {level: 10, color: chalk.hex('#f44336')}, // red 500
   WARN: {level: 40, color: chalk.hex('#ff9800')},  // orange 500
-  INFO: {level: 50, color: chalk.hex('#03a9f4')},  // l.blue 500
+  INFO: {level: 50, color: chalk.hex('#03a9f4')},  // light blue 500
   TODO: {level: 60, color: chalk.hex('#9c27b0')},  // purple 500
   DEBUG: {level: 60, color: chalk.hex('#0d47a1')}, // blue 800
   EXTRA: {level: 70, color: chalk.hex('#546e7a')}, // bluegray 600
+  /* eslint-enable */
 };
 const LOG_PREFIX = 'LOGGER';
 
@@ -386,10 +388,10 @@ function _appStart() {
  *
  * @function appStop
  * @static
- * @param {String} [receivedFrom] Who is requesting the app to stop
+ * @param {String} receivedFrom Who is requesting the app to stop.
+ * @param {Object} extra Extra shutdown data.
  */
-function _appStop(receivedFrom) {
-  receivedFrom = receivedFrom || 'UNKNOWN';
+function _appStop(receivedFrom, extra) {
   _handleLog(_generateLog('STOP', 'APP', `Received from: ${receivedFrom}`));
 }
 
