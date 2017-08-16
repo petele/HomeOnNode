@@ -19,6 +19,7 @@ function WSServer(name, port) {
   this.running = false;
   let _logPrefix = name.toUpperCase() + '_WSS';
   let _wss;
+  let _pingInterval;
 
   /**
    * Init the WebSocket Server
@@ -38,7 +39,7 @@ function WSServer(name, port) {
     log.log(_logPrefix, 'WebSocket server started...');
     _wss.on('connection', _wsConnection);
     _wss.on('error', _wsError);
-    setInterval(_pingClients, PING_INTERVAL);
+    _pingInterval = setInterval(_pingClients, PING_INTERVAL);
   }
 
   /**
@@ -140,6 +141,10 @@ function WSServer(name, port) {
       return;
     }
     _self.running = false;
+    if (_pingInterval) {
+      clearInterval(_pingInterval);
+      _pingInterval = null;
+    }
     return new Promise(function(resolve, reject) {
       _wss.close(() => {
         _wss = null;
