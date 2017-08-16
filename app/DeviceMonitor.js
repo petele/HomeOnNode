@@ -96,11 +96,7 @@ function DeviceMonitor(fb, deviceName) {
    */
   function _initUnRejected() {
     process.on('unhandledRejection', (reason, p) => {
-      const info = {
-        reason: reason,
-        promise: p,
-      };
-      log.warn(_deviceName, 'An unhandled rejection occured', info);
+      log.warn(_deviceName, 'An unhandled promise rejection occured.', reason);
     });
   }
 
