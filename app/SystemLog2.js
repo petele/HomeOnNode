@@ -392,7 +392,7 @@ function _appStart() {
  * @param {Object} extra Extra shutdown data.
  */
 function _appStop(receivedFrom, extra) {
-  _handleLog(_generateLog('STOP', 'APP', `Received from: ${receivedFrom}`));
+  _handleLog(_generateLog('STOP', 'APP', 'Shutdown', extra));
 }
 
 /**

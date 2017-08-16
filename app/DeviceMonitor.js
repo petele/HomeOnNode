@@ -57,7 +57,6 @@ function DeviceMonitor(fb, deviceName) {
       version: version.head,
       online: true,
       shutdownAt: null,
-      shutdownBy: null,
       startedAt: now,
       startedAt_: now_,
       host: {
@@ -66,6 +65,7 @@ function DeviceMonitor(fb, deviceName) {
       },
       restart: null,
       shutdown: null,
+      exitDetails: null,
     };
     _lastWrite = now;
     _fb.child(_deviceName).set(deviceData);
@@ -118,7 +118,7 @@ function DeviceMonitor(fb, deviceName) {
       heartbeat_: now_,
       online: true,
       shutdownAt: null,
-      shutdownBy: null,
+      exitDetails: null,
     };
     _fb.child(`${_deviceName}`).update(details, (err) => {
       if (err) {
@@ -185,11 +185,11 @@ function DeviceMonitor(fb, deviceName) {
       heartbeat_: log.formatTime(now),
       online: true,
       shutdownAt: null,
-      shutdownBy: null,
+      exitDetails: null,
     };
     _fb.child(`${_deviceName}`).update(details);
     _fb.child(`${_deviceName}/online`).onDisconnect().set(false);
-    _fb.child(`${_deviceName}/shutdownBy`).onDisconnect()
+    _fb.child(`${_deviceName}/exitDetails`).onDisconnect()
       .set('connection_lost');
     _fb.child(`${_deviceName}/shutdownAt`).onDisconnect()
       .set(Firebase.ServerValue.TIMESTAMP);
@@ -272,6 +272,7 @@ function DeviceMonitor(fb, deviceName) {
     const details = {
       online: false,
       shutdownAt: now,
+      exitDetails: exitDetails,
     };
     return _fb.child(`${_deviceName}`).update(details);
   }

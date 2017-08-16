@@ -148,6 +148,7 @@ function _handleKeyPress(key, modifier, exitApp) {
  * @param {Number} exitCode The exit code to use.
 */
 function _close() {
+  log.log(APP_NAME, 'Preparing to exit, closing all connections...');
   if (_wsClient) {
     _wsClient.shutdown();
   }

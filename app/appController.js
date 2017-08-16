@@ -250,6 +250,7 @@ function _loadAndRunJS(file, callback) {
  * Close any open connections to shutdown the controller.
 */
 function _close() {
+  log.log(APP_NAME, 'Preparing to exit, closing all connections...');
   if (_home) {
     _home.shutdown();
   }

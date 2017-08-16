@@ -48,9 +48,6 @@ function init() {
   _deviceMonitor.on('restart_request', () => {
     _deviceMonitor.restart('FB', 'restart_request', false);
   });
-  _deviceMonitor.on('shutdown_request', () => {
-    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
-  });
   _deviceMonitor.on('connection_timedout', () => {
     _deviceMonitor.restart('FB', 'connection_timedout', false);
   });

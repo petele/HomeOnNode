@@ -168,6 +168,7 @@ function ringDoorbell() {
  * Exit the app.
 */
 function _close() {
+  log.log(APP_NAME, 'Preparing to exit, closing all connections...');
   if (_pin) {
     log.debug(APP_NAME, 'Unwatching pins');
     _pin.unwatchAll();
