@@ -189,8 +189,6 @@ function DeviceMonitor(fb, deviceName) {
     };
     _fb.child(`${_deviceName}`).update(details);
     _fb.child(`${_deviceName}/online`).onDisconnect().set(false);
-    _fb.child(`${_deviceName}/exitDetails`).onDisconnect()
-      .set('connection_lost');
     _fb.child(`${_deviceName}/shutdownAt`).onDisconnect()
       .set(Firebase.ServerValue.TIMESTAMP);
   }
