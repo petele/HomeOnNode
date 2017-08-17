@@ -121,10 +121,12 @@ function _sendCommand(command) {
  * @param {Boolean} exitApp If the app should exit.
  */
 function _handleKeyPress(key, modifier, exitApp) {
+  let cmd = _config.keypad.keys[key];
   const details = {
     key: key,
     modifier: modifier,
     exitApp: exitApp,
+    cmd: cmd,
   };
   log.verbose(APP_NAME, 'Key pressed', details);
   if (exitApp) {
@@ -132,13 +134,14 @@ function _handleKeyPress(key, modifier, exitApp) {
     _deviceMonitor.shutdown('USER', 'exit_key', 0);
     return;
   }
-  let cmd = _config.keypad.keys[key];
-  if (cmd) {
-    cmd.modifier = modifier;
-    _sendCommand(cmd);
+  if (!cmd) {
+    log.warn(APP_NAME, `Unknown key pressed.`, details);
     return;
   }
-  log.warn(APP_NAME, `Unknown key pressed.`, details);
+  if (modifier) {
+    cmd.modifier = modifier;
+  }
+  _sendCommand(cmd);
 }
 
 /**
