@@ -37,7 +37,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         padding-right: 24px;
       }
 
-      dom-repeat, dom-if { display: none; }
+      dom-if,
+      dom-repeat,
+      .display-none { display: none !important; }
 
       .no-overflow {
         text-overflow: ellipsis;
@@ -54,8 +56,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .grid-three { --app-grid-columns: 3; }
       .grid-four { --app-grid-columns: 4; }
       .grid-five { --app-grid-columns: 5; }
-
-      .display-none { display: none; }
 
       @media (min-width: 600px) {
         .grid-very-wide { --app-grid-columns: 1; }
