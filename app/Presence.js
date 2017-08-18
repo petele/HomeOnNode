@@ -37,7 +37,7 @@ function Presence(bt) {
     _bluetooth.on('discover', (peripheral) => {
       const uuid = peripheral.uuid.toLowerCase();
       let person = _people[uuid];
-      if (person && person.track === true) {
+      if (person) {
         _sawPerson(person, peripheral);
       }
     });
@@ -111,7 +111,7 @@ function Presence(bt) {
     const now = Date.now();
     person.lastSeen = now;
     person.lastSeenFormatted = log.formatTime(now);
-    if (person.state === USER_STATES.AWAY) {
+    if (person.track === true && person.state === USER_STATES.AWAY) {
       person.state = USER_STATES.PRESENT;
       _numPresent += 1;
       _emitChange(person);
