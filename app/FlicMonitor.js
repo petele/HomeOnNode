@@ -20,9 +20,7 @@ function FlicMonitor(bt, hitTimeout) {
   const _self = this;
   const _bluetooth = bt;
   const _hitTimeout = hitTimeout || HIT_TIMEOUT;
-  let _flicUUID;
-  let _lastFlics = [];
-  let _flicPushed = false;
+  let _flicButtons = {};
 
   /**
    * Init the Flic monitor
@@ -34,20 +32,38 @@ function FlicMonitor(bt, hitTimeout) {
       return;
     }
     _bluetooth.on('discover', (peripheral) => {
-      if (_flicUUID && peripheral.uuid === _flicUUID) {
-        _sawFlic(peripheral);
+      const flic = _flicButtons[peripheral.uuid];
+      if (flic) {
+        _sawFlic(flic, peripheral);
       }
     });
   }
 
   /**
-   * Sets the UUID for the Flic button
+   * Add a Flic button to the watch list
    *
    * @param {String} uuid
   */
-  this.setFlicUUID = function(uuid) {
-    log.debug(LOG_PREFIX, `setFlicUUID('${uuid}')`);
-    _flicUUID = uuid;
+  this.add = function(uuid) {
+    log.debug(LOG_PREFIX, `add('${uuid}')`);
+    const flic = {
+      uuid: uuid,
+      lastFlics: [],
+      flicPushed: false,
+    };
+    _flicButtons[uuid] = flic;
+  };
+
+  /**
+   * Remove a Flic button from the watch list
+   *
+   * @param {String} uuid
+  */
+  this.remove = function(uuid) {
+    log.debug(LOG_PREFIX, `remove('${uuid}')`);
+    if (_flicButtons[uuid]) {
+      _flicButtons[uuid] = null;
+    }
   };
 
   /**
@@ -55,30 +71,30 @@ function FlicMonitor(bt, hitTimeout) {
    *
    * @fires Presence#flic_pushed
    *
+   * @param {Object} flic The interal Flic object
    * @param {Object} peripheral The Flic peripheral object
   */
-  function _sawFlic(peripheral) {
+  function _sawFlic(flic, peripheral) {
     const now = Date.now();
-    _lastFlics.unshift(now);
-    if (_lastFlics[TIMES_FLIC_HIT - 1]) {
-      const timeSinceLastFlic = now - _lastFlics[TIMES_FLIC_HIT - 1];
-      if (timeSinceLastFlic < 250 && _flicPushed !== true) {
-        _flicPushed = true;
+    flic.lastFlics.unshift(now);
+    if (flic.lastFlics[TIMES_FLIC_HIT - 1]) {
+      const timeSinceLastFlic = now - flic.lastFlics[TIMES_FLIC_HIT - 1];
+      if (timeSinceLastFlic < 250 && flic.flicPushed !== true) {
+        flic.flicPushed = true;
         setTimeout(function() {
-          _flicPushed = false;
+          flic.flicPushed = false;
         }, _hitTimeout);
         const extra = {
-          uuid: _flicUUID,
-          id: peripheral.id,
+          flic: flic,
           address: peripheral.address,
           rssi: peripheral.rssi,
           name: peripheral.advertisement.localName,
         };
-        log.log(LOG_PREFIX, `sawFlic('${_flicUUID}')`, extra);
-        _self.emit('flic_pushed');
+        log.log(LOG_PREFIX, `flicPushed('${flic.uuid}')`, extra);
+        _self.emit('flic_pushed', flic.uuid);
       }
     }
-    _lastFlics = _lastFlics.slice(0, TIMES_FLIC_HIT - 1);
+    flic.lastFlics = flic.lastFlics.slice(0, TIMES_FLIC_HIT - 1);
   }
 
   _init();

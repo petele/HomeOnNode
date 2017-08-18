@@ -4,7 +4,6 @@ const util = require('util');
 const log = require('./SystemLog2');
 const EventEmitter = require('events').EventEmitter;
 
-
 const LOG_PREFIX = 'PRESENCE';
 
 /**
@@ -35,113 +34,87 @@ function Presence(bt) {
       log.error(LOG_PREFIX, 'Bluetooth not available.');
       return;
     }
-    _bluetooth.on('discover', _sawPerson);
+    _bluetooth.on('discover', (peripheral) => {
+      const uuid = peripheral.uuid.toLowerCase();
+      let person = _people[uuid];
+      if (person && person.track === true) {
+        _sawPerson(person, peripheral);
+      }
+    });
     setInterval(_awayTimerTick, AWAY_REFRESH_INTERVAL);
   }
 
   /**
    * Adds a new person to track
    *
-   * @param {Object} newPerson
-   * @return {Boolean} True is the person was successfully added.
+   * @param {String} uuid The UUID of the person to track
+   * @param {Object} person The person object to add
   */
-  this.addPerson = function(newPerson) {
-    const msg = `addPerson('${newPerson.name}', '${newPerson.uuid}')`;
-    try {
-      const uuid = newPerson.uuid;
-      let person = _people[uuid];
-      if (person) {
-        log.warn(LOG_PREFIX, msg + ' already exists.');
-        return false;
-      }
-      _people[uuid] = newPerson;
-      _people[uuid].lastSeen = 0;
-      _people[uuid].state = USER_STATES.AWAY;
-      log.log(LOG_PREFIX, msg);
-      return true;
-    } catch (ex) {
-      log.exception(LOG_PREFIX, msg + ' failed with exception.', ex);
-      return false;
-    }
+  this.add = function(uuid, person) {
+    uuid = uuid.toLowerCase();
+    const msg = `add('${uuid}')`;
+    person.lastSeen = 0;
+    person.state = USER_STATES.AWAY;
+    _people[uuid] = person;
+    log.log(LOG_PREFIX, msg, person);
   };
 
   /**
    * Removes a person from the tracking list
    *
    * @param {String} uuid The UUID of the person to remove
-   * @return {Boolean} True is the person was successfully removed.
   */
-  this.removePersonByKey = function(uuid) {
-    const msg = `removePersonByKey('${uuid}')`;
-    try {
-      let person = _people[uuid];
-      if (person) {
-        log.log(LOG_PREFIX, msg);
-        if (person.state === USER_STATES.PRESENT) {
-          _numPresent -= 1;
-        }
-        delete _people[uuid];
-        return true;
-      }
-      log.warn(LOG_PREFIX, msg + ' UUID not found.');
-      return false;
-    } catch (ex) {
-      log.exception(LOG_PREFIX, msg + ' failed with exception.', ex);
-      return false;
+  this.remove = function(uuid) {
+    uuid = uuid.toLowerCase();
+    const msg = `remove('${uuid}')`;
+    let person = _people[uuid];
+    if (!person) {
+      log.warn(LOG_PREFIX, msg + ' failed, person does not exist.');
+      return;
     }
+    if (person.state = USER_STATES.PRESENT) {
+      _numPresent -= 1;
+    }
+    _people[uuid] = null;
   };
 
   /**
    * Updates a person in the tracking list.
    *
-   * @param {Object} uPerson The person object to update.
-   * @return {Boolean} True is the person was successfully updated.
+   * @param {Object} uuid The UUID of the person to update
+   * @param {Object} person The info to update.
   */
-  this.updatePerson = function(uPerson) {
-    const msg = `updatePerson(${JSON.stringify(uPerson)})`;
-    try {
-      const uuid = uPerson.uuid;
-      let person = _people[uuid];
-      if (person) {
-        person.name = uPerson.name;
-        person.track = uPerson.track;
-        if (uPerson.track === false && person.state === USER_STATES.PRESENT) {
-          _numPresent -= 1;
-          person.state = USER_STATES.AWAY;
-        }
-        log.log(LOG_PREFIX, msg);
-        return true;
-      }
-      log.warn(LOG_PREFIX, msg + ' - failed. Could not find person.');
-      return false;
-    } catch (ex) {
-      log.exception(LOG_PREFIX, msg + ' - exception occured.', ex);
-      return false;
+  this.update = function(uuid, person) {
+    uuid = uuid.toLowerCase();
+    const msg = `update('${uuid}')`;
+    let p = _people[uuid];
+    if (!p) {
+      log.warn(LOG_PREFIX, msg + ' failed, person does not exist.');
+      return;
     }
+    p.name = person.name;
+    p.track = person.track;
+    if (p.track === false && p.state === USER_STATES.PRESENT) {
+      _numPresent =- 1;
+      p.state = USER_STATES.AWAY;
+    }
+    log.log(LOG_PREFIX, msg, p);
   };
 
   /**
    * Handles a Noble event when a 'person' was last seen
    *
+   * @param {Object} person The interal person object
    * @param {Object} peripheral The peripheral object of the BLE device
   */
-  function _sawPerson(peripheral) {
-    let person = _people[peripheral.uuid];
-    if (person && person.track === true) {
-      const now = Date.now();
-      person.lastSeen = now;
-      person.lastSeenFormatted = log.formatTime(now);
-      if (peripheral.rssi) {
-        person.rssi = peripheral.rssi;
-      }
-      if (peripheral.advertisement && peripheral.advertisement.localName) {
-        person.localName = peripheral.advertisement.localName;
-      }
-      if (person.state === USER_STATES.AWAY) {
-        person.state = USER_STATES.PRESENT;
-        _numPresent += 1;
-        _emitChange(person);
-      }
+  function _sawPerson(person, peripheral) {
+    const now = Date.now();
+    person.lastSeen = now;
+    person.lastSeenFormatted = log.formatTime(now);
+    if (person.state === USER_STATES.AWAY) {
+      person.state = USER_STATES.PRESENT;
+      _numPresent += 1;
+      _emitChange(person);
     }
   }
 

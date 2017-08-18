@@ -38,7 +38,7 @@ function Home(initialConfig, fbRef) {
   let _fb = fbRef;
 
   let bluetooth;
-  let flicAway;
+  let flicMonitor;
   let gcmPush;
   let harmony;
   let hue;
@@ -670,32 +670,36 @@ function Home(initialConfig, fbRef) {
    * Init the Flic API
    */
   function _initFlic() {
-    /*
-    let _flics = {};
-    _fb.child('config/HomeOnNode/flic').on('child_added', function(snapshot) {
-      const flicUUID = snapshot.key();
-      const flicCmd = snapshot.val();
-      const flic = new FlicMonitor(bluetooth);
-      flic.setFlicUUID(flicUUID);
-      flic.on('flic_pushed', () => {
-        _self.executeCommand(flicCmd, `Flic-${flicUUID}`);
-      });
-      _flics[flicUUID] = flic;
+    flicMonitor = new FlicMonitor(bluetooth);
+    flicMonitor.on('flic_pushed', _handleFlicPush);
+    const flicConfigPath = 'config/HomeOnNode/flicButtons';
+    _fb.child(flicConfigPath).on('child_added', function(snapshot) {
+      const uuid = snapshot.key();
+      flicMonitor.add(uuid);
     });
-    _fb.child('config/HomeOnNode/flic').on('child_removed', function(snapshot) {
-      const flicUUID = snapshot.key();
-      _flics[flicUUID].setFlicUUID(null);
-      _flics[flicUUID] = null;
+    _fb.child(flicConfigPath).on('child_removed', function(snapshot) {
+      const uuid = snapshot.key();
+      flicMonitor.remove(uuid);
     });
-    */
-    const flicCfgPath = `config/HomeOnNode/flic`;
-    flicAway = new FlicMonitor(bluetooth);
-    _fb.child(`${flicCfgPath}/away`).on('value', function(snapshot) {
-      flicAway.setFlicUUID(snapshot.val());
-    });
-    flicAway.on('flic_pushed', () => {
-      _self.executeCommand({state: 'ARMED'}, 'FlicAway');
-    });
+  }
+
+  /**
+   * Handles a Flic button push
+   *
+   * @param {String} uuid The UUID of the button that was pushed.
+   */
+  function _handleFlicPush(uuid) {
+    const cmd = _config.flicButtons[uuid];
+    if (!cmd) {
+      log.warn(LOG_PREFIX, `No command for Flic with UUID: ${uuid}`);
+      return;
+    }
+    const src = `Flic-${uuid}`;
+    if (typeof cmd === 'string') {
+      _self.executeCommandByName(cmd, null, src);
+      return;
+    }
+    _self.executeCommand(cmd, src);
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -833,16 +837,18 @@ function Home(initialConfig, fbRef) {
     presence = new Presence(bluetooth);
     // Set up the presence detection
     presence.on('change', _presenceChanged);
-    const fbPresPath = 'config/HomeOnNode/presence/people';
+    const fbPresPath = 'config/HomeOnNode/presence';
     _fb.child(fbPresPath).on('child_added', function(snapshot) {
-      presence.addPerson(snapshot.val());
+      const uuid = snapshot.key();
+      presence.add(uuid, snapshot.val());
     });
     _fb.child(fbPresPath).on('child_removed', function(snapshot) {
-      const uuid = snapshot.val().uuid;
-      presence.removePersonByKey(uuid);
+      const uuid = snapshot.key();
+      presence.remove(uuid);
     });
     _fb.child(fbPresPath).on('child_changed', function(snapshot) {
-      presence.updatePerson(snapshot.val());
+      const uuid = snapshot.key();
+      presence.update(uuid, snapshot.val());
     });
   }
 
