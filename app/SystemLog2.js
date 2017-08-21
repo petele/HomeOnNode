@@ -609,37 +609,35 @@ function _cleanFile(logFile) {
  * @return {Promise}
  */
 function _cleanLogs(path, maxAgeDays) {
-  return new Promise(function(resolve, reject) {
-    maxAgeDays = maxAgeDays || 365;
-    let msg = `cleanLogs('${path}', ${maxAgeDays})`;
-    _debug(LOG_PREFIX, msg);
-    if (!_fbRef) {
-      _error(LOG_PREFIX, 'Cannot clean logs, Firebase reference not set.');
-      reject(new Error('Firebase reference not set.'));
-      return;
+  maxAgeDays = maxAgeDays || 365;
+  let msg = `cleanLogs('${path}', ${maxAgeDays})`;
+  _debug(LOG_PREFIX, msg);
+  if (!_fbRef) {
+    _error(LOG_PREFIX, 'Cannot clean logs, Firebase reference not set.');
+    return Promise.reject(new Error('Firebase reference not set.'));
+  }
+  if (path.indexOf('logs/') !== 0) {
+    _error(LOG_PREFIX, 'Cannot clean logs, invalid path provided.');
+    return Promise.reject(new Error('Path must start with `logs`'));
+  }
+  const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
+  const niceDate = _formatTime(endAt);
+  _debug(LOG_PREFIX, `Removing items older than ${niceDate} from ${path}`);
+  return _fbRef.child(path).orderByChild('date').endAt(endAt).once('value')
+  .then((snapshot) => {
+    const numChildren = snapshot.numChildren();
+    if (numChildren >= 50000) {
+      _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
     }
-    if (path.indexOf('logs/') !== 0) {
-      _error(LOG_PREFIX, 'Cannot clean logs, invalid path provided.');
-      reject(new Error('Path must start with `logs`'));
-      return;
-    }
-    const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
-    const niceDate = _formatTime(endAt);
-    _debug(LOG_PREFIX, `Removing items older than ${niceDate} from ${path}`);
-    _fbRef.child(path).orderByChild('date').endAt(endAt).once('value',
-      function(snapshot) {
-        const numChildren = snapshot.numChildren();
-        if (numChildren >= 50000) {
-          _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
-        }
-        _debug(LOG_PREFIX, `${msg} - found ${numChildren} items`);
-        snapshot.forEach(function(item) {
-          item.ref().remove();
-        });
-        _log(LOG_PREFIX, `${msg} - removed ${numChildren} items`);
-        resolve({path: path, count: numChildren});
-      }
-    );
+    _debug(LOG_PREFIX, `${msg} - found ${numChildren} items`);
+    let promises = [];
+    snapshot.forEach((item) => {
+      promises.push(item.ref().remove());
+    });
+    return Promise.all(promises);
+  })
+  .then((values) => {
+    return {path: path, count: values.length};
   });
 }
 
