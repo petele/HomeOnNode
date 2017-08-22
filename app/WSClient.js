@@ -23,6 +23,8 @@ function WSClient(host, retry) {
   let _wsURL;
   let _retry = retry;
   let _interval;
+  let _lastError;
+  let _lastErrorAt = 0;
 
   /**
    * Init the WebSocket Client and connect to the server
@@ -36,7 +38,15 @@ function WSClient(host, retry) {
     if ((host.indexOf('ws://') === -1) && (host.indexOf('wss://') === -1)) {
       _wsURL = `ws://${host}`;
     }
-    log.init(LOG_PREFIX, `Connecting to ${_wsURL}`);
+    log.init(LOG_PREFIX, _wsURL);
+    _connect();
+  }
+
+  /**
+   * Connects to the WebSocket Server
+   */
+  function _connect() {
+    log.debug(LOG_PREFIX, `Connecting to ${_wsURL}`);
     _ws = new WebSocket(_wsURL);
     _ws.on('open', _wsOpen);
     _ws.on('close', _wsClose);
@@ -70,10 +80,10 @@ function WSClient(host, retry) {
     _self.emit('disconnect');
     _clearPingPong();
     if (_retry === true) {
-      log.debug(LOG_PREFIX, 'Will retry in 2 seconds...');
+      log.debug(LOG_PREFIX, `Will retry in 3 seconds...`);
       setTimeout(() => {
-        _init();
-      }, 2000);
+        _connect();
+      }, 3000);
     } else {
       log.log(LOG_PREFIX, 'WebSocket closed.');
     }
@@ -85,7 +95,7 @@ function WSClient(host, retry) {
   function _wsOpen() {
     _self.connected = true;
     _self.emit('connect');
-    log.debug(LOG_PREFIX, 'WebSocket opened');
+    log.log(LOG_PREFIX, 'WebSocket opened');
     _interval = setInterval(() => {
       _ws.ping('', false, true);
     }, PING_INTERVAL);
@@ -112,6 +122,13 @@ function WSClient(host, retry) {
    * @param {Error} err The incoming error.
    */
   function _wsError(err) {
+    const now = Date.now();
+    const msSinceLastError = now - _lastErrorAt;
+    _lastErrorAt = now;
+    if (err.code === _lastError && msSinceLastError < 10 * 1000) {
+      return;
+    }
+    _lastError = err.code;
     log.error(LOG_PREFIX, `Client error on ${_wsURL}`, err);
   }
 
