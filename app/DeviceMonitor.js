@@ -60,6 +60,11 @@ function DeviceMonitor(fb, deviceName) {
       startedAt: now,
       startedAt_: now_,
       host: {
+        architecture: os.arch(),
+        cpus: os.cpus(),
+        platform: os.platform(),
+        release: os.release(),
+        type: os.type(),
         hostname: _getHostname(),
         ipAddress: _ipAddresses,
       },
