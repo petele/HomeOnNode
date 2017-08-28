@@ -137,7 +137,10 @@ function Sonos() {
     return Promise.all(
       _sonosSystem.zones.map((zone) => {
         const player = _sonosSystem.getPlayerByUUID(zone.uuid);
-        return player.coordinator.setGroupVolume(vol);
+        return player.coordinator.setGroupVolume(vol)
+          .catch((err) => {
+            log.exception(LOG_PREFIX, `_adjustVolume(${vol}) failed.`, err);
+          });
       })
     );
   }
@@ -169,7 +172,10 @@ function Sonos() {
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
-    return _sonosSystem.applyPreset(preset);
+    return _sonosSystem.applyPreset(preset)
+      .catch((err) => {
+        log.exception(LOG_PREFIX, `_applyPreset() failed`, err);
+      });
   }
 
   /**
@@ -183,7 +189,10 @@ function Sonos() {
       return Promise.reject(new Error('not_ready'));
     }
     let player = _getPlayer();
-    return player.play();
+    return player.play()
+      .catch((err) => {
+        log.exception(LOG_PREFIX, `_play() failed`, err);
+      });
   }
 
   /**
@@ -202,7 +211,10 @@ function Sonos() {
       })
       .map((zone) => {
         const player = _sonosSystem.getPlayerByUUID(zone.uuid);
-        return player.pause();
+        return player.pause()
+          .catch((err) => {
+            log.exception(LOG_PREFIX, `Error pausing ${zone.uuid}`, err);
+          });
       })
     );
   }
@@ -218,7 +230,10 @@ function Sonos() {
       return Promise.reject(new Error('not_ready'));
     }
     let player = _getPlayer();
-    return player.nextTrack();
+    return player.nextTrack()
+      .catch((err) => {
+        log.exception(LOG_PREFIX, `_next() failed`, err);
+      });
   }
 
   /**
@@ -232,7 +247,10 @@ function Sonos() {
       return Promise.reject(new Error('not_ready'));
     }
     let player = _getPlayer();
-    return player.previousTrack();
+    return player.previousTrack()
+      .catch((err) => {
+        log.exception(LOG_PREFIX, `_previous() failed`, err);
+      });
   }
 
   /**
