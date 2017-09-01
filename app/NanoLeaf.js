@@ -55,6 +55,9 @@ function NanoLeaf(key, ip, port) {
         return resp;
       });
     }
+    if (command.hasOwnProperty('cycleEffect')) {
+      return _cycleEffect();
+    }
     return Promise.reject(new Error('unknown_command'));
   };
 
@@ -220,6 +223,31 @@ function NanoLeaf(key, ip, port) {
       resolve(_makeLeafRequest('effects', 'PUT', body));
     });
   }
+
+  /**
+   * Cycles to the next effect.
+   *
+   * @return {Promise} A promise that resolves to the response.
+  */
+  function _cycleEffect() {
+    log.info(LOG_PREFIX, `cycleEffect()`);
+    let newEffect;
+    try {
+      const effects = _state.effects.effectsList;
+      let index = effects.indexOf(_state.effects.select);
+      index += 1;
+      if (index >= effects.length) {
+        index = 0;
+      }
+      newEffect = effects[index];
+      _state.effects.select = newEffect;
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'cycleEffect failed.', ex);
+      return Promise.reject(new Error('not_ready'));
+    }
+    return _setEffect(newEffect);
+  }
+
 
   /**
    * Sets the brightness.
