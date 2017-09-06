@@ -22,6 +22,7 @@ function Bluetooth() {
   let _noble;
   let _connectedDevices = {};
   let _connectedDeviceCount = 0;
+  let _scanTimeout;
 
   /**
    * Init the service
@@ -51,12 +52,21 @@ function Bluetooth() {
     });
     _noble.on('scanStart', function() {
       _self.scanning = true;
+      if (_scanTimeout) {
+        clearTimeout(_scanTimeout);
+        _scanTimeout = null;
+      }
       log.debug(LOG_PREFIX, 'Scanning started.');
       _self.emit('scanning', true);
     });
     _noble.on('scanStop', function() {
       _self.scanning = false;
       log.debug(LOG_PREFIX, 'Scanning stopped.');
+      if (_scanTimeout) {
+        clearTimeout(_scanTimeout);
+        _scanTimeout = null;
+      }
+      _scanTimeout = setTimeout(_restartScan, 90 * 1000);
       _self.emit('scanning', false);
     });
     _noble.on('warning', (message) => {
@@ -142,6 +152,15 @@ function Bluetooth() {
         resolve();
       });
     });
+  }
+
+  /**
+   * Restarts the scan
+   */
+  function _restartScan() {
+    _scanTimeout = null;
+    log.warn(LOG_PREFIX, 'Scan shutdown timeout exceeded.', _connectedDevices);
+    _self.startScanning();
   }
 
   /**
