@@ -12,23 +12,23 @@ Now, the rest of the steps can be completed by SSH'ing into the box
 
 1. SSH into Pi
 1. Create the new user:
-       `sudo useradd hon -s /bin/bash -m -G adm,sudo`
+        `sudo useradd hon -s /bin/bash -m -G adm,sudo`
 1. Set the password to something complete:
-       `sudo passwd hon`
+        `sudo passwd hon`
 1. Create any other user accounts you may need
 1. Run `sudo nano /etc/sudoers` and set:
-       `sudo    ALL=(ALL) NOPASSWD: ALL`
+        `sudo    ALL=(ALL) NOPASSWD: ALL`
 1. Log out and log back in as **hon**
 1. Remove default pi account & directory:
-       `sudo userdel pi && sudo rm -rf /home/pi`
+        `sudo userdel pi && sudo rm -rf /home/pi`
 
 ### Disable SSH password authentication
 
 1. If you haven't already, create an SSH key on the remote computer with `ssh-keygen`
 1. Copy key to hon account on the Pi:
-       `ssh-copy-id hon@HOSTNAME`
+        `ssh-copy-id hon@HOSTNAME`
 1. SSH into the Pi and disable password authentication:
-       `echo "PasswordAuthentication no" | sudo tee -a /etc/ssh/sshd_config`
+        `echo "PasswordAuthentication no" | sudo tee -a /etc/ssh/sshd_config`
 
 ### Change default settings
 
@@ -50,6 +50,7 @@ Edit `/etc/kbd/config` and set:
 #### Disable screen blanking
 
 1. Disable [screen blanking](https://www.raspberrypi.org/documentation/configuration/screensaver.md)
+  by editing `/boot/cmdline.txt` and adding: `consoleblank=0`
 
 #### Update settings in `raspi-config`
 
@@ -66,9 +67,9 @@ Edit `/etc/kbd/config` and set:
 ### Install Required Packages
 
 1. Required for everyone:
-       `sudo apt-get -y install alsa-utils mpg321 mplayer git-core lynx netatalk bluetooth bluez libbluetooth-dev`
+        `sudo apt-get -y install alsa-utils mpg321 mplayer git-core lynx netatalk bluetooth bluez libbluetooth-dev`
 1. Phython stuff:
-       `sudo apt-get -y install python-setuptools python-dev python-rpi.gpio`
+        `sudo apt-get -y install python-setuptools python-dev python-rpi.gpio`
 1. USB stuff for z-wave (optional):
        `sudo apt-get -y install libcap2-bin libudev-dev libusb-1.0-0-dev libpcap-dev`
 
