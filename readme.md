@@ -35,7 +35,9 @@ Now, the rest of the steps can be completed by SSH'ing into the box
 #### Disable HDMI CEC & Set GPU Memory
 
 1. `echo "hdmi_ignore_cec=1" | sudo tee -a /boot/config.txt`
+1. `echo "hdmi_ignore_cec_init=1" | sudo tee -a /boot/config.txt`
 1. `echo "gpu_mem=16" | sudo tee -a /boot/config.txt`
+
 
 #### Disable screen saver
 
