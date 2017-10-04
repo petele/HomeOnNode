@@ -1,19 +1,65 @@
 ## Setup
 
+### Enable SSH
+
+1. Run `sudo raspi-config`
+1. Enable SSH
+1. Change _hostname_
+
+Now, the rest of the steps can be completed by SSH'ing into the box
+
+### Create a new user
+
+1. SSH into Pi
+1. Create the new user:
+       `sudo useradd hon -s /bin/bash -m -G adm,sudo`
+1. Set the password to something complete:
+       `sudo passwd hon`
+1. Create any other user accounts you may need
+1. Run `sudo nano /etc/sudoers` and set:
+       `sudo    ALL=(ALL) NOPASSWD: ALL`
+1. Log out and log back in as **hon**
+1. Remove default pi account & directory:
+       `sudo userdel pi && sudo rm -rf /home/pi`
+
+### Disable SSH password authentication
+
+1. If you haven't already, create an SSH key on the remote computer with `ssh-keygen`
+1. Copy key to hon account on the Pi:
+       `ssh-copy-id hon@HOSTNAME`
+1. SSH into the Pi and disable password authentication:
+       `echo "PasswordAuthentication no" | sudo tee -a /etc/ssh/sshd_config`
+
+### Change default settings
+
+#### Disable HDMI CEC & Set GPU Memory
+
+1. `echo "hdmi_ignore_cec=1" | sudo tee -a /boot/config.txt`
+1. `echo "gpu_mem=16" | sudo tee -a /boot/config.txt`
+
+#### Disable screen saver
+
+Edit `/etc/kbd/config` and set:
+
+1. `BLANK_TIME=0`
+1. `BLANK_DPMS=off`
+1. `POWERDOWN_TIME=0`
+
+#### Disable screen blanking
+
+1. Disable [screen blanking](https://www.raspberrypi.org/documentation/configuration/screensaver.md)
+
+#### Update settings in `raspi-config`
+
+* Expand file system
+* Change locale, keyboard layout and timezone
+* Force audio through 3.5mm
+
+**Note:** A reboot will be required now.
+
 ### Update/Upgrade system
 
 1. `sudo apt-get -y update && sudo apt-get -y upgrade`
-
-
-### Update settings in `raspi-config`
-
-* Expand file system
-* Set new password for `pi` user
-* Enable SSH
-* Change locale, keyboard layout and timezone
-* Change hostname
-* Force audio through 3.5mm
-
 
 ### Install Required Packages
 
@@ -23,8 +69,6 @@
        `sudo apt-get -y install python-setuptools python-dev python-rpi.gpio`
 1. USB stuff for z-wave (optional):
        `sudo apt-get -y install libcap2-bin libudev-dev libusb-1.0-0-dev libpcap-dev`
-1. Printer stuff (optional):
-       `sudo apt-get -y install cups foomatic-db foomatic-db-engine`
 
 
 ### Setup Bluetooth
@@ -59,22 +103,10 @@ Enable Bluetooth without root
 1. `cd HomeOnNode/app`
 1. `mkdir logs`
 1. `npm install`
+1. `npm install onoff`
 1. Update `Keys.js`
 1. `cd ..`
 1. `git clone https://github.com/OpenZWave/open-zwave`
-
-**Note:** If you're going to use the GPIO pins, you'll also need to run `npm install onoff`
-
-
-### Disable screen blanking
-
-Edit `/etc/kbd/config` and set:
-
-1. `BLANK_TIME=0`
-1. `BLANK_DPMS=off`
-1. `POWERDOWN_TIME=0`
-
-Follow instructions to prevent console blanking [here](https://www.raspberrypi.org/documentation/configuration/screensaver.md)
 
 
 ### Set up log rotation
@@ -89,6 +121,9 @@ Edit `/etc/logrotate.conf` and add:
   nocompress
 }
 ```
+### Copy dotfiles
+
+* Copy [dotfiles](https://gist.github.com/petele/000830e3ba58b47b2b487ac9566867b3)
 
 ### Create `login.sh`
 
