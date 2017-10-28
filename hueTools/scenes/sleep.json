@@ -6,7 +6,8 @@
     {"light": 15, "cmdName": "OFF"},
     {"light": 19, "cmdName": "OFF"},
     {"light": 20, "cmdName": "OFF"},
-    {"light": 21, "cmdName": "OFF"}
+    {"light": 21, "cmdName": "OFF"},
+    {"light": 30, "cmdName": "OFF"}
   ],
   "scenes": [
     "dimmers/fh-night-light.json",

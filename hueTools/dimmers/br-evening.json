@@ -6,6 +6,7 @@
     {"light": 15, "cmdName": "DEFAULT", "bri": 225},
     {"light": 19, "cmdName": "ROSE_DEEP", "bri": 254},
     {"light": 20, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 21, "cmdName": "REBECCA_PURPLE", "bri": 254}
+    {"light": 21, "cmdName": "REBECCA_PURPLE", "bri": 254},
+    {"light": 30, "cmdName": "ROSE_DEEP", "bri": 254}
   ]
 }

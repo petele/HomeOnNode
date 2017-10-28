@@ -30,6 +30,8 @@
     {"light": 25, "command": {"on": false}},
     {"light": 26, "command": {"on": false}},
     {"light": 27, "command": {"on": false}},
-    {"light": 28, "command": {"on": false}}
+    {"light": 28, "command": {"on": false}},
+    {"light": 29, "command": {"on": false}},
+    {"light": 30, "command": {"on": false}}
   ]
 }

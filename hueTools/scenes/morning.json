@@ -5,7 +5,7 @@
   "scenes": [
     "dimmers/fh-morning.json",
     "dimmers/ba-day.json",
-    "dimmers/ki-day.json",
+    "dimmers/ki-morning.json",
     "dimmers/lr-morning.json",
     "dimmers/br-day.json"
   ]

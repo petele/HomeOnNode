@@ -6,6 +6,7 @@
     {"light": 15, "cmdName": "READING", "bri": 125},
     {"light": 19, "cmdName": "OFF"},
     {"light": 20, "cmdName": "OFF"},
-    {"light": 21, "cmdName": "OFF"}
+    {"light": 21, "cmdName": "OFF"},
+    {"light": 30, "cmdName": "OFF"}
   ]
 }
