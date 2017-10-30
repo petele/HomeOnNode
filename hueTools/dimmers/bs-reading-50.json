@@ -3,7 +3,9 @@
   "sceneId": "76Kei61la9u4kIp",
   "showInWebUI": true,
   "lights": [
+  	{"light": 15, "cmdName": "NIGHT_RED", "bri": 128},
     {"light": 16, "cmdName": "READING", "bri": 128},
-    {"light": 28, "cmdName": "READING", "bri": 128}
+    {"light": 28, "cmdName": "READING", "bri": 128},
+    {"light": 30, "cmdName": "NIGHT_RED", "bri": 128}
   ]
 }

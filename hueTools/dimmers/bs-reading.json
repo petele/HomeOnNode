@@ -2,7 +2,9 @@
   "sceneName": "Reading [Bedside]",
   "showInWebUI": true,
   "lights": [
+  	{"light": 15, "cmdName": "NIGHT_RED", "bri": 128},
     {"light": 16, "cmdName": "READING", "bri": 192},
-    {"light": 28, "cmdName": "READING", "bri": 254}
+    {"light": 28, "cmdName": "READING", "bri": 254},
+    {"light": 30, "cmdName": "NIGHT_RED", "bri": 125}
   ]
 }

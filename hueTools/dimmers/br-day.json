@@ -6,7 +6,11 @@
     {"light": 15, "cmdName": "PEACH", "bri": 254},
     {"light": 19, "cmdName": "DEFAULT", "bri": 254},
     {"light": 20, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 21, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 30, "cmdName": "PEACH", "bri": 254}
+    {"light": 21, "cmdName": "PEACH", "bri": 254},
+    {"light": 30, "cmdName": "PEACH", "bri": 254},
+    {"light": 31, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 32, "cmdName": "PEACH", "bri": 254},
+    {"light": 33, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 34, "cmdName": "DEFAULT", "bri": 254}
   ]
 }

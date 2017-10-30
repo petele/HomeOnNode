@@ -7,6 +7,10 @@
     {"light": 19, "cmdName": "OFF"},
     {"light": 20, "cmdName": "OFF"},
     {"light": 21, "cmdName": "OFF"},
-    {"light": 30, "cmdName": "OFF"}
+    {"light": 30, "cmdName": "OFF"},
+    {"light": 31, "cmdName": "OFF"},
+    {"light": 32, "cmdName": "OFF"},
+    {"light": 33, "cmdName": "OFF"},
+    {"light": 34, "cmdName": "OFF"}
   ]
 }

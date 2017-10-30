@@ -5,8 +5,12 @@
   "lights": [
     {"light": 15, "cmdName": "ROSE_DEEP", "bri": 254},
     {"light": 19, "cmdName": "ROSE_DEEP", "bri": 254},
-    {"light": 20, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 20, "cmdName": "REBECCA_PURPLE", "bri": 254},
     {"light": 21, "cmdName": "REBECCA_PURPLE", "bri": 254},
-    {"light": 30, "cmdName": "ROSE_DEEP", "bri": 254}
+    {"light": 30, "cmdName": "ROSE_DEEP", "bri": 254},
+    {"light": 31, "cmdName": "ROSE", "bri": 254},
+    {"light": 32, "cmdName": "ROSE_DEEP", "bri": 254},
+    {"light": 33, "cmdName": "ROSE", "bri": 254},
+    {"light": 34, "cmdName": "ROSE", "bri": 254}
   ]
 }

@@ -3,10 +3,14 @@
   "sceneId": "PnEJCxabE47CNmU",
   "showInWebUI": true,
   "lights": [
-    {"light": 15, "cmdName": "AURORA_08", "bri": 200},
+    {"light": 15, "cmdName": "AURORA_08", "bri": 254},
     {"light": 19, "cmdName": "AURORA_06", "bri": 254},
-    {"light": 20, "cmdName": "AURORA_01", "bri": 200},
-    {"light": 21, "cmdName": "AURORA_02", "bri": 200},
-    {"light": 30, "cmdName": "AURORA_01", "bri": 200}
+    {"light": 20, "cmdName": "AURORA_01", "bri": 254},
+    {"light": 21, "cmdName": "AURORA_02", "bri": 254},
+    {"light": 30, "cmdName": "AURORA_01", "bri": 254},
+    {"light": 31, "cmdName": "AURORA_01", "bri": 254},
+    {"light": 32, "cmdName": "AURORA_08", "bri": 254},
+    {"light": 33, "cmdName": "AURORA_01", "bri": 254},
+    {"light": 34, "cmdName": "AURORA_08", "bri": 254}
   ]
 }
