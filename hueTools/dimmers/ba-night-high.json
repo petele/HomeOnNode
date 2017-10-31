@@ -1,0 +1,10 @@
+{
+  "sceneName": "Night Light (High) [Bathroom]",
+  "sceneId": "Hj1TeCALKAkoe0P",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 24, "cmdName": "RED", "bri": 128},
+    {"light": 25, "cmdName": "RED", "bri": 128},
+    {"light": 26, "cmdName": "RED", "bri": 128}
+  ]
+}

@@ -15,7 +15,7 @@
   ],
   "scenes": [
     "dimmers/fh-night-light.json",
-    "dimmers/ba-night-light.json",
+    "dimmers/ba-night-low.json",
     "dimmers/ki-night-light.json",
     "dimmers/lr-night-light.json",
     "dimmers/bs-reading.json"

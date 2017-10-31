@@ -1,0 +1,9 @@
+{
+  "sceneName": "Night Light (Low) [Bathroom]",
+  "showInWebUI": true,
+  "lights": [
+    {"light": 24, "cmdName": "RED", "bri": 25},
+    {"light": 25, "cmdName": "OFF"},
+    {"light": 26, "cmdName": "OFF"}
+  ]
+}
