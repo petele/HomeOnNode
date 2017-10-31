@@ -120,6 +120,10 @@ commander
     setLogLevel(commander.verbose);
     log.info('', `Update scene from ${filename}`);
     let sceneObj = readSceneFile(filename);
+    if (!sceneObj.sceneId) {
+      log.error('', 'File is missing `sceneId` field.');
+      return;
+    }
     readRecipeFile(commander.recipeFile);
     setLights(sceneObj.lights, function(lightList) {
       let scene = {
