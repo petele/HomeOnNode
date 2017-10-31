@@ -1,6 +1,7 @@
 {
   "sceneName": "Night Light (Low) [Bathroom]",
   "showInWebUI": true,
+  "sceneId": "ep1ZAFMfHb9mB0W",
   "lights": [
     {"light": 24, "cmdName": "RED", "bri": 25},
     {"light": 25, "cmdName": "OFF"},
