@@ -2,9 +2,9 @@
   "sceneId": "f-ON6QhvynPJdSK",
   "showInWebUI": true,
   "lights": [
-    {"light": 8, "cmdName": "AURORA_02", "bri": 200},
-    {"light": 9, "cmdName": "AURORA_03", "bri": 200},
-    {"light": 10, "cmdName": "AURORA_01", "bri": 200},
+    {"light": 35, "cmdName": "AURORA_02", "bri": 200},
+    {"light": 36, "cmdName": "AURORA_03", "bri": 200},
+    {"light": 37, "cmdName": "AURORA_01", "bri": 200},
     {"light": 11, "cmdName": "AURORA_08", "bri": 200},
     {"light": 12, "cmdName": "AURORA_03", "bri": 200},
     {"light": 13, "cmdName": "AURORA_02", "bri": 200},

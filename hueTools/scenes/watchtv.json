@@ -4,13 +4,13 @@
   "sceneId": "T4eTTKpo0sibks4",
   "scenes": [
   	"dimmers/fh-night-light.json",
-    "dimmers/ba-night-light.json",
+    "dimmers/ba-night-high.json",
     "dimmers/ki-night-light.json"
   ],
    "lights": [
-    {"light": 8, "cmdName": "OFF"},
-    {"light": 9, "cmdName": "OFF"},
-    {"light": 10, "cmdName": "OFF"},
+    {"light": 35, "cmdName": "OFF"},
+    {"light": 36, "cmdName": "OFF"},
+    {"light": 37, "cmdName": "OFF"},
     {"light": 11, "cmdName": "ROSE_DEEP", "bri": 200},
     {"light": 12, "cmdName": "ROSE_DEEP", "bri": 60},
     {"light": 13, "cmdName": "REBECCA_PURPLE", "bri": 60},

@@ -2,9 +2,9 @@
   "sceneId": "hrrvkZ-R8yjqgxb",
   "showInWebUI": true,
   "lights": [
-    {"light": 8, "cmdName": "OFF"},
-    {"light": 9, "cmdName": "OFF"},
-    {"light": 10, "cmdName": "OFF"},
+    {"light": 35, "cmdName": "OFF"},
+    {"light": 36, "cmdName": "OFF"},
+    {"light": 37, "cmdName": "OFF"},
     {"light": 11, "cmdName": "OFF"},
     {"light": 12, "cmdName": "OFF"},
     {"light": 13, "cmdName": "OFF"},

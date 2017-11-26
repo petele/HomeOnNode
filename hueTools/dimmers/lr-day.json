@@ -2,9 +2,9 @@
   "sceneId": "8S1qKlRd444hQzB",
   "showInWebUI": true,
   "lights": [
-    {"light": 8, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 9, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 10, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 35, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 36, "cmdName": "DEFAULT", "bri": 254},
+    {"light": 37, "cmdName": "DEFAULT", "bri": 254},
     {"light": 11, "cmdName": "OFF"},
     {"light": 12, "cmdName": "OFF"},
     {"light": 13, "cmdName": "OFF"},

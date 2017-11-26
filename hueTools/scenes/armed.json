@@ -10,9 +10,6 @@
     {"light": 5, "command": {"on": false}},
     {"light": 6, "command": {"on": false}},
     {"light": 7, "command": {"on": false}},
-    {"light": 8, "command": {"on": false}},
-    {"light": 9, "command": {"on": false}},
-    {"light": 10, "command": {"on": false}},
     {"light": 11, "command": {"on": false}},
     {"light": 12, "command": {"on": false}},
     {"light": 13, "command": {"on": false}},
@@ -36,6 +33,9 @@
     {"light": 31, "command": {"on": false}},
     {"light": 32, "command": {"on": false}},
     {"light": 33, "command": {"on": false}},
-    {"light": 34, "command": {"on": false}}
+    {"light": 34, "command": {"on": false}},
+    {"light": 35, "command": {"on": false}},
+    {"light": 36, "command": {"on": false}},
+    {"light": 37, "command": {"on": false}}
   ]
 }

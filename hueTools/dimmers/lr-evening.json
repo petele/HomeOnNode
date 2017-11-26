@@ -2,9 +2,9 @@
   "sceneId": "QBaxt7kq32ylHnP",
   "showInWebUI": true,
   "lights": [
-    {"light": 8, "cmdName": "ROSE", "bri": 200},
-    {"light": 9, "cmdName": "PURPLE", "bri": 200},
-    {"light": 10, "cmdName": "BLUE", "bri": 200},
+    {"light": 35, "cmdName": "ROSE", "bri": 200},
+    {"light": 36, "cmdName": "PURPLE", "bri": 200},
+    {"light": 37, "cmdName": "BLUE", "bri": 200},
     {"light": 11, "cmdName": "ROSE_DEEP", "bri": 200},
     {"light": 12, "cmdName": "ROSE_DEEP", "bri": 200},
     {"light": 13, "cmdName": "PURPLE", "bri": 200},
