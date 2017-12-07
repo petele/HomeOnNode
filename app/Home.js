@@ -5,6 +5,7 @@ const util = require('util');
 const exec = require('child_process').exec;
 
 const Hue = require('./Hue');
+const MyIP = require('./MyIP');
 const Nest = require('./Nest');
 const Sonos = require('./Sonos');
 const ZWave = require('./ZWave');
@@ -50,6 +51,7 @@ function Home(initialConfig, fbRef) {
   let sonos;
   let weather;
   let zwave;
+  let myIP;
 
   let _armingTimer;
   let _lastSoundPlayedAt = 0;
@@ -374,6 +376,7 @@ function Home(initialConfig, fbRef) {
     _initSoma();
     _initPushBullet();
     _initWeather();
+    _initMyIP();
     _initZWave();
     setTimeout(function() {
       log.log(LOG_PREFIX, 'Ready');
@@ -767,6 +770,22 @@ function Home(initialConfig, fbRef) {
     }
     log.error(LOG_PREFIX, `Unable to retreive receipe: ${receipeName}`);
     return {bri: 254, ct: 369, on: true};
+  }
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
+ * MyIP API
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init IP
+   */
+  function _initMyIP() {
+    myIP = new MyIP();
+    myIP.on('change', (ip) => {
+      _fbSet('state/ip_address', ip);
+    });
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
