@@ -3,8 +3,6 @@
   "sceneId": "wc1DstWhAckSmtl",
   "showInWebUI": true,
   "scenes": [
-    "dimmers/fh-on.json",
-    "dimmers/ki-day.json",
-    "dimmers/lr-day.json"
+    "scenes/morning.json"
   ]
 }

@@ -4,7 +4,7 @@
   "showInWebUI": true,
   "lights": [
     {"light": 24, "cmdName": "RED", "bri": 100},
-    {"light": 25, "cmdName": "RED", "bri": 100},
-    {"light": 26, "cmdName": "RED", "bri": 100}
+    {"light": 25, "cmdName": "RED", "bri": 30},
+    {"light": 26, "cmdName": "RED", "bri": 5}
   ]
 }

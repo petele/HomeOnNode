@@ -7,8 +7,8 @@
     {"light": 5, "cmdName": "OFF"},
     {"light": 6, "cmdName": "OFF"},
     {"light": 7, "cmdName": "OFF"},
-    {"light": 17, "cmdName": "RED", "bri": 25},
+    {"light": 17, "cmdName": "RED", "bri": 10},
     {"light": 23, "cmdName": "OFF"},
-    {"light": 29, "cmdName": "RED", "bri": 25}
+    {"light": 29, "cmdName": "RED", "bri": 10}
   ]
 }
