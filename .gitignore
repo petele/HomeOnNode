@@ -7,6 +7,7 @@ bower_components
 /temp/
 .DS_Store
 
+*/**/package-lock.json
 */**/keys.js
 */**/*.log
 */logs/*

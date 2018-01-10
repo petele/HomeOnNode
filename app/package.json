@@ -26,6 +26,7 @@
     "sonos-discovery": "github:jishi/node-sonos-discovery#v1.4.1",
     "strip-ansi": "^4.0.0",
     "web-push": "^3.2.2",
+    "wemo-client": "^0.14.0",
     "ws": "^3.1.0"
   },
   "devDependencies": {

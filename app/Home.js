@@ -7,6 +7,7 @@ const exec = require('child_process').exec;
 const Hue = require('./Hue');
 const MyIP = require('./MyIP');
 const Nest = require('./Nest');
+const Wemo = require('./Wemo');
 const Sonos = require('./Sonos');
 const ZWave = require('./ZWave');
 const log = require('./SystemLog2');
@@ -50,6 +51,7 @@ function Home(initialConfig, fbRef) {
   let soma;
   let sonos;
   let weather;
+  let wemo;
   let zwave;
   let myIP;
 
@@ -252,6 +254,20 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'SOMA unavailable.');
       }
     }
+    // Wemo Command
+    if (command.hasOwnProperty('wemoCommand')) {
+      if (wemo) {
+        let cmds = command.wemoCommand;
+        if (!Array.isArray(cmds)) {
+          cmds = [cmds];
+        }
+        cmds.forEach((cmd) => {
+          wemo.executeCommand(cmd, modifier);
+        });
+      } else {
+        log.warn(LOG_PREFIX, 'Wemo unavailable.');
+      }
+    }
     // Harmony Activity
     if (command.hasOwnProperty('harmonyActivity')) {
       if (harmony) {
@@ -376,6 +392,7 @@ function Home(initialConfig, fbRef) {
     _initSoma();
     _initPushBullet();
     _initWeather();
+    _initWemo();
     _initMyIP();
     _initZWave();
     setTimeout(function() {
@@ -990,6 +1007,22 @@ function Home(initialConfig, fbRef) {
     weather = new Weather(_config.weatherLatLong, Keys.forecastIO.key);
     weather.on('weather', (forecast) => {
       _fbSet('state/weather', forecast);
+    });
+  }
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
+ * Wemo API
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init Wemo
+   */
+  function _initWemo() {
+    wemo = new Wemo();
+    wemo.on('change', (data) => {
+      _fbSet('state/wemo', data);
     });
   }
 
