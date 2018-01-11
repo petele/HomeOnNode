@@ -255,14 +255,14 @@ function Home(initialConfig, fbRef) {
       }
     }
     // Wemo Command
-    if (command.hasOwnProperty('wemoCommand')) {
+    if (command.hasOwnProperty('wemo')) {
       if (wemo) {
-        let cmds = command.wemoCommand;
+        let cmds = command.wemo;
         if (!Array.isArray(cmds)) {
           cmds = [cmds];
         }
         cmds.forEach((cmd) => {
-          wemo.executeCommand(cmd, modifier);
+          wemo.setState(cmd.id, cmd.on, modifier);
         });
       } else {
         log.warn(LOG_PREFIX, 'Wemo unavailable.');
@@ -1021,11 +1021,18 @@ function Home(initialConfig, fbRef) {
    */
   function _initWemo() {
     wemo = new Wemo();
-    wemo.on('change', (data) => {
-      _fbSet('state/wemo', data);
+    wemo.on('device_found', (data) => {
+      _fbSet(`state/wemo/${data.deviceId}`, data);
+    });
+    wemo.on('change', (id, data) => {
+      _fbSet(`state/wemo/${id}`, data);
     });
     wemo.on('error', (err) => {
-      // Do nothing!
+      log.debug(LOG_PREFIX, `Ignored Wemo error`, err);
+    });
+    const fbWemoConfigPath = 'config/HomeOnNode/wemoDevices';
+    _fb.child(fbWemoConfigPath).on('child_added', (snapshot) => {
+      wemo.addDevice(snapshot.val());
     });
   }
 

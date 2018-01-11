@@ -13,12 +13,15 @@ const LOG_PREFIX = 'WEMO';
  *
  * @see https://github.com/timonreinhard/wemo-client
  *
+ * @fires Wemo#device_found
  * @fires Wemo#change
+ * @fires Wemo#error
 */
 function Wemo() {
   const _self = this;
   const REFRESH_INTERVAL = 7 * 60 * 1000;
   let wemo;
+  const _clients = {};
   const _devices = {};
 
   /**
@@ -32,35 +35,71 @@ function Wemo() {
   }
 
   /**
-   * Execute a Wemo command
+   * Sets the binary state of a switch.
    *
-   * @param {Object} command The command to run.
+   * @param {String} id The device ID.
+   * @param {boolean} state True for on, False for off.
    * @param {String} modifier Any modifiers to change the command.
    * @return {Promise} The promise that will be resolved on completion.
    */
-  this.executeCommand = function(command, modifier) {
-    log.log(LOG_PREFIX, `executeCommand(${command}, ${modifier})`);
+  this.setState = function(id, state, modifier) {
+    const msg = `setState('${id}', ${state} ${modifier})`;
+    log.log(LOG_PREFIX, msg);
     return new Promise((resolve, reject) => {
       if (!_isReady()) {
         reject(new Error('not_ready'));
         return;
       }
-      let client = _devices[command.id];
+      const client = _clients[id];
       if (!client) {
+        log.error(LOG_PREFIX, `${msg} failed: Device not found.`);
         reject(new Error('device_not_found'));
         return;
       }
-      let val = command.value ? 1 : 0;
+      let val = state ? 1 : 0;
       if (modifier === 'OFF') {
         val = 0;
       }
       client.setBinaryState(val, (err, resp) => {
         if (err) {
+          log.error(LOG_PREFIX, `${msg} failed.`, err);
           reject(err);
           return;
         }
-        log.debug(LOG_PREFIX, `Response: ${resp}`);
+        log.debug(LOG_PREFIX, `${msg} success: ${resp}`);
         resolve(resp);
+      });
+    });
+  };
+
+  /**
+   * Gets the binary state of a switch.
+   *
+   * @param {String} id The device ID.
+   * @return {Promise} The promise that will be resolved on completion.
+   */
+  this.getState = function(id) {
+    const msg = `getState('${id}')`;
+    log.log(LOG_PREFIX, msg);
+    return new Promise((resolve, reject) => {
+      if (!_isReady()) {
+        reject(new Error('not_ready'));
+        return;
+      }
+      const client = _clients[id];
+      if (!client) {
+        log.error(LOG_PREFIX, `${msg} failed: Device not found.`);
+        reject(new Error('device_not_found'));
+        return;
+      }
+      client.getBinaryState((err, val) => {
+        if (err) {
+          log.error(LOG_PREFIX, `${msg} failed.`, err);
+          reject(err);
+          return;
+        }
+        log.debug(LOG_PREFIX, `${msg} success: ${val}`);
+        resolve(val == true);
       });
     });
   };
@@ -111,27 +150,39 @@ function Wemo() {
   /**
    * Callback for Wemo device found.
    *
+   * @fires Wemo#device_found
+   * @fires Wemo#change
+   * @fires Wemo#error
    * @param {Error} err Error (if any).
    * @param {Object} deviceInfo Device info.
    */
   function _onWemoDeviceFound(err, deviceInfo) {
+    if (err) {
+      const msg = 'Error in _onWemoDeviceFound, device NOT added.';
+      log.error(LOG_PREFIX, msg, err);
+      return;
+    }
     const dType = deviceInfo.deviceType;
     const dName = deviceInfo.friendlyName;
     const dID = deviceInfo.deviceId;
     const msg = `Wemo ${dName} (${dType}) found. [${dID}]`;
     log.log(LOG_PREFIX, msg);
+    _self.emit('device_found', deviceInfo);
+
     const client = wemo.client(deviceInfo);
+    _devices[dID] = deviceInfo;
+    _clients[dID] = client;
+
     client.on('error', (err) => {
       _self.emit('error', err);
-      log.warning(LOG_PREFIX, `Error from ${dName} (${dID})`, err);
+      log.error(LOG_PREFIX, `Error from ${dName} (${dID})`, err);
     });
+
     client.on('binaryState', (value) => {
       deviceInfo.value = value;
-      _self.emit('change', deviceInfo);
+      _self.emit('change', deviceInfo.deviceId, deviceInfo);
       log.log(LOG_PREFIX, `${dID} binaryState: ${value}`);
     });
-    const deviceId = deviceInfo.deviceId;
-    _devices[deviceId] = client;
   }
 
 
