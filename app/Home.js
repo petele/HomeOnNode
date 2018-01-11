@@ -1024,6 +1024,9 @@ function Home(initialConfig, fbRef) {
     wemo.on('change', (data) => {
       _fbSet('state/wemo', data);
     });
+    wemo.on('error', (err) => {
+      // Do nothing!
+    });
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
