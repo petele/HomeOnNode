@@ -66,7 +66,7 @@ function Wemo() {
           reject(err);
           return;
         }
-        log.debug(LOG_PREFIX, `${msg} success: ${resp}`);
+        log.debug(LOG_PREFIX, `${msg} success`, resp);
         resolve(resp);
       });
     });
@@ -162,26 +162,25 @@ function Wemo() {
       log.error(LOG_PREFIX, msg, err);
       return;
     }
-    const dType = deviceInfo.deviceType;
     const dName = deviceInfo.friendlyName;
-    const dID = deviceInfo.deviceId;
-    const msg = `Wemo ${dName} (${dType}) found. [${dID}]`;
+    const dMac = deviceInfo.macAddress.toUpperCase();
+    const msg = `Wemo ${dName} (${dMac}) found.`;
     log.log(LOG_PREFIX, msg);
     _self.emit('device_found', deviceInfo);
 
     const client = wemo.client(deviceInfo);
-    _devices[dID] = deviceInfo;
-    _clients[dID] = client;
+    _devices[dMac] = deviceInfo;
+    _clients[dMac] = client;
 
     client.on('error', (err) => {
       _self.emit('error', err);
-      log.error(LOG_PREFIX, `Error from ${dName} (${dID})`, err);
+      log.error(LOG_PREFIX, `Error from ${dName}`, err);
     });
 
     client.on('binaryState', (value) => {
       deviceInfo.value = value;
-      _self.emit('change', deviceInfo.deviceId, deviceInfo);
-      log.log(LOG_PREFIX, `${dID} binaryState: ${value}`);
+      _self.emit('change', deviceInfo.macAddress, deviceInfo);
+      log.log(LOG_PREFIX, `${dName} new binaryState: ${value}`);
     });
   }
 
