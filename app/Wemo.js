@@ -39,11 +39,10 @@ function Wemo() {
    *
    * @param {String} id The device ID.
    * @param {boolean} state True for on, False for off.
-   * @param {String} modifier Any modifiers to change the command.
    * @return {Promise} The promise that will be resolved on completion.
    */
-  this.setState = function(id, state, modifier) {
-    const msg = `setState('${id}', ${state} ${modifier})`;
+  this.setState = function(id, state) {
+    const msg = `setState('${id}', ${state})`;
     log.log(LOG_PREFIX, msg);
     return new Promise((resolve, reject) => {
       if (!_isReady()) {
@@ -56,10 +55,7 @@ function Wemo() {
         reject(new Error('device_not_found'));
         return;
       }
-      let val = state ? 1 : 0;
-      if (modifier === 'OFF') {
-        val = 0;
-      }
+      const val = state ? 1 : 0;
       client.setBinaryState(val, (err, resp) => {
         if (err) {
           log.error(LOG_PREFIX, `${msg} failed.`, err);
@@ -166,7 +162,7 @@ function Wemo() {
     const dMac = deviceInfo.macAddress.toUpperCase();
     const msg = `Wemo ${dName} (${dMac}) found.`;
     log.log(LOG_PREFIX, msg);
-    _self.emit('device_found', deviceInfo);
+    _self.emit('device_found', dMac, deviceInfo);
 
     const client = wemo.client(deviceInfo);
     _devices[dMac] = deviceInfo;
@@ -179,8 +175,9 @@ function Wemo() {
 
     client.on('binaryState', (value) => {
       deviceInfo.value = value;
-      _self.emit('change', deviceInfo.macAddress, deviceInfo);
-      log.log(LOG_PREFIX, `${dName} new binaryState: ${value}`);
+      _self.emit('change', dMac, deviceInfo);
+      const val = value === 1 ? true : false;
+      log.log(LOG_PREFIX, `binaryState for ${dName} changed to ${val}`);
     });
   }
 

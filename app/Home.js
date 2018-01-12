@@ -262,7 +262,10 @@ function Home(initialConfig, fbRef) {
           cmds = [cmds];
         }
         cmds.forEach((cmd) => {
-          wemo.setState(cmd.id, cmd.on, modifier);
+          if (modifier === 'OFF') {
+            cmd.on = false;
+          }
+          wemo.setState(cmd.id, cmd.on);
         });
       } else {
         log.warn(LOG_PREFIX, 'Wemo unavailable.');
@@ -1021,8 +1024,8 @@ function Home(initialConfig, fbRef) {
    */
   function _initWemo() {
     wemo = new Wemo();
-    wemo.on('device_found', (data) => {
-      _fbSet(`state/wemo/${data.deviceId}`, data);
+    wemo.on('device_found', (id, data) => {
+      _fbSet(`state/wemo/${id}`, data);
     });
     wemo.on('change', (id, data) => {
       _fbSet(`state/wemo/${id}`, data);
