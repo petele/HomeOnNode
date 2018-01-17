@@ -567,6 +567,7 @@ function Home(initialConfig, fbRef) {
     if (!_config.presenceAlarm) {
       return;
     }
+    log.debug(LOG_PREFIX, `_doorOpenAccounceTimer('${doorName}')`);
     const presenceAlarmTimeout = _config.presenceAlarm.timeout;
     _doorOpenAccounceTimer = setTimeout(() => {
       _doorOpenAccounceTimer = null;
@@ -584,6 +585,8 @@ function Home(initialConfig, fbRef) {
           const cmd = _config.commands[cmdName];
           _self.executeCommand(cmd, 'doorAlarm');
         }
+      } else {
+        log.debug(LOG_PREFIX, `${doorName} opened, someone was present.`);
       }
     }, presenceAlarmTimeout);
   }
