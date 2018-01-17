@@ -1,0 +1,9 @@
+{
+  "sceneName": "Aurora [Bathroom]",
+  "sceneId": "vlgkj7lhLMxMXVd",
+  "showInWebUI": true,
+  "lights": [
+    {"id": 12, "cmdName": "NIGHT_RED", "state": {"bri": 151}},
+    {"id": 13, "cmdName": "NIGHT_RED"}
+  ]
+}
