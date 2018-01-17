@@ -55,6 +55,7 @@ function Home(initialConfig, fbRef) {
   let zwave;
   let myIP;
 
+  let _doorOpenAccounceTimer;
   let _armingTimer;
   let _lastSoundPlayedAt = 0;
 
@@ -87,14 +88,18 @@ function Home(initialConfig, fbRef) {
    * @param {String} source The source of the command.
    */
   this.executeCommandByName = function(commandName, modifier, source) {
-    let command = _config.commands[commandName];
-    if (command) {
-      command.modifier = modifier;
-      command.commandName = commandName;
-      _self.executeCommand(command, source);
+    if (!commandName) {
+      log.warn(LOG_PREFIX, 'commandName not provided.');
       return;
     }
-    log.warn(LOG_PREFIX, 'Command (' + commandName + ') not found.');
+    const command = _config.commands[commandName];
+    if (!command) {
+      log.warn(LOG_PREFIX, `Command ${commandName} not found.`);
+      return;
+    }
+    command.modifier = modifier;
+    command.commandName = commandName;
+    _self.executeCommand(command, source);
   };
 
   /**
@@ -112,7 +117,15 @@ function Home(initialConfig, fbRef) {
       msg += `([${Object.keys(command)}], `;
     }
     msg += `'${modifier}', '${source}')`;
+    if (command.noop === true) {
+      msg += ' ** NoOp **';
+    }
     log.log(LOG_PREFIX, msg);
+
+    // If it's a NoOp, stop here.
+    if (command.noop === true) {
+      return;
+    }
 
     // systemState
     if (command.hasOwnProperty('state')) {
@@ -531,6 +544,7 @@ function Home(initialConfig, fbRef) {
     log.log(LOG_PREFIX, msg);
     if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
       _setState('HOME');
+      _announceDoorOpened(doorName);
     }
     const cmdName = 'DOOR_' + doorName;
     let modifier;
@@ -539,6 +553,41 @@ function Home(initialConfig, fbRef) {
     }
     _self.executeCommandByName(cmdName, modifier, cmdName);
   }
+
+  /**
+   * Sends an announcement when the door has been opened.
+   *
+   * @param {string} doorName The name of the door.
+   */
+  function _announceDoorOpened(doorName) {
+    if (_doorOpenAccounceTimer) {
+      // timer has already started, we'll ignore this second notification
+      return;
+    }
+    if (!_config.presenceAlarm) {
+      return;
+    }
+    const presenceAlarmTimeout = _config.presenceAlarm.timeout;
+    _doorOpenAccounceTimer = setTimeout(() => {
+      _doorOpenAccounceTimer = null;
+      let isSomeonePresent = false;
+      Object.keys(_self.state.presence).forEach((k) => {
+        const person = _self.state.presence[k];
+        if (person.track && person.state === 'PRESENT') {
+          isSomeonePresent = true;
+        }
+      });
+      if (isSomeonePresent === false) {
+        log.warn(LOG_PREFIX, `${doorName} opened, but no one was present.`);
+        const cmdName = _config.presenceAlarm.cmdName;
+        if (cmdName) {
+          const cmd = _config.commands[cmdName];
+          _self.executeCommand(cmd, 'doorAlarm');
+        }
+      }
+    }, presenceAlarmTimeout);
+  }
+
 
   /**
    * Plays a sound
@@ -738,6 +787,11 @@ function Home(initialConfig, fbRef) {
     harmony = new Harmony(Keys.harmony.key);
     harmony.on('activity_changed', (activity) => {
       _fbSet('state/harmony', activity);
+      const honCmdName = `HARMONY_${activity.label.toUpperCase()}`;
+      const honCmd = _config.commands[honCmdName];
+      if (honCmd) {
+        _self.executeCommand(honCmd, 'Harmony');
+      }
     });
     harmony.on('config_changed', (config) => {
       _fbSet('state/harmonyConfig', config);
