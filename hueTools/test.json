@@ -1,9 +1,10 @@
 {
-  "sceneName": "Aurora [Bathroom]",
-  "sceneId": "vlgkj7lhLMxMXVd",
+  "sceneName": "Evening [Bathroom]",
+  "sceneId": "PTrMhudCsg6mOCt",
   "showInWebUI": true,
   "lights": [
-    {"id": 12, "cmdName": "NIGHT_RED", "state": {"bri": 151}},
-    {"id": 13, "cmdName": "NIGHT_RED"}
+    {"light": 24, "cmdName": "ROSE", "bri": 225},
+    {"light": 25, "cmdName": "ROSE_DEEP", "bri": 200},
+    {"light": 26, "cmdName": "BLUE", "bri": 200}
   ]
 }
