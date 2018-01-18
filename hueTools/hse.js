@@ -4,17 +4,14 @@
 /* eslint no-console: "off", require-jsdoc: "off" */
 
 const chalk = require('chalk');
+const glob = require('globule');
 const commander = require('commander');
 const hseLib = require('./lib/HueSceneEditor');
 
 console.log(chalk.bold('HomeOnNode Hue Scene Helper'));
 
-function printResult(results) {
-  console.log(results);
-}
-
 commander
-  .version('0.2.0')
+  .version('0.8.0')
   .option('-v, --verbose', 'Verbose output')
   .option('-t, --trial', 'Trial only, don\'t make requests.')
   .option('-r, --recipeFile <filename>', 'Read [recipes.json]', 'recipes.json');
@@ -46,50 +43,90 @@ commander
   });
 
 commander
-  .command('test')
-  .description('Activates the specified scene.')
-  .action(() => {
-    return hseLib.test().then(printResult);
-  });
-
-commander
   .command('activate <sceneID>')
   .description('Activates the specified scene.')
   .action((sceneID) => {
-    return hseLib.activateScene(sceneID).then(printResult);
+    return hseLib.activateScene(sceneID);
   });
 
 commander
   .command('set <filename>')
   .description('Sets all lights in a scene definition file to their settings.')
   .action((filename) => {
-    return hseLib.setLights(filename).then(printResult);
+    const sceneObj = hseLib.readJSONFile(filename);
+    return hseLib.setLights(sceneObj.lights);
   });
 
 commander
   .command('create <filename>')
   .description('Create a new scene based on the scene file.')
-  .action((filename) => {
-    return hseLib.createScene(filename)
-      .then(printResult)
-      .catch(printResult);
-  });
+  .action(createScene);
+
+function createScene(filename) {
+  const sceneObj = hseLib.readJSONFile(filename);
+  if (sceneObj.sceneId) {
+    throw new Error('sceneId already specified.');
+  }
+  return hseLib.setLights(sceneObj.lights)
+    .then(() => {
+      return hseLib.createScene(sceneObj);
+    })
+    .then((id) => {
+      sceneObj.sceneId = id;
+      hseLib.saveJSONFile(filename, sceneObj);
+    });
+}
 
 commander
   .command('update <filename>')
   .description('Update an existing scene.')
-  .action((filename) => {
-    return hseLib.updateScene(filename)
-      .then(printResult)
-      .catch(printResult);
-  });
+  .action(updateScene);
+
+async function updateScene(filename) {
+  console.log(chalk.cyan(filename));
+  const sceneObj = hseLib.readJSONFile(filename);
+  if (!sceneObj.sceneId) {
+    throw new Error('sceneId is not exist specified.');
+  }
+  // if (sceneObj.scenes) {
+  //   for (let i = 0; i < sceneObj.scenes.length; i++) {
+  //     const f = sceneObj.scenes[i];
+  //     await updateScene(f);
+  //   }
+  // }
+  return hseLib.setLights(sceneObj.lights)
+    .then(() => {
+      return hseLib.wait(3500);
+    })
+    .then(() => {
+      return hseLib.updateScene(sceneObj);
+    });
+}
 
 commander
   .command('delete <sceneID>')
   .description('Delete an existing scene.')
   .action((sceneID) => {
-    return hseLib.deleteScene(sceneID).then(printResult);
+    return hseLib.deleteScene(sceneID);
   });
+
+commander
+  .command('folder <folder>')
+  .description('Set scenes from all files in folder.')
+  .action((folder) => {
+    const files = glob.find('*.json', {prefixBase: true, srcBase: folder});
+    return folders(files);
+  });
+
+async function folders(files) {
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    await hseLib.allOff();
+    await hseLib.wait(1500);
+    await updateScene(file);
+    await hseLib.wait(500);
+  }
+}
 
 commander.parse(process.argv);
 if (commander.args.length === 0) {
