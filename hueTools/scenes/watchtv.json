@@ -8,15 +8,14 @@
     "dimmers/ki-night-light.json"
   ],
    "lights": [
-    {"light": 35, "cmdName": "OFF"},
-    {"light": 36, "cmdName": "OFF"},
-    {"light": 37, "cmdName": "OFF"},
-    {"light": 11, "cmdName": "ROSE_DEEP", "bri": 200},
-    {"light": 12, "cmdName": "ROSE_DEEP", "bri": 60},
-    {"light": 13, "cmdName": "REBECCA_PURPLE", "bri": 60},
-    {"light": 14, "cmdName": "OFF"},
-    {"light": 18, "cmdName": "PEACH", "bri": 200},
-    {"light": 22, "cmdName": "BLUE", "bri": 100},
-    {"light": 27, "cmdName": "RED", "bri": 25}
+    {"lightId": 35, "recipeName": "OFF"},
+    {"lightId": 36, "recipeName": "OFF"},
+    {"lightId": 37, "recipeName": "OFF"},
+    {"lightId": 12, "recipeName": "ROSE_DEEP", "command": {"bri": 60}},
+    {"lightId": 13, "recipeName": "REBECCA_PURPLE", "command": {"bri": 60}},
+    {"lightId": 14, "recipeName": "OFF"},
+    {"lightId": 18, "recipeName": "PEACH", "command": {"bri": 200}},
+    {"lightId": 22, "recipeName": "BLUE", "command": {"bri": 100}},
+    {"lightId": 27, "recipeName": "RED", "command": {"bri": 25}}
   ]
 }

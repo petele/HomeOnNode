@@ -3,8 +3,8 @@
   "sceneId": "dcwMcHRD4ZCMzN1",
   "showInWebUI": true,
   "lights": [
-    {"light": 24, "cmdName": "ROSE", "bri": 125},
-    {"light": 25, "cmdName": "ROSE_DEEP", "bri": 75},
-    {"light": 26, "cmdName": "BLUE", "bri": 75}
+    {"lightId": 24, "recipeName": "ROSE", "command": {"bri": 125}},
+    {"lightId": 25, "recipeName": "ROSE_DEEP", "command": {"bri": 75}},
+    {"lightId": 26, "recipeName": "BLUE", "command": {"bri": 75}}
   ]
 }

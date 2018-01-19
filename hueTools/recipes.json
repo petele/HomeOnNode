@@ -61,104 +61,77 @@
     },
     "label": "Aqua (LightStrip)"
   },
-  "AURORA_01": {
+  "AURORA_BLUE_LIGHT": {
     "hue": {
       "xy": [
         0.2061,
         0.1166
       ]
     },
-    "label": "Aurora 01"
+    "label": "Aurora - Blue (Light)"
   },
-  "AURORA_02": {
+  "AURORA_WHITE_GREENISH": {
     "hue": {
       "xy": [
         0.3589,
         0.4191
       ]
     },
-    "label": "Aurora 02"
+    "label": "Aurora - White (Greenish)"
   },
-  "AURORA_03": {
+  "AURORA_BLUE_DEEP": {
     "hue": {
       "xy": [
         0.1684,
         0.0416
       ]
     },
-    "label": "Aurora 03"
+    "label": "Aurora - Blue (Deep)"
   },
-  "AURORA_04": {
+  "AURORA_WHITE_COLD": {
     "hue": {
       "xy": [
         0.2929,
         0.2887
       ]
     },
-    "label": "Aurora 04"
+    "label": "Aurora - White (Cold)"
   },
-  "AURORA_05": {
-    "hue": {
-      "xy": [
-        0.267,
-        0.2372
-      ]
-    },
-    "label": "Aurora 05"
-  },
-  "AURORA_06": {
+  "AURORA_CYAN_LIGHT_LS": {
     "hue": {
       "xy": [
         0.1984,
         0.267
       ]
     },
-    "label": "Aurora 06"
+    "label": "Aurora - Cyan (Light) LS"
   },
-  "AURORA_07": {
+  "AURORA_WHITE_GREEN_TINT": {
     "hue": {
       "xy": [
         0.3132,
         0.3288
       ]
     },
-    "label": "Aurora 07"
+    "label": "Aurora - White (Green Tint)"
   },
-  "AURORA_08": {
+  "AURORA_CYAN_DARK_LS": {
     "hue": {
       "xy": [
         0.1641,
         0.3552
       ]
     },
-    "label": "Aurora 08"
+    "label": "Aurora - Cyan (Dark) LS"
   },
-  "AURORA_09": {
-    "hue": {
-      "xy": [
-        0.1693,
-        0.396
-      ]
-    },
-    "label": "Aurora 09"
-  },
-  "AURORA_10": {
-    "hue": {
-      "xy": [
-        0.1715,
-        0.3561
-      ]
-    },
-    "label": "Aurora 10"
-  },
-  "AURORA_11": {
+  "AURORA_BLURPLE": {
     "hue": {
       "xy": [
         0.2058,
         0.116
       ]
     },
-    "label": "Aurora 11"
+    "label": "Aurora - Blurple"
   },
   "BISQUE": {
     "hue": {

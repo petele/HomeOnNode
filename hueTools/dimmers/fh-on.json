@@ -3,8 +3,8 @@
   "sceneId": "ddMF4nlw1HcpvxQ",
   "showInWebUI": true,
   "lights": [
-    {"light": 1, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 2, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 3, "cmdName": "DEFAULT", "bri": 254}
+    {"lightId": 1, "recipeName": "DEFAULT", "command": {"bri": 254}},
+    {"lightId": 2, "recipeName": "DEFAULT", "command": {"bri": 254}},
+    {"lightId": 3, "recipeName": "DEFAULT", "command": {"bri": 254}}
   ]
 }

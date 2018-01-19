@@ -2,15 +2,14 @@
   "sceneId": "8S1qKlRd444hQzB",
   "showInWebUI": true,
   "lights": [
-    {"light": 35, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 36, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 37, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 11, "cmdName": "OFF"},
-    {"light": 12, "cmdName": "OFF"},
-    {"light": 13, "cmdName": "OFF"},
-    {"light": 14, "cmdName": "OFF"},
-    {"light": 18, "cmdName": "DEFAULT", "bri": 254},
-    {"light": 22, "cmdName": "REBECCA_PURPLE", "bri": 100},
-    {"light": 27, "cmdName": "ROSE_DEEP", "bri": 254}
+    {"lightId": 35, "recipeName": "DEFAULT", "command": {"bri": 254}},
+    {"lightId": 36, "recipeName": "DEFAULT", "command": {"bri": 254}},
+    {"lightId": 37, "recipeName": "DEFAULT", "command": {"bri": 254}},
+    {"lightId": 12, "recipeName": "OFF"},
+    {"lightId": 13, "recipeName": "OFF"},
+    {"lightId": 14, "recipeName": "OFF"},
+    {"lightId": 18, "recipeName": "DEFAULT", "command": {"bri": 254}},
+    {"lightId": 22, "recipeName": "REBECCA_PURPLE", "command": {"bri": 100}},
+    {"lightId": 27, "recipeName": "ROSE_DEEP", "command": {"bri": 254}}
   ]
 }

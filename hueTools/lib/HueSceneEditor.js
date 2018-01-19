@@ -1,20 +1,20 @@
 'use strict';
 
 const fs = require('fs');
+const util = require('util');
 const chalk = require('chalk');
 const request = require('request');
-
-let _recipes;
+const Keys = require('../../app/Keys.js').keys;
 
 /** ***************************************************************************
  * Constants & Remark Lint Options
  *****************************************************************************/
 
+let _recipes;
 const VERBOSE = false;
 const HUE_IP = '192.168.86.206';
-const HUE_KEY = '9075e416a7d67c2f6c7d9386dff2e591';
+const HUE_KEY = Keys.hueBridge.key;
 const REQUEST_TIMEOUT = 30000;
-const SLEEP_BETWEEN_REQUESTS = 250;
 
 /** ***************************************************************************
  * Internal Helper Functions
@@ -60,14 +60,6 @@ function getRecipes() {
   return _recipes;
 }
 
-function getLightList(lights) {
-  const lightList = [];
-  lights.forEach((light) => {
-    lightList.push(light.light.toString());
-  });
-  return lightList;
-}
-
 function getRecipe(recipeName, recipes) {
   if (recipeName) {
     const recipe = recipes[recipeName];
@@ -78,7 +70,7 @@ function getRecipe(recipeName, recipes) {
   return {};
 }
 
-function setLight(lightID, state) {
+function _setLight(lightID, state) {
   const method = 'PUT';
   const path = `lights/${lightID}/state`;
   return makeRequest(method, path, state);
@@ -89,7 +81,13 @@ function setLight(lightID, state) {
  * Task Functions
  *****************************************************************************/
 
-function parseResults(results, show) {
+const UTIL_OPTS = {
+  colors: true,
+  maxArrayLength: 20,
+  breakLength: 1000,
+}
+
+function printResults(results, throwOnError) {
   if (!Array.isArray(results)) {
     return false;
   }
@@ -99,7 +97,7 @@ function parseResults(results, show) {
     let msg;
     if (result.success) {
       prefix = chalk.green('✔');
-      msg = result.success;
+      msg = util.inspect(result.success, UTIL_OPTS);
     } else if (result.error) {
       const address = result.error.address;
       const description = result.error.description;
@@ -108,58 +106,25 @@ function parseResults(results, show) {
       hasErrors = true;
     } else {
       prefix = chalk.yellow('?');
-      msg = result;
+      msg = util.inspect(result, UTIL_OPTS);
     }
-    if (show) {
-      console.log(' ', prefix, msg);
-    }
+    console.log(' ', prefix, msg);
   });
+  if (throwOnError && hasErrors) {
+    throw new Error('Request failed.');
+  }
   return hasErrors;
 }
 
-function iterate(state, obj) {
-  Object.keys(obj).forEach((k) => {
-    if (k === 'light' || k === 'cmdName') {
-      return;
-    } if (k === 'command') {
-      return iterate(state, obj[k]);
-    }
-    state[k] = obj[k];
-  });
-}
-
-async function setLights(lights) {
-  let results = [];
+async function setLight(light) {
   const recipes = getRecipes();
-  console.log('Setting lights...');
-  for (let i = 0; i < lights.length; i++) {
-    const light = lights[i];
-    const state = {on: true};
-    const recipe = getRecipe(light.cmdName, recipes);
-    // Object.keys(recipe).forEach((k) => {
-    //   state[k] = recipe[k];
-    // });
-    iterate(state, recipe);
-    // Object.keys(light).forEach((k) => {
-    //   if (k === 'light' || k === 'cmdName') {
-    //     return;
-    //   }
-    //   if (k === 'command') {
-
-    //   }
-    //   state[k] = light[k];
-    // });
-    iterate(state, light);
-    if (i > 0) {
-      await wait(SLEEP_BETWEEN_REQUESTS);
-    }
-    let result = await setLight(light.light, state);
-    results = results.concat(result);
+  let state = {on: true};
+  const recipe = getRecipe(light.recipeName, recipes);
+  state = Object.assign(state, recipe);
+  if (light.command) {
+    state = Object.assign(state, light.command);
   }
-  let hasErrors = parseResults(results, false);
-  if (hasErrors) {
-    throw new Error('Failed while trying to set lights.');
-  }
+  const results = await _setLight(light.lightId, state);
   return results;
 }
 
@@ -181,52 +146,36 @@ function deleteScene(sceneID) {
   return makeRequest('DELETE', 'scenes/' + sceneID, null);
 }
 
-async function createScene(sceneObj) {
-  console.log('Creating scene...');
+async function createScene(sceneObj, lightList) {
+  console.log(`Saving ${chalk.cyan(sceneObj.sceneName)}`);
   let appDataValue = 'HoN';
   if (sceneObj.showInWebUI) {
     appDataValue += ',UI';
   }
   const scene = {
     name: sceneObj.sceneName,
-    lights: getLightList(sceneObj.lights),
+    lights: lightList,
     recycle: false,
     appdata: {data: appDataValue, version: 4},
   };
   if (sceneObj.transitionTime) {
     scene.transitiontime = sceneObj.transitionTime;
   }
-  return makeRequest('POST', 'scenes/', scene)
-    .then((results) => {
-      const hasErrors = parseResults(results, false);
-      if (results && results[0] && results[0].success) {
-        const sceneId = results[0].success.id;
-        return sceneId
-      }
-      throw new Error('Unable to create scene');
-    })
+  return makeRequest('POST', 'scenes/', scene);
 }
 
-function updateScene(sceneObj) {
-  console.log('Updating scene...');
+function updateScene(sceneObj, lightList) {
+  console.log(`Saving ${chalk.cyan(sceneObj.sceneName)} (${sceneObj.sceneId})`);
   const scene = {
     name: sceneObj.sceneName,
-    lights: getLightList(sceneObj.lights),
+    lights: lightList,
     storelightstate: true,
   };
   if (sceneObj.transitionTime) {
     scene.transitiontime = sceneObj.transitionTime;
   }
-  return makeRequest('PUT', `scenes/${sceneObj.sceneId}`, scene)
-    .then((results) => {
-      const hasErrors = parseResults(results, false);
-      if (hasErrors) {
-        throw new Error('Unable to update scene');
-      }
-      return results;
-    });
+  return makeRequest('PUT', `scenes/${sceneObj.sceneId}`, scene);
 }
-
 
 /**
  * Makes a request to the Hue API
@@ -258,7 +207,6 @@ function makeRequest(method, path, body) {
       if (VERBOSE) {
         console.log(method, '<-', path, respBody);
       }
-      parseResults(respBody, true);
       resolve(respBody);
       return;
     });
@@ -267,12 +215,13 @@ function makeRequest(method, path, body) {
 
 exports.wait = wait;
 exports.allOff = allOff;
-exports.readJSONFile = readJSONFile;
-exports.saveJSONFile = saveJSONFile;
-exports.setLights = setLights;
+exports.setLight = setLight;
 exports.getRecipes = getRecipes;
 exports.listScenes = listScenes;
 exports.createScene = createScene;
 exports.deleteScene = deleteScene;
 exports.updateScene = updateScene;
+exports.printResults = printResults;
+exports.readJSONFile = readJSONFile;
+exports.saveJSONFile = saveJSONFile;
 exports.activateScene = activateScene;
