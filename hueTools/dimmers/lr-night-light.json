@@ -2,15 +2,15 @@
   "sceneId": "hrrvkZ-R8yjqgxb",
   "showInWebUI": true,
   "lights": [
-    {"light": 35, "cmdName": "OFF"},
-    {"light": 36, "cmdName": "OFF"},
-    {"light": 37, "cmdName": "OFF"},
-    {"light": 11, "cmdName": "OFF"},
-    {"light": 12, "cmdName": "OFF"},
-    {"light": 13, "cmdName": "OFF"},
-    {"light": 14, "cmdName": "RED", "bri": 5},
-    {"light": 18, "cmdName": "OFF"},
-    {"light": 22, "cmdName": "RED", "bri": 50},
-    {"light": 27, "cmdName": "OFF"}
+    {"lightId": 35, "recipeName": "OFF"},
+    {"lightId": 36, "recipeName": "OFF"},
+    {"lightId": 37, "recipeName": "OFF"},
+    {"lightId": 11, "recipeName": "OFF"},
+    {"lightId": 12, "recipeName": "OFF"},
+    {"lightId": 13, "recipeName": "OFF"},
+    {"lightId": 14, "recipeName": "RED", "command": {"bri": 5}},
+    {"lightId": 18, "recipeName": "OFF"},
+    {"lightId": 22, "recipeName": "RED", "command": {"bri": 50}},
+    {"lightId": 27, "recipeName": "OFF"}
   ]
 }

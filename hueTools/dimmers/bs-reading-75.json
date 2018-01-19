@@ -3,7 +3,7 @@
   "sceneId": "QtXwmmmLlS9bh5d",
   "showInWebUI": true,
   "lights": [
-    {"light": 16, "cmdName": "READING", "bri": 192},
-    {"light": 28, "cmdName": "READING", "bri": 192}
+    {"lightId": 16, "recipeName": "READING", "command": {"bri": 192}},
+    {"lightId": 28, "recipeName": "READING", "command": {"bri": 192}}
   ]
 }

@@ -3,6 +3,6 @@
   "sceneId": "37693cfc7-off-0",
   "showInWebUI": false,
   "lights": [
-    {"light": 23, "cmdName": "OFF"}
+    {"lightId": 23, "recipeName": "OFF"}
   ]
 }

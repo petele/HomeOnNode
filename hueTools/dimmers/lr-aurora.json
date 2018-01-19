@@ -2,15 +2,15 @@
   "sceneId": "f-ON6QhvynPJdSK",
   "showInWebUI": true,
   "lights": [
-    {"light": 35, "cmdName": "AURORA_02", "bri": 200},
-    {"light": 36, "cmdName": "AURORA_03", "bri": 200},
-    {"light": 37, "cmdName": "AURORA_01", "bri": 200},
-    {"light": 11, "cmdName": "AURORA_08", "bri": 200},
-    {"light": 12, "cmdName": "AURORA_03", "bri": 200},
-    {"light": 13, "cmdName": "AURORA_02", "bri": 200},
-    {"light": 14, "cmdName": "AURORA_06", "bri": 200},
-    {"light": 18, "cmdName": "AURORA_08", "bri": 254},
-    {"light": 22, "cmdName": "AURORA_05", "bri": 200},
-    {"light": 27, "cmdName": "AURORA_08", "bri": 200}
+    {"lightId": 35, "recipeName": "AURORA_WHITE_GREENISH", "command": {"bri": 200}},
+    {"lightId": 36, "recipeName": "AURORA_BLUE_DEEP", "command": {"bri": 200}},
+    {"lightId": 37, "recipeName": "AURORA_BLUE_LIGHT", "command": {"bri": 200}},
+    {"lightId": 11, "recipeName": "AURORA_CYAN_DARK_LS", "command": {"bri": 200}},
+    {"lightId": 12, "recipeName": "AURORA_BLUE_DEEP", "command": {"bri": 200}},
+    {"lightId": 13, "recipeName": "AURORA_WHITE_GREENISH", "command": {"bri": 200}},
+    {"lightId": 14, "recipeName": "AURORA_CYAN_LIGHT_LS", "command": {"bri": 200}},
+    {"lightId": 18, "recipeName": "AURORA_CYAN_DARK_LS", "command": {"bri": 254}},
+    {"lightId": 22, "recipeName": "AURORA_WHITE_COLD", "command": {"bri": 200}},
+    {"lightId": 27, "recipeName": "AURORA_CYAN_DARK_LS", "command": {"bri": 200}}
   ]
 }
