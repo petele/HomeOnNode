@@ -3,8 +3,8 @@
   "showInWebUI": true,
   "sceneId": "ep1ZAFMfHb9mB0W",
   "lights": [
-    {"light": 24, "cmdName": "RED", "bri": 25},
-    {"light": 25, "cmdName": "OFF"},
-    {"light": 26, "cmdName": "OFF"}
+    {"lightId": 24, "recipeName": "RED", "command": {"bri": 25}},
+    {"lightId": 25, "recipeName": "OFF"},
+    {"lightId": 26, "recipeName": "OFF"}
   ]
 }

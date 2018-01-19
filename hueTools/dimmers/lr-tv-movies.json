@@ -2,15 +2,14 @@
   "sceneId": "ctqaDSwPLilyRMC",
   "showInWebUI": true,
   "lights": [
-    {"light": 35, "cmdName": "OFF"},
-    {"light": 36, "cmdName": "OFF"},
-    {"light": 37, "cmdName": "OFF"},
-    {"light": 11, "cmdName": "ROSE_DEEP", "bri": 128},
-    {"light": 12, "cmdName": "ROSE_DEEP", "bri": 65},
-    {"light": 13, "cmdName": "PURPLE", "bri": 65},
-    {"light": 14, "cmdName": "ROSE_DEEP", "bri": 20},
-    {"light": 18, "cmdName": "PEACH", "bri": 200},
-    {"light": 22, "cmdName": "BLUE", "bri": 65},
-    {"light": 27, "cmdName": "ROSE_DEEP", "bri": 65}
+    {"lightId": 35, "recipeName": "OFF"},
+    {"lightId": 36, "recipeName": "OFF"},
+    {"lightId": 37, "recipeName": "OFF"},
+    {"lightId": 12, "recipeName": "ROSE_DEEP", "command": {"bri": 65}},
+    {"lightId": 13, "recipeName": "PURPLE", "command": {"bri": 65}},
+    {"lightId": 14, "recipeName": "ROSE_DEEP", "command": {"bri": 20}},
+    {"lightId": 18, "recipeName": "PEACH", "command": {"bri": 200}},
+    {"lightId": 22, "recipeName": "BLUE", "command": {"bri": 65}},
+    {"lightId": 27, "recipeName": "ROSE_DEEP", "command": {"bri": 65}}
   ]
 }

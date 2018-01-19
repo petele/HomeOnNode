@@ -3,12 +3,12 @@
   "sceneId": "h2O-HtPaJD1GfnU",
   "showInWebUI": true,
   "lights": [
-    {"light": 4, "cmdName": "OFF"},
-    {"light": 5, "cmdName": "OFF"},
-    {"light": 6, "cmdName": "OFF"},
-    {"light": 7, "cmdName": "OFF"},
-    {"light": 17, "cmdName": "RED", "bri": 10},
-    {"light": 23, "cmdName": "OFF"},
-    {"light": 29, "cmdName": "RED", "bri": 10}
+    {"lightId": 4, "recipeName": "OFF"},
+    {"lightId": 5, "recipeName": "OFF"},
+    {"lightId": 6, "recipeName": "OFF"},
+    {"lightId": 7, "recipeName": "OFF"},
+    {"lightId": 17, "recipeName": "RED", "command": {"bri": 10}},
+    {"lightId": 23, "recipeName": "OFF"},
+    {"lightId": 29, "recipeName": "RED", "command": {"bri": 10}}
   ]
 }

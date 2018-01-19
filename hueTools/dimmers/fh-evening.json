@@ -3,8 +3,8 @@
   "sceneId": "kQ1V-4J8UFuDExK",
   "showInWebUI": true,
   "lights": [
-    {"light": 1, "cmdName": "PEACH", "bri": 200},
-    {"light": 2, "cmdName": "REBECCA_PURPLE", "bri": 200},
-    {"light": 3, "cmdName": "PEACH", "bri": 200}
+    {"lightId": 1, "recipeName": "PEACH", "command": {"bri": 200}},
+    {"lightId": 2, "recipeName": "REBECCA_PURPLE", "command": {"bri": 200}},
+    {"lightId": 3, "recipeName": "PEACH", "command": {"bri": 200}}
   ]
 }

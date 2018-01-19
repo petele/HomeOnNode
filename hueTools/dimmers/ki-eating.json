@@ -3,12 +3,12 @@
   "sceneId": "99NgrL4Cc9kJCp7",
   "showInWebUI": true,
   "lights": [
-    {"light": 4, "cmdName": "REBECCA_PURPLE", "bri": 180},
-    {"light": 5, "cmdName": "REBECCA_PURPLE", "bri": 180},
-    {"light": 6, "cmdName": "DEFAULT", "bri": 250},
-    {"light": 7, "cmdName": "DEFAULT", "bri": 250},
-    {"light": 17, "cmdName": "PEACH", "bri": 250},
-    {"light": 23, "cmdName": "OFF"},
-    {"light": 29, "cmdName": "PEACH", "bri": 250}
+    {"lightId": 4, "recipeName": "REBECCA_PURPLE", "command": {"bri": 180}},
+    {"lightId": 5, "recipeName": "REBECCA_PURPLE", "command": {"bri": 180}},
+    {"lightId": 6, "recipeName": "DEFAULT", "command": {"bri": 250}},
+    {"lightId": 7, "recipeName": "DEFAULT", "command": {"bri": 250}},
+    {"lightId": 17, "recipeName": "PEACH", "command": {"bri": 250}},
+    {"lightId": 23, "recipeName": "OFF"},
+    {"lightId": 29, "recipeName": "PEACH", "command": {"bri": 250}}
   ]
 }

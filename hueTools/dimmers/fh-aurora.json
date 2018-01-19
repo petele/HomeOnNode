@@ -3,8 +3,8 @@
   "sceneId": "PoaBSAOFJHmjIZM",
   "showInWebUI": true,
   "lights": [
-    {"light": 1, "cmdName": "AURORA_03", "bri": 200},
-    {"light": 2, "cmdName": "AURORA_07", "bri": 200},
-    {"light": 3, "cmdName": "AURORA_03", "bri": 200}
+    {"lightId": 1, "recipeName": "AURORA_BLUE_DEEP", "command": {"bri": 200}},
+    {"lightId": 2, "recipeName": "AURORA_WHITE_GREEN_TINT", "command": {"bri": 200}},
+    {"lightId": 3, "recipeName": "AURORA_BLUE_DEEP", "command": {"bri": 200}}
   ]
 }
