@@ -49,15 +49,15 @@ function GCMPush(fb) {
   /**
    * Send a message
    *
-   * @param {Object} message The message to send.
+   * @param {Object} srcMessage The message to send.
    * @return {Promise} A promise with the results of the sent messages.
   */
-  this.sendMessage = function(message) {
-    if (!message) {
+  this.sendMessage = function(srcMessage) {
+    if (!srcMessage) {
       log.error(LOG_PREFIX, 'sendMessage() failed, cannot send empty message');
       return Promise.reject(new Error('empty_message_not_allowed'));
     }
-    if (typeof message !== 'object') {
+    if (typeof srcMessage !== 'object') {
       log.error(LOG_PREFIX, 'sendMessage() failed, message must be an object');
       return Promise.reject(new Error('message_must_be_object'));
     }
@@ -66,6 +66,7 @@ function GCMPush(fb) {
       return Promise.reject(new Error('not_ready'));
     }
     log.log(LOG_PREFIX, 'Sending notifications...');
+    const message = Object.assign({}, srcMessage);
     const now = Date.now();
     message.sentAt = now;
     if (!message.tag) {
