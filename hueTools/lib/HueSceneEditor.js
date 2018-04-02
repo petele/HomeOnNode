@@ -4,17 +4,26 @@ const fs = require('fs');
 const util = require('util');
 const chalk = require('chalk');
 const request = require('request');
-const Keys = require('../../app/Keys.js').keys;
 
 /** ***************************************************************************
  * Constants & Remark Lint Options
  *****************************************************************************/
 
-let _recipes;
-const VERBOSE = false;
-const HUE_IP = '192.168.86.206';
-const HUE_KEY = Keys.hueBridge.key;
 const REQUEST_TIMEOUT = 30000;
+const UTIL_OPTS = {
+  colors: true,
+  maxArrayLength: 20,
+  breakLength: 1000,
+}
+
+let _recipes;
+let _ready = false;
+let _verbose = false;
+let _secure = false;
+let _trial = false;
+let _address;
+let _key;
+
 
 /** ***************************************************************************
  * Internal Helper Functions
@@ -81,10 +90,22 @@ function _setLight(lightID, state) {
  * Task Functions
  *****************************************************************************/
 
-const UTIL_OPTS = {
-  colors: true,
-  maxArrayLength: 20,
-  breakLength: 1000,
+function init(opts) {
+  if (opts.key) {
+    _key = opts.key;
+  }
+  if (opts.address) {
+    _address = opts.address;
+  }
+  if (_key && _address) {
+    _ready = true;
+  }
+  _verbose = opts.verbose === true ? true : false;
+  _secure = opts.secure === true ? true : false;
+  _trial = opts.trial === true ? true : false;
+  if (_trial) {
+    console.log(chalk.red('Trial mode'), '- No HTTP requests will be made.');
+  }
 }
 
 function printResults(results, throwOnError) {
@@ -186,8 +207,13 @@ function updateScene(sceneObj, lightList) {
  */
 function makeRequest(method, path, body) {
   return new Promise(function(resolve, reject) {
+    if (!_ready) {
+      reject('Not setup');
+      return;
+    }
+    const protocol = _secure === true ? 'https' : 'http';
     const reqOpt = {
-      url: 'http://' + HUE_IP + '/api/' + HUE_KEY + '/' + path,
+      url: `${protocol}://${_address}/api/${_key}/${path}`,
       method: method,
       timeout: REQUEST_TIMEOUT,
       json: true,
@@ -195,8 +221,14 @@ function makeRequest(method, path, body) {
     if (body) {
       reqOpt.body = body;
     }
-    if (VERBOSE) {
-      console.log(method, '->', path, body);
+    if (_verbose || _trial) {
+      const m = _trial === true ? chalk.dim(method.toLowerCase()) : chalk.bold(method);
+      const b = util.inspect(body, UTIL_OPTS);
+      console.log(m, '->', chalk.cyan(reqOpt.url), b);
+    }
+    if (_trial) {
+      resolve(true);
+      return;
     }
     request(reqOpt, function(error, response, respBody) {
       if (error) {
@@ -204,7 +236,7 @@ function makeRequest(method, path, body) {
         reject([{failed: error}]);
         return;
       }
-      if (VERBOSE) {
+      if (_verbose) {
         console.log(method, '<-', path, respBody);
       }
       resolve(respBody);
@@ -213,6 +245,7 @@ function makeRequest(method, path, body) {
   });
 }
 
+exports.init = init;
 exports.wait = wait;
 exports.allOff = allOff;
 exports.setLight = setLight;

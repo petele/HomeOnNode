@@ -8,6 +8,7 @@ const chalk = require('chalk');
 const glob = require('globule');
 const commander = require('commander');
 const hseLib = require('./lib/HueSceneEditor');
+const Keys = require('../app/Keys.js').keys;
 
 console.log(chalk.bold('HomeOnNode Hue Scene Helper'));
 
@@ -21,8 +22,22 @@ const UTIL_OPTS = {
   breakLength: 1000,
 }
 
+function initHSE() {
+  const opts = {
+    key: commander.key || Keys.hueBridge.key,
+    address: commander.address || '192.168.86.206',
+    verbose: commander.verbose,
+    secure: !commander.insecure,
+    trial: commander.trial,
+  };
+  hseLib.init(opts);
+}
+
 commander
-  .version('0.8.0')
+  .version('0.8.1')
+  .option('-a, --address <address>', 'Address to use')
+  .option('-k, --key <key>', 'Hue Key')
+  .option('-i, --insecure', 'Insecure, use HTTP only')
   .option('-v, --verbose', 'Verbose output')
   .option('-t, --trial', 'Trial only, don\'t make requests.')
   .option('-r, --recipeFile <filename>', 'Read [recipes.json]', 'recipes.json');
@@ -43,6 +58,7 @@ commander
   .command('list')
   .description('Lists all of the current scenes')
   .action(() => {
+    initHSE();
     hseLib.listScenes()
       .then((scenes) => {
         const keys = Object.keys(scenes);
@@ -57,6 +73,7 @@ commander
   .command('activate <sceneID>')
   .description('Activates the specified scene.')
   .action((sceneID) => {
+    initHSE();
     return hseLib.activateScene(sceneID)
       .then((results) => {
         hseLib.printResults(results);
@@ -67,6 +84,7 @@ commander
   .command('delete <sceneID>')
   .description('Delete an existing scene.')
   .action((sceneID) => {
+    initHSE();
     return hseLib.deleteScene(sceneID)
       .then((results) => {
         hseLib.printResults(results);
@@ -77,6 +95,7 @@ commander
   .command('set <filename>')
   .description('Sets all lights in a scene definition file to their settings.')
   .action((filename) => {
+    initHSE();
     return makeScenes([filename]);
   });
 
@@ -84,6 +103,7 @@ commander
   .command('update <filename>')
   .description('Update an existing scene.')
   .action((filename) => {
+    initHSE();
     return makeScenes([filename], true, false);
   });
 
@@ -91,6 +111,7 @@ commander
   .command('folder <folder>')
   .description('Set scenes from all files in folder.')
   .action((folder) => {
+    initHSE();
     const files = glob.find('*.json', {prefixBase: true, srcBase: folder});
     return makeScenes(files, true, true);
   });
