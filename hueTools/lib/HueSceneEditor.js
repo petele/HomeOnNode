@@ -217,6 +217,7 @@ function makeRequest(method, path, body) {
       method: method,
       timeout: REQUEST_TIMEOUT,
       json: true,
+      strictSSL: false,
     };
     if (body) {
       reqOpt.body = body;
