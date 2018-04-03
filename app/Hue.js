@@ -17,7 +17,8 @@ const LOG_PREFIX = 'HUE';
  * @fires Hue#lights_changed
  * @property {Object} lights - List of all lights and their current state
  * @property {Object} groups - List of all groups and their current state
- * @property {Object} config - Current Hub configuration
+ * @property {Object} capabilities - Current Hub capabilities
+ * @property {Object} dataStore - Entire Hub data store
  * @param {String} key Hue authentication key.
  * @param {String} [explicitIPAddress] IP Address of the Hub
  */
@@ -35,7 +36,8 @@ function Hue(key, explicitIPAddress) {
 
   this.lights = {};
   this.groups = {};
-  this.config = {};
+  this.capabilities = {};
+  this.dataStore = {};
 
   /**
    * Turn the lights (or groups) on and off, modify the hue and effects.
@@ -134,6 +136,23 @@ function Hue(key, explicitIPAddress) {
   }
 
   /**
+   * Delayed Hue Request
+   * @param {String} requestPath the URL/request path to hit
+   * @param {String} method the HTTP method to use
+   * @param {Object} [body] The body to send along with the request
+   * @param {Boolean} [retry] If the request fails, should it retry
+   * @param {Number} delayMS MS to delay the call
+   * @return {Promise} A promise that resolves with the response
+   */
+  function _delayedHueRequest(requestPath, method, body, retry, delayMS) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve(_makeHueRequest(requestPath, method, body, retry));
+      }, delayMS);
+    });
+  }
+
+  /**
    * Helper function to make a Hue request
    *
    * @param {String} requestPath the URL/request path to hit
@@ -152,11 +171,12 @@ function Hue(key, explicitIPAddress) {
     log.verbose(LOG_PREFIX, msg, body);
     return new Promise(function(resolve, reject) {
       let requestOptions = {
-        uri: `http://${_bridgeIP}/api/${_key}${requestPath}`,
+        uri: `https://${_bridgeIP}/api/${_key}${requestPath}`,
         method: method,
         json: true,
         timeout: REQUEST_TIMEOUT,
         agent: false,
+        strictSSL: false,
       };
       if (body) {
         requestOptions.body = body;
@@ -255,29 +275,65 @@ function Hue(key, explicitIPAddress) {
     });
   }
 
+  // /**
+  //  * Updates this.config to the latest state from the hub.
+  //  *
+  //  * @return {Promise} True if updated, false if failed.
+  //  */
+  // function _updateConfig() {
+  //   // log.log(LOG_PREFIX, '_updateConfig()');
+  //   return _makeHueRequest('', 'GET', null, false)
+  //   .then((dataStore) => {
+  //     if (diff(_self.dataStore, dataStore)) {
+  //       _self.dataStore = dataStore;
+  //       /**
+  //        * see {@link https://developers.meethue.com/documentation/configuration-api}
+  //        * @event Hue#config_changed
+  //        */
+  //       _self.emit('config_changed', dataStore);
+  //     }
+  //     return true;
+  //   })
+  //   .catch((error) => {
+  //     log.exception(LOG_PREFIX, 'Unable to retreive config', error);
+  //     return false;
+  //   });
+  // }
+
   /**
-   * Updates this.config to the latest state from the hub.
+   * Updates this.dataStore to the latest state from the hub.
    *
    * @return {Promise} True if updated, false if failed.
    */
   function _updateConfig() {
-    // log.log(LOG_PREFIX, '_updateConfig()');
-    return _makeHueRequest('', 'GET', null, false)
-    .then((config) => {
-      if (diff(_self.config, config)) {
-        _self.config = config;
-        /**
-         * see {@link https://developers.meethue.com/documentation/configuration-api#72_get_configuration}
-         * @event Hue#config_changed
-         */
-        _self.emit('config_changed', config);
-      }
-      return true;
-    })
-    .catch((error) => {
-      log.exception(LOG_PREFIX, 'Unable to retreive config', error);
-      return false;
-    });
+    const pDataStore = _makeHueRequest('', 'GET', null, false);
+    const pCapabilities = _delayedHueRequest('/capabilities', null, false, 800);
+    return Promise.all([pDataStore, pCapabilities])
+      .then((results) => {
+        let hasChanged = false;
+
+        // Has the dataStore changed?
+        if (diff(_self.dataStore, results[0])) {
+          _self.dataStore = results[0];
+          hasChanged = true;
+        }
+        // Have the capabilities changed?
+        if (diff(_self.capabilities, results[1])) {
+          _self.capabilities = results[1];
+          hasChanged = true;
+        }
+        // Has something changed?
+        if (hasChanged) {
+          const config = dataStore;
+          config.capabilities = capabilities;
+          _self.emit('config_changed', config);
+        }
+        return true;
+      })
+      .catch((error) => {
+        log.exception(LOG_PREFIX, 'Unable to get config/capabilities', error);
+        return false;
+      });
   }
 
   /**
