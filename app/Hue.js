@@ -104,6 +104,25 @@ function Hue(key, explicitIPAddress) {
   };
 
   /**
+   * Send a Raw command
+   *
+   * @param {String} requestPath the URL/request path to hit
+   * @param {String} method the HTTP method to use
+   * @param {Object} [body] The body to send along with the request
+   * @return {Promise} A promise that resolves with the response
+  */
+  this.sendRequest = function(requestPath, method, body) {
+    log.log(LOG_PREFIX, `sendRequest('${requestPath}', '${method}', ${body})`);
+    if (_isReady() !== true) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    if (!requestPath || !method) {
+      return Promise.reject(new Error('missing_parameter'));
+    }
+    return _makeHueRequest(requestPath, method, body);
+  };
+
+  /**
    * Init the API
   */
   function _init() {
@@ -324,8 +343,8 @@ function Hue(key, explicitIPAddress) {
         }
         // Has something changed?
         if (hasChanged) {
-          const config = dataStore;
-          config.capabilities = capabilities;
+          const config = Object.assign({}, _self.dataStore);
+          config.capabilities = _self.capabilities;
           _self.emit('config_changed', config);
         }
         return true;
