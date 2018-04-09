@@ -2,7 +2,6 @@
 
 const EventEmitter = require('events').EventEmitter;
 const util = require('util');
-const moment = require('moment');
 const exec = require('child_process').exec;
 
 const Hue = require('./Hue');
@@ -340,22 +339,21 @@ function Home(initialConfig, fbRef) {
       }
     }
     // Schedule a delayed command
-    if (command.hasOwnProperty('onDelay')) {
+    if (command.hasOwnProperty('delay')) {
       let cmds = command.onDelay;
       if (Array.isArray(cmds) === false) {
         cmds = [cmds];
       }
       cmds.forEach((cmd) => {
         const delay = cmd.delayMS || 30 * 1000;
-        const delayedId = setTimeout(() => {
+        setTimeout(() => {
           if (cmd.hasOwnProperty('cmdName')) {
             _self.executeCommandByName(cmd.cmdName, cmd.modifier, 'DELAYED');
           } else {
             _self.executeCommand(cmd.command, 'DELAYED');
           }
         }, delay);
-        const dHuman = moment.duration(delay, 'milliseconds').humanize(true);
-        const msg = `Scheduled command (${delayedId}) to run ${dHuman}`;
+        const msg = `Scheduled command to run in ${delay / 1000}s`;
         log.log(LOG_PREFIX, msg, cmd);
       });
     }
