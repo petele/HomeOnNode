@@ -151,7 +151,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _setSpeakerVolume(speakerName, vol) {
-    const msg = `_setSpeakerVolume('${speakerName}', ${vol})`;
+    const msg = `setSpeakerVolume('${speakerName}', ${vol})`;
     const speaker = _getPlayer(speakerName, true);
     if (!speaker) {
       log.error(LOG_PREFIX, `${msg} failed, speaker not found.`);
