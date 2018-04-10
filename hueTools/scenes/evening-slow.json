@@ -2,7 +2,7 @@
   "sceneName": "Evening (slow)",
   "sceneId": "MS8ZDjSNoFmcchE",
   "showInWebUI": true,
-  "transitionTime": 60000,
+  "transitionTime": 6000,
   "scenes": [
     "scenes/evening.json"
   ]
