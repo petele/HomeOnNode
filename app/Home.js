@@ -170,7 +170,13 @@ function Home(initialConfig, fbRef) {
     // NanoLeaf
     if (command.hasOwnProperty('nanoLeaf')) {
       if (nanoLeaf) {
-        nanoLeaf.executeCommand(command.nanoLeaf, modifier);
+        let cmds = command.nanoLeaf;
+        if (Array.isArray(cmds) === false) {
+          cmds = [cmds];
+        }
+        cmds.forEach((cmd) => {
+          nanoLeaf.executeCommand(cmd, modifier);
+        });
       } else {
         log.warn(LOG_PREFIX, 'NanoLeaf unavailable.');
       }
