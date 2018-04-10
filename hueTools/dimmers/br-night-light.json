@@ -2,15 +2,10 @@
   "sceneName": "Night Light [Bedroom]",
   "sceneId": "qWEYvmRUH6Ff3wK",
   "showInWebUI": true,
+  "scenes": [
+    "dimmers/br-off.json"
+  ],
   "lights": [
-    {"lightId": 15, "recipeName": "READING", "command": {"bri": 125}},
-    {"lightId": 19, "recipeName": "OFF"},
-    {"lightId": 20, "recipeName": "OFF"},
-    {"lightId": 21, "recipeName": "OFF"},
-    {"lightId": 30, "recipeName": "OFF"},
-    {"lightId": 31, "recipeName": "OFF"},
-    {"lightId": 32, "recipeName": "OFF"},
-    {"lightId": 33, "recipeName": "OFF"},
-    {"lightId": 34, "recipeName": "OFF"}
+    {"lightId": 15, "recipeName": "READING", "command": {"bri": 125}}
   ]
 }

@@ -2,22 +2,12 @@
   "sceneName": "Sleep",
   "sceneId": "AMUp6lH557C2t3p",
   "showInWebUI": true,
-  "lights": [
-    {"lightId": 15, "recipeName": "OFF"},
-    {"lightId": 19, "recipeName": "OFF"},
-    {"lightId": 20, "recipeName": "OFF"},
-    {"lightId": 21, "recipeName": "OFF"},
-    {"lightId": 30, "recipeName": "OFF"},
-    {"lightId": 31, "recipeName": "OFF"},
-    {"lightId": 32, "recipeName": "OFF"},
-    {"lightId": 33, "recipeName": "OFF"},
-    {"lightId": 34, "recipeName": "OFF"}
-  ],
   "scenes": [
-    "dimmers/fh-night-light.json",
     "dimmers/ba-night-low.json",
+    "dimmers/br-off.json",
+    "dimmers/bs-reading.json",
+    "dimmers/fh-night-light.json",
     "dimmers/ki-night-light.json",
-    "dimmers/lr-night-light.json",
-    "dimmers/bs-reading.json"
+    "dimmers/lr-night-light.json"
   ]
 }

@@ -1,0 +1,7 @@
+{
+  "sceneName": "Off [Bedside]",
+  "lights": [
+    {"lightId": 16, "recipeName": "OFF"},
+    {"lightId": 28, "recipeName": "OFF"}
+  ]
+}

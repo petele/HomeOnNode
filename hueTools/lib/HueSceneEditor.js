@@ -4,6 +4,8 @@ const fs = require('fs');
 const util = require('util');
 const chalk = require('chalk');
 const request = require('request');
+const stripComments = require('strip-json-comments');
+
 
 /** ***************************************************************************
  * Constants & Remark Lint Options
@@ -44,14 +46,15 @@ function readJSONFile(filename) {
   let result;
   try {
     result = fs.readFileSync(filename, 'utf8');
+    result = stripComments(result);
   } catch (ex) {
     const msg = `Unable to read ${filename}`;
     throw new Error(msg);
   }
   try {
-    result = JSON.parse(result);
-    return result;
+    return JSON.parse(result);
   } catch (ex) {
+    console.log(ex);
     const msg = `Unable to parse ${filename}`;
     throw new Error(msg);
   }
@@ -168,7 +171,7 @@ function deleteScene(sceneID) {
 }
 
 async function createScene(sceneObj, lightList) {
-  console.log(`Saving ${chalk.cyan(sceneObj.sceneName)}`);
+  console.log(`Creating ${chalk.cyan(sceneObj.sceneName)}`);
   let appDataValue = 'HoN';
   if (sceneObj.showInWebUI) {
     appDataValue += ',UI';
@@ -186,7 +189,7 @@ async function createScene(sceneObj, lightList) {
 }
 
 function updateScene(sceneObj, lightList) {
-  console.log(`Saving ${chalk.cyan(sceneObj.sceneName)} (${sceneObj.sceneId})`);
+  console.log(`Updating ${chalk.cyan(sceneObj.sceneName)} (${sceneObj.sceneId})`);
   const scene = {
     name: sceneObj.sceneName,
     lights: lightList,

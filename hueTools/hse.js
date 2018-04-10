@@ -167,8 +167,8 @@ async function makeScenes(files, save, startOff) {
     const sceneObj = hseLib.readJSONFile(filename);
     if (startOff) {
       await allOffAndWait();
+      await hseLib.wait(DELAY_BETWEEN_ACTIONS);
     }
-    await hseLib.wait(DELAY_BETWEEN_ACTIONS);
     const lightList = await setScene(sceneObj);
     const lights = Object.keys(lightList);
     if (save) {
@@ -186,7 +186,6 @@ async function makeScenes(files, save, startOff) {
       }
     }
     if (i + 1 < files.length) {
-      console.log('');
       await hseLib.wait(DELAY_BETWEEN_ACTIONS);
     }
   }
