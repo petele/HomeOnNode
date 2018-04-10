@@ -1,5 +1,6 @@
 {
   "sceneName": "Sleep (Guest)",
+  "sceneId": "w3HsgMZOPIGdOBF",
   "showInWebUI": true,
   "scenes": [
     "dimmers/ba-night-low.json",
