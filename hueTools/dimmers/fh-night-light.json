@@ -2,9 +2,10 @@
   "sceneName": "Night Light [Front Hall]",
   "sceneId": "tMAzXFApSPSZbvA",
   "showInWebUI": true,
+  "scenes": [
+    "dimmers/fh-off.json"
+  ],
   "lights": [
-    {"lightId": 1, "recipeName": "OFF"},
-    {"lightId": 2, "recipeName": "RED", "command": {"bri": 10}},
-    {"lightId": 3, "recipeName": "OFF"}
+    {"lightId": 2, "recipeName": "RED", "command": {"bri": 10}}
   ]
 }

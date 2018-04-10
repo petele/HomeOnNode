@@ -1,0 +1,12 @@
+{
+  "sceneName": "Sleep (Guest)",
+  "showInWebUI": true,
+  "scenes": [
+    "dimmers/ba-night-low.json",
+    "dimmers/br-off.json",
+    "dimmers/bs-reading.json",
+    "dimmers/fh-off.json",
+    "dimmers/ki-off.json",
+    "dimmers/lr-guest-read.json"
+  ]
+}

@@ -2,13 +2,11 @@
   "sceneName": "Night Light [Kitchen]",
   "sceneId": "h2O-HtPaJD1GfnU",
   "showInWebUI": true,
+  "scenes": [
+    "dimmers/ki-off.json"
+  ],
   "lights": [
-    {"lightId": 4, "recipeName": "OFF"},
-    {"lightId": 5, "recipeName": "OFF"},
-    {"lightId": 6, "recipeName": "OFF"},
-    {"lightId": 7, "recipeName": "OFF"},
     {"lightId": 17, "recipeName": "RED", "command": {"bri": 10}},
-    {"lightId": 23, "recipeName": "OFF"},
     {"lightId": 29, "recipeName": "RED", "command": {"bri": 10}}
   ]
 }

@@ -1,16 +1,12 @@
 { "sceneName": "Guest Read [Living Room]",
   "sceneId": "FylstdkasWrVYlu",
   "showInWebUI": false,
+  "scenes": [
+    "dimmers/lr-off.json"
+  ],
   "lights": [
-    {"lightId": 35, "recipeName": "OFF"},
-    {"lightId": 36, "recipeName": "OFF"},
-    {"lightId": 37, "recipeName": "OFF"},
-    {"lightId": 11, "recipeName": "OFF"},
     {"lightId": 12, "recipeName": "READING", "command": {"bri": 254}},
     {"lightId": 13, "recipeName": "READING", "command": {"bri": 128}},
-    {"lightId": 14, "recipeName": "OFF"},
-    {"lightId": 18, "recipeName": "OFF"},
-    {"lightId": 22, "recipeName": "READING", "command": {"bri": 128}},
-    {"lightId": 27, "recipeName": "OFF"}
+    {"lightId": 22, "recipeName": "READING", "command": {"bri": 128}}
   ]
 }

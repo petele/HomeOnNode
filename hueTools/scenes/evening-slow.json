@@ -1,0 +1,8 @@
+{
+  "sceneName": "Evening (slow)",
+  "showInWebUI": true,
+  "transitionTime": 60000,
+  "scenes": [
+    "scenes/evening.json"
+  ]
+}

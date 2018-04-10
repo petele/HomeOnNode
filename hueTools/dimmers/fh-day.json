@@ -1,0 +1,10 @@
+{
+  "sceneName": "On [Front Hall]",
+  "sceneId": "ddMF4nlw1HcpvxQ",
+  "showInWebUI": true,
+  "lights": [
+    {"lightId": 1, "recipeName": "DEFAULT", "command": {"bri": 254}},
+    {"lightId": 2, "recipeName": "DEFAULT", "command": {"bri": 254}},
+    {"lightId": 3, "recipeName": "DEFAULT", "command": {"bri": 254}}
+  ]
+}

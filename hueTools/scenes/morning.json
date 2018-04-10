@@ -3,10 +3,10 @@
   "sceneId": "uR9E4wuZ8dCZYCj",
   "showInWebUI": true,
   "scenes": [
-    "dimmers/fh-morning.json",
     "dimmers/ba-day.json",
+    "dimmers/br-day.json",
+    "dimmers/fh-morning.json",
     "dimmers/ki-morning.json",
-    "dimmers/lr-morning.json",
-    "dimmers/br-day.json"
+    "dimmers/lr-morning.json"
   ]
 }
