@@ -59,6 +59,18 @@ function Sonos() {
     if (command.name === 'VOLUME_DOWN') {
       return _volumeDown();
     }
+    if (command.name === 'SET_VOLUME') {
+      const results = [];
+      if (typeof command.speakers != 'object') {
+        return Promise.reject(new Error('invalid_speakers'));
+      }
+      const keys = Object.keys(command.speakers);
+      keys.forEach((speaker) => {
+        const vol = command.speakers[speaker];
+        results.push(_setSpeakerVolume(speaker, vol));
+      });
+      return Promise.all(results);
+    }
     return Promise.reject(new Error('unknown_command'));
   };
 
@@ -104,14 +116,18 @@ function Sonos() {
    * Gets Sonos Player
    *
    * @param {string} roomName The name of the player to return (optional).
+   * @param {boolean} strict Only select the named speaker.
    * @return {Object} A Sonos Player.
   */
-  function _getPlayer(roomName) {
+  function _getPlayer(roomName, strict) {
     let player;
     if (roomName) {
       player = _sonosSystem.getPlayer(roomName);
       if (player) {
         return player;
+      }
+      if (strict === true) {
+        return null;
       }
     }
     try {
@@ -125,6 +141,26 @@ function Sonos() {
       player = _sonosSystem.getAnyPlayer();
     }
     return player;
+  }
+
+  /**
+   * Set specific speaker volume.
+   *
+   * @param {string} speakerName Name of speaker to adjust.
+   * @param {number} vol The level to set the speaker to.
+   * @return {Promise} The promise that will be resolved on completion.
+  */
+  function _setSpeakerVolume(speakerName, vol) {
+    const msg = `_setSpeakerVolume('${speakerName}', ${vol}) failed,`;
+    const speaker = _getPlayer(speakerName, true);
+    if (!speaker) {
+      log.error(LOG_PREFIX, `${msg} speaker not found.`);
+      return Promise.resolve('speaker_not_found');
+    }
+    return speaker.setVolume(vol)
+      .catch((err) => {
+        log.exception(LOG_PREFIX, `${msg} with exception.`, err);
+      });
   }
 
   /**

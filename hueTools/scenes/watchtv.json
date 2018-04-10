@@ -8,14 +8,28 @@
     "dimmers/ki-night-light.json"
   ],
    "lights": [
+    {"lightId": 16, "recipeName": "OFF"},
+    {"lightId": 28, "recipeName": "OFF"},
+
+    {"lightId": 15, "recipeName": "OFF"},
+    {"lightId": 19, "recipeName": "OFF"},
+    {"lightId": 20, "recipeName": "OFF"},
+    {"lightId": 21, "recipeName": "OFF"},
+    {"lightId": 30, "recipeName": "ROSE_DEEP", "command": {"bri": 128}},
+    {"lightId": 31, "recipeName": "OFF"},
+    {"lightId": 32, "recipeName": "OFF"},
+    {"lightId": 33, "recipeName": "ROSE_DEEP", "command": {"bri": 64}},
+    {"lightId": 34, "recipeName": "ROSE_DEEP", "command": {"bri": 64}},
+
+    {"lightId": 11, "recipeName": "PEACH", "command": {"bri": 40}},
+    {"lightId": 12, "recipeName": "ROSE_DEEP", "command": {"bri": 64}},
+    {"lightId": 13, "recipeName": "REBECCA_PURPLE", "command": {"bri": 64}},
+    {"lightId": 14, "recipeName": "OFF"},
+    {"lightId": 18, "recipeName": "PEACH", "command": {"bri": 64}},
+    {"lightId": 22, "recipeName": "BLUE", "command": {"bri": 40}},
+    {"lightId": 27, "recipeName": "OFF"},
     {"lightId": 35, "recipeName": "OFF"},
     {"lightId": 36, "recipeName": "OFF"},
-    {"lightId": 37, "recipeName": "OFF"},
-    {"lightId": 12, "recipeName": "ROSE_DEEP", "command": {"bri": 60}},
-    {"lightId": 13, "recipeName": "REBECCA_PURPLE", "command": {"bri": 60}},
-    {"lightId": 14, "recipeName": "OFF"},
-    {"lightId": 18, "recipeName": "PEACH", "command": {"bri": 200}},
-    {"lightId": 22, "recipeName": "BLUE", "command": {"bri": 100}},
-    {"lightId": 27, "recipeName": "RED", "command": {"bri": 25}}
+    {"lightId": 37, "recipeName": "OFF"}
   ]
 }
