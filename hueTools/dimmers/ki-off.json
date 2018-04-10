@@ -1,5 +1,6 @@
 {
   "sceneName": "Off [Kitchen]",
+  "sceneId": "EIAkxZRiGuSLXBV",
   "lights": [
     {"lightId": 4, "recipeName": "OFF"},
     {"lightId": 5, "recipeName": "OFF"},
