@@ -1,6 +1,7 @@
 {
   "sceneName": "Sleep",
   "sceneId": "AMUp6lH557C2t3p",
+  "transitionTime": 10,
   "showInWebUI": true,
   "scenes": [
     "dimmers/ba-night-low.json",

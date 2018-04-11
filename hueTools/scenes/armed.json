@@ -1,7 +1,7 @@
 {
   "sceneName": "Armed",
   "sceneId": "dkHWskiamrRsNrd",
-  "transitionTime": 1,
+  "transitionTime": 0,
   "scenes": [
     "dimmers/ba-off.json",
     "dimmers/br-off.json",

@@ -182,7 +182,7 @@ async function createScene(sceneObj, lightList) {
     recycle: false,
     appdata: {data: appDataValue, version: 4},
   };
-  if (sceneObj.transitionTime) {
+  if (sceneObj.hasOwnProperty('transitionTime')) {
     scene.transitiontime = sceneObj.transitionTime;
   }
   return makeRequest('POST', 'scenes/', scene);
@@ -195,7 +195,7 @@ function updateScene(sceneObj, lightList) {
     lights: lightList,
     storelightstate: true,
   };
-  if (sceneObj.transitionTime) {
+  if (sceneObj.hasOwnProperty('transitionTime')) {
     scene.transitiontime = sceneObj.transitionTime;
   }
   return makeRequest('PUT', `scenes/${sceneObj.sceneId}`, scene);

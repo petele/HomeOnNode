@@ -2,6 +2,7 @@
   "sceneName": "Watching TV",
   "showInWebUI": true,
   "sceneId": "T4eTTKpo0sibks4",
+  "transitionTime": 50,
   "scenes": [
   	"dimmers/ba-night-high.json",
     "dimmers/br-off.json",
