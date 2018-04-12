@@ -24,6 +24,7 @@ const LOG_PREFIX = 'HUE';
  */
 function Hue(key, explicitIPAddress) {
   const REQUEST_TIMEOUT = 15 * 1000;
+  const BATTERY_CHECK_INTERVAL = 24 * 60 * 1000;
   const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
   const GROUPS_REFRESH_INTERVAL = 100 * 1000;
   const LIGHTS_REFRESH_INTERVAL = 40 * 1000;
@@ -130,7 +131,10 @@ function Hue(key, explicitIPAddress) {
     _findHub()
     .then((bridgeIP) => {
       _bridgeIP = bridgeIP;
-      _updateConfig();
+      _updateConfig()
+        .then(() => {
+          _checkBatteries();
+        });
       _updateLights();
       _updateGroups();
       _ready = true;
@@ -138,6 +142,7 @@ function Hue(key, explicitIPAddress) {
       setInterval(_updateConfig, CONFIG_REFRESH_INTERVAL);
       setInterval(_updateGroups, GROUPS_REFRESH_INTERVAL);
       setInterval(_updateLights, LIGHTS_REFRESH_INTERVAL);
+      setInterval(_checkBatteries, BATTERY_CHECK_INTERVAL);
     });
   }
 
@@ -294,31 +299,6 @@ function Hue(key, explicitIPAddress) {
     });
   }
 
-  // /**
-  //  * Updates this.config to the latest state from the hub.
-  //  *
-  //  * @return {Promise} True if updated, false if failed.
-  //  */
-  // function _updateConfig() {
-  //   // log.log(LOG_PREFIX, '_updateConfig()');
-  //   return _makeHueRequest('', 'GET', null, false)
-  //   .then((dataStore) => {
-  //     if (diff(_self.dataStore, dataStore)) {
-  //       _self.dataStore = dataStore;
-  //       /**
-  //        * see {@link https://developers.meethue.com/documentation/configuration-api}
-  //        * @event Hue#config_changed
-  //        */
-  //       _self.emit('config_changed', dataStore);
-  //     }
-  //     return true;
-  //   })
-  //   .catch((error) => {
-  //     log.exception(LOG_PREFIX, 'Unable to retreive config', error);
-  //     return false;
-  //   });
-  // }
-
   /**
    * Updates this.dataStore to the latest state from the hub.
    *
@@ -396,6 +376,36 @@ function Hue(key, explicitIPAddress) {
           resolve(_findHub());
         }, 2 * 60 * 1000);
       });
+    });
+  }
+
+  /**
+   * Check batteries
+   */
+  function _checkBatteries() {
+    if (!_self.dataStore.sensors) {
+      log.warn(LOG_PREFIX, 'checkBatteries() failed, no sensors available.');
+      return;
+    }
+    log.debug(LOG_PREFIX, 'Checking batteries...');
+    const keys = Object.keys(_self.dataStore.sensors);
+    keys.forEach((key) => {
+      const sensor = _self.dataStore.sensors[key];
+      if (!sensor || !sensor.config) {
+        return;
+      }
+      const sConfig = sensor.config;
+      const msgBase = `${sensor.name} (${sensor.modelid}) [${key}]`;
+      if (sConfig.reachable === false) {
+        const msg = `${msgBase} is unreachable.`;
+        log.warn(LOG_PREFIX, msg, sensor);
+        _self.emit('sensor_unreachable', sensor);
+      }
+      if (sConfig.battery && sConfig.battery < 50) {
+        const msg = `${msgBase} has a low battery (${sConfig.battery}%)`;
+        log.warn(LOG_PREFIX, msg, sensor);
+        _self.emit('sensor_low_battery', sensor);
+      }
     });
   }
 

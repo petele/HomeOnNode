@@ -1,7 +1,8 @@
 {
   "sceneName": "Watching TV",
-  "showInWebUI": true,
+  "room": {"key": "ALL", "id": 0},
   "sceneId": "T4eTTKpo0sibks4",
+  "showInWebUI": true,
   "transitionTime": 50,
   "scenes": [
   	"dimmers/ba-night-high.json",
@@ -12,7 +13,6 @@
     "dimmers/lr-tv-movies.json"
   ],
    "lights": [
-    // Bedroom
     {"lightId": 30, "recipeName": "ROSE_DEEP", "command": {"bri": 128}},
     {"lightId": 33, "recipeName": "ROSE_DEEP", "command": {"bri": 64}},
     {"lightId": 34, "recipeName": "ROSE_DEEP", "command": {"bri": 64}}

@@ -1,6 +1,7 @@
 {
   "sceneName": "Eating [Kitchen]",
   "sceneId": "99NgrL4Cc9kJCp7",
+  "room": {"key": "KI", "id": 2},
   "showInWebUI": true,
   "lights": [
     {"lightId": 4, "recipeName": "REBECCA_PURPLE", "command": {"bri": 180}},

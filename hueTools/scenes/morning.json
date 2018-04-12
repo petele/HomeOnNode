@@ -1,6 +1,7 @@
 {
   "sceneName": "Morning",
   "sceneId": "uR9E4wuZ8dCZYCj",
+  "room": {"key": "ALL", "id": 0},
   "showInWebUI": true,
   "scenes": [
     "dimmers/ba-day.json",

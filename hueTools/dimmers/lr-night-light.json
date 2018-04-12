@@ -1,5 +1,7 @@
-{ "sceneName": "Night Light [Living Room]",
+{
+  "sceneName": "Night Light [Living Room]",
   "sceneId": "hrrvkZ-R8yjqgxb",
+  "room": {"key": "LR", "id": 4},
   "showInWebUI": true,
   "scenes": [
     "dimmers/lr-off.json"

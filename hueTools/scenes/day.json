@@ -1,6 +1,7 @@
 {
   "sceneName": "Day",
   "sceneId": "wc1DstWhAckSmtl",
+  "room": {"key": "ALL", "id": 0},
   "showInWebUI": true,
   "scenes": [
     "dimmers/fh-morning.json",

@@ -857,6 +857,24 @@ function Home(initialConfig, fbRef) {
     hue.on('groups_changed', (groups) => {
       _fbSet('state/hue/groups', groups);
     });
+    hue.on('sensor_unreachable', (sensor) => {
+      const msg = {
+        message: 'Hue sensor unreachable',
+        level: 5,
+        date: Date.now(),
+        extra: sensor,
+      };
+      _fbPush('state/messages', msg);
+    });
+    hue.on('sensor_low_battery', (sensor) => {
+      const msg = {
+        message: 'Hue sensor low battery',
+        level: 5,
+        date: Date.now(),
+        extra: sensor,
+      };
+      _fbPush('state/messages', msg);
+    });
   }
 
   /**
