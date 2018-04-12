@@ -189,7 +189,7 @@ function Hue(key, explicitIPAddress) {
     _requestsInProgress++;
     let msg = `makeHueRequest('${method}', '${requestPath}')`;
     if (_requestsInProgress >= 5) {
-      let xrpMsg = `Excessive requests in progress (${_requestsInProgress}`;
+      let xrpMsg = `Excessive requests in progress (${_requestsInProgress})`;
       log.warn(LOG_PREFIX, xrpMsg);
     }
     log.verbose(LOG_PREFIX, msg, body);
