@@ -1,6 +1,7 @@
 {
   "sceneName": "Night Light (High) [Bathroom]",
   "sceneId": "Hj1TeCALKAkoe0P",
+  "room": {"key": "BA", "id": 8},
   "showInWebUI": true,
   "lights": [
     {"lightId": 24, "recipeName": "RED", "command": {"bri": 100}},

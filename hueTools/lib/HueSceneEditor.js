@@ -170,17 +170,32 @@ function deleteScene(sceneID) {
   return makeRequest('DELETE', 'scenes/' + sceneID, null);
 }
 
+function getAppDataValue(sceneObj) {
+  const appData = ['HoN'];
+  if (sceneObj.showInWebUI) {
+    appData.push('UI');
+  }
+  if (sceneObj.room && sceneObj.room.key) {
+    appData.push(sceneObj.room.key);
+  }
+  let appDataValue = appData.join('/');
+  if (sceneObj.room && sceneObj.room.hasOwnProperty('id')) {
+    appDataValue += '_r' + sceneObj.room.id.toString().padStart(2, '0');
+  }
+  const result = {
+    data: appDataValue,
+    version: 1,
+  };
+  return result;
+}
+
 async function createScene(sceneObj, lightList) {
   console.log(`Creating ${chalk.cyan(sceneObj.sceneName)}`);
-  let appDataValue = 'HoN';
-  if (sceneObj.showInWebUI) {
-    appDataValue += ',UI';
-  }
   const scene = {
     name: sceneObj.sceneName,
     lights: lightList,
     recycle: false,
-    appdata: {data: appDataValue, version: 4},
+    appdata: getAppDataValue(sceneObj),
   };
   if (sceneObj.hasOwnProperty('transitionTime')) {
     scene.transitiontime = sceneObj.transitionTime;
@@ -193,6 +208,7 @@ function updateScene(sceneObj, lightList) {
   const scene = {
     name: sceneObj.sceneName,
     lights: lightList,
+    recycle: false,
     storelightstate: true,
   };
   if (sceneObj.hasOwnProperty('transitionTime')) {

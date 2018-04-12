@@ -1,6 +1,7 @@
 {
   "sceneName": "Aurora Borealis",
   "sceneId": "NtH6-wh9hioG22v",
+  "room": {"key": "ALL", "id": 0},
   "showInWebUI": true,
   "scenes": [
     "dimmers/ba-aurora.json",

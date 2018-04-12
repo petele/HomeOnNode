@@ -1,6 +1,7 @@
 {
   "sceneName": "Evening [Front Hall]",
   "sceneId": "kQ1V-4J8UFuDExK",
+  "room": {"key": "FH", "id": 1},
   "showInWebUI": true,
   "lights": [
     {"lightId": 1, "recipeName": "PEACH", "command": {"bri": 200}},

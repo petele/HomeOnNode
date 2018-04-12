@@ -1,6 +1,7 @@
 {
   "sceneName": "Stove (On) [Kitchen]",
   "sceneId": "a033615f5-on-0",
+  "room": {"key": "KI", "id": 2},
   "showInWebUI": true,
   "lights": [
     {"lightId": 23, "command": {"on":true, "xy": [0.3691, 0.3719], "bri": 254}}

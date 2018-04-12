@@ -1,6 +1,7 @@
 {
   "sceneName": "Aurora [Front Hall]",
   "sceneId": "PoaBSAOFJHmjIZM",
+  "room": {"key": "FH", "id": 1},
   "showInWebUI": true,
   "lights": [
     {"lightId": 1, "recipeName": "AURORA_BLUE_DEEP", "command": {"bri": 200}},

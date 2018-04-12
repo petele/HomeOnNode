@@ -1,6 +1,7 @@
 {
   "sceneName": "Chill [Bathroom]",
   "sceneId": "dcwMcHRD4ZCMzN1",
+  "room": {"key": "BA", "id": 8},
   "showInWebUI": true,
   "lights": [
     {"lightId": 24, "recipeName": "ROSE", "command": {"bri": 125}},

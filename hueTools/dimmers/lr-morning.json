@@ -1,5 +1,7 @@
-{ "sceneName": "Morning [Living Room]",
+{
+  "sceneName": "Morning [Living Room]",
   "sceneId": "wsGINXDXAxZx4cl",
+  "room": {"key": "LR", "id": 4},
   "showInWebUI": true,
   "lights": [
     {"lightId": 11, "recipeName": "OFF"},
