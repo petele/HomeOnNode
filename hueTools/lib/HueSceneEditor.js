@@ -156,6 +156,10 @@ function listScenes() {
   return makeRequest('GET', 'scenes/', null);
 }
 
+function getScene(sceneId) {
+  return makeRequest('GET', `scenes/${sceneId}`, null);
+}
+
 function activateScene(sceneID) {
   const body = {scene: sceneID};
   return makeRequest('PUT', 'groups/0/action', body);
@@ -171,14 +175,17 @@ function deleteScene(sceneID) {
 }
 
 function getAppDataValue(sceneObj) {
-  const appData = ['HoN'];
+  let appDataValue = 'h';
+  if (sceneObj.room && sceneObj.room.hasOwnProperty('key')) {
+    appDataValue += sceneObj.room.key.substring(0,2).padStart(2, 'X');
+  } else {
+    appDataValue += 'zz';
+  }
   if (sceneObj.showInWebUI) {
-    appData.push('UI');
+    appDataValue += 'UI';
+  } else {
+    appDataValue += 'zz';
   }
-  if (sceneObj.room && sceneObj.room.key) {
-    appData.push(sceneObj.room.key);
-  }
-  let appDataValue = appData.join('/');
   if (sceneObj.room && sceneObj.room.hasOwnProperty('id')) {
     appDataValue += '_r' + sceneObj.room.id.toString().padStart(2, '0');
   }
@@ -208,8 +215,8 @@ function updateScene(sceneObj, lightList) {
   const scene = {
     name: sceneObj.sceneName,
     lights: lightList,
-    recycle: false,
     storelightstate: true,
+    appdata: getAppDataValue(sceneObj),
   };
   if (sceneObj.hasOwnProperty('transitionTime')) {
     scene.transitiontime = sceneObj.transitionTime;
@@ -269,6 +276,7 @@ exports.init = init;
 exports.wait = wait;
 exports.allOff = allOff;
 exports.setLight = setLight;
+exports.getScene = getScene;
 exports.getRecipes = getRecipes;
 exports.listScenes = listScenes;
 exports.createScene = createScene;
