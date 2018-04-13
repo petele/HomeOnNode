@@ -20,7 +20,7 @@ const UTIL_OPTS = {
   colors: true,
   maxArrayLength: 20,
   breakLength: 1000,
-}
+};
 
 function initHSE() {
   const opts = {
@@ -55,6 +55,23 @@ commander
   });
 
 commander
+  .command('get <sceneID>')
+  .description('Gets the details of the specified scene.')
+  .action((sceneID) => {
+    initHSE();
+    hseLib.getScene(sceneID)
+      .then((scene) => {
+        const util_opts = {
+          colors: true,
+          compact: false,
+          depth: 3,
+          maxArrayLength: 50,
+        };
+        console.log(util.inspect(scene, util_opts));
+      });
+  });
+
+commander
   .command('list')
   .description('Lists all of the current scenes')
   .action(() => {
@@ -63,8 +80,10 @@ commander
       .then((scenes) => {
         const keys = Object.keys(scenes);
         keys.forEach(function(key) {
-          const k = chalk.cyan(key.padEnd(20, ' '));
-          console.log(k, scenes[key].name);
+          const k = key.padEnd(16, ' ');
+          const a = scenes[key].appdata.data.padEnd(14, ' ');
+          const n = scenes[key].name;
+          console.log(chalk.cyan(k), chalk.magenta(a), n);
         });
       });
   });
