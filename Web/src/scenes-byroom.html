@@ -18,18 +18,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles app-grid-style">
       :host {
-        display: block;
-      }        
+        display: none;
+      }
     </style>
 
     <send-command id="sendCommand"></send-command>
     <div class="card">
       <div>[[roomName]]</div>
       <div class="app-grid grid-medium">
-        <template is="dom-repeat"
-          items="[[scenes]]"
-          sort="sortScenes"
-          filter="isInRoom">
+        <template is="dom-repeat" items="[[scenes]]"
+          sort="sortScenes" filter="isInRoom">
             <paper-button class="button" on-tap="tapHueScene">
               [[getSceneName(item.name)]]
             </paper-button>
@@ -61,6 +59,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
+        this.visible = false;
+      }
+
+      makeVisible() {
+        if (this.visible === false) {
+          this.visible = true;
+          this.updateStyles({'display': 'block'});
+        }
       }
 
       getRoomAndName(lightName) {
@@ -76,15 +82,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       isInRoom(item) {
-        if (item.name.toLowerCase() === 'last on state') {
-          return false;
-        }
-        let scene = this.getRoomAndName(item.name);
-        if (scene.name.toLowerCase() === 'off') {
-          return false;
-        }
-        if (scene.room === this.roomId) {
-          return true;
+        if (item.appdata.data) {
+          const appData = item.appdata.data;
+          const roomId = '_r' + this.roomId.padStart(2, '0');
+
+          // Is it auto-generated?
+          if (appData.indexOf('_d') >= 0 || appData.indexOf('_h') >= 0) {
+            return false;
+          }
+          // Is it hidden in the webUI?
+          if (appData.indexOf('zz' + roomId) >= 0) {
+            return false;
+          }
+          // Is it in the current room?
+          if (appData.indexOf(roomId) >= 0) {
+            this.makeVisible();
+            return true;
+          }
         }
         return false;
       }

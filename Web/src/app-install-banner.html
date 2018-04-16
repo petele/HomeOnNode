@@ -1,0 +1,96 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="app-install-banner">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: none;
+      }
+    </style>
+
+    <paper-button on-tap="prompt">
+      Add to Home Screen
+    </paper-button>
+
+  </template>
+
+  <script>
+    class AppInstallBanner extends Polymer.Element {
+      static get is() { return 'app-install-banner'; }
+
+      static get properties() {
+        return {
+          promptEvent: Object,
+        };
+      }
+
+      ready() {
+        super.ready();
+        window.addEventListener('beforeinstallprompt', this._beforeInstallPrompt.bind(this));
+        window.addEventListener('appinstalled', this._appInstalled.bind(this));
+      }
+
+      savePromptEvent(evt) {
+        console.log('savePromptEvent', evt);
+        this.promptEvent = evt;
+        if (evt) {
+          this.updateStyles({'display': 'block'});
+        } else {
+          this.updateStyles({'display': 'none'});
+        }
+      }
+
+
+      prompt(e) {
+        const promptEvent = this.promptEvent;
+        if (!promptEvent) {
+          console.error('prompt', 'No prompt event available.');
+          return;
+        }
+        promptEvent.prompt()
+          .then(() => {
+            console.log('promptEvent');
+          })
+          .catch((err) => {
+            console.error('promptEvent', err);
+          });
+        promptEvent.userChoice
+          .then((result) => {
+            console.log('userChoice', result);
+          })
+          .catch((err) => {
+            console.error('userChoice', err);
+          })
+          .then(() => {
+            this.savePromptEvent(null);
+          });
+      }
+
+      _appInstalled(e) {
+        console.log('appInstalled', e);
+        this.savePromptEvent(null);
+      }
+
+      _beforeInstallPrompt(e) {
+        console.log('beforeInstallPrompt');
+        this.savePromptEvent(e);
+        e.preventDefault();
+      }
+
+    }
+
+    window.customElements.define(AppInstallBanner.is, AppInstallBanner);
+
+  </script>
+</dom-module>

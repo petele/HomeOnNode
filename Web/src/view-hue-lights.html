@@ -29,14 +29,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <elem-hue-control light-state="{{lightState}}"></elem-hue-control>
     </div>
 
+    <fb-query path="state/hue/groups" data="{{hueGroups}}"></fb-query>
     <fb-query path="state/hue/lights" data="{{hueLights}}"></fb-query>
     <div>
-      <template is="dom-repeat" items="[[rooms]]">
-        <lights-byroom 
+      <template is="dom-repeat" sort="sort" filter="roomsOnly" items="[[hueGroups]]">
+        <lights-byroom
           light-state="{{lightState}}"
           lights="{{hueLights}}"
-          room-name="[[item.name]]"
-          room-id="[[item.id]]">
+          room-info="[[item]]">
         </lights-byroom>
       </template>
     </div>
@@ -50,17 +50,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get properties() {
         return {
           page: String,
-          rooms: {
-            type: Array,
-            value: [
-              {name: 'Bedroom', id: 'BR'},
-              {name: 'Bathroom', id: 'Bathroom'},
-              {name: 'Front Hall', id: 'Front Hall'},
-              {name: 'Kitchen', id: 'Kitchen'},
-              {name: 'Living Room', id: 'LR'},
-            ],
-          },
         };
+      }
+
+      sort(val1, val2) {
+        const a = val1.name.toLowerCase();
+        const b = val2.name.toLowerCase();
+        if (a > b) {
+          return 1;
+        }
+        if (a < b) {
+          return -1;
+        }
+        return 0;
+      }
+
+      roomsOnly(item) {
+        if (item.type === 'Room') {
+          return true;
+        }
+        return false;
       }
 
     }
