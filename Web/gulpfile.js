@@ -82,11 +82,15 @@ gulp.task('serve', function() {
   return promisedExec('polymer serve', '.');
 });
 
+gulp.task('serve-sw', ['build'], function() {
+  return promisedExec('python -m SimpleHTTPServer', 'build/bundled/');
+});
+
 gulp.task('lint', function() {
-  return promisedExec('npm run lint', '.')
+  return promisedExec('eslint . --ext html --ignore-path .gitignore', '.')
     .then((output) => {
       console.log(output);
-    })
+    });
 });
 
 gulp.task('build', ['clean', 'updateVersion'], function() {

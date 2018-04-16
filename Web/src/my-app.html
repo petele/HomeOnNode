@@ -31,6 +31,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="say-this.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="push-subscription.html">
+<link rel="import" href="app-install-banner.html">
 
 <link rel="import" href="view-settings.html">
 
@@ -82,7 +83,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       data="{{routeData}}"
       tail="{{subroute}}">
     </app-route>
-    
+
     <app-drawer-layout fullbleed responsive-width="800px">
       <!-- Drawer content -->
       <app-drawer id="drawer" slot="drawer">
@@ -101,6 +102,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </iron-selector>
         <push-subscription></push-subscription>
         <say-this></say-this>
+        <app-install-banner></app-install-banner>
         <my-version></my-version>
       </app-drawer>
 
@@ -122,8 +124,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <paper-tab name="media" link>
                 <a href="/media" class="link" tabindex="-1">Media</a>
               </paper-tab>
-            </paper-tabs> 
-          </app-toolbar>       
+            </paper-tabs>
+          </app-toolbar>
         </app-header>
 
         <iron-pages

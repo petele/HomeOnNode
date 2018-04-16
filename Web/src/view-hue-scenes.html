@@ -29,14 +29,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <elem-lights page="{{page}}"></elem-lights>
 
+    <fb-query path="state/hue/groups" data="{{hueGroups}}"></fb-query>
     <fb-query path="state/hue/scenes" data="{{hueScenes}}"></fb-query>
 
     <div>
-      <template is="dom-repeat" items="[[rooms]]">
+        <scenes-byroom
+          scenes="[[hueScenes]]"
+          room-name="Home"
+          room-id="0">
+        </scenes-byroom>
+      <template is="dom-repeat" filter="isRoom" sort="sort" items="[[hueGroups]]">
         <scenes-byroom
           scenes="[[hueScenes]]"
           room-name="[[item.name]]"
-          room-id="[[item.id]]">
+          room-id="[[item.$key]]">
         </scenes-byroom>
       </template>
     </div>
@@ -50,18 +56,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get properties() {
         return {
           page: String,
-          rooms: {
-            type: Array,
-            value: [
-              {name: 'Home', id: 'all'},
-              {name: 'Bedroom', id: 'Bedroom'},
-              {name: 'Bathroom', id: 'Bathroom'},
-              {name: 'Front Hall', id: 'Front Hall'},
-              {name: 'Kitchen', id: 'Kitchen'},
-              {name: 'Living Room', id: 'Living Room'},
-            ],
-          },
         };
+      }
+
+      isRoom(item) {
+        if (item.type === 'Room') {
+          return true;
+        }
+        return false;
+      }
+
+      sort(val1, val2) {
+        const a = val1.name.toLowerCase();
+        const b = val2.name.toLowerCase();
+        if (a > b) {
+          return 1;
+        }
+        if (a < b) {
+          return -1;
+        }
+        return 0;
       }
 
     }

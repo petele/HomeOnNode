@@ -29,7 +29,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
 
     <elem-lights page="{{page}}"></elem-lights>
-    
+
     <send-command id="sendCommand"></send-command>
     <fb-query path="state/hue/groups" data="{{hueGroups}}"></fb-query>
 
@@ -41,6 +41,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </paper-button>
         <template
           is="dom-repeat"
+          sort="sort"
           filter="isRoom"
           items="[[hueGroups]]">
             <paper-button class$="[[getButtonClass(item.$key, item.state.all_on)]]" on-tap="tapHueGroup">
@@ -70,6 +71,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.allOn = 'button';
       }
 
+      isRoom(item) {
+        if (item.type === 'Room') {
+          return true;
+        }
+        return false;
+      }
+
+      sort(val1, val2) {
+        const a = val1.name.toLowerCase();
+        const b = val2.name.toLowerCase();
+        if (a > b) {
+          return 1;
+        }
+        if (a < b) {
+          return -1;
+        }
+        return 0;
+      }
+
       getButtonClass(key, isOn) {
         this.updateAllLights(key, isOn);
         if (isOn === true) {
@@ -91,13 +111,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         } else {
           this.allOn = 'button';
         }
-      }
-
-      isRoom(item) {
-        if (item.type === 'Room') {
-          return true;
-        }
-        return false;
       }
 
       tapAllLights(event) {

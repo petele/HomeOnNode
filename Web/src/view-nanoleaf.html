@@ -45,7 +45,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <elem-lights page="{{page}}"></elem-lights>
 
     <send-command id="sendCommand"></send-command>
-    <fb-document path="state/nanoLeaf" data="{{nanoLeaf}}"></fb-document>    
+    <fb-document path="state/nanoLeaf" data="{{nanoLeaf}}"></fb-document>
 
     <div class="card card-narrow" style="padding-top: 12px;">
       <div class="layout horizontal">
@@ -59,7 +59,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <div class="card">
       <div class="app-grid grid-medium" id="nlEffects">
-        <template is="dom-repeat" items="[[nanoLeaf.effects.effectsList]]">
+        <template items="[[nanoLeaf.effects.effectsList]]"
+          is="dom-repeat" sort="sort" >
           <paper-button class$="[[effectClass(item, nanoLeaf.effects.select, nanoLeaf.state.on.value)]]" on-tap="tapNanoLeafEffect">
             [[item]]
           </paper-button>
@@ -77,6 +78,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return {
           page: String,
         };
+      }
+
+      sort(val1, val2) {
+        const a = val1.toLowerCase();
+        const b = val2.toLowerCase();
+        if (a > b) {
+          return 1;
+        }
+        if (a < b) {
+          return -1;
+        }
+        return 0;
       }
 
       effectClass(item, selected, isOn) {
