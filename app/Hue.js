@@ -399,12 +399,12 @@ function Hue(key, explicitIPAddress) {
       if (sConfig.reachable === false) {
         const msg = `${msgBase} is unreachable.`;
         log.warn(LOG_PREFIX, msg, sensor);
-        _self.emit('sensor_unreachable', sensor);
+        // _self.emit('sensor_unreachable', sensor);
       }
       if (sConfig.battery && sConfig.battery < 50) {
         const msg = `${msgBase} has a low battery (${sConfig.battery}%)`;
         log.warn(LOG_PREFIX, msg, sensor);
-        _self.emit('sensor_low_battery', sensor);
+        // _self.emit('sensor_low_battery', sensor);
       }
     });
   }
