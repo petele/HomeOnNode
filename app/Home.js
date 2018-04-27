@@ -346,7 +346,7 @@ function Home(initialConfig, fbRef) {
     }
     // Schedule a delayed command
     if (command.hasOwnProperty('delay')) {
-      let cmds = command.onDelay;
+      let cmds = command.delay;
       if (Array.isArray(cmds) === false) {
         cmds = [cmds];
       }
