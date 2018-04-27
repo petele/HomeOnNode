@@ -4,7 +4,7 @@
   "room": {"key": "ALL", "id": 0},
   "showInWebUI": true,
   "scenes": [
-    "dimmers/ba-day.json",
+    "dimmers/ba-morning.json",
     "dimmers/br-day.json",
     "dimmers/fh-morning.json",
     "dimmers/ki-morning.json",

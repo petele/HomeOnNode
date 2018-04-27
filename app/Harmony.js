@@ -236,7 +236,13 @@ function Harmony(uuid) {
       const child = data.children[0];
       if (child.attrs.mime === COMMAND_STRINGS.CONFIG) {
         result = child.children.join('');
-        result = JSON.parse(result);
+        try {
+          result = JSON.parse(result);
+        } catch (ex) {
+          const msg = `Unable to parse config string: ${result}`;
+          log.exception(LOG_PREFIX, msg, ex);
+          return;
+        }
         _configChanged(result);
       } else if (child.attrs.mime === COMMAND_STRINGS.ACTIVITY) {
         result = child.children.join('');
