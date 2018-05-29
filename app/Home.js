@@ -1011,6 +1011,10 @@ function Home(initialConfig, fbRef) {
     let cmdName = 'PRESENCE_SOME';
     if (numPresent === 0) {
       cmdName = 'PRESENCE_NONE';
+    } else {
+      if (_self.state.systemState === 'AWAY') {
+        _setState('HOME');
+      }
     }
     _self.executeCommandByName(cmdName, null, 'PRESENCE');
   }
