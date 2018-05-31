@@ -127,6 +127,16 @@ function Home(initialConfig, fbRef) {
       return;
     }
 
+    // Door Open/Close event
+    if (command.hasOwnProperty('door')) {
+      const doorName = command.door.name;
+      const state = command.door.state;
+      if (doorName && state) {
+        _handleDoorEvent(doorName, state);
+      } else {
+        log.warn(LOG_PREFIX, `Invalid door params: ${doorName} / ${state}`);
+      }
+    }
     // systemState
     if (command.hasOwnProperty('state')) {
       _setState(command.state);
@@ -166,6 +176,10 @@ function Home(initialConfig, fbRef) {
       } else {
         log.warn(LOG_PREFIX, 'Hue unavailable.');
       }
+    }
+    // Doorbell
+    if (command.hasOwnProperty('doorbell')) {
+      _ringDoorbell(source);
     }
     // NanoLeaf
     if (command.hasOwnProperty('nanoLeaf')) {
