@@ -112,7 +112,6 @@ function init() {
  * @return {Boolean} true if loaded, false if not.
  */
 function _loadGPIO() {
-  return true;
   try {
     GPIO = require('onoff').Gpio;
     return true;
@@ -208,12 +207,12 @@ function _pinChanged(pin, err, value) {
 */
 function _close() {
   log.log(APP_NAME, 'Preparing to exit, closing all connections...');
-  if (GPIO) {
-    log.debug(APP_NAME, 'Unwatching pins');
-    GPIO.unwatchAll();
-    // log.debug(APP_NAME, 'Unexporting GPIO');
-    // GPIO.unexport();
-  }
+  // if (GPIO) {
+  //   log.debug(APP_NAME, 'Unwatching pins');
+  //   GPIO.unwatchAll();
+  //   log.debug(APP_NAME, 'Unexporting GPIO');
+  //   GPIO.unexport();
+  // }
   if (_wsClient) {
     _wsClient.shutdown();
   }
