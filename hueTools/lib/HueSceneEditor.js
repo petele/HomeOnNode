@@ -179,31 +179,9 @@ function deleteScene(sceneID) {
   return makeRequest('DELETE', 'scenes/' + sceneID, null);
 }
 
-// function getAppDataValue(sceneObj) {
-//   let appDataValue = 'h';
-//   if (sceneObj.room && sceneObj.room.hasOwnProperty('key')) {
-//     appDataValue += sceneObj.room.key.substring(0,2).padStart(2, 'X');
-//   } else {
-//     appDataValue += 'zz';
-//   }
-//   if (sceneObj.showInWebUI) {
-//     appDataValue += 'UI';
-//   } else {
-//     appDataValue += 'zz';
-//   }
-//   if (sceneObj.room && sceneObj.room.hasOwnProperty('id')) {
-//     appDataValue += '_r' + sceneObj.room.id.toString().padStart(2, '0');
-//   }
-//   const result = {
-//     data: appDataValue,
-//     version: 1,
-//   };
-//   return result;
-// }
-
 function _generateAppDataValue(roomId) {
   let result = 'x' + _randomChar() + _randomChar() + _randomChar() + 'X';
-  result += '_r' + roomId.padStart(2, '0');
+  result += '_r' + roomId.toString().padStart(2, '0');
   result += '_d99';
   return result;
 }
@@ -231,15 +209,11 @@ function updateScene(sceneObj, lightList) {
     name: sceneObj.sceneName,
     lights: lightList,
     storelightstate: true,
-    appdata: {
-      version: 1,
-    },
   };
-  if (sceneObj.appData) {
-    scene.appdata.data = sceneObj.appData;
-  } else {
-    scene.appdata.data = _generateAppDataValue(sceneObj.room.id);
-  }
+  // scene.appdata = {
+  //   data: _generateAppDataValue(sceneObj.room.id),
+  //   version: 1,
+  // };
   if (sceneObj.hasOwnProperty('transitionTime')) {
     scene.transitiontime = sceneObj.transitionTime;
   }

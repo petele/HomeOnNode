@@ -139,7 +139,7 @@ function _registerPin(details) {
     return false;
   }
   const edge = details.edge;
-  if (edge && !EDGES.contains(edge)) {
+  if (edge && !EDGES.includes(edge)) {
     log.error(APP_NAME, `Invalid edge (${edge}) for pin ${pinNumber}`);
     return false;
   }
