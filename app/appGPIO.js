@@ -172,9 +172,10 @@ function _pinChanged(pin, err, value) {
     return;
   }
   const now = Date.now();
+  const debounceDelay = pin.debounceDelay || 250;
   const hasChanged = value !== pin.lastValue;
   const msSinceLastPush = now - pin.lastPushed;
-  const timeOK = msSinceLastPush > 500;
+  const timeOK = msSinceLastPush > debounceDelay;
   // let msg = `hasChanged: ${hasChanged}, msSinceLastPush: ${msSinceLastPush}, `
   //   + `timeOK: ${timeOK}`;
   // console.log('_pinChanged', msg);
