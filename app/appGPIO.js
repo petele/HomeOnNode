@@ -40,7 +40,10 @@ const APP_NAME = _config.appName;
 
 // Setup logging
 log.setAppName(APP_NAME);
-log.setOptions({firebasePath: `logs/${APP_NAME}`});
+log.setOptions({
+  firebaseLogLevel: _config.logLevel || 50,
+  firebasePath: `logs/${APP_NAME.toLowerCase()}`
+});
 log.startWSS();
 log.appStart();
 
