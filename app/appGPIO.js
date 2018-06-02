@@ -137,14 +137,18 @@ function _registerPin(details) {
     log.log(APP_NAME, `Pin '${pinNumber}' disabled`);
     return false;
   }
-  const edge = details.edge;
-  if (edge && !EDGES.includes(edge)) {
+  const edge = details.edge || 'both';
+  if (!EDGES.includes(edge)) {
     log.error(APP_NAME, `Invalid edge (${edge}) for pin ${pinNumber}`);
     return false;
   }
-  log.log(APP_NAME, `Listening on pin ${pinNumber}`);
+  log.log(APP_NAME, `Listening on pin ${pinNumber} on edge: ${edge}`);
   details.lastPushed = 0;
   const pin = new GPIO(pinNumber, 'in', edge);
+  if (details.invert) {
+    log.debug(APP_NAME, `Inverting value on pin ${pinNumber}`);
+    pin.setActiveLow(true);
+  }
   const value = pin.readSync();
   details.lastValue = value;
   log.debug(APP_NAME, `Pin ${pinNumber} is currently: ${value}`)
@@ -170,7 +174,7 @@ function _pinChanged(pin, err, value) {
   const now = Date.now();
   const hasChanged = value !== pin.lastValue;
   const msSinceLastPush = now - pin.lastPushed;
-  const timeOK = msSinceLastPush > 3000;
+  const timeOK = msSinceLastPush > 500;
   // let msg = `hasChanged: ${hasChanged}, msSinceLastPush: ${msSinceLastPush}, `
   //   + `timeOK: ${timeOK}`;
   // console.log('_pinChanged', msg);
