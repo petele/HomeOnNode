@@ -8,23 +8,42 @@ const Firebase = require('firebase');
 const WSClient = require('./WSClient');
 const DeviceMonitor = require('./DeviceMonitor');
 
-const APP_NAME = process.argv[2];
-
 let _fb;
 let _config;
 let _wsClient;
 let _deviceMonitor;
 
-if (!APP_NAME) {
-  log.error('REMOTE', 'App Name not provided on command line');
+// Read config file
+try {
+  console.log(`Reading 'config.json'...`);
+  let config = fs.readFileSync('config.json', {encoding: 'utf8'});
+  console.log(`Parsing 'config.json'...`);
+  _config = JSON.parse(config);
+} catch (ex) {
+  console.error(`Unable to read or parse 'config.json'`);
+  console.error(ex);
   process.exit(1);
 }
+
+// Verify config has appName
+if (!_config.appName) {
+  console.error(`'appName' not set in config.`);
+  process.exit(1);
+}
+const APP_NAME = _config.appName;
+// Verify config has wsServer
+if (!_config.wsServer) {
+  console.error(`'wsServer' not set in config.`);
+  process.exit(1);
+}
+
+
+// Setup logging
 log.setAppName(APP_NAME);
-const logOpt = {
-  firebaseLogLevel: 40,
-  firebasePath: `logs/${APP_NAME.toLowerCase()}`,
-};
-log.setOptions(logOpt);
+log.setOptions({
+  firebaseLogLevel: _config.logLevel || 50,
+  firebasePath: `logs/${APP_NAME.toLowerCase()}`
+});
 log.startWSS();
 log.appStart();
 
@@ -51,41 +70,14 @@ function init() {
     _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
   });
 
-  _fb.child(`config/${APP_NAME}/logs`).on('value', (snapshot) => {
-    log.setOptions(snapshot.val());
-    log.debug(APP_NAME, 'Log config updated.');
+  _fb.child(`config/${APP_NAME}/logLevel`).on('value', (snapshot) => {
+    const logLevel = snapshot.val();
+    log.setOptions({
+      firebaseLogLevel: logLevel || 50,
+      firebasePath: `logs/${APP_NAME.toLowerCase()}`
+    });
+    log.log(APP_NAME, `Log level changed to ${logLevel}`);
   });
-
-  let data;
-  try {
-    log.debug(APP_NAME, `Reading 'config.json'.`);
-    data = fs.readFileSync('config.json', {encoding: 'utf8'});
-  } catch (ex) {
-    const msg = `Error reading 'config.json' file.`;
-    log.exception(APP_NAME, msg, ex);
-    _close();
-    _deviceMonitor.shutdown('read_config', msg, 1);
-    return;
-  }
-
-  try {
-    log.debug(APP_NAME, `Parsing 'config.json'.`);
-    _config = JSON.parse(data);
-  } catch (ex) {
-    const msg = `Error parsing 'config.json' file.`;
-    log.exception(APP_NAME, msg, ex);
-    _close();
-    _deviceMonitor.shutdown('parse_config', msg, 1);
-    return;
-  }
-
-  if (_config.enabled !== true) {
-    const msg = 'Disabled by config.';
-    log.error(APP_NAME, msg, _config);
-    _close();
-    _deviceMonitor.shutdown('disabled_by_config', msg, 1);
-    return;
-  }
 
   _wsClient = new WSClient(_config.wsServer, true);
 
@@ -94,7 +86,13 @@ function init() {
     log.log(APP_NAME, 'Keypad settings updated.');
   });
 
+  _fb.child(`config/${APP_NAME}/disabled`).on('value', function(snapshot) {
+    _config.disabled = snapshot.val();
+    log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
+  });
+
   Keypad.listen(_config.keypad.modifiers, _handleKeyPress);
+
   setInterval(function() {
     log.cleanFile();
   }, 60 * 60 * 24 * 1000);
@@ -129,6 +127,10 @@ function _handleKeyPress(key, modifier, exitApp) {
     cmd: cmd,
   };
   log.verbose(APP_NAME, 'Key pressed', details);
+  if (_config.disabled === true) {
+    log.warn(APP_NAME, 'AppRemote disabled by config', details);
+    return;
+  }
   if (exitApp) {
     _close();
     _deviceMonitor.shutdown('USER', 'exit_key', 0);
