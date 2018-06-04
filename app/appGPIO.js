@@ -91,7 +91,7 @@ function init() {
   _config.pins.forEach(_registerPin);
 
   // Listen for changes to config
-  _fb.child(`config/${APP_NAME}`).on('value', (snapshot) => {
+  _fb.child(`config/${APP_NAME}/pins`).on('value', (snapshot) => {
     if (_hasReadFBConfig === false) {
       _hasReadFBConfig = true;
       return;
@@ -101,6 +101,22 @@ function init() {
     log.log(APP_NAME, 'Config updated, restart required.');
     _close();
     _deviceMonitor.restart(APP_NAME, 'Config changed', false);
+  });
+
+  // Listen for changes to disabled
+  _fb.child(`config/${APP_NAME}/disabled`).on('value', function(snapshot) {
+    _config.disabled = snapshot.val();
+    log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
+  });
+
+  // Listen for changes to log level
+  _fb.child(`config/${APP_NAME}/logLevel`).on('value', (snapshot) => {
+    const logLevel = snapshot.val();
+    log.setOptions({
+      firebaseLogLevel: logLevel || 50,
+      firebasePath: `logs/${APP_NAME.toLowerCase()}`
+    });
+    log.log(APP_NAME, `Log level changed to ${logLevel}`);
   });
 
   // Clean up logs every 24 hours
@@ -179,9 +195,13 @@ function _pinChanged(pin, err, value) {
   const hasChanged = value !== pin.lastValue;
   const msSinceLastPush = now - pin.lastPushed;
   const timeOK = msSinceLastPush > debounceDelay;
-  // let msg = `hasChanged: ${hasChanged}, msSinceLastPush: ${msSinceLastPush}, `
-  //   + `timeOK: ${timeOK}`;
-  // console.log('_pinChanged', msg);
+  const msg = `pinNumber: ${pin.pinNumber} - ` +
+              `value: ${value} | ` +
+              `hasChanged: ${hasChanged}, ` +
+              `timeOK: ${timeOK} -|- ` +
+              `debounceDelay: ${debounceDelay}, ` +
+              `msSinceLastPushed: ${msSinceLastPush}`;
+  log.debug(APP_NAME, msg);
   pin.lastValue = value;
   if (hasChanged && timeOK) {
     pin.lastPushed = now;
@@ -194,6 +214,10 @@ function _pinChanged(pin, err, value) {
     } else if (value === 0) {
       command = pin.cmdFalse;
       message = pin.msgFalse;
+    }
+    if (_config.disabled === true) {
+      log.warn(APP_NAME, `Command not sent, ${APP_NAME} is disabled`);
+      return;
     }
     if (command && _wsClient) {
       _wsClient.send(JSON.stringify(command)).catch((err) => {
