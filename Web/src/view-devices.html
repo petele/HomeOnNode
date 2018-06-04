@@ -58,6 +58,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       h1 {
         margin-top: 0;
       }
+      summary {
+        list-style: none;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
     </style>
     <fb-query path="devices" data="{{devices}}"></fb-query>
 
@@ -87,34 +93,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <span>[[item.appName]]</span>
           </div>
         </template>
-        <template is="dom-if" if="[[item.host]]">
-          <div>
-            <span class="label">IP Address</span>
-            <span>[[item.host.ipAddress]]</span>
-          </div>
-        </template>
         <div>
           <span class="label">Last Updated</span>
           <span class$="[[isStale(item.heartbeat)]]">
             [[formatDate(item.heartbeat)]]
           </span>
         </div>
-        <template is="dom-if" if="[[item.startedAt]]">
+        <details>
+          <summary class="label">Details</summary>
+          <template is="dom-if" if="[[item.host]]">
+            <div>
+              <span class="label">IP Address</span>
+              <span>[[item.host.ipAddress]]</span>
+            </div>
+          </template>
+          <template is="dom-if" if="[[item.startedAt]]">
+            <div>
+              <span class="label">Started</span>
+              <span>[[formatDate(item.startedAt)]]</span>
+            </div>
+          </template>
+          <template is="dom-if" if="[[item.shutdownAt]]">
+            <div>
+              <span class="label">Shutdown</span>
+              <span>[[formatDate(item.shutdownAt)]]</span>
+            </div>
+          </template>
           <div>
-            <span class="label">Started</span>
-            <span>[[formatDate(item.startedAt)]]</span>
+            <span class="label">Version</span>
+            <span>[[item.version]]</span>
           </div>
-        </template>
-        <template is="dom-if" if="[[item.shutdownAt]]">
-          <div>
-            <span class="label">Shutdown</span>
-            <span>[[formatDate(item.shutdownAt)]]</span>
-          </div>
-        </template>
-        <div>
-          <span class="label">Version</span>
-          <span>[[item.version]]</span>
-        </div>
+        </details>
         <paper-icon-button icon="hon-icons:restart" on-tap="rebootDevice"></paper-icon-button>
       </div>
 
