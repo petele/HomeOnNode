@@ -1,5 +1,5 @@
 {
-  "sceneName": "Sunrise End [Bathroom]",
+  "sceneName": "Sunrise [Bathroom]",
   "sceneId": "68ROTtByFmrRwm5",
   "room": {"key": "BA", "id": 8},
   "showInWebUI": true,
@@ -7,6 +7,6 @@
   "lights": [
     {"lightId": 24, "recipeName": "DEFAULT", "command": {"bri": 254}},
     {"lightId": 25, "recipeName": "DEFAULT", "command": {"bri": 254}},
-    {"lightId": 26, "recipeName": "REBECCA_PURPLE", "command": {"bri": 254}}
+    {"lightId": 26, "recipeName": "HUE_ENERGIZE", "command": {"bri": 254}}
   ]
 }

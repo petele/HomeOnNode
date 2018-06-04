@@ -57,9 +57,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
       h1 {
         margin-top: 0;
+        margin-bottom: 0.25em;
       }
       summary {
         list-style: none;
+        cursor: pointer;
       }
       summary::-webkit-details-marker {
         display: none;
@@ -100,7 +102,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </span>
         </div>
         <details>
-          <summary class="label">Details</summary>
+          <summary class="label">Expand</summary>
           <template is="dom-if" if="[[item.host]]">
             <div>
               <span class="label">IP Address</span>
