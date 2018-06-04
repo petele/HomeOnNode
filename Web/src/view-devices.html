@@ -75,12 +75,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <template is="dom-repeat" items="[[devices]]">
       <div class="card card-narrow">
         <div class="layout horizontal">
-          <h1 class="flex">[[item.appName]]</h1>
+          <h1 class="flex">[[item.deviceName]]</h1>
           <div class="circle">
             <iron-icon icon="[[getIcon(item.online)]]" class$="[[isOnline(item.online)]]">
             </iron-icon>
           </div>
         </div>
+        <template is="dom-if" if="[[item.appName]]">
+          <div>
+            <span class="label">App</span>
+            <span>[[item.appName]]</span>
+          </div>
+        </template>
         <template is="dom-if" if="[[item.host]]">
           <div>
             <span class="label">IP Address</span>
