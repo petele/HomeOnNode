@@ -36,30 +36,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
 
-    <sonos-controller></sonos-controller>
-
-<!--     <fb-document path="state/sonos/state" data="{{sonosState}}">
-    </fb-document>
-    <div class="card card-narrow">
-      <div class="sonosTitle no-overflow">
-        [[getTitle(sonosState.currentTrack)]] &nbsp;
-      </div>
-      <div class="sonosArtistAlbum sonosTrackInfo no-overflow">
-        [[getArtistAlbum(sonosState.currentTrack)]]
-      </div>
-      <div class="layout horizontal">
-        <paper-icon-button icon="hon-icons:volume-down"
-          cmd="SONOS_VOL_DOWN" on-tap="tapSonosControl"></paper-icon-button>
-        <paper-icon-button icon="hon-icons:skip-back"
-          cmd="SONOS_PREVIOUS" on-tap="tapSonosControl"></paper-icon-button>
-        <paper-icon-button id="sonosPlay" icon="hon-icons:play"
-          cmd="SONOS_PLAY" on-tap="tapSonosControl"></paper-icon-button>
-        <paper-icon-button icon="hon-icons:skip-forward"
-          cmd="SONOS_NEXT" on-tap="tapSonosControl"></paper-icon-button>
-        <paper-icon-button icon="hon-icons:volume-up"
-          cmd="SONOS_VOL_UP" on-tap="tapSonosControl"></paper-icon-button>
-      </div>
-    </div> -->
+    <sonos-controller id="sonosController"></sonos-controller>
 
     <fb-document path="state/harmony" data="{{currentHarmonyActivity}}">
     </fb-document>
@@ -95,12 +72,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class MediaView extends Polymer.Element {
       static get is() { return 'view-media'; }
 
-      static get observers() {
-        return [
-          'sonosPlayerStateChanged(sonosState.playbackState)',
-        ];
-      }
-
       harmonyActivityClass(activityLabel, currentActivity) {
         activityLabel = activityLabel.toLowerCase();
         currentActivity = currentActivity.toLowerCase();
@@ -108,49 +79,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return 'button toggle-on';
         }
         return 'button';
-      }
-
-      getTitle(currentTrack) {
-        if (currentTrack) {
-          if (currentTrack.uri && currentTrack.uri.indexOf('spdif') > 0) {
-            return 'TV';
-          }
-          if (currentTrack.title) {
-            return currentTrack.title;
-          }
-        }
-        return '';
-      }
-
-      getArtistAlbum(currentTrack) {
-        if (currentTrack) {
-          if (currentTrack.artist && currentTrack.album) {
-            return currentTrack.artist + ' - ' + currentTrack.album;
-          }
-          if (currentTrack.artist || currentTrack.album) {
-            return currentTrack.artist || currentTrack.album;
-          }
-        }
-        return '';
-      }
-
-      sonosPlayerStateChanged(newVal) {
-        if (newVal === undefined) {
-          return;
-        }
-        let icon = 'hon-icons:play';
-        let cmd = 'SONOS_PLAY';
-        if (newVal === 'PLAYING') {
-          icon = 'hon-icons:pause';
-          cmd = 'SONOS_PAUSE';
-        }
-        this.$.sonosPlay.icon = icon;
-        this.$.sonosPlay.setAttribute('cmd', cmd);
-      }
-
-      tapSonosControl(event) {
-        let cmd = {cmdName: event.target.getAttribute('cmd')};
-        this.$.sendCommand.send(cmd);
       }
 
       tapHarmony(event) {
@@ -164,14 +92,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       tapSonosFav(event) {
-        let cmd = {
-            sonos: {
-              name: 'PRESET',
-              options: 'music',
-              uri: event.model.item.uri,
-            },
-          };
+        const cmd = {
+          sonos: {
+            name: 'PRESET',
+            options: 'music',
+            uri: event.model.item.uri,
+          },
+        };
         this.$.sendCommand.send(cmd);
+        if (this.currentHarmonyActivity.label !== 'Sonos') {
+          this.$.sendCommand.send({harmonyActivity: 'Sonos'});
+        }
       }
 
       startIndterminate(button) {
