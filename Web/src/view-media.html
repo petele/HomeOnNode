@@ -36,20 +36,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
 
-    <sonos-controller id="sonosController"></sonos-controller>
+    <div class="card">
+      <sonos-controller
+          id="sonosController"
+          source="{{sonosSource}}"></sonos-controller>
+    </div>
 
     <fb-document path="state/harmony" data="{{currentHarmonyActivity}}">
     </fb-document>
     <fb-query path="state/harmonyConfig/activity" data="{{harmonyActivities}}">
     </fb-query>
-    <div class="card">
+    <div class="card activities">
       <div class="app-grid grid-medium" id="harmonyButtons">
-        <template is="dom-repeat" items="[[harmonyActivities]]" >
+        <paper-button on-tap="tapOff"
+            class$="[[harmonyActivityClass('PowerOff', currentHarmonyActivity.label, sonosSource)]]">
+          Off
+        </paper-button>
+        <template is="dom-repeat" items="[[harmonyActivities]]" filter="filterActivities">
           <paper-button on-tap="tapHarmony"
-            class$="[[harmonyActivityClass(item.label, currentHarmonyActivity.label)]]">
-              [[item.label]]
+              class$="[[harmonyActivityClass(item.label, currentHarmonyActivity.label, sonosSource)]]">
+            [[item.label]]
           </paper-button>
         </template>
+        <paper-button on-tap="tapRadio"
+            class$="[[harmonyActivityClass('radio', currentHarmonyActivity.label, sonosSource)]]">
+          Radio
+        </paper-button>
       </div>
     </div>
 
@@ -72,9 +84,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class MediaView extends Polymer.Element {
       static get is() { return 'view-media'; }
 
-      harmonyActivityClass(activityLabel, currentActivity) {
+      filterActivities(item) {
+        if (item.id === '-1') {
+          return false;
+        }
+        return true;
+      }
+
+      harmonyActivityClass(activityLabel, currentActivity, sonosSource) {
+        if (!activityLabel || !currentActivity) {
+          return 'button';
+        }
         activityLabel = activityLabel.toLowerCase();
         currentActivity = currentActivity.toLowerCase();
+
+        if (currentActivity === 'sonos') {
+          if (activityLabel === 'sonos' && sonosSource !== 'line_in') {
+            return 'button toggle-on';
+          }
+          if (activityLabel === 'radio' && sonosSource === 'line_in') {
+            return 'button toggle-on';
+          }
+          return 'button'
+        }
+
         if (activityLabel === currentActivity) {
           return 'button toggle-on';
         }
@@ -89,6 +122,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       tapRadio() {
         this.$.sendCommand.send({cmdName: 'SONOS_FM'});
+      }
+
+      tapOff(event) {
+        const cmd = {harmonyActivity: 'PowerOff'};
+        this.$.sendCommand.send(cmd);
+        this.startIndterminate(event.target)
       }
 
       tapSonosFav(event) {
