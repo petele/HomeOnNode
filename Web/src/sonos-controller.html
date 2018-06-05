@@ -1,0 +1,180 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="fb-document.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="send-command.html">
+
+<dom-module id="sonos-controller">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+      }
+      .container {
+        display: flex;
+      }
+      .middle {
+        text-align: center;
+        flex-grow: 1;
+      }
+      .trackNavButtons {
+        display: flex;
+        align-items: center;
+      }
+      .trackNavButtons paper-icon-button {
+        width: 52px;
+        height: 52px;
+      }
+      .sonosTitle {
+        font-size: 1.5em;
+      }
+      .sonosArtistAlbum {
+        font-size: 1.0em;
+      }
+      paper-icon-button[disabled] {
+        opacity: 0.4;
+      }
+      .hidden {
+        display: none !important;
+      }
+    </style>
+
+    <send-command id="sendCommand"></send-command>
+
+    <fb-document path="state/sonos/state" data="{{sonosState}}">
+    </fb-document>
+    <div class="card">
+      <div class="container">
+        <div class="trackNavButtons">
+          <paper-icon-button id="sonosBack" icon="hon-icons:skip-back"
+              cmd="SONOS_PREVIOUS" on-tap="tapSonosControl"></paper-icon-button>
+        </div>
+        <div class="middle no-overflow">
+          <div class="sonosTitle no-overflow">
+            [[lineTop]] &nbsp;
+          </div>
+          <div class="sonosArtistAlbum sonosTrackInfo no-overflow">
+            [[lineBot]]
+          </div>
+        </div>
+        <div class="trackNavButtons">
+          <paper-icon-button id="sonosForward" icon="hon-icons:skip-forward"
+              cmd="SONOS_NEXT" on-tap="tapSonosControl"></paper-icon-button>
+        </div>
+      </div>
+      <div class="middle">
+        <paper-icon-button icon="hon-icons:volume-down"
+          cmd="SONOS_VOL_DOWN" on-tap="tapSonosControl"></paper-icon-button>
+        <paper-icon-button id="sonosPlay" icon="hon-icons:play"
+          cmd="SONOS_PLAY" on-tap="tapSonosControl"></paper-icon-button>
+        <paper-icon-button icon="hon-icons:volume-up"
+          cmd="SONOS_VOL_UP" on-tap="tapSonosControl"></paper-icon-button>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    class SonosController extends Polymer.Element {
+      static get is() { return 'sonos-controller'; }
+
+      static get properties() {
+        return {
+          sonosState: Object,
+          source: {
+            type: String,
+            notify: true,
+            reflectToAttribute: true,
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          'trackChanged(sonosState.currentTrack)',
+          'playerStateChanged(sonosState.playbackState)',
+        ];
+      }
+
+      trackChanged(currentTrack) {
+        if (!currentTrack) {
+          return;
+        }
+        let display = 'block';
+        let hideSkip = false;
+        let source = currentTrack.type;
+        let lineTop = currentTrack.title;
+        let lineBot = null;
+        if (currentTrack.artist && currentTrack.album) {
+          lineBot = currentTrack.artist + ' - ' + currentTrack.album;
+        } else if (currentTrack.artist || currentTrack.album) {
+          lineBot = currentTrack.artist || currentTrack.album;
+        }
+
+        if (currentTrack.type === 'line_in') {
+          if (currentTrack.uri.indexOf('spdif') >= 0) {
+            lineTop = null;
+            lineBot = null;
+            display = 'none';
+          }
+          hideSkip = true;
+        }
+
+        this.$.sonosBack.classList.toggle('hidden', hideSkip);
+        this.$.sonosForward.classList.toggle('hidden', hideSkip);
+        this.updateStyles({display});
+        this.lineTop = lineTop;
+        this.lineBot = lineBot;
+        this.source = source;
+      }
+
+      playerStateChanged(state) {
+        if (!state) {
+          return;
+        }
+        if (state === 'PLAYING') {
+          this.isPlaying = true;
+          this.$.sonosPlay.icon = 'hon-icons:pause';
+          this.$.sonosPlay.setAttribute('cmd', 'SONOS_PAUSE');
+          this.clearPauseTimer();
+        } else {
+          this.isPlaying = false;
+          this.$.sonosPlay.icon = 'hon-icons:play';
+          this.$.sonosPlay.setAttribute('cmd', 'SONOS_PLAY');
+          this.startPauseTimer();
+        }
+      }
+
+      clearPauseTimer() {
+        if (this.pauseTimer) {
+          clearTimeout(this.pauseTimer);
+          this.pauseTimer = null;
+        }
+      }
+
+      startPauseTimer() {
+        this.clearPauseTimer();
+        this.pauseTimer = setTimeout(() => {
+          this.updateStyles({display: 'none'});
+        }, 30 * 60 * 1000);
+      }
+
+      tapSonosControl(event) {
+        let cmd = {cmdName: event.target.getAttribute('cmd')};
+        this.$.sendCommand.send(cmd);
+      }
+    }
+    window.customElements.define(SonosController.is, SonosController);
+  </script>
+</dom-module>

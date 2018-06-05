@@ -20,6 +20,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="send-command.html">
 <link rel="import" href="device-online.html">
+<link rel="import" href="sonos-controller.html">
 
 <dom-module id="view-home">
   <template>
@@ -60,7 +61,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </fb-document>
     <fb-document path="state/doNotDisturb" data="{{dataDnD}}"></fb-document>
     <fb-document path="state/systemState" data="{{dataSystemState}}"></fb-document>
-    <fb-document 
+    <fb-document
       path="state/nest/devices/cameras/Dyvr--9GQVxTLUxYcGxG_8zPrWCgRjRhM77sy1ptRAi1_4CktEAZNQ/is_streaming"
       data="{{dataNestCam}}">
     </fb-document>
@@ -92,6 +93,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </div>
         </div>
       </div>
+      <sonos-controller></sonos-controller>
     </div>
 
     <div class="card">
@@ -115,7 +117,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 [[item.label]]
               </paper-button>
             </template>
-          </template>  
+          </template>
         </div>
       </template>
     </div>
@@ -129,11 +131,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 [[item.label]]
               </paper-button>
             </template>
-          </template>  
+          </template>
         </div>
       </div>
     </template>
-      
+
     <template is="dom-if" if="[[buttonsForView.row3]]">
       <div class="card">
         <div class$="app-grid [[buttonsForView.row3.class]]">
