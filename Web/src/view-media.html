@@ -18,6 +18,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="fb-document.html">
 <link rel="import" href="fb-query.html">
 <link rel="import" href="send-command.html">
+<link rel="import" href="sonos-controller.html">
 
 <dom-module id="view-media">
   <template>
@@ -35,7 +36,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
 
-    <fb-document path="state/sonos/state" data="{{sonosState}}">
+    <sonos-controller></sonos-controller>
+
+<!--     <fb-document path="state/sonos/state" data="{{sonosState}}">
     </fb-document>
     <div class="card card-narrow">
       <div class="sonosTitle no-overflow">
@@ -56,7 +59,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-icon-button icon="hon-icons:volume-up"
           cmd="SONOS_VOL_UP" on-tap="tapSonosControl"></paper-icon-button>
       </div>
-    </div>
+    </div> -->
 
     <fb-document path="state/harmony" data="{{currentHarmonyActivity}}">
     </fb-document>
