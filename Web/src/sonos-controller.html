@@ -38,10 +38,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         height: 52px;
       }
       .sonosTitle {
-        font-size: 1.5em;
+        font-size: 1.75em;
+        min-height: 42px;
       }
       .sonosArtistAlbum {
-        font-size: 1.0em;
+        font-size: 1.25em;
       }
       paper-icon-button[disabled] {
         opacity: 0.4;
@@ -55,7 +56,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <fb-document path="state/sonos/state" data="{{sonosState}}">
     </fb-document>
-    <div class="card">
+    <div class="outerContainer">
       <div class="container">
         <div class="trackNavButtons">
           <paper-icon-button id="sonosBack" icon="hon-icons:skip-back"
@@ -63,7 +64,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
         <div class="middle no-overflow">
           <div class="sonosTitle no-overflow">
-            [[lineTop]] &nbsp;
+            [[lineTop]]
           </div>
           <div class="sonosArtistAlbum sonosTrackInfo no-overflow">
             [[lineBot]]
