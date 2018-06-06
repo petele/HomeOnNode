@@ -26,11 +26,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
-      .sonosTitle {
-        font-size: 1.75em;
-      }
-      .sonosArtistAlbum {
-        font-size: 1.25em;
+      .hidden {
+        display: none !important;
       }
     </style>
 
@@ -39,6 +36,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div class="card">
       <sonos-controller
           id="sonosController"
+          visible="{{sonosVisible}}"
           source="{{sonosSource}}"></sonos-controller>
     </div>
 
@@ -82,6 +80,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     class MediaView extends Polymer.Element {
       static get is() { return 'view-media'; }
+
+      static get observers() {
+        return [
+          'sonosVisibleChanged(sonosVisible)',
+        ];
+      }
+
+      sonosVisibleChanged(val) {
+        this.$.sonosController.parentElement.classList.toggle('hidden', !val);
+      }
 
       filterActivities(item) {
         if (item.id === '-1') {
