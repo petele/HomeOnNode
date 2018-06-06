@@ -26,16 +26,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div class="card">
       <div>[[roomName]]</div>
       <div class="app-grid grid-medium">
-        <template is="dom-repeat" items="[[scenes]]"
-          sort="sortScenes" filter="isInRoom">
-            <paper-button class="button" on-tap="tapHueScene">
-              [[getSceneName(item.name)]]
-            </paper-button>
+        <paper-button class="button" on-tap="tapSceneOn">
+          On
+        </paper-button>
+        <template is="dom-if" if="[[sceneLastOn]]">
+          <paper-button class="button" on-tap="tapSceneLastOn">
+            Last On
+          </paper-button>
+        </template>
+        <paper-button class="button" on-tap="tapSceneOff">
+          Off
+        </paper-button>
+        <template is="dom-repeat" items="[[scenesInRoom]]" sort="sortScenes">
+          <paper-button class="button" on-tap="tapHueScene">
+            [[item.name]]
+          </paper-button>
         </template>
       </div>
     </div>
-
-
   </template>
 
   <script>
@@ -48,6 +56,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: Array,
             notify: true,
           },
+          scenesInRoom: {
+            type: Array,
+            notify: true,
+          },
           roomName: {
             type: String,
           },
@@ -57,59 +69,72 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         };
       }
 
-      ready() {
-        super.ready();
-        this.visible = false;
+      static get observers() {
+        return [
+          'scenesChanged(scenes)',
+        ];
       }
 
-      makeVisible() {
-        if (this.visible === false) {
-          this.visible = true;
+      scenesChanged(scenes) {
+        const reScene = /(.*)\s\[(.*)\]/;
+        const roomId = '_r' + this.roomId.padStart(2, '0');
+        const scenesInRoom = [];
+        scenes.forEach((scene) => {
+          const sceneId = scene.$key;
+          const appData = scene.appdata.data;
+          const inRoom = appData.includes(roomId);
+          if (!inRoom) {
+            return;
+          }
+          if (appData.includes('_d20')) {
+            this.sceneLastOn = sceneId;
+            return;
+          }
+          if (appData.includes('_h01')) {
+            return;
+          }
+          const matches = scene.name.match(reScene);
+          if (matches) {
+            scene.name = matches[1];
+          }
+          const sceneName = scene.name.toLowerCase();
+          if (sceneName === 'on') {
+            this.sceneOn = sceneId;
+            return;
+          }
+          if (sceneName === 'off') {
+            return;
+          }
+          scenesInRoom.push(scene);
+        });
+        if (scenesInRoom.length > 0) {
+          this.scenesInRoom = scenesInRoom;
           this.updateStyles({'display': 'block'});
         }
       }
 
-      getRoomAndName(lightName) {
-        const reScene = /(.*)\s\[(.*)\]/;
-        let result = {name: lightName, room: 'all'};
-        let matches = lightName.match(reScene);
-        if (!matches) {
-          return result;
+      tapSceneOn(event) {
+        let cmd = {hueScene: this.sceneOn};
+        if (!this.sceneOn) {
+          const lightGroup = `-${this.roomId}`;
+          const lightState = {on: true};
+          cmd = {hueCommand: {lights: `${lightGroup}`, lightState}};
         }
-        result.name = matches[1];
-        result.room = matches[2];
-        return result;
+        this.$.sendCommand.send(cmd);
       }
 
-      isInRoom(item) {
-        if (item.appdata.data) {
-          const appData = item.appdata.data;
-          const roomId = '_r' + this.roomId.padStart(2, '0');
+      tapSceneLastOn(event) {
+        this.$.sendCommand.send({hueScene: this.sceneLastOn});
+      }
 
-          // // Is it auto-generated?
-          // if (appData.indexOf('_d') >= 0 || appData.indexOf('_h') >= 0) {
-          //   return false;
-          // }
-          // // Is it hidden in the webUI?
-          // if (appData.indexOf('zz' + roomId) >= 0) {
-          //   return false;
-          // }
-          // Is it in the current room?
-          if (appData.indexOf(roomId) >= 0) {
-            this.makeVisible();
-            return true;
-          }
-        }
-        return false;
+      tapSceneOff(event) {
+        const lightGroup = `-${this.roomId}`;
+        const lightState = {on: false};
+        const cmd = {hueCommand: {lights: `${lightGroup}`, lightState}};
+        this.$.sendCommand.send(cmd);
       }
 
       sortScenes(a, b) {
-        if (a.name.toLowerCase().indexOf('on [') === 0) {
-          return -1;
-        }
-        if (b.name.toLowerCase().indexOf('on [') === 0) {
-          return 1;
-        }
         if (a.name > b.name) {
           return 1;
         }
@@ -117,18 +142,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return -1;
         }
         return 0;
-      }
-
-      getSceneName(item) {
-        let scene = this.getRoomAndName(item);
-        return scene.name;
-      }
-
-      getButtonClass(isOn) {
-        if (isOn === true) {
-          return 'button toggle-on';
-        }
-        return 'button';
       }
 
       tapHueScene(event) {
