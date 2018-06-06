@@ -20,7 +20,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles app-grid-style">
       :host {
-        display: block;
+        display: none;
       }
       .container {
         display: flex;
@@ -38,8 +38,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         height: 52px;
       }
       .sonosTitle {
-        font-size: 1.75em;
-        min-height: 42px;
+        font-size: 1.8em;
+        min-height: 46px;
       }
       .sonosArtistAlbum {
         font-size: 1.25em;
@@ -53,6 +53,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
 
     <send-command id="sendCommand"></send-command>
+
+    <fb-document path="state/harmony/label" data="{{harmonyActivity}}">
+    </fb-document>
+
+    <!-- Marquee effect: http://jsfiddle.net/MaY5A/1/ -->
 
     <fb-document path="state/sonos/state" data="{{sonosState}}">
     </fb-document>
@@ -98,6 +103,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             notify: true,
             reflectToAttribute: true,
           },
+          visible: {
+            type: Boolean,
+            notify: true,
+            reflectToAttribute: true,
+            value: false,
+          },
         };
       }
 
@@ -105,15 +116,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return [
           'trackChanged(sonosState.currentTrack)',
           'playerStateChanged(sonosState.playbackState)',
+          'harmonyActivityChanged(harmonyActivity)',
         ];
+      }
+
+      harmonyActivityChanged(newActivity) {
+        if (typeof newActivity !== 'string' || newActivity.length === 0) {
+          return;
+        }
+        if (newActivity.toLowerCase() === 'poweroff') {
+          this.visible = false;
+          this.updateStyles({display: 'none'});
+          return;
+        }
+        this.lineTop = newActivity;
+        this.visible = true;
+        this.updateStyles({display: 'block'});
+        return;
+
       }
 
       trackChanged(currentTrack) {
         if (!currentTrack) {
           return;
         }
-        let display = 'block';
-        let hideSkip = false;
+        let showSkip = true;
         let source = currentTrack.type;
         let lineTop = currentTrack.title;
         let lineBot = null;
@@ -125,19 +152,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
         if (currentTrack.type === 'line_in') {
           if (currentTrack.uri.indexOf('spdif') >= 0) {
-            lineTop = null;
             lineBot = null;
-            display = 'none';
+            source = 'spdif';
           }
-          hideSkip = true;
+          showSkip = false;
         }
-
-        this.$.sonosBack.classList.toggle('hidden', hideSkip);
-        this.$.sonosForward.classList.toggle('hidden', hideSkip);
-        this.updateStyles({display});
+        this.showSkipButtons(showSkip);
         this.lineTop = lineTop;
         this.lineBot = lineBot;
         this.source = source;
+      }
+
+      showSkipButtons(show) {
+        if (show === true || show === false) {
+          this.$.sonosBack.classList.toggle('hidden', !show);
+          this.$.sonosForward.classList.toggle('hidden', !show);
+        }
+
       }
 
       playerStateChanged(state) {
