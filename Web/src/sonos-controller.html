@@ -21,6 +21,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <style include="shared-styles app-grid-style">
       :host {
         display: none;
+        --marquee-shift-left: 0px;
+        --marquee-shift-right: 0px;
       }
       .container {
         display: flex;
@@ -28,6 +30,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .middle {
         text-align: center;
         flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
       }
       .trackNavButtons {
         display: flex;
@@ -37,12 +41,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         width: 52px;
         height: 52px;
       }
-      .sonosTitle {
+      .lineTop {
         font-size: 1.8em;
-        min-height: 46px;
       }
-      .sonosArtistAlbum {
+      .lineBot {
         font-size: 1.25em;
+      }
+      #marquee {
+        display: inline-block;
+      }
+      .marquee {
+        animation: marquee 15s linear infinite;
       }
       paper-icon-button[disabled] {
         opacity: 0.4;
@@ -50,14 +59,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .hidden {
         display: none !important;
       }
+      @keyframes marquee {
+        0%  { transform: translate(0%, 0); }
+        5% { transform: translate(0%, 0); }
+        30% { transform: translate(var(--marquee-shift-left), 0); }
+        70% { transform: translate(var(--marquee-shift-right), 0); }
+        95% { transform: translate(0%, 0); }
+        100% { transform: translate(0%, 0); }
+      }
     </style>
 
     <send-command id="sendCommand"></send-command>
 
     <fb-document path="state/harmony/label" data="{{harmonyActivity}}">
     </fb-document>
-
-    <!-- Marquee effect: http://jsfiddle.net/MaY5A/1/ -->
 
     <fb-document path="state/sonos/state" data="{{sonosState}}">
     </fb-document>
@@ -67,12 +82,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <paper-icon-button id="sonosBack" icon="hon-icons:skip-back"
               cmd="SONOS_PREVIOUS" on-tap="tapSonosControl"></paper-icon-button>
         </div>
-        <div class="middle no-overflow">
-          <div class="sonosTitle no-overflow">
-            [[lineTop]]
-          </div>
-          <div class="sonosArtistAlbum sonosTrackInfo no-overflow">
-            [[lineBot]]
+        <div class="middle" id="marqueeContainer">
+          <div id="marquee">
+            <span class="lineTop">[[lineTop]]</span><br>
+            <span class="lineBot">[[lineBot]]</span>
           </div>
         </div>
         <div class="trackNavButtons">
@@ -121,6 +134,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       harmonyActivityChanged(newActivity) {
+        console.log('nA', newActivity)
         if (typeof newActivity !== 'string' || newActivity.length === 0) {
           return;
         }
@@ -132,8 +146,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.lineTop = newActivity;
         this.visible = true;
         this.updateStyles({display: 'block'});
-        return;
-
       }
 
       trackChanged(currentTrack) {
@@ -149,18 +161,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         } else if (currentTrack.artist || currentTrack.album) {
           lineBot = currentTrack.artist || currentTrack.album;
         }
-
         if (currentTrack.type === 'line_in') {
           if (currentTrack.uri.indexOf('spdif') >= 0) {
+            lineTop = this.harmonyActivity;
             lineBot = null;
             source = 'spdif';
           }
           showSkip = false;
         }
+
         this.showSkipButtons(showSkip);
         this.lineTop = lineTop;
         this.lineBot = lineBot;
         this.source = source;
+
+        const marqueeWidth = this.$.marquee.offsetWidth;
+        const marqueeContainer = this.$.marqueeContainer.offsetWidth;
+        const marqueeDiff = marqueeWidth - marqueeContainer;
+        if (marqueeDiff > 0) {
+          const halfWidth = marqueeDiff / 2;
+          this.$.marquee.style.marginLeft = `-${halfWidth}px`;
+          this.updateStyles({
+            '--marquee-shift-left': `-${halfWidth + 10}px`,
+            '--marquee-shift-right': `${halfWidth + 10}px`,
+          });
+          this.$.marquee.classList.toggle('marquee', true);
+        } else {
+          this.$.marquee.style.marginLeft = `0px`;
+          this.$.marquee.classList.toggle('marquee', false);
+        }
       }
 
       showSkipButtons(show) {
@@ -168,7 +197,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.$.sonosBack.classList.toggle('hidden', !show);
           this.$.sonosForward.classList.toggle('hidden', !show);
         }
-
       }
 
       playerStateChanged(state) {

@@ -15,17 +15,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="fb-query">
   <template>
 
-    <firebase-query 
+    <firebase-query
       path="[[path]]"
-      data="{{liveData}}">
+      data="{{data}}">
     </firebase-query>
 
+<!--
     <app-indexeddb-mirror
       key="[[path]]"
       data="{{liveData}}"
       persisted-data="{{data}}"
       worker-url="/bower_components/app-storage/app-indexeddb-mirror/app-indexeddb-mirror-worker.js">
     </app-indexeddb-mirror>
+-->
 
   </template>
 
