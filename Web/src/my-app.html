@@ -33,7 +33,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="push-subscription.html">
 <link rel="import" href="app-install-banner.html">
 
+<!-- Needs to be imported to get settings loaded -->
 <link rel="import" href="view-settings.html">
+
+<link rel="lazy-import" href="view-404.html">
+<link rel="lazy-import" href="view-actions.html">
+<link rel="lazy-import" href="view-devices.html">
+<link rel="lazy-import" href="view-door-logs.html">
+<link rel="lazy-import" href="view-home.html">
+<link rel="lazy-import" href="view-hue-groups.html">
+<link rel="lazy-import" href="view-hue-lights.html">
+<link rel="lazy-import" href="view-hue-scenes.html">
+<link rel="lazy-import" href="view-hvac.html">
+<link rel="lazy-import" href="view-media.html">
+<link rel="lazy-import" href="view-nanoleaf.html">
+<link rel="lazy-import" href="view-presence-logs.html">
+<link rel="lazy-import" href="view-system-logs.html">
+<link rel="lazy-import" href="view-weather.html">
+
 
 <dom-module id="my-app">
   <template>
@@ -134,7 +151,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             fallback-selection="view404"
             role="main">
           <view-home name="home" view="{{view}}"></view-home>
-          <view-lights name="lights" page="{{page}}"></view-lights>
           <view-nanoleaf name="nanoleaf" page="{{page}}"></view-nanoleaf>
           <view-hue-lights name="hue-lights" page="{{page}}"></view-hue-lights>
           <view-hue-groups name="hue-groups" page="{{page}}"></view-hue-groups>
