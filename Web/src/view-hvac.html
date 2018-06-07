@@ -31,14 +31,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: var(--secondary-text-color);
       }
     </style>
-    
+
     <send-command id="sendCommand"></send-command>
 
     <fb-query path="state/nest/devices/thermostats" data="{{nestThermostats}}">
     </fb-query>
 
-    <fb-document 
-      path="state/nest/structures/yzfxfqLcIvayvKiyjaAh82QUV2Uun0rbTYbmTYi356_a2tI5SqP3rA/away" 
+    <fb-document
+      path="state/nest/structures/yzfxfqLcIvayvKiyjaAh82QUV2Uun0rbTYbmTYi356_a2tI5SqP3rA/away"
       data="{{nestState}}">
     </fb-document>
 
@@ -59,7 +59,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
       <div class="app-grid">
         <paper-toggle-button id="ptAway" checked="{{nestAway}}" on-change="awayChanged">
-          Nest Away 
+          Nest Away
         </paper-toggle-button>
       </div>
     </div>
@@ -69,7 +69,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div class="card" style="display:none;">
       <div>HVAC Mode</div>
       <paper-dropdown-menu label="HVAC Mode">
-        <paper-listbox 
+        <paper-listbox
           slot="dropdown-content"
           class="dropdown-content"
           attr-for-selected="value"
@@ -84,13 +84,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div class="card">
       <div>Living Room</div>
       <div class="app-grid grid-two">
-        <paper-input 
+        <paper-input
           label="Day"
           type="number"
           min="60" max="80"
           value="{{hvacConfig.auto.DAY.LR}}">
         </paper-input>
-        <paper-input 
+        <paper-input
           label="Night"
           type="number"
           min="60" max="80"
@@ -102,13 +102,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div class="card">
       <div>Bedroom</div>
       <div class="app-grid grid-two">
-        <paper-input 
+        <paper-input
           label="Day"
           type="number"
           min="60" max="80"
           value="{{hvacConfig.auto.DAY.BR}}">
         </paper-input>
-        <paper-input 
+        <paper-input
           label="Night"
           type="number"
           min="60" max="80"
@@ -120,6 +120,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     class HVACView extends Polymer.Element {
       static get is() { return 'view-hvac'; }
+
+      static get properties() {
+        return {
+          nestState: Object,
+          nestAway: Boolean,
+        };
+      }
+
 
       static get observers() {
         return [

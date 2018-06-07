@@ -17,7 +17,7 @@
     "moment": "^2.18.1"
   },
   "scripts": {
-    "lint": "eslint . --ext html --ignore-path .gitignore",
+    "lint": "eslint . --ext html --ignore-path .gitignore && polymer lint",
     "test": "npm run lint && polymer test"
   },
   "dependencies": {}

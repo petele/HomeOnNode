@@ -81,6 +81,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class MediaView extends Polymer.Element {
       static get is() { return 'view-media'; }
 
+      static get properties() {
+        return {
+          sonosVisible: Boolean,
+        };
+      }
+
       static get observers() {
         return [
           'sonosVisibleChanged(sonosVisible)',
@@ -112,7 +118,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (activityLabel === 'radio' && sonosSource === 'line_in') {
             return 'button toggle-on';
           }
-          return 'button'
+          return 'button';
         }
 
         if (activityLabel === currentActivity) {
@@ -122,7 +128,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       tapHarmony(event) {
-        let cmd = {harmonyActivity: event.model.item.label};
+        const cmd = {harmonyActivity: event.model.item.label};
         this.$.sendCommand.send(cmd);
         this.startIndterminate(event.target);
       }
@@ -134,7 +140,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       tapOff(event) {
         const cmd = {harmonyActivity: 'PowerOff'};
         this.$.sendCommand.send(cmd);
-        this.startIndterminate(event.target)
+        this.startIndterminate(event.target);
       }
 
       tapSonosFav(event) {
