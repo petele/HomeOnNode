@@ -38,7 +38,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        this.checkSubscription();
+        navigator.serviceWorker.ready.then((swReg) => {
+          this.swRegistration = swReg;
+          return swReg;
+        }).then(() => {
+          this._checkSubscription();
+        });
       }
 
       changeSubscription(event) {
@@ -51,51 +56,66 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _logError(err) {
         // eslint-disable-next-line no-console
-        console.log('ERROR', err);
+        console.warn('ERROR', err);
       }
 
-      checkSubscription() {
-        navigator.serviceWorker.ready.then((swReg) => {
-          swReg.pushManager.getSubscription().then((subscription) => {
-            if (subscription) {
-              this.isSubscribed = true;
-            } else {
-              this.isSubscribed = false;
-            }
-            this.ready = true;
-          });
-        })
-        .catch(this._logError);
+      _checkSubscription() {
+        if (!this.swRegistration) {
+          this._logError('No service worker.');
+          return;
+        }
+        this.swRegistration.pushManager.getSubscription().then((sub) => {
+          if (sub) {
+            this.isSubscribed = true;
+            this._verifySubscription(sub);
+          } else {
+            this.isSubscribed = false;
+          }
+        }).catch(this._logError);
+      }
+
+      _verifySubscription(sub) {
+        const subKey = this._getSubscriptionKey(sub.endpoint);
+        const path = `pushSubscribers/${subKey}`;
+        this.$.fbPush.getStoredValue(path).then((val) => {
+          if (!val.hasOwnProperty('subscriptionInfo')) {
+            this._sendSubscription(sub);
+          }
+        });
       }
 
       _getSubscriptionKey(endpoint) {
         return endpoint.replace('https://android.googleapis.com/gcm/send/', '');
       }
 
+      _sendSubscription(sub) {
+        const subObj = {
+          date: Date.now(),
+          userAgent: navigator.userAgent,
+          subscriptionInfo: JSON.parse(JSON.stringify(sub)),
+        };
+        const subKey = this._getSubscriptionKey(sub.endpoint);
+        this.$.fbPush.ref.child(subKey).set(subObj).catch(this._logError);
+      }
+
+      _removeSubscription(sub) {
+        const subKey = this._getSubscriptionKey(sub.endpoint);
+        this.$.fbPush.ref.child(subKey).remove().catch(this._logError);
+        sub.unsubscribe().catch(this._logError);
+      }
+
       _subscribe() {
-        navigator.serviceWorker.ready.then((swReg) => {
-          swReg.pushManager.subscribe({userVisibleOnly: true})
-            .then((subscription) => {
-              let subObj = {
-                date: Date.now(),
-                userAgent: navigator.userAgent,
-                subscriptionInfo: JSON.parse(JSON.stringify(subscription)),
-              };
-              let subKey = this._getSubscriptionKey(subscription.endpoint);
-              this.$.fbPush.ref.child(subKey).set(subObj);
-            });
-          }).catch(this._logError);
+        this.swRegistration.pushManager.subscribe({userVisibleOnly: true})
+        .then((sub) => {
+          return this._sendSubscription(sub);
+        }).catch(this._logError);
       }
 
       _unsubscribe() {
-        navigator.serviceWorker.ready.then((swReg) => {
-          swReg.pushManager.getSubscription().then((subscription) => {
-            if (subscription) {
-              let subKey = this._getSubscriptionKey(subscription.endpoint);
-              this.$.fbPush.ref.child(subKey).remove();
-              subscription.unsubscribe();
-            }
-          });
+        this.swRegistration.pushManager.getSubscription().then((sub) => {
+          if (sub) {
+            return this._removeSubscription(sub);
+          }
         }).catch(this._logError);
       }
 
