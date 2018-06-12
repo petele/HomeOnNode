@@ -209,27 +209,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.isPlaying = true;
           this.$.sonosPlay.icon = 'hon-icons:pause';
           this.$.sonosPlay.setAttribute('cmd', 'SONOS_PAUSE');
-          this.clearPauseTimer();
         } else {
           this.isPlaying = false;
           this.$.sonosPlay.icon = 'hon-icons:play';
           this.$.sonosPlay.setAttribute('cmd', 'SONOS_PLAY');
-          this.startPauseTimer();
         }
-      }
-
-      clearPauseTimer() {
-        if (this.pauseTimer) {
-          clearTimeout(this.pauseTimer);
-          this.pauseTimer = null;
-        }
-      }
-
-      startPauseTimer() {
-        this.clearPauseTimer();
-        this.pauseTimer = setTimeout(() => {
-          this.updateStyles({display: 'none'});
-        }, 30 * 60 * 1000);
       }
 
       tapSonosControl(event) {

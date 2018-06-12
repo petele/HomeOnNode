@@ -75,8 +75,10 @@ function HTTPServer(port) {
 
   exp.post('/doorbell', function(req, res) {
     const sender = '[HTTP ' + req.ip + ']';
-    _self.emit('doorbell', sender);
+    const body = {doorbell: true};
+    _self.emit('executeCommand', body, sender);
     res.send({result: 'done'});
+    log.warn(LOG_PREFIX, `Deprecated path '/doorbell' hit`);
   });
 
   exp.use(function(req, res) {

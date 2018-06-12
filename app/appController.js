@@ -94,17 +94,12 @@ function init() {
     _httpServer.on('executeCommand', (cmd, sender) => {
       _home.executeCommand(cmd, sender);
     });
-    _httpServer.on('doorbell', (sender) => {
-      _home.ringDoorbell(sender);
-    });
   }
 
   if (_config.cmdPorts.wss) {
     _wss = new WSServer('CMD', _config.cmdPorts.wss);
     _wss.on('message', (cmd, source) => {
-      if (cmd.hasOwnProperty('doorbell')) {
-        _home.ringDoorbell(source);
-      } else if (cmd.hasOwnProperty('cmdName')) {
+      if (cmd.hasOwnProperty('cmdName')) {
         _home.executeCommandByName(cmd.cmdName, cmd.modifier, source);
       } else {
         _home.executeCommand(cmd, source);
