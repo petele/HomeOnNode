@@ -875,7 +875,7 @@ function Home(initialConfig, fbRef) {
         date: Date.now(),
         extra: sensor,
       };
-      _fbPush('state/messages', msg);
+      _fbPush('logs/messages', msg);
     });
     hue.on('sensor_low_battery', (sensor) => {
       const msg = {
@@ -884,7 +884,7 @@ function Home(initialConfig, fbRef) {
         date: Date.now(),
         extra: sensor,
       };
-      _fbPush('state/messages', msg);
+      _fbPush('logs/messages', msg);
     });
   }
 
