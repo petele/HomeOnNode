@@ -1,3 +1,5 @@
+/* eslint no-console: ["error", { "allow": ["error"] }] */
+
 'use strict';
 
 const fs = require('fs');
@@ -15,8 +17,10 @@ let _deviceMonitor;
 
 // Read config file
 try {
+  // eslint-disable-next-line no-console
   console.log(`Reading 'config.json'...`);
   let config = fs.readFileSync('config.json', {encoding: 'utf8'});
+  // eslint-disable-next-line no-console
   console.log(`Parsing 'config.json'...`);
   _config = JSON.parse(config);
 } catch (ex) {
@@ -42,7 +46,7 @@ if (!_config.wsServer) {
 log.setAppName(APP_NAME);
 log.setOptions({
   firebaseLogLevel: _config.logLevel || 50,
-  firebasePath: `logs/${APP_NAME.toLowerCase()}`
+  firebasePath: `logs/${APP_NAME.toLowerCase()}`,
 });
 log.startWSS();
 log.appStart();
@@ -74,7 +78,7 @@ function init() {
     const logLevel = snapshot.val();
     log.setOptions({
       firebaseLogLevel: logLevel || 50,
-      firebasePath: `logs/${APP_NAME.toLowerCase()}`
+      firebasePath: `logs/${APP_NAME.toLowerCase()}`,
     });
     log.log(APP_NAME, `Log level changed to ${logLevel}`);
   });

@@ -10,7 +10,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymerfire/polymerfire.html">
-<link rel="import" href="../bower_components/app-storage/app-indexeddb-mirror/app-indexeddb-mirror.html">
 
 <dom-module id="fb-query">
   <template>
@@ -19,15 +18,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       path="[[path]]"
       data="{{data}}">
     </firebase-query>
-
-<!--
-    <app-indexeddb-mirror
-      key="[[path]]"
-      data="{{liveData}}"
-      persisted-data="{{data}}"
-      worker-url="/bower_components/app-storage/app-indexeddb-mirror/app-indexeddb-mirror-worker.js">
-    </app-indexeddb-mirror>
--->
 
   </template>
 

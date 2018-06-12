@@ -9,7 +9,6 @@ const MyIP = require('./MyIP');
 const Nest = require('./Nest');
 const Wemo = require('./Wemo');
 const Sonos = require('./Sonos');
-// const ZWave = require('./ZWave');
 const log = require('./SystemLog2');
 const Keys = require('./Keys').keys;
 const GCMPush = require('./GCMPush');
@@ -52,7 +51,6 @@ function Home(initialConfig, fbRef) {
   let sonos;
   let weather;
   let wemo;
-  // let zwave;
   let myIP;
 
   let _doorOpenAccounceTimer;
@@ -380,24 +378,11 @@ function Home(initialConfig, fbRef) {
   };
 
   /**
-   * Ring the doorbell
-   *
-   * @param {String} source Where doorbell was rung/sender
-   */
-  this.ringDoorbell = function(source) {
-    log.log(LOG_PREFIX, 'Doorbell');
-    _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
-    const now = Date.now();
-    _fbSet('state/lastDoorbell', now);
-  };
-
-  /**
    * Shutdown the HOME Service
    */
   this.shutdown = function() {
     log.log(LOG_PREFIX, 'Shutting down...');
     _shutdownBluetooth();
-    // _shutdownZWave();
     _shutdownHarmony();
     _shutdownPushBullet();
   };
@@ -449,7 +434,6 @@ function Home(initialConfig, fbRef) {
     _initWeather();
     _initWemo();
     _initMyIP();
-    // _initZWave();
     setTimeout(function() {
       log.log(LOG_PREFIX, 'Ready');
       _self.emit('ready');
@@ -702,6 +686,18 @@ function Home(initialConfig, fbRef) {
   }
 
   /**
+   * Ring the doorbell
+   *
+   * @param {String} source Where doorbell was rung/sender
+   */
+  function _ringDoorbell(source) {
+    log.log(LOG_PREFIX, `Doorbell from ${source}`);
+    _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
+    const now = Date.now();
+    _fbSet('state/lastDoorbell', now);
+  }
+
+  /**
    * Change the system state (HOME/AWAY/ARMED)
    *
    * @param {String} newState The new state to set the house to
@@ -747,6 +743,7 @@ function Home(initialConfig, fbRef) {
     _self.executeCommandByName('RUN_ON_' + newState, null, 'SET_STATE');
     return Promise.resolve({state: newState});
   }
+
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
@@ -1159,61 +1156,9 @@ function Home(initialConfig, fbRef) {
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
- * ZWave API
+ * Initialize the whole thing
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  // /**
-  //  * Init ZWave
-  //  */
-  // function _initZWave() {
-  //   zwave = new ZWave();
-  //   zwave.on('ready', _updateZWaveNodes);
-  //   zwave.on('nodes_updated', _updateZWaveNodes);
-  //   zwave.on('node_event', _zwaveEvent);
-  // }
-
-  // /**
-  //  * Update the system state with the latest ZWave node info
-  //  *
-  //  * @param {Object} nodes
-  //  */
-  // function _updateZWaveNodes(nodes) {
-  //   _fbSet('state/zwave/nodes', nodes);
-  // }
-
-  // /**
-  //  * Handles a ZWave Event
-  //  *
-  //  * @param {Number} nodeId
-  //  * @param {Object} value
-  //  */
-  // function _zwaveEvent(nodeId, value) {
-  //   const device = _config.zwave[nodeId];
-  //   if (!device) {
-  //     log.warn(LOG_PREFIX, `Unknown ZWave Device: ${nodeId} - ${value}`);
-  //     return;
-  //   }
-  //   if (device.kind === 'DOOR') {
-  //     const doorState = value === 255 ? 'OPEN' : 'CLOSED';
-  //     _handleDoorEvent(device.label, doorState);
-  //   } else {
-  //     log.warn(LOG_PREFIX, `Unhandled ZWave event for nodeId: ${nodeId}`);
-  //   }
-  // }
-
-  // /**
-  //  * Shutdown the ZWave controller
-  //  */
-  // function _shutdownZWave() {
-  //   log.log(LOG_PREFIX, 'Shutting down ZWave.');
-  //   try {
-  //     zwave.disconnect();
-  //   } catch (ex) {
-  //     log.warn(LOG_PREFIX, 'Error attempting to shut down Harmony.');
-  //   }
-  //   zwave = null;
-  // }
 
   _init();
 }
