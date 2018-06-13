@@ -53,7 +53,8 @@ function init() {
   });
 
   setInterval(function() {
-    log.cleanFile(logOpts.fileFilename);
+    log.cleanFile();
+    log.cleanLogs(logOpts.firebasePath, 2);
   }, 60 * 60 * 24 * 1000);
 }
 

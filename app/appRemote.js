@@ -35,6 +35,8 @@ if (!_config.appName) {
   process.exit(1);
 }
 const APP_NAME = _config.appName;
+const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
+
 // Verify config has wsServer
 if (!_config.wsServer) {
   console.error(`'wsServer' not set in config.`);
@@ -46,7 +48,7 @@ if (!_config.wsServer) {
 log.setAppName(APP_NAME);
 log.setOptions({
   firebaseLogLevel: _config.logLevel || 50,
-  firebasePath: `logs/${APP_NAME.toLowerCase()}`,
+  firebasePath: FB_LOG_PATH,
 });
 log.startWSS();
 log.appStart();
@@ -99,6 +101,7 @@ function init() {
 
   setInterval(function() {
     log.cleanFile();
+    log.cleanLogs(FB_LOG_PATH, 7);
   }, 60 * 60 * 24 * 1000);
 }
 
