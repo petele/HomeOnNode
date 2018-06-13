@@ -41,12 +41,13 @@ if (!_config.appName) {
   process.exit(1);
 }
 const APP_NAME = _config.appName;
+const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
 
 // Setup logging
 log.setAppName(APP_NAME);
 log.setOptions({
   firebaseLogLevel: _config.logLevel || 50,
-  firebasePath: `logs/${APP_NAME.toLowerCase()}`,
+  firebasePath: FB_LOG_PATH,
 });
 log.startWSS();
 log.appStart();
@@ -118,7 +119,7 @@ function init() {
     const logLevel = snapshot.val();
     log.setOptions({
       firebaseLogLevel: logLevel || 50,
-      firebasePath: `logs/${APP_NAME.toLowerCase()}`,
+      firebasePath: FB_LOG_PATH,
     });
     log.log(APP_NAME, `Log level changed to ${logLevel}`);
   });
@@ -126,6 +127,7 @@ function init() {
   // Clean up logs every 24 hours
   setInterval(function() {
     log.cleanFile();
+    log.cleanLogs(FB_LOG_PATH, 7);
   }, 60 * 60 * 24 * 1000);
 }
 

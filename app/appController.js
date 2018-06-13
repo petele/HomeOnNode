@@ -11,6 +11,7 @@ const HTTPServer = require('./HTTPServer');
 const DeviceMonitor = require('./DeviceMonitor');
 
 const APP_NAME = 'HomeOnNode';
+const FB_LOG_PATH = 'logs/server';
 
 let _fb;
 let _wss;
@@ -20,7 +21,7 @@ let _httpServer;
 let _deviceMonitor;
 
 log.setAppName(APP_NAME);
-log.setOptions({firebaseLogLevel: 50, firebasePath: 'logs/server'});
+log.setOptions({firebaseLogLevel: 50, firebasePath: FB_LOG_PATH});
 log.startWSS();
 log.appStart();
 
@@ -155,6 +156,7 @@ function init() {
   log.log(APP_NAME, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
   setInterval(function() {
     log.verbose(APP_NAME, 'CRON Daily');
+    log.cleanLogs(FB_LOG_PATH, 7);
     _loadAndRunJS('cronDaily.js');
   }, cron24h);
 }
