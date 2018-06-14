@@ -72,6 +72,71 @@ commander
   });
 
 commander
+  .command('save <sceneID> <filename>')
+  .description('Actives scene and saves all info to a file.')
+  .action((sceneID, filename) => {
+    let sceneInfo;
+    console.log('save', sceneID, filename);
+    initHSE();
+    return hseLib.activateScene(sceneID).then((results) => {
+      hseLib.printResults(results);
+    }).then(() => {
+      return hseLib.getScene(sceneID);
+    }).then((scene) => {
+      console.log('sceneInfo', util.inspect(scene, UTIL_OPTS));
+      sceneInfo = scene;
+      const results = [];
+      sceneInfo.lights.forEach((light) => {
+        const p = Promise.resolve({});
+        results.push(p);
+      });
+      // loop through lights to get individual light state
+      return Promise.all(results);
+    }).then((lightStates) => {
+      const results = {
+        sceneName: sceneInfo.name,
+        sceneId: sceneID,
+        sceneData: sceneInfo.appdata,
+        roomId: 1,
+        lights: [],
+      };
+      lightStates.forEach((lightObj) => {
+        console.log('light', util.inspect(lightObj, UTIL_OPTS));
+        const light = {
+          lightId: 1,
+          command: {on: false},
+        };
+        if (lightObj.state.on) {
+          light.command.on = true;
+          light.command.bri = lightObj.state.bri;
+          if (lightObj.state.colormode === 'xy') {
+            light.command.xy = lightObj.state.xy;
+          } else if (lightObj.state.colormode === 'hs') {
+            light.command.hue = lightObj.state.hue;
+            light.command.sat = lightObj.state.sat;
+          } else if (lightObj.state.colormode === 'ct') {
+            light.command.ct = lightObj.state.ct;
+          } else {
+            console.error('OOOPS', lightObj.state.colormode);
+          }
+          if (lightObj.state.alert !== 'none') {
+            light.command.alert = lightObj.state.alert;
+          }
+          if (lightObj.state.effect !== 'none') {
+            light.command.effect = lightObj.state.effect;
+          }
+        }
+        results.lights.push(light);
+      });
+      return results;
+    }).then((sceneObj) => {
+      console.log(util.inspect(sceneObj, UTIL_OPTS));
+      // hseLib.saveJSONFile(filename, sceneObj);
+    });
+  });
+
+
+commander
   .command('list')
   .description('Lists all of the current scenes')
   .action(() => {
