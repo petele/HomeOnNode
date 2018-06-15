@@ -1,18 +1,8 @@
 {
   "sceneName": "Morning [Stove]",
-  "room": {
-    "key": "KI",
-    "id": 9
-  },
-  "showInWebUI": true,
+  "sceneId": "1oo8g7gOrOFihk3",
+  "roomId": 9,
   "lights": [
-    {
-      "lightId": 23,
-      "recipeName": "ROSE",
-      "command": {
-        "bri": 180
-      }
-    }
-  ],
-  "sceneId": "1oo8g7gOrOFihk3"
+    {"lightId": 23, "recipeName": "ROSE", "command": {"bri": 180}}
+  ]
 }

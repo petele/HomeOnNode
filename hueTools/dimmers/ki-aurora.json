@@ -1,8 +1,7 @@
 {
   "sceneName": "Aurora [Kitchen]",
   "sceneId": "tEpTl3aBJhA8Qjo",
-  "room": {"key": "KI", "id": 2},
-  "showInWebUI": true,
+  "roomId": 2,
   "lights": [
     {"lightId": 4, "recipeName": "AURORA_BLUE_LIGHT", "command": {"bri": 200}},
     {"lightId": 5, "recipeName": "AURORA_WHITE_GREENISH", "command": {"bri": 200}},

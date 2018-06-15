@@ -1,8 +1,7 @@
 {
   "sceneName": "Sunrise [Bathroom]",
   "sceneId": "68ROTtByFmrRwm5",
-  "room": {"key": "BA", "id": 8},
-  "showInWebUI": true,
+  "roomId": 8,
   "transitionTime": 8000,
   "lights": [
     {"lightId": 24, "recipeName": "DEFAULT", "command": {"bri": 254}},

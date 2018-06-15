@@ -1,6 +1,6 @@
 {
   "sceneName": "Aurora [Bedside]",
-  "room": {"key": "BR", "id": 3},
+  "roomId": 3,
   "sceneId": "gGIxupSBeNQPZ0U",
   "lights": [
     {"lightId": 16, "recipeName": "AURORA_WHITE_COLD", "command": {"bri": 200}},

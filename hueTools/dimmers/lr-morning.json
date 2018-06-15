@@ -1,8 +1,7 @@
 {
   "sceneName": "Morning [Living Room]",
   "sceneId": "wsGINXDXAxZx4cl",
-  "room": {"key": "LR", "id": 4},
-  "showInWebUI": true,
+  "roomId": 4,
   "lights": [
     {"lightId": 11, "recipeName": "OFF"},
     {"lightId": 12, "recipeName": "ROSE", "command": {"bri": 254}},

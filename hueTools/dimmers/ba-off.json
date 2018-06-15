@@ -1,7 +1,7 @@
 {
   "sceneName": "Off [Bathroom]",
   "sceneId": "q-RJcd3feaXbuVW",
-  "room": {"key": "BA", "id": 8},
+  "roomId": 8,
   "lights": [
     {"lightId": 24, "recipeName": "OFF"},
     {"lightId": 25, "recipeName": "OFF"},

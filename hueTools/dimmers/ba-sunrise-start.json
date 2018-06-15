@@ -1,8 +1,7 @@
 {
   "sceneName": "Sunrise (Start) [Bathroom]",
   "sceneId": "V4kYmTx1JO8cIaY",
-  "room": {"key": "BA", "id": 8},
-  "showInWebUI": true,
+  "roomId": 8,
   "lights": [
     {"lightId": 24, "recipeName": "REBECCA_PURPLE", "command": {"bri": 200}},
     {"lightId": 25, "recipeName": "PEACH", "command": {"bri": 200}},

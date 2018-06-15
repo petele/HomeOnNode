@@ -1,8 +1,7 @@
 {
   "sceneName": "Night Light [Kitchen]",
   "sceneId": "h2O-HtPaJD1GfnU",
-  "room": {"key": "KI", "id": 2},
-  "showInWebUI": true,
+  "roomId": 2,
   "scenes": [
     "dimmers/ki-off.json"
   ],

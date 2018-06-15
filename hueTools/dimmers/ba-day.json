@@ -1,8 +1,7 @@
 {
   "sceneName": "On [Bathroom]",
   "sceneId": "IF1C8D9SVPZclOQ",
-  "room": {"key": "BA", "id": 8},
-  "showInWebUI": true,
+  "roomId": 8,
   "lights": [
     {"lightId": 24, "recipeName": "DEFAULT", "command": {"bri": 254}},
     {"lightId": 25, "recipeName": "DEFAULT", "command": {"bri": 254}},

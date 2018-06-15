@@ -1,8 +1,7 @@
 {
   "sceneName": "Watching TV",
-  "room": {"key": "ALL", "id": 0},
+  "roomId": 0,
   "sceneId": "T4eTTKpo0sibks4",
-  "showInWebUI": true,
   "transitionTime": 50,
   "scenes": [
   	"dimmers/ba-night-high.json",

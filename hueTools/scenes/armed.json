@@ -1,7 +1,7 @@
 {
   "sceneName": "Armed",
   "sceneId": "dkHWskiamrRsNrd",
-  "room": {"key": "ALL", "id": 0},
+  "roomId": 0,
   "transitionTime": 0,
   "scenes": [
     "dimmers/ba-off.json",

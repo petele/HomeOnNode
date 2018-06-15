@@ -1,8 +1,7 @@
 {
   "sceneName": "Aurora [Bathroom]",
   "sceneId": "vlgkj7lhLMxMXVd",
-  "room": {"key": "BA", "id": 8},
-  "showInWebUI": true,
+  "roomId": 8,
   "lights": [
     {"lightId": 24, "recipeName": "AURORA_WHITE_COLD", "command": {"bri": 150}},
     {"lightId": 25, "recipeName": "AURORA_CYAN_LIGHT_LS", "command": {"bri": 150}},

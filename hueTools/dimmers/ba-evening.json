@@ -1,8 +1,7 @@
 {
   "sceneName": "Evening [Bathroom]",
   "sceneId": "PTrMhudCsg6mOCt",
-  "room": {"key": "BA", "id": 8},
-  "showInWebUI": true,
+  "roomId": 8,
   "lights": [
     {"lightId": 24, "recipeName": "ROSE", "command": {"bri": 225}},
     {"lightId": 25, "recipeName": "ROSE_DEEP", "command": {"bri": 200}},

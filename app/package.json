@@ -35,7 +35,6 @@
     "mocha": "^3.4.2"
   },
   "scripts": {
-    "test": "mocha ./tests/*.js",
     "lint": "eslint --ignore-pattern '/tests/' ."
   }
 }

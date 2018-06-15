@@ -19,5 +19,8 @@
   "devDependencies": {
     "eslint": "^4.12.0",
     "eslint-config-google": "^0.9.1"
+  },
+    "scripts": {
+    "lint": "eslint --ignore-pattern '/tests/' ."
   }
 }
