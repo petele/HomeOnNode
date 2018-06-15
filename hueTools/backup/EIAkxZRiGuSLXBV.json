@@ -1,0 +1,50 @@
+{
+  "sceneName": "Off [Kitchen]",
+  "sceneId": "EIAkxZRiGuSLXBV",
+  "sceneData": {
+    "version": 1,
+    "data": "xEemX_r02_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 2
+  },
+  "lights": [
+    {
+      "lightId": 4,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": false
+      }
+    }
+  ]
+}

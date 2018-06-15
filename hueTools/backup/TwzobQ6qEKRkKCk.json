@@ -1,0 +1,32 @@
+{
+  "sceneName": "Last on state",
+  "sceneId": "TwzobQ6qEKRkKCk",
+  "sceneData": {
+    "version": 1,
+    "data": "v0OwL_r08_d20"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 8
+  },
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": true
+      }
+    }
+  ]
+}

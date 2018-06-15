@@ -1,0 +1,36 @@
+{
+  "sceneName": "Reading - (25) [Bedside]",
+  "sceneId": "NysrcLopDP64vpT",
+  "sceneData": {
+    "version": 1,
+    "data": "xsH7X_r03_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 3
+  },
+  "lights": [
+    {
+      "lightId": 16,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.6126,
+          0.3667
+        ]
+      }
+    },
+    {
+      "lightId": 28,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.6126,
+          0.3667
+        ]
+      }
+    }
+  ]
+}

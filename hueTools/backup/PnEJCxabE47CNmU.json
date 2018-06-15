@@ -1,0 +1,113 @@
+{
+  "sceneName": "Aurora [Bedroom]",
+  "sceneId": "PnEJCxabE47CNmU",
+  "sceneData": {
+    "version": 1,
+    "data": "x5DNX_r06_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1641,
+          0.3552
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1984,
+          0.267
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2061,
+          0.1166
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3589,
+          0.4191
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2061,
+          0.1166
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2061,
+          0.1166
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1641,
+          0.3552
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2061,
+          0.1166
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1641,
+          0.3552
+        ]
+      }
+    }
+  ]
+}

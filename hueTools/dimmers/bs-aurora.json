@@ -1,8 +1,7 @@
 {
   "sceneName": "Aurora [Bedside]",
-  "sceneId": "DN0kPKmHvOVmxlj",
   "room": {"key": "BR", "id": 3},
-  "showInWebUI": true,
+  "sceneId": "gGIxupSBeNQPZ0U",
   "lights": [
     {"lightId": 16, "recipeName": "AURORA_WHITE_COLD", "command": {"bri": 200}},
     {"lightId": 28, "recipeName": "AURORA_CYAN_LIGHT_LS", "command": {"bri": 200}}

@@ -1,0 +1,32 @@
+{
+  "sceneName": "Off [Front Hall]",
+  "sceneId": "0WmsEvtP0bMJIzI",
+  "sceneData": {
+    "version": 1,
+    "data": "xSqhX_r01_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 1
+  },
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": false
+      }
+    }
+  ]
+}

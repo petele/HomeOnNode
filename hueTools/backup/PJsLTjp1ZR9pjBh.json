@@ -1,0 +1,24 @@
+{
+  "sceneName": "Day [Stove]",
+  "sceneId": "PJsLTjp1ZR9pjBh",
+  "sceneData": {
+    "version": 1,
+    "data": "xkm7X_r09_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 9
+  },
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 80,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    }
+  ]
+}

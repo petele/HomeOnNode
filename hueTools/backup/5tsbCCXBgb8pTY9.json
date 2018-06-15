@@ -1,0 +1,26 @@
+{
+  "sceneName": "Off [Bedside]",
+  "sceneId": "5tsbCCXBgb8pTY9",
+  "sceneData": {
+    "version": 1,
+    "data": "xWY7X_r03_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 3
+  },
+  "lights": [
+    {
+      "lightId": 16,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 28,
+      "command": {
+        "on": false
+      }
+    }
+  ]
+}

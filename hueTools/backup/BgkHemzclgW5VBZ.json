@@ -1,0 +1,40 @@
+{
+  "sceneName": "Morning [Front Hall]",
+  "sceneId": "BgkHemzclgW5VBZ",
+  "sceneData": {
+    "version": 1,
+    "data": "xmCfX_r01_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 1
+  },
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    }
+  ]
+}

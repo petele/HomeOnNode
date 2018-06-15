@@ -10,6 +10,7 @@
     "dimmers/bs-off.json",
     "dimmers/fh-night-light.json",
     "dimmers/ki-night-light.json",
+    "dimmers/ki-off.json",
     "dimmers/lr-tv-movies.json"
   ],
    "lights": [

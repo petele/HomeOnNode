@@ -1,0 +1,74 @@
+{
+  "sceneName": "Off [Living Room]",
+  "sceneId": "ypwHRuNvYVKtVkw",
+  "sceneData": {
+    "version": 1,
+    "data": "xUVsX_r04_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 4
+  },
+  "lights": [
+    {
+      "lightId": 11,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 12,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 13,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 14,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 18,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 22,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 27,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 35,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 36,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 37,
+      "command": {
+        "on": false
+      }
+    }
+  ]
+}

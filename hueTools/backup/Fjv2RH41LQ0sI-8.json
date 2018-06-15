@@ -1,0 +1,50 @@
+{
+  "sceneName": "Last on state",
+  "sceneId": "Fjv2RH41LQ0sI-8",
+  "sceneData": {
+    "version": 1,
+    "data": "Gh1rW_r02_d20"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 2
+  },
+  "lights": [
+    {
+      "lightId": 4,
+      "command": {
+        "on": true
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": true
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": true
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": true
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": true
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": true
+      }
+    }
+  ]
+}

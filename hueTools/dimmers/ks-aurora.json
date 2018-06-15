@@ -1,0 +1,18 @@
+{
+  "sceneName": "Aurora [Stove]",
+  "room": {
+    "key": "KI",
+    "id": 9
+  },
+  "showInWebUI": true,
+  "lights": [
+    {
+      "lightId": 23,
+      "recipeName": "AURORA_CYAN_DARK_LS",
+      "command": {
+        "bri": 200
+      }
+    }
+  ],
+  "sceneId": "YBfCvLMQCOpypTH"
+}

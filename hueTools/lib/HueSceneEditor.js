@@ -210,14 +210,18 @@ function updateScene(sceneObj, lightList) {
     lights: lightList,
     storelightstate: true,
   };
-  // scene.appdata = {
-  //   data: _generateAppDataValue(sceneObj.room.id),
-  //   version: 1,
-  // };
   if (sceneObj.hasOwnProperty('transitionTime')) {
     scene.transitiontime = sceneObj.transitionTime;
   }
   return makeRequest('PUT', `scenes/${sceneObj.sceneId}`, scene);
+}
+
+function renameScene(sceneId, sceneName) {
+  console.log(`Renaming ${sceneId} to ${chalk.cyan(sceneName)}`);
+  const scene = {
+    name: sceneName,
+  };
+  return makeRequest('PUT', `scenes/${sceneId}`, scene);
 }
 
 /**
@@ -276,6 +280,7 @@ exports.getScene = getScene;
 exports.getRecipes = getRecipes;
 exports.listScenes = listScenes;
 exports.createScene = createScene;
+exports.renameScene = renameScene;
 exports.deleteScene = deleteScene;
 exports.updateScene = updateScene;
 exports.printResults = printResults;

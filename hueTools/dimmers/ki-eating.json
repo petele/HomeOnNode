@@ -9,7 +9,6 @@
     {"lightId": 6, "recipeName": "DEFAULT", "command": {"bri": 250}},
     {"lightId": 7, "recipeName": "DEFAULT", "command": {"bri": 250}},
     {"lightId": 17, "recipeName": "PEACH", "command": {"bri": 250}},
-    {"lightId": 23, "recipeName": "OFF"},
     {"lightId": 29, "recipeName": "PEACH", "command": {"bri": 250}}
   ]
 }

@@ -1,0 +1,46 @@
+{
+  "sceneName": "Evening [Bathroom]",
+  "sceneId": "PTrMhudCsg6mOCt",
+  "sceneData": {
+    "version": 1,
+    "data": "xATgX_r08_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 8
+  },
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.3612,
+          0.1607
+        ]
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "effect": "none",
+        "hue": 46784,
+        "sat": 254
+      }
+    }
+  ]
+}

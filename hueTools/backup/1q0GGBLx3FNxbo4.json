@@ -1,0 +1,68 @@
+{
+  "sceneName": "Off [Bedroom]",
+  "sceneId": "1q0GGBLx3FNxbo4",
+  "sceneData": {
+    "version": 1,
+    "data": "xxkIX_r06_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": false
+      }
+    }
+  ]
+}
