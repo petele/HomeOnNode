@@ -6,9 +6,8 @@
     "data": "xFVIX_r02_d99"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 2
-  },
+  "roomId": 2,
+  "sceneType": 99,
   "lights": [
     {
       "lightId": 4,

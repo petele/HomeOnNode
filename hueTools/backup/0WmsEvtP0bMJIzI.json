@@ -6,9 +6,8 @@
     "data": "xSqhX_r01_d99"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 1
-  },
+  "roomId": 1,
+  "sceneType": 99,
   "lights": [
     {
       "lightId": 1,

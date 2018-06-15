@@ -1,6 +1,6 @@
 {
   "sceneName": "Stove (On) [Kitchen]",
-  "sceneId": "nMmI97AitYkpOOl",
+  "sceneId": "z4YumS8VHu7IRHG",
   "roomId": 9,
   "lights": [
     {"lightId": 23, "command": {"on":true, "xy": [0.3691, 0.3719], "bri": 254}}

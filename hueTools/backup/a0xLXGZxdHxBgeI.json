@@ -6,9 +6,8 @@
     "data": "ucXe6_r09_d05"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 9
-  },
+  "roomId": 9,
+  "sceneType": 5,
   "lights": [
     {
       "lightId": 23,

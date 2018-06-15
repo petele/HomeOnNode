@@ -1,8 +1,7 @@
 {
   "sceneName": "Stove (Off) [Kitchen]",
-  "sceneId": "DijhAotWFdE41c1",
+  "sceneId": "FLpEB3p2Jzu85-Z",
   "roomId": 9,
-  "showInWebUI": false,
   "lights": [
     {"lightId": 23, "recipeName": "OFF"}
   ]

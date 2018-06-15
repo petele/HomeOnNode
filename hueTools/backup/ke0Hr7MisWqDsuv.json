@@ -6,9 +6,8 @@
     "data": "M7V9z_r04_d20"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 4
-  },
+  "roomId": 4,
+  "sceneType": 20,
   "lights": [
     {
       "lightId": 11,

@@ -6,9 +6,8 @@
     "data": "m6hs5_r09_d18"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 9
-  },
+  "roomId": 9,
+  "sceneType": 18,
   "lights": [
     {
       "lightId": 23,

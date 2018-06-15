@@ -51,7 +51,6 @@ commander
   .option('-t, --trial', 'Trial only, don\'t make requests.')
   .option('-r, --recipeFile <filename>', 'Read [recipes.json]', 'recipes.json');
 
-
 commander
   .command('list')
   .description('Lists all of the current scenes')
@@ -167,16 +166,6 @@ commander
     });
   });
 
-// commander
-//   .command('save <sceneID> <filename>')
-//   .description('Saves scene details to file.')
-//   .action((sceneID, filename) => {
-//     initHSE();
-//     backupScene(sceneID, filename).then((result) => {
-//       console.log(util.inspect(result, UTIL_OPTS_PRETTY));
-//     });
-//   });
-
 function allOffAndWait() {
   return hseLib.allOff().then(() => {
     console.log(' Waiting for lights to catch up...');
@@ -192,42 +181,9 @@ async function backupScenes(scenes, folder) {
     const sceneID = scenes[i];
     const filename = path.join(folder, `${sceneID}.json`);
     const sceneObj = await hseLib.getScene(sceneID);
-    saveScene(sceneObj, filename);
-    // backupScene(sceneID, filename);
+    saveScene(sceneID, sceneObj, filename);
   }
 }
-
-// async function backupScene(sceneID, filename) {
-//   const scene = await hseLib.getScene(sceneID);
-//   const results = {
-//     sceneName: scene.name,
-//     sceneId: sceneID,
-//     sceneData: scene.appdata,
-//     sceneVersion: scene.version,
-//   };
-//   if (scene.appdata && scene.appdata.data) {
-//     const matches = scene.appdata.data.match(RE_ROOM_ID);
-//     if (matches && matches[1]) {
-//       results.room = {id: parseInt(matches[1])};
-//     }
-//   }
-//   results.lights = [];
-//   Object.keys(scene.lightstates).forEach((lightId) => {
-//     const lightState = scene.lightstates[lightId];
-//     results.lights.push({
-//       lightId: parseInt(lightId),
-//       command: lightState,
-//     });
-//   });
-//   let cSceneID = chalk.cyan(sceneID);
-//   if (scene.version < 2) {
-//     cSceneID = chalk.red(sceneID);
-//   }
-//   const cFilename = chalk.cyan(filename);
-//   console.log(`Saved ${cSceneID} to ${cFilename}`);
-//   hseLib.saveJSONFile(filename, results);
-//   return results;
-// }
 
 function saveScene(sceneID, hueSceneObj, filename) {
   const results = {
@@ -328,6 +284,7 @@ async function makeScenes(files, save, startOff) {
       await hseLib.wait(DELAY_BETWEEN_ACTIONS);
     }
   }
+  console.log('');
 }
 
 commander.parse(process.argv);

@@ -6,9 +6,8 @@
     "data": "Gh1rW_r02_d20"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 2
-  },
+  "roomId": 2,
+  "sceneType": 20,
   "lights": [
     {
       "lightId": 4,

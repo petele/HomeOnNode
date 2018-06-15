@@ -1,6 +1,6 @@
 {
   "sceneName": "Aurora [Stove]",
-  "sceneId": "YBfCvLMQCOpypTH",
+  "sceneId": "GwvrssT9D-GfpOi",
   "roomId": 9,
   "lights": [
     {"lightId": 23, "recipeName": "AURORA_CYAN_DARK_LS", "command": {"bri": 200}}

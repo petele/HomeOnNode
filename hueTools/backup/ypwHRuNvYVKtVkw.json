@@ -6,9 +6,8 @@
     "data": "xUVsX_r04_d99"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 4
-  },
+  "roomId": 4,
+  "sceneType": 99,
   "lights": [
     {
       "lightId": 11,

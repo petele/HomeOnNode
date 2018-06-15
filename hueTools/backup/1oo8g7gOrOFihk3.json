@@ -6,9 +6,8 @@
     "data": "xBRuX_r09_d99"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 9
-  },
+  "roomId": 9,
+  "sceneType": 99,
   "lights": [
     {
       "lightId": 23,

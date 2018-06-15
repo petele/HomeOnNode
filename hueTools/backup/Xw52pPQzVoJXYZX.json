@@ -6,9 +6,8 @@
     "data": "tXIiR_r06_d20"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 6
-  },
+  "roomId": 6,
+  "sceneType": 20,
   "lights": [
     {
       "lightId": 15,

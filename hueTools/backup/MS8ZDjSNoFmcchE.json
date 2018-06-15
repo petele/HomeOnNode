@@ -6,9 +6,8 @@
     "data": "xFSUX_r00_d99"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 0
-  },
+  "roomId": 0,
+  "sceneType": 99,
   "lights": [
     {
       "lightId": 1,

@@ -6,41 +6,29 @@
     "data": "A4WiM_r08_h01"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 8
-  },
+  "roomId": 8,
   "lights": [
     {
       "lightId": 24,
       "command": {
         "on": true,
-        "bri": 100,
+        "bri": 25,
         "xy": [
-          0.674,
-          0.322
+          0.6737,
+          0.3216
         ]
       }
     },
     {
       "lightId": 25,
       "command": {
-        "on": true,
-        "bri": 30,
-        "xy": [
-          0.674,
-          0.322
-        ]
+        "on": false
       }
     },
     {
       "lightId": 26,
       "command": {
-        "on": true,
-        "bri": 5,
-        "xy": [
-          0.674,
-          0.322
-        ]
+        "on": false
       }
     }
   ]
