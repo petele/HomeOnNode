@@ -1,0 +1,113 @@
+{
+  "sceneName": "Nebula",
+  "sceneId": "9701QqvDJ9Bn8Vt",
+  "sceneData": {
+    "version": 1,
+    "data": "hMjzO_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.3206,
+          0.2315
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.3722,
+          0.2696
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.3206,
+          0.2315
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.3722,
+          0.2696
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.1995,
+          0.1042
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.2573,
+          0.2694
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.305,
+          0.1914
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.1995,
+          0.1042
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 60,
+        "xy": [
+          0.3206,
+          0.2315
+        ]
+      }
+    }
+  ]
+}

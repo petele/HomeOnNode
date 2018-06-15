@@ -1,0 +1,113 @@
+{
+  "sceneName": "Blood Moon",
+  "sceneId": "myUQHUi4joq7IRu",
+  "sceneData": {
+    "version": 1,
+    "data": "lQcoL_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.5263,
+          0.2968
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.5263,
+          0.2968
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.4671,
+          0.3489
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.5263,
+          0.2968
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.149,
+          0.0848
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.5263,
+          0.2968
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.5263,
+          0.2968
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.5263,
+          0.2968
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 49,
+        "xy": [
+          0.149,
+          0.0848
+        ]
+      }
+    }
+  ]
+}

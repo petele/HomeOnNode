@@ -1,0 +1,113 @@
+{
+  "sceneName": "Winter mountain",
+  "sceneId": "TK-0SwvXsJrgV6S",
+  "sceneData": {
+    "version": 1,
+    "data": "ZWbSS_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.2519,
+          0.31
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.2835,
+          0.3222
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.3045,
+          0.3112
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.3059,
+          0.3146
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.2835,
+          0.3222
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.25,
+          0.3051
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.2483,
+          0.3083
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.25,
+          0.3051
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.2519,
+          0.31
+        ]
+      }
+    }
+  ]
+}

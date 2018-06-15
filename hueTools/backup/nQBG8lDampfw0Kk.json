@@ -1,0 +1,113 @@
+{
+  "sceneName": "Ocean Dawn",
+  "sceneId": "nQBG8lDampfw0Kk",
+  "sceneData": {
+    "version": 1,
+    "data": "B351l_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.2521,
+          0.2846
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.343,
+          0.3424
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.3931,
+          0.3582
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.343,
+          0.3424
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.2521,
+          0.2846
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.3931,
+          0.3582
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.343,
+          0.3424
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.3931,
+          0.3582
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 214,
+        "xy": [
+          0.343,
+          0.3424
+        ]
+      }
+    }
+  ]
+}

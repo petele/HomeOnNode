@@ -1,0 +1,113 @@
+{
+  "sceneName": "Palm Beach",
+  "sceneId": "8ZY-6P35yPxBEIa",
+  "sceneData": {
+    "version": 1,
+    "data": "PGSCP_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.207,
+          0.3387
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.207,
+          0.3387
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.2961,
+          0.2946
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.4078,
+          0.333
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.207,
+          0.3387
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.4078,
+          0.333
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.4078,
+          0.333
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.4078,
+          0.333
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 216,
+        "xy": [
+          0.4078,
+          0.333
+        ]
+      }
+    }
+  ]
+}

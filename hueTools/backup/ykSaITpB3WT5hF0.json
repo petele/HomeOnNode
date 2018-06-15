@@ -1,0 +1,113 @@
+{
+  "sceneName": "Savanna sunset",
+  "sceneId": "ykSaITpB3WT5hF0",
+  "sceneData": {
+    "version": 1,
+    "data": "ejJs7_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.6606,
+          0.3188
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.5862,
+          0.3513
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.5862,
+          0.3513
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.5862,
+          0.3513
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.6606,
+          0.3188
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.532,
+          0.3845
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.3833,
+          0.4018
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.5862,
+          0.3513
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 205,
+        "xy": [
+          0.6606,
+          0.3188
+        ]
+      }
+    }
+  ]
+}

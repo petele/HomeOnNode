@@ -1,0 +1,113 @@
+{
+  "sceneName": "Ibiza",
+  "sceneId": "K5n4ydX6X18TIn9",
+  "sceneData": {
+    "version": 1,
+    "data": "CRFjq_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.5805,
+          0.3254
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.5104,
+          0.4329
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.5104,
+          0.4329
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.5104,
+          0.4329
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.473,
+          0.4523
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.473,
+          0.4523
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.5768,
+          0.39
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.4313,
+          0.4526
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 123,
+        "xy": [
+          0.5104,
+          0.4329
+        ]
+      }
+    }
+  ]
+}

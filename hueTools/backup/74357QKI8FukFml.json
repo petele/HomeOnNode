@@ -1,0 +1,113 @@
+{
+  "sceneName": "Golden Pond",
+  "sceneId": "74357QKI8FukFml",
+  "sceneData": {
+    "version": 1,
+    "data": "jViev_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.4862,
+          0.4551
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.5421,
+          0.4319
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.5364,
+          0.4224
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.4969,
+          0.4518
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.5421,
+          0.4319
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.4862,
+          0.4551
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.5421,
+          0.4319
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.5654,
+          0.3239
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 187,
+        "xy": [
+          0.5421,
+          0.4319
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "sceneName": "Blue Lagoon",
+  "sceneId": "KlsAgA0ur15cKov",
+  "sceneData": {
+    "version": 1,
+    "data": "e7dLS_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.4462,
+          0.3791
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.2654,
+          0.3654
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.2633,
+          0.23
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.3181,
+          0.3379
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.4462,
+          0.3791
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.3859,
+          0.3896
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.2076,
+          0.334
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.4462,
+          0.3791
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 152,
+        "xy": [
+          0.3859,
+          0.3896
+        ]
+      }
+    }
+  ]
+}

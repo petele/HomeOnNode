@@ -1,0 +1,113 @@
+{
+  "sceneName": "Motown",
+  "sceneId": "fOvGs3-7mSTf-cb",
+  "sceneData": {
+    "version": 1,
+    "data": "M64pd_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.1541,
+          0.2066
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.1634,
+          0.2855
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.2066,
+          0.1176
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.2066,
+          0.1176
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.1471,
+          0.1487
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.1391,
+          0.0821
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.1391,
+          0.0821
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.1471,
+          0.1487
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 223,
+        "xy": [
+          0.1471,
+          0.1487
+        ]
+      }
+    }
+  ]
+}

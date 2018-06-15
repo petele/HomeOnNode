@@ -1,0 +1,113 @@
+{
+  "sceneName": "Midsomer Sun",
+  "sceneId": "UR7OVxXMa0UABoL",
+  "sceneData": {
+    "version": 1,
+    "data": "Zw0uU_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3873,
+          0.3449
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3495,
+          0.3375
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3495,
+          0.3375
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3743,
+          0.3826
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3873,
+          0.3449
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3317,
+          0.3461
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3873,
+          0.3449
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3495,
+          0.3375
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.3317,
+          0.3461
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "sceneName": "Honolulu",
+  "sceneId": "ByBBf2gN9t6w73U",
+  "sceneData": {
+    "version": 1,
+    "data": "SLTOG_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.4826,
+          0.4221
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.4826,
+          0.4221
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.5955,
+          0.3144
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.5955,
+          0.3144
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.66,
+          0.2907
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.4826,
+          0.4221
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.5955,
+          0.3144
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.4826,
+          0.4221
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 98,
+        "xy": [
+          0.5955,
+          0.3144
+        ]
+      }
+    }
+  ]
+}

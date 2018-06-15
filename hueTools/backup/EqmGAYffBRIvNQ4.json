@@ -1,0 +1,113 @@
+{
+  "sceneName": "Osaka",
+  "sceneId": "EqmGAYffBRIvNQ4",
+  "sceneData": {
+    "version": 1,
+    "data": "4cwVW_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.6209,
+          0.2695
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.6107,
+          0.2869
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.6107,
+          0.2869
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.3373,
+          0.2471
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.3373,
+          0.2471
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.4407,
+          0.4333
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 225,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "sceneName": "Frosty Dawn",
+  "sceneId": "F-mCZ6JNBOhcxXa",
+  "sceneData": {
+    "version": 1,
+    "data": "CTRJi_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.4404,
+          0.4359
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.4404,
+          0.4359
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.4127,
+          0.4343
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.4404,
+          0.4359
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.4127,
+          0.4343
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.4127,
+          0.4343
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.4127,
+          0.4343
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.3943,
+          0.416
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 252,
+        "xy": [
+          0.4404,
+          0.4359
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "sceneName": "Soho",
+  "sceneId": "NvHEJRir1Pz1EMb",
+  "sceneData": {
+    "version": 1,
+    "data": "nqzJ9_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.5571,
+          0.2405
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.5571,
+          0.2405
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3071,
+          0.3169
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3071,
+          0.3169
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2257,
+          0.114
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2257,
+          0.114
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1945,
+          0.374
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.5378,
+          0.2636
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1945,
+          0.374
+        ]
+      }
+    }
+  ]
+}

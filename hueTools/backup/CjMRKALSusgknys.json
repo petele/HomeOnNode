@@ -1,0 +1,113 @@
+{
+  "sceneName": "Emerald Isle",
+  "sceneId": "CjMRKALSusgknys",
+  "sceneData": {
+    "version": 1,
+    "data": "A8WPv_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3202,
+          0.4128
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3202,
+          0.4128
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3488,
+          0.398
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3488,
+          0.398
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3202,
+          0.4128
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3799,
+          0.4007
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3799,
+          0.4007
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3799,
+          0.4007
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 212,
+        "xy": [
+          0.3202,
+          0.4128
+        ]
+      }
+    }
+  ]
+}

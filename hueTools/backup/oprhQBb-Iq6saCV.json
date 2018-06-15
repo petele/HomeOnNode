@@ -1,0 +1,113 @@
+{
+  "sceneName": "Lake Placid",
+  "sceneId": "oprhQBb-Iq6saCV",
+  "sceneData": {
+    "version": 1,
+    "data": "s7sKm_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.4897,
+          0.3527
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.252,
+          0.2634
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.4897,
+          0.3527
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.2744,
+          0.2521
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.1647,
+          0.1486
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.5342,
+          0.3552
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.4897,
+          0.3527
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.5342,
+          0.3552
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 210,
+        "xy": [
+          0.3986,
+          0.3326
+        ]
+      }
+    }
+  ]
+}
