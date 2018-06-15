@@ -19,7 +19,7 @@ const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
 const Bluetooth = require('./Bluetooth');
 const PushBullet = require('./PushBullet');
-const FlicMonitor = require('./FlicMonitor');
+// const FlicMonitor = require('./FlicMonitor');
 const SomaSmartShades = require('./SomaSmartShades');
 
 const LOG_PREFIX = 'HOME';
@@ -39,7 +39,7 @@ function Home(initialConfig, fbRef) {
   let _fb = fbRef;
 
   let bluetooth;
-  let flicMonitor;
+  // let flicMonitor;
   let gcmPush;
   let harmony;
   let hue;
@@ -427,7 +427,7 @@ function Home(initialConfig, fbRef) {
     _initNanoLeaf();
     _initSonos();
     _initHarmony();
-    _initFlic();
+    // _initFlic();
     _initPresence();
     _initSoma();
     _initPushBullet();
@@ -777,41 +777,41 @@ function Home(initialConfig, fbRef) {
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
-  /**
-   * Init the Flic API
-   */
-  function _initFlic() {
-    flicMonitor = new FlicMonitor(bluetooth);
-    flicMonitor.on('flic_pushed', _handleFlicPush);
-    const flicConfigPath = 'config/HomeOnNode/flicButtons';
-    _fb.child(flicConfigPath).on('child_added', function(snapshot) {
-      const uuid = snapshot.key();
-      flicMonitor.add(uuid);
-    });
-    _fb.child(flicConfigPath).on('child_removed', function(snapshot) {
-      const uuid = snapshot.key();
-      flicMonitor.remove(uuid);
-    });
-  }
+  // /**
+  //  * Init the Flic API
+  //  */
+  // function _initFlic() {
+  //   flicMonitor = new FlicMonitor(bluetooth);
+  //   flicMonitor.on('flic_pushed', _handleFlicPush);
+  //   const flicConfigPath = 'config/HomeOnNode/flicButtons';
+  //   _fb.child(flicConfigPath).on('child_added', function(snapshot) {
+  //     const uuid = snapshot.key();
+  //     flicMonitor.add(uuid);
+  //   });
+  //   _fb.child(flicConfigPath).on('child_removed', function(snapshot) {
+  //     const uuid = snapshot.key();
+  //     flicMonitor.remove(uuid);
+  //   });
+  // }
 
-  /**
-   * Handles a Flic button push
-   *
-   * @param {String} uuid The UUID of the button that was pushed.
-   */
-  function _handleFlicPush(uuid) {
-    const cmd = _config.flicButtons[uuid];
-    if (!cmd) {
-      log.warn(LOG_PREFIX, `No command for Flic with UUID: ${uuid}`);
-      return;
-    }
-    const src = `Flic-${uuid}`;
-    if (typeof cmd === 'string') {
-      _self.executeCommandByName(cmd, null, src);
-      return;
-    }
-    _self.executeCommand(cmd, src);
-  }
+  // /**
+  //  * Handles a Flic button push
+  //  *
+  //  * @param {String} uuid The UUID of the button that was pushed.
+  //  */
+  // function _handleFlicPush(uuid) {
+  //   const cmd = _config.flicButtons[uuid];
+  //   if (!cmd) {
+  //     log.warn(LOG_PREFIX, `No command for Flic with UUID: ${uuid}`);
+  //     return;
+  //   }
+  //   const src = `Flic-${uuid}`;
+  //   if (typeof cmd === 'string') {
+  //     _self.executeCommandByName(cmd, null, src);
+  //     return;
+  //   }
+  //   _self.executeCommand(cmd, src);
+  // }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
