@@ -1,8 +1,7 @@
 {
   "sceneName": "Night Light [Front Hall]",
   "sceneId": "tMAzXFApSPSZbvA",
-  "room": {"key": "FH", "id": 1},
-  "showInWebUI": true,
+  "roomId": 1,
   "scenes": [
     "dimmers/fh-off.json"
   ],

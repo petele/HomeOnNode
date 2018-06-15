@@ -1,8 +1,7 @@
 {
   "sceneName": "Night Light [Bedroom]",
   "sceneId": "qWEYvmRUH6Ff3wK",
-  "room": {"key": "BR", "id": 6},
-  "showInWebUI": true,
+  "roomId": 6,
   "scenes": [
     "dimmers/br-off.json"
   ],

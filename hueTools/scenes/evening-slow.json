@@ -1,8 +1,7 @@
 {
   "sceneName": "Evening (slow)",
   "sceneId": "MS8ZDjSNoFmcchE",
-  "room": {"key": "ALL", "id": 0},
-  "showInWebUI": true,
+  "roomId": 0,
   "transitionTime": 6000,
   "scenes": [
     "scenes/evening.json"

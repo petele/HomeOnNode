@@ -1,8 +1,7 @@
 {
   "sceneName": "On [Front Hall]",
   "sceneId": "ddMF4nlw1HcpvxQ",
-  "room": {"key": "FH", "id": 1},
-  "showInWebUI": true,
+  "roomId": 1,
   "lights": [
     {"lightId": 1, "recipeName": "DEFAULT", "command": {"bri": 254}},
     {"lightId": 2, "recipeName": "DEFAULT", "command": {"bri": 254}},

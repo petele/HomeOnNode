@@ -1,8 +1,7 @@
 {
   "sceneName": "Reading - (50) [Bedside]",
   "sceneId": "SNZanTcH-EPW1pr",
-  "room": {"key": "BR", "id": 3},
-  "showInWebUI": true,
+  "roomId": 3,
   "lights": [
     {"lightId": 16, "recipeName": "READING", "command": {"bri": 128}},
     {"lightId": 28, "recipeName": "READING", "command": {"bri": 128}}

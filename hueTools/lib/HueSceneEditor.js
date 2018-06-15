@@ -1,5 +1,7 @@
 'use strict';
 
+/* eslint require-jsdoc: "off" */
+
 const fs = require('fs');
 const util = require('util');
 const chalk = require('chalk');
@@ -16,7 +18,7 @@ const UTIL_OPTS = {
   colors: true,
   maxArrayLength: 20,
   breakLength: 1000,
-}
+};
 
 let _recipes;
 let _ready = false;
@@ -93,6 +95,16 @@ function _randomChar() {
   return _CHARS[Math.floor(Math.random() * 61)];
 }
 
+function _generateAppDataValue(roomId, sceneType) {
+  let result = 'x' + _randomChar() + _randomChar() + _randomChar() + 'X';
+  result += '_r' + roomId.toString().padStart(2, '0');
+  if (sceneType) {
+    result += '_d' + sceneType.toString().padStart(2, '0');
+  } else {
+    result += '_d99';
+  }
+  return result;
+}
 
 /** ***************************************************************************
  * Task Functions
@@ -118,6 +130,7 @@ function init(opts) {
 
 function printResults(results, throwOnError) {
   if (!Array.isArray(results)) {
+    console.log(util.inspect(results, UTIL_OPTS));
     return false;
   }
   let hasErrors = false;
@@ -170,57 +183,50 @@ function activateScene(sceneID) {
   return makeRequest('PUT', 'groups/0/action', body);
 }
 
+function deleteScene(sceneID) {
+  return makeRequest('DELETE', 'scenes/' + sceneID, null);
+}
+
+function renameScene(sceneId, sceneName) {
+  const scene = {name: sceneName};
+  console.log(`Renaming ${sceneId} to ${chalk.cyan(sceneName)}`);
+  return makeRequest('PUT', `scenes/${sceneId}`, scene);
+}
+
 async function allOff() {
   console.log('Turning all lights off...');
   return makeRequest('PUT', 'groups/0/action', {on: false});
 }
 
-function deleteScene(sceneID) {
-  return makeRequest('DELETE', 'scenes/' + sceneID, null);
-}
-
-function _generateAppDataValue(roomId) {
-  let result = 'x' + _randomChar() + _randomChar() + _randomChar() + 'X';
-  result += '_r' + roomId.toString().padStart(2, '0');
-  result += '_d99';
-  return result;
-}
-
 async function createScene(sceneObj, lightList) {
-  console.log(`Creating ${chalk.cyan(sceneObj.sceneName)}`);
   const scene = {
     name: sceneObj.sceneName,
     lights: lightList,
     recycle: false,
     appdata: {
-      data: _generateAppDataValue(sceneObj.room.id),
+      data: _generateAppDataValue(sceneObj.roomId, sceneObj.sceneType),
       version: 1,
     },
   };
   if (sceneObj.hasOwnProperty('transitionTime')) {
     scene.transitiontime = sceneObj.transitionTime;
   }
+  console.log(`Creating ${chalk.cyan(scene.name)}`);
   return makeRequest('POST', 'scenes/', scene);
 }
 
 function updateScene(sceneObj, lightList) {
-  console.log(`Updating ${chalk.cyan(sceneObj.sceneName)} (${sceneObj.sceneId})`);
+  const sceneId = sceneObj.sceneId;
+  const sceneName = sceneObj.sceneName;
   const scene = {
-    name: sceneObj.sceneName,
+    name: sceneName,
     lights: lightList,
     storelightstate: true,
   };
   if (sceneObj.hasOwnProperty('transitionTime')) {
     scene.transitiontime = sceneObj.transitionTime;
   }
-  return makeRequest('PUT', `scenes/${sceneObj.sceneId}`, scene);
-}
-
-function renameScene(sceneId, sceneName) {
-  console.log(`Renaming ${sceneId} to ${chalk.cyan(sceneName)}`);
-  const scene = {
-    name: sceneName,
-  };
+  console.log(`Updating ${chalk.cyan(sceneName)} (${sceneId})`);
   return makeRequest('PUT', `scenes/${sceneId}`, scene);
 }
 
@@ -229,7 +235,8 @@ function renameScene(sceneId, sceneName) {
  *
  * @param {string} method The HTTP request method.
  * @param {string} path The URL path to request from.
- * @param {Object} <body> The body to send along with the request.
+ * @param {Object} body The body to send along with the request.
+ * @return {Promise}
  */
 function makeRequest(method, path, body) {
   return new Promise(function(resolve, reject) {
@@ -249,6 +256,7 @@ function makeRequest(method, path, body) {
       reqOpt.body = body;
     }
     if (_verbose || _trial) {
+      // eslint-disable-next-line max-len
       const m = _trial === true ? chalk.dim(method.toLowerCase()) : chalk.bold(method);
       const b = util.inspect(body, UTIL_OPTS);
       console.log(m, '->', chalk.cyan(reqOpt.url), b);

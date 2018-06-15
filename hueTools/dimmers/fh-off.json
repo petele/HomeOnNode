@@ -1,7 +1,7 @@
 {
   "sceneName": "Off [Front Hall]",
   "sceneId": "0WmsEvtP0bMJIzI",
-  "room": {"key": "FH", "id": 1},
+  "roomId": 1,
   "lights": [
     {"lightId": 1, "recipeName": "OFF"},
     {"lightId": 2, "recipeName": "OFF"},
