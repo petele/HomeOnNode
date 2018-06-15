@@ -1,0 +1,113 @@
+{
+  "sceneName": "Arctic aurora",
+  "sceneId": "ZuG4W8E3myygEH5",
+  "sceneData": {
+    "version": 1,
+    "data": "WJESs_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.1565,
+          0.2273
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.1565,
+          0.2273
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.3104,
+          0.3235
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.2726,
+          0.2481
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.1565,
+          0.2273
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.1767,
+          0.395
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.2071,
+          0.2532
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.2561,
+          0.3745
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 77,
+        "xy": [
+          0.1767,
+          0.395
+        ]
+      }
+    }
+  ]
+}

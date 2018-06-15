@@ -1,0 +1,113 @@
+{
+  "sceneName": "Midwinter",
+  "sceneId": "ss4kIpSalqKleEN",
+  "sceneData": {
+    "version": 1,
+    "data": "ZOrdM_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2184,
+          0.2484
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2938,
+          0.3164
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2801,
+          0.2629
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2618,
+          0.227
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2938,
+          0.3164
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2184,
+          0.2484
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2492,
+          0.2781
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2404,
+          0.2629
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 228,
+        "xy": [
+          0.2184,
+          0.2484
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "sceneName": "Chinatown",
+  "sceneId": "ochtjlWurdsqwyy",
+  "sceneData": {
+    "version": 1,
+    "data": "TJ8IG_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.6152,
+          0.3137
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.6969,
+          0.2985
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.4834,
+          0.3513
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.6739,
+          0.3221
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.6969,
+          0.2985
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.6969,
+          0.2985
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.6969,
+          0.2985
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.6969,
+          0.2985
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 202,
+        "xy": [
+          0.6152,
+          0.3137
+        ]
+      }
+    }
+  ]
+}

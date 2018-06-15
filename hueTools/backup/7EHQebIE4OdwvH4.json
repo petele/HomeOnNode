@@ -1,0 +1,113 @@
+{
+  "sceneName": "Lake Mist",
+  "sceneId": "7EHQebIE4OdwvH4",
+  "sceneData": {
+    "version": 1,
+    "data": "THTdw_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.4495,
+          0.3519
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.4495,
+          0.3519
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.2954,
+          0.2934
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.3477,
+          0.3353
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.4066,
+          0.3456
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.3477,
+          0.3353
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.4066,
+          0.3456
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.3788,
+          0.3547
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 181,
+        "xy": [
+          0.3788,
+          0.3547
+        ]
+      }
+    }
+  ]
+}

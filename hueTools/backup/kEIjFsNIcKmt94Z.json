@@ -1,0 +1,113 @@
+{
+  "sceneName": "Spring blossom",
+  "sceneId": "kEIjFsNIcKmt94Z",
+  "sceneData": {
+    "version": 1,
+    "data": "aK1AS_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.3295,
+          0.3377
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.4133,
+          0.2554
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.3632,
+          0.2844
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.3632,
+          0.2844
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.3295,
+          0.3377
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.3295,
+          0.3377
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.3632,
+          0.2844
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.3295,
+          0.3377
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 206,
+        "xy": [
+          0.3632,
+          0.2844
+        ]
+      }
+    }
+  ]
+}

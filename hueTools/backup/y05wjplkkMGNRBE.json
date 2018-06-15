@@ -1,0 +1,113 @@
+{
+  "sceneName": "Starlight",
+  "sceneId": "y05wjplkkMGNRBE",
+  "sceneData": {
+    "version": 1,
+    "data": "pL7Rd_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.4013,
+          0.3301
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.2576,
+          0.1282
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.3584,
+          0.2511
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.3044,
+          0.1872
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.3044,
+          0.1872
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.4013,
+          0.3301
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.4013,
+          0.3301
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.2576,
+          0.1282
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 59,
+        "xy": [
+          0.4013,
+          0.3301
+        ]
+      }
+    }
+  ]
+}

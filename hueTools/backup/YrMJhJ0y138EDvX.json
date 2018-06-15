@@ -1,0 +1,113 @@
+{
+  "sceneName": "Galaxy",
+  "sceneId": "YrMJhJ0y138EDvX",
+  "sceneData": {
+    "version": 1,
+    "data": "WqW2U_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.5336,
+          0.3257
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.6222,
+          0.2843
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.619,
+          0.2914
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.5336,
+          0.3257
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.5034,
+          0.2671
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.5034,
+          0.2671
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.6222,
+          0.2843
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.6222,
+          0.2843
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 64,
+        "xy": [
+          0.5336,
+          0.3257
+        ]
+      }
+    }
+  ]
+}

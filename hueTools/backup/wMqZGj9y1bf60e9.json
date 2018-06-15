@@ -1,0 +1,113 @@
+{
+  "sceneName": "Sundowner",
+  "sceneId": "wMqZGj9y1bf60e9",
+  "sceneData": {
+    "version": 1,
+    "data": "viFaI_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.4599,
+          0.3785
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.5656,
+          0.3501
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.4239,
+          0.4224
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.2419,
+          0.1875
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.1885,
+          0.2148
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.4599,
+          0.3785
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.1885,
+          0.2148
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.4599,
+          0.3785
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 146,
+        "xy": [
+          0.4599,
+          0.3785
+        ]
+      }
+    }
+  ]
+}

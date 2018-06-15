@@ -1,0 +1,113 @@
+{
+  "sceneName": "Ruby Glow",
+  "sceneId": "97-NlgHAYCTxg3z",
+  "sceneData": {
+    "version": 1,
+    "data": "p1T5G_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.4654,
+          0.2882
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.3879,
+          0.3107
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.3879,
+          0.3107
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.3641,
+          0.3188
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.612,
+          0.2793
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.3879,
+          0.3107
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.3879,
+          0.3107
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.5363,
+          0.2745
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 138,
+        "xy": [
+          0.612,
+          0.2793
+        ]
+      }
+    }
+  ]
+}

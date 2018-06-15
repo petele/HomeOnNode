@@ -1,0 +1,113 @@
+{
+  "sceneName": "Autumn gold",
+  "sceneId": "j3ke1Ejcacuyc7f",
+  "sceneData": {
+    "version": 1,
+    "data": "Eab1V_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.4594,
+          0.4052
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.4594,
+          0.4052
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.4594,
+          0.4052
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.4676,
+          0.3979
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.4676,
+          0.3979
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.44,
+          0.4053
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.442,
+          0.4244
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.4594,
+          0.4052
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 204,
+        "xy": [
+          0.4594,
+          0.4052
+        ]
+      }
+    }
+  ]
+}

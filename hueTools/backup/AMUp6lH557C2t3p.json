@@ -164,13 +164,20 @@
       }
     },
     {
+      "lightId": 23,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
       "lightId": 24,
       "command": {
         "on": true,
         "bri": 25,
         "xy": [
-          0.6737,
-          0.3216
+          0.674,
+          0.322
         ],
         "transitiontime": 10
       }

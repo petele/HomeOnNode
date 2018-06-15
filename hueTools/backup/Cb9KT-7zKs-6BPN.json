@@ -1,0 +1,113 @@
+{
+  "sceneName": "Mountain Breeze",
+  "sceneId": "Cb9KT-7zKs-6BPN",
+  "sceneData": {
+    "version": 1,
+    "data": "T2Aux_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.3357,
+          0.3395
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.2882,
+          0.2965
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.2954,
+          0.2934
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.2954,
+          0.2934
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.2507,
+          0.2643
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.2882,
+          0.2965
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.2882,
+          0.2965
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.2208,
+          0.2352
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 197,
+        "xy": [
+          0.3791,
+          0.3742
+        ]
+      }
+    }
+  ]
+}

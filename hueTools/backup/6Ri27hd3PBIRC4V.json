@@ -1,0 +1,113 @@
+{
+  "sceneName": "Tokyo",
+  "sceneId": "6Ri27hd3PBIRC4V",
+  "sceneData": {
+    "version": 1,
+    "data": "fTkLq_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.3201,
+          0.15
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.1471,
+          0.1487
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.2267,
+          0.116
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.2267,
+          0.116
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.5474,
+          0.4274
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.3201,
+          0.15
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.5761,
+          0.2476
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.2267,
+          0.116
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 243,
+        "xy": [
+          0.3201,
+          0.15
+        ]
+      }
+    }
+  ]
+}

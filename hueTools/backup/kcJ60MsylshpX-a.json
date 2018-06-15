@@ -1,0 +1,113 @@
+{
+  "sceneName": "Sunday Morning",
+  "sceneId": "kcJ60MsylshpX-a",
+  "sceneData": {
+    "version": 1,
+    "data": "7ZBap_r06"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3802,
+          0.3615
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3491,
+          0.3523
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3802,
+          0.3615
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3802,
+          0.3615
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3491,
+          0.3523
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3859,
+          0.3772
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3802,
+          0.3615
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3802,
+          0.3615
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 173,
+        "xy": [
+          0.3802,
+          0.3615
+        ]
+      }
+    }
+  ]
+}
