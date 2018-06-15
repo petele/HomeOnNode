@@ -6,9 +6,7 @@
     "data": "a7s6N_r06"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 6
-  },
+  "roomId": 6,
   "lights": [
     {
       "lightId": 15,

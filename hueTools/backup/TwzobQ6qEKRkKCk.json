@@ -6,9 +6,8 @@
     "data": "v0OwL_r08_d20"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 8
-  },
+  "roomId": 8,
+  "sceneType": 20,
   "lights": [
     {
       "lightId": 24,

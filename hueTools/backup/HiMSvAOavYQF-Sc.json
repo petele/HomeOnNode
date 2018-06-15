@@ -6,9 +6,8 @@
     "data": "xEObS_r09_d03"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 9
-  },
+  "roomId": 9,
+  "sceneType": 3,
   "lights": [
     {
       "lightId": 23,

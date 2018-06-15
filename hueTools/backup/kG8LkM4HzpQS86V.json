@@ -6,9 +6,8 @@
     "data": "Ky9oL_r09_d17"
   },
   "sceneVersion": 2,
-  "room": {
-    "id": 9
-  },
+  "roomId": 9,
+  "sceneType": 17,
   "lights": [
     {
       "lightId": 23,
