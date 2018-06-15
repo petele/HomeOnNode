@@ -1,0 +1,72 @@
+{
+  "sceneName": "On [Kitchen]",
+  "sceneId": "2FSzVVt3QUBdIXi",
+  "sceneData": {
+    "version": 1,
+    "data": "xaWYX_r02_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 2
+  },
+  "lights": [
+    {
+      "lightId": 4,
+      "command": {
+        "on": true,
+        "bri": 150,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": true,
+        "bri": 150,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2703,
+          0.1398
+        ]
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2703,
+          0.1398
+        ]
+      }
+    }
+  ]
+}

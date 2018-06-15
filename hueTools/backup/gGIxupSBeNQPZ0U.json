@@ -1,0 +1,36 @@
+{
+  "sceneName": "Aurora [Bedside]",
+  "sceneId": "gGIxupSBeNQPZ0U",
+  "sceneData": {
+    "version": 1,
+    "data": "x7YkX_r03_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 3
+  },
+  "lights": [
+    {
+      "lightId": 16,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.2929,
+          0.2887
+        ]
+      }
+    },
+    {
+      "lightId": 28,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.1984,
+          0.267
+        ]
+      }
+    }
+  ]
+}

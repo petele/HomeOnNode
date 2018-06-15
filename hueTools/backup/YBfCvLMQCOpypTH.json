@@ -1,0 +1,25 @@
+{
+  "sceneName": "Aurora [Stove]",
+  "sceneId": "YBfCvLMQCOpypTH",
+  "sceneData": {
+    "version": 1,
+    "data": "x9PgX_r09_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 9
+  },
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.1641,
+          0.3552
+        ]
+      }
+    }
+  ]
+}

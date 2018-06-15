@@ -1,0 +1,46 @@
+{
+  "sceneName": "Chill [Bathroom]",
+  "sceneId": "dcwMcHRD4ZCMzN1",
+  "sceneData": {
+    "version": 1,
+    "data": "xD3aX_r08_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 8
+  },
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 125,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true,
+        "bri": 75,
+        "xy": [
+          0.3612,
+          0.1607
+        ]
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": true,
+        "bri": 75,
+        "effect": "none",
+        "hue": 46784,
+        "sat": 254
+      }
+    }
+  ]
+}

@@ -10,6 +10,8 @@
     "dimmers/bs-reading.json",
     "dimmers/fh-night-light.json",
     "dimmers/ki-night-light.json",
+    "dimmers/ki-off.json",
+    "dimmers/ks-off.json",
     "dimmers/lr-night-light.json"
   ]
 }

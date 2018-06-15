@@ -1,11 +1,12 @@
 {
   "sceneName": "Day",
-  "sceneId": "wc1DstWhAckSmtl",
+  "sceneId": "Ef97fWzbVeW6mjQ",
   "room": {"key": "ALL", "id": 0},
   "showInWebUI": true,
   "scenes": [
     "dimmers/fh-morning.json",
     "dimmers/ki-morning.json",
+    "dimmers/ks-morning.json",
     "dimmers/lr-morning.json"
   ]
 }

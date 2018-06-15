@@ -1,0 +1,275 @@
+{
+  "sceneName": "Sleep",
+  "sceneId": "AMUp6lH557C2t3p",
+  "sceneData": {
+    "version": 1,
+    "data": "xif6X_r00_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 0
+  },
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": true,
+        "bri": 10,
+        "xy": [
+          0.674,
+          0.322
+        ],
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 4,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 11,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 12,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 13,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 14,
+      "command": {
+        "on": true,
+        "bri": 5,
+        "xy": [
+          0.674,
+          0.322
+        ],
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 15,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 16,
+      "command": {
+        "on": true,
+        "bri": 192,
+        "xy": [
+          0.6126,
+          0.3667
+        ],
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 18,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 22,
+      "command": {
+        "on": true,
+        "bri": 50,
+        "xy": [
+          0.674,
+          0.322
+        ],
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 25,
+        "xy": [
+          0.6737,
+          0.3216
+        ],
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 27,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 28,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.6126,
+          0.3667
+        ],
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 35,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 36,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    },
+    {
+      "lightId": 37,
+      "command": {
+        "on": false,
+        "transitiontime": 10
+      }
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "sceneName": "Concentrate",
+  "sceneId": "HiMSvAOavYQF-Sc",
+  "sceneData": {
+    "version": 1,
+    "data": "xEObS_r09_d03"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 9
+  },
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 233
+      }
+    }
+  ]
+}

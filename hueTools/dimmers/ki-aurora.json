@@ -9,7 +9,6 @@
     {"lightId": 6, "recipeName": "AURORA_BLUE_LIGHT", "command": {"bri": 200}},
     {"lightId": 7, "recipeName": "AURORA_WHITE_GREENISH", "command": {"bri": 200}},
     {"lightId": 17, "recipeName": "AURORA_CYAN_LIGHT_LS", "command": {"bri": 200}},
-    {"lightId": 23, "recipeName": "AURORA_CYAN_DARK_LS", "command": {"bri": 200}},
     {"lightId": 29, "recipeName": "AURORA_CYAN_LIGHT_LS", "command": {"bri": 200}}
   ]
 }

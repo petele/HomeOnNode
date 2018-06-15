@@ -1,0 +1,60 @@
+{
+  "sceneName": "Night Light [Kitchen]",
+  "sceneId": "h2O-HtPaJD1GfnU",
+  "sceneData": {
+    "version": 1,
+    "data": "xlRQX_r02_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 2
+  },
+  "lights": [
+    {
+      "lightId": 4,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": true,
+        "bri": 10,
+        "xy": [
+          0.674,
+          0.322
+        ]
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": true,
+        "bri": 10,
+        "xy": [
+          0.674,
+          0.322
+        ]
+      }
+    }
+  ]
+}

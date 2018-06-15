@@ -1,0 +1,94 @@
+{
+  "sceneName": "On [Bedroom]",
+  "sceneId": "dY8op3Hnp6HMCjR",
+  "sceneData": {
+    "version": 1,
+    "data": "xgc9X_r06_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 6
+  },
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    }
+  ]
+}

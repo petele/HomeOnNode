@@ -1,0 +1,204 @@
+{
+  "sceneName": "Day",
+  "sceneId": "Ef97fWzbVeW6mjQ",
+  "sceneData": {
+    "version": 1,
+    "data": "xakoX_r00_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 0
+  },
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 4,
+      "command": {
+        "on": true,
+        "bri": 150,
+        "xy": [
+          0.2703,
+          0.1398
+        ]
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": true,
+        "bri": 150,
+        "xy": [
+          0.2703,
+          0.1398
+        ]
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 11,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 12,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3336,
+          0.2648
+        ]
+      }
+    },
+    {
+      "lightId": 13,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 14,
+      "command": {
+        "on": true,
+        "bri": 128,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 18,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 22,
+      "command": {
+        "on": true,
+        "bri": 100,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    },
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 180,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    },
+    {
+      "lightId": 27,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 35,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 36,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3612,
+          0.1607
+        ]
+      }
+    },
+    {
+      "lightId": 37,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "sceneName": "Morning [Stove]",
+  "sceneId": "1oo8g7gOrOFihk3",
+  "sceneData": {
+    "version": 1,
+    "data": "xBRuX_r09_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 9
+  },
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 180,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    }
+  ]
+}

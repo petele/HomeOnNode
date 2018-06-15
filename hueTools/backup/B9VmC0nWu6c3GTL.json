@@ -1,0 +1,36 @@
+{
+  "sceneName": "Reading - (100) [Bedside]",
+  "sceneId": "B9VmC0nWu6c3GTL",
+  "sceneData": {
+    "version": 1,
+    "data": "xgz0X_r03_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 3
+  },
+  "lights": [
+    {
+      "lightId": 16,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.6126,
+          0.3667
+        ]
+      }
+    },
+    {
+      "lightId": 28,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.6126,
+          0.3667
+        ]
+      }
+    }
+  ]
+}

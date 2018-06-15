@@ -1,0 +1,37 @@
+{
+  "sceneName": "Night Light (Low) [Bathroom]",
+  "sceneId": "ep1ZAFMfHb9mB0W",
+  "sceneData": {
+    "version": 1,
+    "data": "xzb7X_r08_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 8
+  },
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 25,
+        "xy": [
+          0.674,
+          0.322
+        ]
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": false
+      }
+    }
+  ]
+}

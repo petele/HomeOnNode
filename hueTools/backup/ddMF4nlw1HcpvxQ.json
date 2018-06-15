@@ -1,0 +1,38 @@
+{
+  "sceneName": "On [Front Hall]",
+  "sceneId": "ddMF4nlw1HcpvxQ",
+  "sceneData": {
+    "version": 1,
+    "data": "xIdpX_r01_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 1
+  },
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    }
+  ]
+}

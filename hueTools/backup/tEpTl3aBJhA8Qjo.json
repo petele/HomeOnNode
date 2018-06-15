@@ -1,0 +1,80 @@
+{
+  "sceneName": "Aurora [Kitchen]",
+  "sceneId": "tEpTl3aBJhA8Qjo",
+  "sceneData": {
+    "version": 1,
+    "data": "xHfvX_r02_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 2
+  },
+  "lights": [
+    {
+      "lightId": 4,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.2061,
+          0.1166
+        ]
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.3589,
+          0.4191
+        ]
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.2061,
+          0.1166
+        ]
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.3589,
+          0.4191
+        ]
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.1984,
+          0.267
+        ]
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": true,
+        "bri": 200,
+        "xy": [
+          0.1984,
+          0.267
+        ]
+      }
+    }
+  ]
+}

@@ -8,6 +8,7 @@
     "dimmers/br-off.json",
     "dimmers/bs-off.json",
     "dimmers/ki-off.json",
+    "dimmers/ks-off.json",
     "dimmers/lr-off.json"
   ],
   "lights": [

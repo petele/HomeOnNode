@@ -1,0 +1,32 @@
+{
+  "sceneName": "Off [Bathroom]",
+  "sceneId": "q-RJcd3feaXbuVW",
+  "sceneData": {
+    "version": 1,
+    "data": "xl2UX_r08_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 8
+  },
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": false
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": false
+      }
+    }
+  ]
+}

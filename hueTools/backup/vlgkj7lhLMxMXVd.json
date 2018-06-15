@@ -1,0 +1,47 @@
+{
+  "sceneName": "Aurora [Bathroom]",
+  "sceneId": "vlgkj7lhLMxMXVd",
+  "sceneData": {
+    "version": 1,
+    "data": "xaYwX_r08_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 8
+  },
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 150,
+        "xy": [
+          0.2929,
+          0.2887
+        ]
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true,
+        "bri": 150,
+        "xy": [
+          0.1984,
+          0.267
+        ]
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": true,
+        "bri": 150,
+        "xy": [
+          0.1684,
+          0.0416
+        ]
+      }
+    }
+  ]
+}

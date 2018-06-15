@@ -1,0 +1,22 @@
+{
+  "sceneName": "Bright",
+  "sceneId": "a0xLXGZxdHxBgeI",
+  "sceneData": {
+    "version": 1,
+    "data": "ucXe6_r09_d05"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 9
+  },
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 367
+      }
+    }
+  ]
+}

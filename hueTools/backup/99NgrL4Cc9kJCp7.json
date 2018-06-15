@@ -1,0 +1,72 @@
+{
+  "sceneName": "Eating [Kitchen]",
+  "sceneId": "99NgrL4Cc9kJCp7",
+  "sceneData": {
+    "version": 1,
+    "data": "x0DhX_r02_d99"
+  },
+  "sceneVersion": 2,
+  "room": {
+    "id": 2
+  },
+  "lights": [
+    {
+      "lightId": 4,
+      "command": {
+        "on": true,
+        "bri": 180,
+        "xy": [
+          0.2703,
+          0.1398
+        ]
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": true,
+        "bri": 180,
+        "xy": [
+          0.2703,
+          0.1398
+        ]
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    }
+  ]
+}
