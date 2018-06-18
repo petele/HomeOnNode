@@ -21,6 +21,7 @@ const COMMANDS = [
   'IRCODE NUM0', 'IRCODE NUM1', 'IRCODE NUM2', 'IRCODE NUM3', 'IRCODE NUM4',
   'IRCODE NUM5', 'IRCODE NUM6', 'IRCODE NUM7', 'IRCODE NUM8', 'IRCODE NUM9',
   'IRCODE ACTION_A', 'IRCODE ACTION_B', 'IRCODE ACTION_C', 'IRCODE ACTION_D',
+  'IRCODE NETFLIX', 'IRCODE BACK',
 ];
 
 
@@ -67,6 +68,19 @@ function Tivo(ipAddress) {
   };
 
   /**
+   * Closes the TiVo connection.
+   */
+  this.close = function() {
+    log.log(LOG_PREFIX, `Shutting down TiVo connection.`);
+    _ready = false;
+    _reconnecting = true;
+    if (_tivo) {
+      _tivo.end();
+      _tivo = null;
+    }
+  };
+
+  /**
    * Connect to the Tivo.
    */
   function _connectToTivo() {
@@ -74,6 +88,7 @@ function Tivo(ipAddress) {
     _reconnecting = false;
     _tivo = net.connect({host: _host, port: 31339});
     _tivo.on('connect', () => {
+      _ready = true;
       log.debug(LOG_PREFIX, `Connected`);
     });
      _tivo.on('ready', () => {
@@ -112,7 +127,8 @@ function Tivo(ipAddress) {
    * @param {String} data
    */
   function _handleData(data) {
-    log.debug(LOG_PREFIX, 'handleData', data);
+    const str = data.toString();
+    log.debug(LOG_PREFIX, 'handleData', str);
   }
 
   /**
