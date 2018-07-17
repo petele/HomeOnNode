@@ -809,8 +809,11 @@ function Home(initialConfig, fbRef) {
         const keys = Object.keys(_self.state.nest.devices.thermostats);
         keys.forEach((k) => {
           const t = _self.state.nest.devices.thermostats[k];
-          msg[`temperature-${k}`] = t['ambient_temperature_f'];
-          msg[`humidity-${k}`] = t['humidity'];
+          msg[`thermostat-${k}`] = {
+            name: t['name'],
+            temperature: t['ambient_temperature_f'],
+            humidity: t['humidity'],
+          };
         });
       }
     } catch (ex) {
@@ -819,8 +822,9 @@ function Home(initialConfig, fbRef) {
     try {
       if (_self.state.presence) {
         const keys = Object.keys(_self.state.presence);
+        msg.presence = {};
         keys.forEach((k) => {
-          msg[`presence-${k}`] = _self.state.presence[k].state;
+          msg.presence[k] = _self.state.presence[k].state;
         });
       }
     } catch (ex) {
