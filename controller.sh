@@ -8,8 +8,6 @@ echo ""
 . ~/.nvm/nvm.sh
 nvm use 6
 
-npm install cron
-
 node appController.js
 
 node appOnError.js

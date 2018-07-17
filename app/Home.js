@@ -806,9 +806,9 @@ function Home(initialConfig, fbRef) {
     }
     try {
       if (_self.state.nest) {
-        const keys = Object.keys(_self.state.nest.thermostats);
+        const keys = Object.keys(_self.state.nest.devices.thermostats);
         keys.forEach((k) => {
-          const t = _self.state.nest.thermostats[k];
+          const t = _self.state.nest.devices.thermostats[k];
           msg[`temperature-${k}`] = t['ambient_temperature_f'];
           msg[`humidity-${k}`] = t['humidity'];
         });
