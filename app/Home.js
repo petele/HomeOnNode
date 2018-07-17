@@ -807,9 +807,10 @@ function Home(initialConfig, fbRef) {
     try {
       if (_self.state.nest) {
         const keys = Object.keys(_self.state.nest.devices.thermostats);
+        msg.thermostats = {};
         keys.forEach((k) => {
           const t = _self.state.nest.devices.thermostats[k];
-          msg[`thermostat-${k}`] = {
+          msg.thermostats[k] = {
             name: t['name'],
             temperature: t['ambient_temperature_f'],
             humidity: t['humidity'],
