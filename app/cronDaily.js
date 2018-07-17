@@ -11,6 +11,7 @@ const cronJob = function() {
   promises.push(log.cleanLogs('logs/presence', 120));
   promises.push(log.cleanLogs('logs/pushBullet', 1));
   promises.push(log.cleanLogs('logs/systemState', 30));
+  promises.push(log.cleanLogs('logs/cron', 90));
 
   Promise.all(promises)
   .then(() => {
