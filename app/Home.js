@@ -19,7 +19,6 @@ const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
 const Bluetooth = require('./Bluetooth');
 const PushBullet = require('./PushBullet');
-// const FlicMonitor = require('./FlicMonitor');
 const SomaSmartShades = require('./SomaSmartShades');
 
 const LOG_PREFIX = 'HOME';
@@ -39,7 +38,6 @@ function Home(initialConfig, fbRef) {
   let _fb = fbRef;
 
   let bluetooth;
-  // let flicMonitor;
   let gcmPush;
   let harmony;
   let hue;
@@ -427,13 +425,13 @@ function Home(initialConfig, fbRef) {
     _initNanoLeaf();
     _initSonos();
     _initHarmony();
-    // _initFlic();
     _initPresence();
     _initSoma();
     _initPushBullet();
     _initWeather();
     _initWemo();
     _initMyIP();
+    _initCron();
     setTimeout(function() {
       log.log(LOG_PREFIX, 'Ready');
       _self.emit('ready');
@@ -773,45 +771,63 @@ function Home(initialConfig, fbRef) {
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
- * Flic Monitor API
+ * Cron Job
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
-  // /**
-  //  * Init the Flic API
-  //  */
-  // function _initFlic() {
-  //   flicMonitor = new FlicMonitor(bluetooth);
-  //   flicMonitor.on('flic_pushed', _handleFlicPush);
-  //   const flicConfigPath = 'config/HomeOnNode/flicButtons';
-  //   _fb.child(flicConfigPath).on('child_added', function(snapshot) {
-  //     const uuid = snapshot.key();
-  //     flicMonitor.add(uuid);
-  //   });
-  //   _fb.child(flicConfigPath).on('child_removed', function(snapshot) {
-  //     const uuid = snapshot.key();
-  //     flicMonitor.remove(uuid);
-  //   });
-  // }
+  /**
+   * Init Cron API
+   */
+  function _initCron() {
+    try {
+      const CronJob = require('cron').CronJob;
+      const cronSchedule = '0 0,5,10,15,20,25,30,35,40,45,50,55 * * * *';
+      new CronJob(cronSchedule, () => {
+        _onCronTick();
+      }, null, true, 'America/New_York');
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to initialize Cron', ex);
+    }
+  }
 
-  // /**
-  //  * Handles a Flic button push
-  //  *
-  //  * @param {String} uuid The UUID of the button that was pushed.
-  //  */
-  // function _handleFlicPush(uuid) {
-  //   const cmd = _config.flicButtons[uuid];
-  //   if (!cmd) {
-  //     log.warn(LOG_PREFIX, `No command for Flic with UUID: ${uuid}`);
-  //     return;
-  //   }
-  //   const src = `Flic-${uuid}`;
-  //   if (typeof cmd === 'string') {
-  //     _self.executeCommandByName(cmd, null, src);
-  //     return;
-  //   }
-  //   _self.executeCommand(cmd, src);
-  // }
+  /**
+   * Cron Tick
+   */
+  function _onCronTick() {
+    log.debug(LOG_PREFIX, 'CRON: tick');
+    const now = Date.now();
+    const nowPretty = log.formatTime(now);
+    const msg = {
+      date: now,
+      date_: nowPretty,
+    };
+    if (_self.state.systemState) {
+      msg.systemState = _self.state.systemState;
+    }
+    try {
+      if (_self.state.nest) {
+        const keys = Object.keys(_self.state.nest.thermostats);
+        keys.forEach((k) => {
+          const t = _self.state.nest.thermostats[k];
+          msg[`temperature-${k}`] = t['ambient_temperature_f'];
+          msg[`humidity-${k}`] = t['humidity'];
+        });
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'CRON: Unable to store Thermostat info', ex);
+    }
+    try {
+      if (_self.state.presence) {
+        const keys = Object.keys(_self.state.presence);
+        keys.forEach((k) => {
+          msg[`presence-${k}`] = _self.state.presence[k].state;
+        });
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'CRON: Unable to store presence info', ex);
+    }
+    _fbPush('logs/cron', msg);
+  }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
@@ -950,6 +966,7 @@ function Home(initialConfig, fbRef) {
     nest = new Nest.Nest(Keys.nest.token, _config.hvac.thermostats);
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
+      _self.state.nest = data;
     });
   }
 
@@ -1019,6 +1036,7 @@ function Home(initialConfig, fbRef) {
     };
     _fbPush('logs/presence', presenceLog);
     _fbSet('state/presence', who);
+    _self.state.presence = who;
     let cmdName = 'PRESENCE_SOME';
     if (numPresent === 0) {
       cmdName = 'PRESENCE_NONE';
