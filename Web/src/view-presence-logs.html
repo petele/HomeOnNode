@@ -11,6 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="log-viewer.html">
+<link rel="import" href="fb-query.html">
 
 <dom-module id="view-presence-logs">
   <template>
@@ -18,15 +19,146 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
+      #chart {
+        height: 100px;
+      }
     </style>
 
-    <log-viewer path="logs/presence"></log-viewer>
+    <firebase-query
+        id="query"
+        data="{{logs}}"
+        path="logs/presence"
+        limit-to-last="[[MAX_ITEMS]]">
+    </firebase-query>
+
+    <div id="chart"></div>
+
+    <log-viewer logs="[[logs]]"></log-viewer>
+
+    <script type="text/javascript" async on-load="chartsLoaded"
+            src="https://www.gstatic.com/charts/loader.js">
+    </script>
 
   </template>
 
   <script>
     class PresenceLogsView extends Polymer.Element {
       static get is() { return 'view-presence-logs'; }
+
+      static get properties() {
+        return {
+          MAX_ITEMS: {
+            type: Number,
+            value: 150,
+          },
+          CUT_OFF_DATE: {
+            type: Number,
+            value: 5 * 24 * 60 * 60 * 1000,
+          },
+          logs: Array,
+          chart: Object,
+          dataTable: Object,
+          firstFill: {
+            type: Boolean,
+            value: true,
+          },
+          rows: {
+            type: Object,
+            value: {},
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          'logsChanged(logs.length)',
+        ];
+      }
+
+      chartsLoaded() {
+        const google = window.google;
+        google.charts.load('current', {'packages': ['timeline']});
+        google.charts.setOnLoadCallback(this.chartsReady.bind(this));
+      }
+
+      chartsReady() {
+        const google = window.google;
+        const container = this.$.chart;
+        this.chart = new google.visualization.Timeline(container);
+        this.dataTable = new google.visualization.DataTable();
+        this.dataTable.addColumn({type: 'string', id: 'Name'});
+        this.dataTable.addColumn({type: 'string', id: 'Status'});
+        this.dataTable.addColumn({type: 'date', id: 'Start'});
+        this.dataTable.addColumn({type: 'date', id: 'End'});
+        if (this.logs.length > 0) {
+          this.chartsFirstFill();
+        }
+      }
+
+      chartsAddRow(name, state, start, stop) {
+        const row = [];
+        row.push(name);
+        row.push(state);
+        row.push(new Date(start));
+        row.push(new Date(stop));
+        this.dataTable.addRow(row);
+      }
+
+      chartsFirstFill() {
+        if (!this.dataTable) {
+          return;
+        }
+        this.firstFill = false;
+        const cutOff = Date.now() - this.CUT_OFF_DATE;
+        this.logs.forEach((item) => {
+          const row = this.rows[item.name] || {};
+          if (!this.rows[item.name]) {
+            row.name = item.name;
+            row.startTime = cutOff;
+            this.rows[item.name] = row;
+          }
+          if (item.date < cutOff) {
+            row.state = item.state;
+            return;
+          }
+          if (row.state !== item.state) {
+            this.chartsAddRow(row.name, row.state, row.startTime, item.date);
+            row.state = item.state;
+            row.startTime = item.date;
+          }
+        });
+        Object.keys(this.rows).forEach((k) => {
+          const row = this.rows[k];
+          const now = Date.now();
+          this.chartsAddRow(k, row.state, row.startTime, now);
+          row.startTime = now;
+        });
+        this.chartsDraw();
+      }
+
+      chartsDraw() {
+        if (this.chart) {
+          const opts = {
+            enableInteractivity: true,
+            tooltip: {
+              isHtml: true,
+              trigger: 'none',
+            },
+          };
+          this.chart.draw(this.dataTable, opts);
+        }
+      }
+
+      logsChanged(len) {
+        if (len === 0) {
+          return;
+        }
+        if (this.firstFill) {
+          this.chartsFirstFill();
+          return;
+        }
+      }
+
     }
 
     window.customElements.define(PresenceLogsView.is, PresenceLogsView);

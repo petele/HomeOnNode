@@ -88,9 +88,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </iron-icon>
         </span>
         <span class="nest-details">
-          {{lr.temperature}}
-          <span class="secondary">{{lr.humidity}}</span>
-
+          [[lr.temperature]]
+          <span class="secondary">[[lr.humidity]]</span>
         </span>
       </div>
       <div class="app-grid grid-two">
@@ -120,9 +119,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </iron-icon>
         </span>
         <span class="nest-details">
-          {{br.temperature}}
-          <span class="secondary">{{br.humidity}}</span>
-
+          [[br.temperature]]
+          <span class="secondary">[[br.humidity]]</span>
+        </span>
       </div>
       <div class="app-grid grid-two">
         <paper-input
@@ -187,17 +186,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       chartsLoaded() {
         const google = window.google;
         google.charts.load('current', {'packages': ['line']});
+        // google.charts.load('current', {'packages':['corechart']});
         google.charts.setOnLoadCallback(this.chartsReady.bind(this));
       }
 
       chartsReady() {
         const google = window.google;
         this.lrChartData = new google.visualization.DataTable();
-        this.lrChartData.addColumn('datetime', 'Day');
+        this.lrChartData.addColumn('datetime', '');
         this.lrChartData.addColumn('number', 'Temperature');
         this.lrChartData.addColumn('number', 'Humidity');
         this.brChartData = new google.visualization.DataTable();
-        this.brChartData.addColumn('datetime', 'Day');
+        this.brChartData.addColumn('datetime', '');
         this.brChartData.addColumn('number', 'Temperature');
         this.brChartData.addColumn('number', 'Humidity');
         if (this.cronLogs.length > 0) {
@@ -235,13 +235,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           },
           curveType: 'function',
         };
+        // const chartOpts = options;
         const chartOpts = google.charts.Line.convertOptions(options);
         if (!this.lrChart) {
           this.lrChart = new google.charts.Line(this.$.lrChart);
+          // this.lrChart = new google.visualization.LineChart(this.$.lrChart);
         }
         this.lrChart.draw(this.lrChartData, chartOpts);
         if (!this.brChart) {
           this.brChart = new google.charts.Line(this.$.brChart);
+          // this.brChart = new google.visualization.LineChart(this.$.brChart);
         }
         this.brChart.draw(this.brChartData, chartOpts);
       }
