@@ -18,7 +18,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymerfire/polymerfire.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="hon-icons.html">
-
+<link rel="import" href="fb-query.html">
 
 <dom-module id="log-viewer">
   <template>
@@ -94,7 +94,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </paper-dialog>
 
     <div>
-      <template is="dom-repeat" 
+      <template is="dom-repeat"
         sort="sortLogs"
         items="[[logs]]" initial-count="5">
         <paper-item on-tap="tapLogItem">
@@ -123,6 +123,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: Number,
             value: 150,
           },
+          logs: Array,
           path: String,
           selectedLogItem: Object,
         };
@@ -130,9 +131,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        if (!this.path) {
-          throw new Error('missing path attribute');
-        }
         document.querySelector('body').appendChild(this.$.logDetailDialog);
       }
 
@@ -142,7 +140,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ];
       }
 
-      logsChanged() {
+      logsChanged(a) {
         if (this.logs.length > this.MAX_ITEMS) {
           this.logs.pop();
         }
