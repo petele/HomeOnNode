@@ -15,10 +15,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="fb-document.html">
 <link rel="import" href="fb-query.html">
 <link rel="import" href="send-command.html">
+<link rel="import" href="hon-icons.html">
 
 <dom-module id="view-hvac">
   <template>
@@ -27,14 +29,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
         --app-grid-item-height: reset;
       }
-      span {
+      .nest-off {
+        color: var(--paper-grey-500);
+      }
+      .nest-heating {
+        color: var(--paper-red-500);
+      }
+      .nest-cooling {
+        color: var(--paper-blue-500);
+      }
+      .nest {
+        margin-top: -4px;
+      }
+      .nest-fan {
+        display: none;
+      }
+      .nest-fan-visible {
+        display: inline-flex !important;
+      }
+      .nest-details { text-align: right; }
+
+      .secondary {
         color: var(--secondary-text-color);
       }
     </style>
 
     <send-command id="sendCommand"></send-command>
 
-    <fb-query path="state/nest/devices/thermostats" data="{{nestThermostats}}">
+    <fb-document path="state/nest/devices/thermostats" data="{{nestThermostats}}">
+    </fb-document>
+
+    <fb-query path="logs/cron" limit-to-last="864" data="{{cronLogs}}">
     </fb-query>
 
     <fb-document
@@ -42,21 +67,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       data="{{nestState}}">
     </fb-document>
 
+    <fb-document path="config/HomeOnNode/hvac" data="{{hvacConfig}}">
+    </fb-document>
+
     <div class="card">
-      <div class="app-grid grid-two">
-        <template is="dom-repeat" items="[[nestThermostats]]">
-          <div>
-            <div class='roomName'>[[item.name]]</div>
-            <div>
-              [[item.ambient_temperature_f]]&deg;F
-              <span>[[item.humidity]]%</span>
-            </div>
-            <div>
-              [[item.hvac_state]] <span>([[item.hvac_mode]])</span>
-            </div>
-          </div>
-        </template>
-      </div>
       <div class="app-grid">
         <paper-toggle-button id="ptAway" checked="{{nestAway}}" on-change="awayChanged">
           Nest Away
@@ -64,25 +78,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
-    <fb-document path="config/HomeOnNode/hvac" data="{{hvacConfig}}">
-    </fb-document>
-    <div class="card" style="display:none;">
-      <div>HVAC Mode</div>
-      <paper-dropdown-menu label="HVAC Mode">
-        <paper-listbox
-          slot="dropdown-content"
-          class="dropdown-content"
-          attr-for-selected="value"
-          selected="{{hvacConfig.hvacMode}}">
-          <paper-item value="off">Off</paper-item>
-          <paper-item value="heat">Heat</paper-item>
-          <paper-item value="cool">Cool</paper-item>
-        </paper-listbox>
-      </paper-dropdown-menu>
-    </div>
-
     <div class="card">
-      <div>Living Room</div>
+      <div class="app-grid grid-two">
+        <span>
+          Living Room
+          <iron-icon class$="nest [[lr.hvacIconClass]]" icon="hon-icons:[[lr.hvacIcon]]">
+          </iron-icon>
+          <iron-icon class$="nest nest-fan [[lr.hvacFanClass]]" icon="hon-icons:hvac-fan">
+          </iron-icon>
+        </span>
+        <span class="nest-details">
+          {{lr.temperature}}
+          <span class="secondary">{{lr.humidity}}</span>
+
+        </span>
+      </div>
       <div class="app-grid grid-two">
         <paper-input
           label="Day"
@@ -97,10 +107,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           value="{{hvacConfig.auto.SLEEP.LR}}">
         </paper-input>
       </div>
+      <div id="lrChart"></div>
     </div>
 
     <div class="card">
-      <div>Bedroom</div>
+      <div class="app-grid grid-two">
+        <span>
+          Bedroom
+          <iron-icon class$="nest [[br.hvacIconClass]]" icon="hon-icons:[[br.hvacIcon]]">
+          </iron-icon>
+          <iron-icon class$="nest nest-fan [[br.hvacFanClass]]" icon="hon-icons:hvac-fan">
+          </iron-icon>
+        </span>
+        <span class="nest-details">
+          {{br.temperature}}
+          <span class="secondary">{{br.humidity}}</span>
+
+      </div>
       <div class="app-grid grid-two">
         <paper-input
           label="Day"
@@ -114,7 +137,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           min="60" max="80"
           value="{{hvacConfig.auto.SLEEP.BR}}">
       </div>
+      <div id="brChart"></div>
     </div>
+
+    <script type="text/javascript" async on-load="chartsLoaded"
+            src="https://www.gstatic.com/charts/loader.js">
+    </script>
   </template>
 
   <script>
@@ -125,14 +153,158 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return {
           nestState: Object,
           nestAway: Boolean,
+          nestThermostats: Object,
+          lr: Object,
+          lrChart: Object,
+          lrChartData: Object,
+          br: Object,
+          brChart: Object,
+          brChartData: Object,
+          lrThermostatId: {
+            type: String,
+            value: 'dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1',
+          },
+          brThermostatId: {
+            type: String,
+            value: 'dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1',
+          },
+          cronLogs: Array,
+          firstFill: {
+            type: Boolean,
+            value: true,
+          },
         };
       }
-
 
       static get observers() {
         return [
           'nestStateChanged(nestState)',
+          'nestThermostatChanged(nestThermostats.*)',
+          'logsChanged(cronLogs.length)',
         ];
+      }
+
+      chartsLoaded() {
+        const google = window.google;
+        google.charts.load('current', {'packages': ['line']});
+        google.charts.setOnLoadCallback(this.chartsReady.bind(this));
+      }
+
+      chartsReady() {
+        const google = window.google;
+        this.lrChartData = new google.visualization.DataTable();
+        this.lrChartData.addColumn('datetime', 'Day');
+        this.lrChartData.addColumn('number', 'Temperature');
+        this.lrChartData.addColumn('number', 'Humidity');
+        this.brChartData = new google.visualization.DataTable();
+        this.brChartData.addColumn('datetime', 'Day');
+        this.brChartData.addColumn('number', 'Temperature');
+        this.brChartData.addColumn('number', 'Humidity');
+        if (this.cronLogs.length > 0) {
+          this.chartsFirstFill();
+        }
+      }
+
+      chartsCreateRow(item, thermostatId) {
+        const row = [];
+        row.push(new Date(item.date));
+        row.push(item.thermostats[thermostatId].temperature);
+        row.push(item.thermostats[thermostatId].humidity);
+        return row;
+      }
+
+      chartsFirstFill() {
+        if (!this.lrChartData) {
+          return;
+        }
+        this.firstFill = false;
+        const lrId = this.lrThermostatId;
+        const brId = this.brThermostatId;
+        this.cronLogs.forEach((item) => {
+          this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
+          this.brChartData.addRow(this.chartsCreateRow(item, brId));
+        });
+        this.chartsDraw();
+      }
+
+      chartsDraw() {
+        const google = window.google;
+        const options = {
+          chart: {
+            title: 'Temperature and Humidity',
+          },
+          curveType: 'function',
+        };
+        const chartOpts = google.charts.Line.convertOptions(options);
+        if (!this.lrChart) {
+          this.lrChart = new google.charts.Line(this.$.lrChart);
+        }
+        this.lrChart.draw(this.lrChartData, chartOpts);
+        if (!this.brChart) {
+          this.brChart = new google.charts.Line(this.$.brChart);
+        }
+        this.brChart.draw(this.brChartData, chartOpts);
+      }
+
+
+      logsChanged(len) {
+        if (len === 0) {
+          return;
+        }
+        if (this.firstFill) {
+          this.chartsFirstFill();
+          return;
+        }
+        const lrId = this.lrThermostatId;
+        const brId = this.brThermostatId;
+        const rows = this.lrChartData.getNumberOfRows();
+        for (let i = rows; i < this.cronLogs.length; i++) {
+          const item = this.cronLogs[i];
+          this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
+          this.brChartData.addRow(this.chartsCreateRow(item, brId));
+        }
+        this.chartsDraw();
+      }
+
+      nestThermostatChanged(changeRecord) {
+        this._debouncer = Polymer.Debouncer.debounce(
+            this._debouncer,
+            Polymer.Async.timeOut.after(750),
+            () => {
+              this.updateThermostatState();
+            });
+      }
+
+      updateThermostatState() {
+        const keys = Object.keys(this.nestThermostats);
+        keys.forEach((k) => {
+          const t = this.nestThermostats[k];
+          const val = {
+            temperature: `${t['ambient_temperature_f']}F`,
+            humidity: `${t['humidity']}%`,
+            funActive: t['fan_timer_active'],
+            hvacMode: t['hvac_mode'],
+            hvacState: t['hvac_state'],
+            hvacIconClass: `nest-${t['hvac_state']}`,
+          };
+          if (t['fan_timer_active']) {
+            val.hvacFanClass = 'nest-fan-visible';
+          }
+          if (val.hvacMode === 'cool') {
+            val.hvacIcon = 'hvac-cool';
+          } else if (val.hvacMode === 'heat') {
+            val.hvacIcon = 'hvac-heat';
+          } else {
+            val.hvacIcon = 'hvac-leaf';
+          }
+          if (k === this.lrThermostatId) {
+            this.lr = val;
+          } else if (k === this.brThermostatId) {
+            this.br = val;
+          } else {
+            console.error('Unknown key', k);
+          }
+        });
       }
 
       nestStateChanged(newState) {
