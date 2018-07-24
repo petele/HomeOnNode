@@ -59,7 +59,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <fb-document path="state/nest/devices/thermostats" data="{{nestThermostats}}">
     </fb-document>
 
-    <fb-query path="logs/cron" limit-to-last="864" data="{{cronLogs}}">
+    <!-- 12 rec/hr = 288 rec/day * 4 days = 1152 -->
+    <fb-query path="logs/cron" limit-to-last="1152" data="{{cronLogs}}">
     </fb-query>
 
     <fb-document
@@ -179,7 +180,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return [
           'nestStateChanged(nestState)',
           'nestThermostatChanged(nestThermostats.*)',
-          'logsChanged(cronLogs.length)',
+          'logsChanged(cronLogs.splices)',
         ];
       }
 
@@ -194,11 +195,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         const google = window.google;
         this.lrChartData = new google.visualization.DataTable();
         this.lrChartData.addColumn('datetime', '');
-        this.lrChartData.addColumn('number', 'Temperature');
+        this.lrChartData.addColumn('number', 'Temp (F)');
         this.lrChartData.addColumn('number', 'Humidity');
         this.brChartData = new google.visualization.DataTable();
         this.brChartData.addColumn('datetime', '');
-        this.brChartData.addColumn('number', 'Temperature');
+        this.brChartData.addColumn('number', 'Temp (F)');
         this.brChartData.addColumn('number', 'Humidity');
         if (this.cronLogs.length > 0) {
           this.chartsFirstFill();
@@ -218,9 +219,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
         this.firstFill = false;
+        const daysToShow = this.offsetWidth < 500 ? 1 : 4;
+        const timeCutOff = Date.now() - (daysToShow * 24 * 60 * 60 * 1000);
         const lrId = this.lrThermostatId;
         const brId = this.brThermostatId;
         this.cronLogs.forEach((item) => {
+          if (item.date < timeCutOff) {
+            return;
+          }
           this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
           this.brChartData.addRow(this.chartsCreateRow(item, brId));
         });
@@ -249,24 +255,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.brChart.draw(this.brChartData, chartOpts);
       }
 
-
-      logsChanged(len) {
-        if (len === 0) {
+      logsChanged(change) {
+        if (!change || !change.indexSplices) {
+          if (this.firstFill && this.cronLogs.length > 0) {
+            this.chartsFirstFill();
+          }
           return;
         }
-        if (this.firstFill) {
-          this.chartsFirstFill();
-          return;
-        }
+        let recordsAdded = 0;
         const lrId = this.lrThermostatId;
         const brId = this.brThermostatId;
-        const rows = this.lrChartData.getNumberOfRows();
-        for (let i = rows; i < this.cronLogs.length; i++) {
-          const item = this.cronLogs[i];
-          this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
-          this.brChartData.addRow(this.chartsCreateRow(item, brId));
+        change.indexSplices.forEach((splice) => {
+          for (let i = 0; i < splice.addedCount; i++) {
+            const item = splice.object[splice.index + i];
+            this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
+            this.brChartData.addRow(this.chartsCreateRow(item, brId));
+            recordsAdded++;
+          }
+        });
+        if (recordsAdded > 0) {
+          this.chartsDraw();
         }
-        this.chartsDraw();
       }
 
       nestThermostatChanged(changeRecord) {

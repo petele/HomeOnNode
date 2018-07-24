@@ -51,10 +51,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: Number,
             value: 150,
           },
-          CUT_OFF_DATE: {
-            type: Number,
-            value: 5 * 24 * 60 * 60 * 1000,
-          },
           logs: Array,
           chart: Object,
           dataTable: Object,
@@ -109,7 +105,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
         this.firstFill = false;
-        const cutOff = Date.now() - this.CUT_OFF_DATE;
+        const daysToShow = this.offsetWidth < 500 ? 1 : 4;
+        const cutOff = Date.now() - (daysToShow * 24 * 60 * 60 * 1000);
         this.logs.forEach((item) => {
           const row = this.rows[item.name] || {};
           if (!this.rows[item.name]) {
