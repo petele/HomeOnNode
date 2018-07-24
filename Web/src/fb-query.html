@@ -15,6 +15,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
 
     <firebase-query
+      limit-to-last="[[limitToLast]]"
       path="[[path]]"
       data="{{data}}">
     </firebase-query>
@@ -34,6 +35,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           },
           path: {
             type: String,
+          },
+          limitToLast: {
+            type: Number,
+            value: 250,
           },
         };
       }
