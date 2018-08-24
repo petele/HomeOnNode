@@ -224,11 +224,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         const lrId = this.lrThermostatId;
         const brId = this.brThermostatId;
         this.cronLogs.forEach((item) => {
-          if (item.date < timeCutOff) {
+          if (item.date < timeCutOff || !item.thermostats) {
             return;
           }
-          this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
-          this.brChartData.addRow(this.chartsCreateRow(item, brId));
+          if (!item.thermostats) {
+            console.warn('chartsFirstFill is missing thermostats', item);
+            return;
+          }
+          if (item.thermostats[lrId]) {
+            this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
+          }
+          if (item.thermostats[brId]) {
+            this.brChartData.addRow(this.chartsCreateRow(item, brId));
+          }
         });
         this.chartsDraw();
       }
