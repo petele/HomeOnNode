@@ -19,7 +19,7 @@ const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
 const Bluetooth = require('./Bluetooth');
 const PushBullet = require('./PushBullet');
-const SomaSmartShades = require('./SomaSmartShades');
+// const SomaSmartShades = require('./SomaSmartShades');
 
 const LOG_PREFIX = 'HOME';
 
@@ -263,25 +263,26 @@ function Home(initialConfig, fbRef) {
     }
     // SOMA Smart Shades
     if (command.hasOwnProperty('somaSmartShades')) {
-      if (soma) {
-        let cmds = command.somaSmartShades;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
-        }
-        cmds.forEach((cmd) => {
-          if (cmd.position === 'OPEN') {
-            soma.open(cmd.blindId, true);
-          } else if (cmd.position === 'CLOSE') {
-            soma.close(cmd.blindId, true);
-          } else if (cmd.position === 'TOGGLE') {
-            soma.toggle(cmd.blindId, true);
-          } else {
-            soma.setPosition(cmd.blindId, parseInt(cmd.position, 10), true);
-          }
-        });
-      } else {
-        log.warn(LOG_PREFIX, 'SOMA unavailable.');
-      }
+      log.log(LOG_PREFIX, 'SOMA disabled');
+      // if (soma) {
+      //   let cmds = command.somaSmartShades;
+      //   if (Array.isArray(cmds) === false) {
+      //     cmds = [cmds];
+      //   }
+      //   cmds.forEach((cmd) => {
+      //     if (cmd.position === 'OPEN') {
+      //       soma.open(cmd.blindId, true);
+      //     } else if (cmd.position === 'CLOSE') {
+      //       soma.close(cmd.blindId, true);
+      //     } else if (cmd.position === 'TOGGLE') {
+      //       soma.toggle(cmd.blindId, true);
+      //     } else {
+      //       soma.setPosition(cmd.blindId, parseInt(cmd.position, 10), true);
+      //     }
+      //   });
+      // } else {
+      //   log.warn(LOG_PREFIX, 'SOMA unavailable.');
+      // }
     }
     // Wemo Command
     if (command.hasOwnProperty('wemo')) {
@@ -1102,16 +1103,17 @@ function Home(initialConfig, fbRef) {
    * Init the SOMA Smart Shades API
    */
   function _initSoma() {
-    const fbSomaConfigPath = 'config/HomeOnNode/somaSmartShades';
-    _fb.child(fbSomaConfigPath).once('value', function(snapshot) {
-      soma = new SomaSmartShades(bluetooth, snapshot.val());
-      soma.on('level', function(id, value) {
-        _fbSet(`state/somaSmartShades/${id}/level`, value);
-      });
-      soma.on('battery', function(id, value) {
-        _fbSet(`state/somaSmartShades/${id}/battery`, value);
-      });
-    });
+    log.log(LOG_PREFIX, 'SOMA INIT skipped.');
+    // const fbSomaConfigPath = 'config/HomeOnNode/somaSmartShades';
+    // _fb.child(fbSomaConfigPath).once('value', function(snapshot) {
+    //   soma = new SomaSmartShades(bluetooth, snapshot.val());
+    //   soma.on('level', function(id, value) {
+    //     _fbSet(`state/somaSmartShades/${id}/level`, value);
+    //   });
+    //   soma.on('battery', function(id, value) {
+    //     _fbSet(`state/somaSmartShades/${id}/battery`, value);
+    //   });
+    // });
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
