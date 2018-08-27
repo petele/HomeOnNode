@@ -56,12 +56,12 @@ function Bluetooth() {
         clearTimeout(_scanTimeout);
         _scanTimeout = null;
       }
-      log.debug(LOG_PREFIX, 'Scanning started.');
+      log.log(LOG_PREFIX, 'Scanning started.');
       _self.emit('scanning', true);
     });
     _noble.on('scanStop', function() {
       _self.scanning = false;
-      log.debug(LOG_PREFIX, 'Scanning stopped.');
+      log.log(LOG_PREFIX, 'Scanning stopped.');
       if (_scanTimeout) {
         clearTimeout(_scanTimeout);
         _scanTimeout = null;
@@ -73,6 +73,7 @@ function Bluetooth() {
       log.warn(LOG_PREFIX, 'Noble warning', message);
     });
     _noble.on('discover', (peripheral) => {
+      log.debug(LOG_PREFIX, 'Discovered', peripheral);
       _self.emit('discover', peripheral);
     });
     log.log(LOG_PREFIX, 'Noble started.');
@@ -167,10 +168,11 @@ function Bluetooth() {
    * Starts Noble scanning
    */
   this.startScanning = function() {
+    log.debug(LOG_PREFIX, 'startScanning()');
     if (_self.scanning === true) {
+      log.debug(LOG_PREFIX, 'startScanning - already scanning.');
       return;
     }
-    log.verbose(LOG_PREFIX, 'startScanning()');
     _noble.startScanning([], true);
   };
 
@@ -178,10 +180,11 @@ function Bluetooth() {
    * Stops Noble scanning
    */
   this.stopScanning = function() {
+    log.debug(LOG_PREFIX, 'stopScanning()');
     if (_self.scanning === false) {
+      log.debug(LOG_PREFIX, 'stopScanning - already stopped.');
       return;
     }
-    log.verbose(LOG_PREFIX, 'stopScanning()');
     _noble.stopScanning();
   };
 
