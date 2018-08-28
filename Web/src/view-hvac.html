@@ -173,6 +173,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: Boolean,
             value: true,
           },
+          showHumidity: {
+            type: Boolean,
+            value: false,
+          },
         };
       }
 
@@ -182,6 +186,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           'nestThermostatChanged(nestThermostats.*)',
           'logsChanged(cronLogs.splices)',
         ];
+      }
+
+      ready() {
+        super.ready();
+        const qs = window.location.search;
+        if (qs.indexOf('humidity') > 0) {
+          this.showHumidity = true;
+        }
       }
 
       chartsLoaded() {
@@ -196,11 +208,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.lrChartData = new google.visualization.DataTable();
         this.lrChartData.addColumn('datetime', '');
         this.lrChartData.addColumn('number', 'Temp (F)');
-        this.lrChartData.addColumn('number', 'Humidity');
+        if (this.showHumidity) {
+          this.lrChartData.addColumn('number', 'Humidity');
+        }
         this.brChartData = new google.visualization.DataTable();
         this.brChartData.addColumn('datetime', '');
         this.brChartData.addColumn('number', 'Temp (F)');
-        this.brChartData.addColumn('number', 'Humidity');
+        if (this.showHumidity) {
+          this.brChartData.addColumn('number', 'Humidity');
+        }
         if (this.cronLogs.length > 0) {
           this.chartsFirstFill();
         }
@@ -210,7 +226,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         const row = [];
         row.push(new Date(item.date));
         row.push(item.thermostats[thermostatId].temperature);
-        row.push(item.thermostats[thermostatId].humidity);
+        if (this.showHumidity) {
+          row.push(item.thermostats[thermostatId].humidity);
+        }
         return row;
       }
 
@@ -228,7 +246,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             return;
           }
           if (!item.thermostats) {
-            console.warn('chartsFirstFill is missing thermostats', item);
+            console.error('chartsFirstFill is missing thermostats', item);
             return;
           }
           if (item.thermostats[lrId]) {
@@ -245,10 +263,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         const google = window.google;
         const options = {
           chart: {
-            title: 'Temperature and Humidity',
+            title: 'Temperature',
           },
           curveType: 'function',
         };
+        if (this.showHumidity) {
+          options.chart.title += ' & Humidity';
+        }
         // const chartOpts = options;
         const chartOpts = google.charts.Line.convertOptions(options);
         if (!this.lrChart) {
