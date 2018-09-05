@@ -1,0 +1,350 @@
+#!/usr/bin/env node
+'use strict';
+
+/* eslint require-jsdoc: "off" */
+
+// const fs = require('fs');
+
+const util = require('util');
+const path = require('path');
+const chalk = require('chalk');
+const glob = require('globule');
+const _ = require('underscore');
+const commander = require('commander');
+const hseLib = require('./lib/HueSceneEditor');
+const Keys = require('../app/Keys.js').keys;
+
+const UTIL_OPTS_PRETTY = {
+  colors: true,
+  compact: true,
+  depth: 6,
+  maxArrayLength: 80,
+};
+
+commander
+  .version('0.0.1')
+  .option('-a, --address <address>', 'Address to use')
+  .option('-k, --key <key>', 'Hue Key')
+  .option('-i, --insecure', 'Insecure, use HTTP only')
+  .option('-v, --verbose', 'Verbose output')
+  .option('-t, --trial', 'Trial only, don\'t make requests.');
+
+function initHSE() {
+  const opts = {
+    key: commander.key || Keys.hueBridge.key,
+    address: commander.address || '192.168.86.206',
+    verbose: commander.verbose,
+    secure: !commander.insecure,
+    trial: commander.trial,
+  };
+  hseLib.init(opts);
+}
+
+let _data;
+function getData() {
+  if (_data) {
+    return _data;
+  }
+  throw new Error('no_data');
+}
+function setData(data) {
+  _data = data;
+}
+
+
+function getDimmers() {
+  const data = getData();
+  const sensors = data.sensors;
+  return _.filter(sensors, (sensor, key) => {
+    sensor.$key = key;
+    if (sensor.modelid.startsWith('RWL02')) {
+      return true;
+    }
+    return false;
+  });
+}
+
+function getResourceLinks() {
+  const data = getData();
+  const resourceLinks = data.resourcelinks;
+  return resourceLinks;
+}
+
+function getResourceLinkForSensorID(sensorID) {
+  let result;
+  const sensorString = `/sensors/${sensorID}`;
+  const resourceLinks = getResourceLinks();
+  Object.keys(resourceLinks).forEach((key) => {
+    const rLink = resourceLinks[key];
+    if (rLink.links.includes(sensorString)) {
+      result = rLink;
+    }
+  });
+  return result;
+}
+
+function getSensor(sensorID) {
+  const data = getData();
+  const sensor = data.sensors[sensorID];
+  if (!sensor) {
+    return null;
+  }
+  sensor.$key = sensorID;
+  return sensor;
+}
+
+function getRule(ruleID) {
+  const data = getData();
+  const rule = data.rules[ruleID];
+  if (!rule) {
+    return null;
+  }
+  rule.$key = ruleID;
+  return rule;
+}
+
+function getGroup(groupID) {
+  const data = getData();
+  const group = data.groups[groupID];
+  if (!group) {
+    return null;
+  }
+  group.$key = groupID;
+  return group;
+}
+
+function getSchedule(scheduleID) {
+  const data = getData();
+  const schedule = data.schedules[scheduleID];
+  if (!schedule) {
+    return null;
+  }
+  schedule.$key = scheduleID;
+  return schedule;
+}
+
+function getScene(sceneID) {
+  const data = getData();
+  const scene = data.scenes[sceneID];
+  if (!scene) {
+    return null;
+  }
+  scene.$key = sceneID;
+  return scene;
+}
+
+function testRules(conditions, rules) {
+  if (conditions.length !== rules.length) {
+    return false;
+  }
+  let result = true;
+  rules.forEach((rule) => {
+    if (!_.findWhere(conditions, rule)) {
+      result = false;
+    }
+  });
+  return result;
+}
+
+function isRulePress(rule, sensorID, cycleSensorID, butStatOp, butStatVal) {
+  const buttonEvent = {
+    address: `/sensors/${sensorID}/state/buttonevent`,
+    operator: 'eq',
+    value: '1000',
+  };
+  const buttonStatus = {
+    address: `/sensors/${cycleSensorID}/state/status`,
+    operator: butStatOp,
+    value: butStatVal,
+  }
+  const lastUpdated = {
+    address: `/sensors/${sensorID}/state/lastupdated`,
+    operator: 'dx',
+  };
+  const rules = [buttonEvent, buttonStatus, lastUpdated];
+  return testRules(rule.conditions, rules);
+}
+
+function isRuleSimplePress(rule, sensorID, buttonID) {
+  const buttonEvent = {
+    address: `/sensors/${sensorID}/state/buttonevent`,
+    operator: 'eq',
+    value: buttonID,
+  };
+  const lastUpdated = {
+    address: `/sensors/${sensorID}/state/lastupdated`,
+    operator: 'dx',
+  };
+  const rules = [buttonEvent, lastUpdated];
+  return testRules(rule.conditions, rules);
+}
+
+function isRuleResetTimer(rule, sensorID) {
+  const lastUpdated = {
+    address: `/sensors/${sensorID}/state/lastupdated`,
+    operator: 'dx',
+  };
+  const rules = [lastUpdated];
+  return testRules(rule.conditions, rules);
+}
+
+function getID(path) {
+  const reLink = path.match(/^\/(.*?)\/(.*)/m);
+  if (reLink[2]) {
+    return reLink[2];
+  }
+  return null;
+}
+
+commander
+  .command('get <dimmerID>')
+  .description('Lists all of the current scenes')
+  .action((dimmerID) => {
+    initHSE();
+    return hseLib.makeRequest('GET', '').then((resp) => {
+      setData(resp);
+      const dimmer = getSensor(dimmerID);
+      const dimmerObj = {
+        sensor: null,
+        sceneCycle: {
+          sensor: null,
+          schedule: null,
+        },
+        groups: {},
+        rules: {
+          on0: null,
+          on1: null,
+          on2: null,
+          on3: null,
+          on4: null,
+          off: null,
+          dimUpPress: null,
+          dimUpHold: null,
+          dimUpRelease: null,
+          dimDownPress: null,
+          dimDownHold: null,
+          dimDownRelease: null,
+          sceneCycleReset: null,
+          other: [],
+        },
+        scenes: {},
+        resourceLinks: {},
+      };
+      if (!dimmer) {
+        console.log('dimmer not found');
+        return;
+      }
+      if (dimmer.modelid.indexOf('RWL02') !== 0) {
+        console.log('not a dimmer');
+        return;
+      }
+
+      let sceneCycleID;
+
+      dimmerObj.sensor = dimmer;
+      const rLinks = getResourceLinkForSensorID(dimmerID);
+      dimmerObj.resourceLinks = rLinks;
+
+      _.filter(rLinks.links, (val) => val.startsWith('/sensors/'))
+        .forEach((sensorPath) => {
+          const sensorID = getID(sensorPath);
+          const sensor = getSensor(sensorID);
+          if (sensor.modelid === 'PHWA01') {
+            dimmerObj.sceneCycle.sensor = sensor;
+            sceneCycleID = sensor.$key;
+          }
+        });
+      _.filter(rLinks.links, (val) => val.startsWith('/schedules/'))
+        .forEach((schedulePath) => {
+          const scheduleID = getID(schedulePath);
+          dimmerObj.sceneCycle.schedule = getSchedule(scheduleID);
+        });
+      _.filter(rLinks.links, (val) => val.startsWith('/scenes/'))
+        .forEach((scenePath) => {
+          const sceneID = getID(scenePath);
+          const scene = getScene(sceneID);
+          dimmerObj.scenes[scene.$key] = scene;
+        });
+      _.filter(rLinks.links, (val) => val.startsWith('/groups/'))
+        .forEach((groupPath) => {
+          const groupID = getID(groupPath);
+          const group = getGroup(groupID);
+          dimmerObj.groups[group.$key] = group;
+        });
+      _.filter(rLinks.links, (val) => val.startsWith('/rules/'))
+        .forEach((rulePath) => {
+          const ruleID = getID(rulePath);
+          const rule = getRule(ruleID);
+          if (isRulePress(rule, dimmerID, sceneCycleID, 'lt', '1')) {
+            dimmerObj.rules.on0 = rule;
+          } else if (isRulePress(rule, dimmerID, sceneCycleID, 'eq', '1')) {
+            dimmerObj.rules.on1 = rule;
+          } else if (isRulePress(rule, dimmerID, sceneCycleID, 'eq', '2')) {
+            dimmerObj.rules.on2 = rule;
+          } else if (isRulePress(rule, dimmerID, sceneCycleID, 'eq', '3')) {
+            dimmerObj.rules.on3 = rule;
+          } else if (isRulePress(rule, dimmerID, sceneCycleID, 'gt', '3')) {
+            dimmerObj.rules.on4 = rule;
+          } else if (isRuleSimplePress(rule, dimmerID, '4000')) {
+            dimmerObj.rules.off = rule;
+          } else if (isRuleSimplePress(rule, dimmerID, '2000')) {
+            dimmerObj.rules.dimUpPress = rule;
+          } else if (isRuleSimplePress(rule, dimmerID, '2001')) {
+            dimmerObj.rules.dimUpHold = rule;
+          } else if (isRuleSimplePress(rule, dimmerID, '2003')) {
+            dimmerObj.rules.dimUpRelease = rule;
+          } else if (isRuleSimplePress(rule, dimmerID, '3000')) {
+            dimmerObj.rules.dimDownPress = rule;
+          } else if (isRuleSimplePress(rule, dimmerID, '3001')) {
+            dimmerObj.rules.dimDownHold = rule;
+          } else if (isRuleSimplePress(rule, dimmerID, '3003')) {
+            dimmerObj.rules.dimDownRelease = rule;
+          } else if (isRuleResetTimer(rule, dimmerID)) {
+            dimmerObj.rules.sceneCycleReset = rule;
+          } else {
+            dimmerObj.rules.other.push(rule);
+          }
+        });
+      // console.log(util.inspect(dimmerObj, UTIL_OPTS_PRETTY));
+      printDimmerInfo(dimmerObj)
+    });
+  });
+
+function printDimmerInfo(dimmerObj) {
+  console.log('Hue Dimmer Info:', chalk.cyan(dimmerObj.sensor.name));
+  console.log(' ', `Sensor ID: ${chalk.cyan(dimmerObj.sensor.$key)}`);
+  console.log(' ', `Battery: ${chalk.cyan(dimmerObj.sensor.config.battery)}%`);
+  console.log(' ', `SW Version: ${chalk.cyan(dimmerObj.sensor.swversion)}`);
+  console.log(' ', `Last Used: ${chalk.cyan(dimmerObj.sensor.state.lastupdated)}`);
+  _.each(dimmerObj.groups, (val, key) => {
+    console.log(' ', 'Room:', chalk.cyan(val.name), `(${chalk.cyan(key)})`);
+  });
+  console.log(' ', `Cycle Sensor ID: ${chalk.cyan(dimmerObj.sceneCycle.sensor.$key)}`);
+  console.log(' ', chalk.bold('Rules'));
+  _.each(dimmerObj.rules, (val, key) => {
+    console.log('  ', `${chalk.green(key)}: ${val.name} (${chalk.cyan(val.$key)})`);
+  });
+
+
+  // console.log(`${dimmerObj.sensor.name} (${dimmerObj.sensor.$key})`);
+}
+
+commander
+  .command('list')
+  .description('Lists all of the current scenes')
+  .action(() => {
+    initHSE();
+    return hseLib.makeRequest('GET', '').then((resp) => {
+      setData(resp);
+      const dimmers = getDimmers();
+      Object.keys(dimmers).forEach((key) => {
+        const dimmer = dimmers[key];
+        console.log(dimmer.$key.padStart(2), chalk.cyan(dimmer.name));
+      });
+    });
+  });
+
+commander.parse(process.argv);
+if (commander.args.length === 0) {
+  commander.help();
+}

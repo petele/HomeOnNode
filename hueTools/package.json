@@ -14,13 +14,14 @@
     "globule": "^1.2.0",
     "npmlog": "^3.1.2",
     "request": "^2.72.0",
-    "strip-json-comments": "^2.0.1"
+    "strip-json-comments": "^2.0.1",
+    "underscore": "^1.9.1"
   },
   "devDependencies": {
     "eslint": "^4.12.0",
     "eslint-config-google": "^0.9.1"
   },
-    "scripts": {
+  "scripts": {
     "lint": "eslint --ignore-pattern '/tests/' ."
   }
 }
