@@ -291,6 +291,7 @@ exports.createScene = createScene;
 exports.renameScene = renameScene;
 exports.deleteScene = deleteScene;
 exports.updateScene = updateScene;
+exports.makeRequest = makeRequest;
 exports.printResults = printResults;
 exports.readJSONFile = readJSONFile;
 exports.saveJSONFile = saveJSONFile;
