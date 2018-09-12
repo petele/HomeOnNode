@@ -37,28 +37,33 @@ function NanoLeaf(key, ip, port) {
     if (modifier === 'OFF') {
       return _setPower(false);
     }
-    if (command.hasOwnProperty('effect')) {
-      return _setEffect(command.effect);
-    }
-    if (command.hasOwnProperty('brightness')) {
-      return _setBrightness(command.brightness);
-    }
-    if (command.hasOwnProperty('colorTemp')) {
-      return _setColorTemperature(command.colorTemp);
-    }
-    if (command.hasOwnProperty('hue') && command.hasOwnProperty('sat')) {
-      return _setHueAndSat(command.hue, command.sat);
-    }
     if (command.hasOwnProperty('authorize')) {
       return _makeLeafRequest('new', 'POST').then((resp) => {
         log.log(LOG_PREFIX, resp);
         return resp;
       });
     }
-    if (command.hasOwnProperty('cycleEffect')) {
-      return _cycleEffect();
+    const promises = [];
+    if (command.hasOwnProperty('effect')) {
+      promises.push(_setEffect(command.effect));
     }
-    return Promise.reject(new Error('unknown_command'));
+    if (command.hasOwnProperty('brightness')) {
+      promises.push(_setBrightness(command.brightness));
+    }
+    if (command.hasOwnProperty('colorTemp')) {
+      promises.push(_setColorTemperature(command.colorTemp));
+    }
+    if (command.hasOwnProperty('hue') && command.hasOwnProperty('sat')) {
+      promises.push(_setHueAndSat(command.hue, command.sat));
+    }
+    if (command.hasOwnProperty('cycleEffect')) {
+      promises.push(_cycleEffect());
+    }
+    if (promises.length === 0) {
+      return Promise.reject(new Error('unknown_command'));
+    } else {
+      return Promise.all(promises);
+    }
   };
 
   /**
