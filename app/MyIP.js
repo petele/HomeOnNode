@@ -89,7 +89,7 @@ function MyIP(dnsAccount) {
     const password = _dnsAccount.password;
     const hostname = _dnsAccount.hostname;
 
-    const host = `${user}:${password}@$domains.google.com`;
+    const host = `${user}:${password}@domains.google.com`;
     const path = `nic/update?hostname=${hostname}`;
 
     let requestOptions = {
