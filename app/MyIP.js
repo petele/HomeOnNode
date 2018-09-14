@@ -11,12 +11,15 @@ const LOG_PREFIX = 'MyIP';
  * MyIP API.
  * @constructor
  *
+ * @param {Object} dnsAccount DNS account info, user, password, hostname.
  * @fires MyIP#change
  */
-function MyIP() {
+function MyIP(dnsAccount) {
   const REFRESH_INTERVAL = 5 * 60 * 1000;
+  const _dnsAccount = dnsAccount;
   const _ipifyURL = 'https://api.ipify.org?format=json';
   const _self = this;
+  let _dnsTimer;
   this.myIP = null;
 
   /**
@@ -24,13 +27,16 @@ function MyIP() {
   */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
+    if (_dnsAccount) {
+      log.debug(LOG_PREFIX, `DNS update enabled for ${_dnsAccount.hostname}`);
+    }
     _getIP();
     setInterval(_getIP, REFRESH_INTERVAL);
   }
 
   /**
-   * Get's the latest weather.
-   *  Fires an event (weather) when the weather has been updated.
+   * Get's the current IP address.
+   *  Fires an event (change) when the IP has been updated.
   */
   function _getIP() {
     request(_ipifyURL, function(error, response, body) {
@@ -51,19 +57,65 @@ function MyIP() {
         const myIPObj = JSON.parse(body);
         const myIP = myIPObj.ip;
         /**
-         * Fires when the weather info has changed
-         * @event Weather#weather
+         * Fires when the IP address has changed
+         * @event MyIP#change
          */
         if (myIP !== _self.myIP) {
           _self.myIP = myIP;
           _self.emit('change', _self.myIP);
           log.log(LOG_PREFIX, `IP Address changed to ${_self.myIP}`);
+          _updateDNS();
         }
         return;
       } catch (ex) {
         log.exception(LOG_PREFIX, 'Unable to parse IPify response', ex);
         return;
       }
+    });
+  }
+
+  /**
+   * Updates the Dynamic DNS entry on the Google DNS.
+  */
+  function _updateDNS() {
+    if (!_dnsAccount) {
+      return;
+    }
+    if (_dnsTimer) {
+      log.log(LOG_PREFIX, 'DNS update timer active, skipping this request.');
+      return;
+    }
+    const user = _dnsAccount.user;
+    const password = _dnsAccount.password;
+    const hostname = _dnsAccount.hostname;
+
+    const host = `${user}:${password}@$domains.google.com`;
+    const path = `nic/update?hostname=${hostname}`;
+
+    let requestOptions = {
+      uri: `https://${host}/${path}`,
+      method: 'POST',
+      agent: false,
+    };
+    log.log(LOG_PREFIX, 'Updating DNS entry...');
+    request(requestOptions, (error, response, respBody) => {
+      if (error) {
+        log.exception(LOG_PREFIX, 'Request error', error);
+        return;
+      }
+      if (respBody.indexOf('good') >= 0 || respBody.indexOf('nochg') >= 0) {
+        log.info(LOG_PREFIX, `DNS entry updated: ${respBody}`);
+        return;
+      }
+      if (respBody.indexOf('911') >= 0) {
+        log.warn(LOG_PREFIX, `DNS entry update server error, will retry...`);
+        _dnsTimer = setTimeout(() => {
+          _dnsTimer = null;
+          _updateDNS();
+        }, 5 * 60 * 1000);
+        return;
+      }
+      log.error(LOG_PREFIX, `DNS entry update failed: ${respBody}`);
     });
   }
 
