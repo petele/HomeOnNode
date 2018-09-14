@@ -16,8 +16,8 @@ const LOG_PREFIX = 'My_IP';
  */
 function MyIP(dnsAccount) {
   const REFRESH_INTERVAL = 5 * 60 * 1000;
+  const IPIFY_URL = 'https://api.ipify.org?format=json';
   const _dnsAccount = dnsAccount;
-  const _ipifyURL = 'https://api.ipify.org?format=json';
   const _self = this;
   let _dnsTimer;
   this.myIP = null;
@@ -40,8 +40,8 @@ function MyIP(dnsAccount) {
    *  Fires an event (change) when the IP has been updated.
   */
   function _getIP() {
-    const LOG_PREFIX = 'IPIFY';
-    request(_ipifyURL, function(error, response, body) {
+    request(IPIFY_URL, (error, response, body) => {
+      const LOG_PREFIX = 'IPIFY';
       const msgErr = `IPify request failed.`;
       if (error) {
         log.error(LOG_PREFIX, `${msgErr} (Request Error)`, error);
@@ -105,7 +105,7 @@ function MyIP(dnsAccount) {
       method: 'POST',
       agent: false,
     };
-    log.log(LOG_PREFIX, 'Updating DNS entry...');
+    log.debug(LOG_PREFIX, 'Updating DNS entry...');
     request(requestOptions, (error, response, body) => {
       const msgErr = `DNS update failed.`;
       const msgOK = `DNS updated.`;
@@ -114,7 +114,7 @@ function MyIP(dnsAccount) {
         return;
       }
       if (body.indexOf('good') >= 0 || body.indexOf('nochg') >= 0) {
-        log.info(LOG_PREFIX, msgOK, body);
+        log.log(LOG_PREFIX, msgOK, body);
         return;
       }
       if (body.indexOf('911') >= 0) {
