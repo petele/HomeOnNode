@@ -89,6 +89,7 @@ function MyIP(dnsAccount) {
     const password = _dnsAccount.password;
     const hostname = _dnsAccount.hostname;
 
+    // See https://support.google.com/domains/answer/6147083 for Dynamic DNS API
     const host = `${user}:${password}@domains.google.com`;
     const path = `nic/update?hostname=${hostname}`;
 

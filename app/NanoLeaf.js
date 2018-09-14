@@ -12,6 +12,7 @@ const LOG_PREFIX = 'NANOLEAF';
  * NanoLeaf API.
  * @constructor
  *
+ * @see http://forum.nanoleaf.me/docs/openapi
  * @fires NanoLeaf#state_changed
  * @property {Object} state Current state of the NanoLeaf
  * @param {String} key Authentication key.
@@ -43,6 +44,9 @@ function NanoLeaf(key, ip, port) {
         return resp;
       });
     }
+    if (command.hasOwnProperty('cycleEffect')) {
+      return _cycleEffect();
+    }
     const promises = [];
     if (command.hasOwnProperty('effect')) {
       promises.push(_setEffect(command.effect));
@@ -55,9 +59,6 @@ function NanoLeaf(key, ip, port) {
     }
     if (command.hasOwnProperty('hue') && command.hasOwnProperty('sat')) {
       promises.push(_setHueAndSat(command.hue, command.sat));
-    }
-    if (command.hasOwnProperty('cycleEffect')) {
-      promises.push(_cycleEffect());
     }
     if (promises.length === 0) {
       return Promise.reject(new Error('unknown_command'));
