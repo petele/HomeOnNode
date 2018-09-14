@@ -9,43 +9,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="log-viewer.html">
 
-<dom-module id="my-version">
+<dom-module id="view-vpn-logs">
   <template>
     <style include="shared-styles">
       :host {
-        color: var(--secondary-text-color);
         display: block;
-        font-size: smaller;
-        margin-top: 16px;
-        padding: 0 16px;
       }
     </style>
-    <div>
-      [[appVersion]]<br>
-      [[appBuildDate]]
-    </div>
+
+    <log-viewer path="logs/vpnmonitor"></log-viewer>
+
   </template>
 
   <script>
-    class MyVersion extends Polymer.Element {
-      static get is() { return 'my-version'; }
-
-      static get properties() {
-        return {
-          appVersion: {
-            type: String,
-            value: '20180914',
-          },
-          appBuildDate: {
-            type: String,
-            value: 'September 14th 2018, 3:30 pm',
-          },
-        };
-      }
-
+    class VPNLogsView extends Polymer.Element {
+      static get is() { return 'view-vpn-logs'; }
     }
 
-    window.customElements.define(MyVersion.is, MyVersion);
+    window.customElements.define(VPNLogsView.is, VPNLogsView);
   </script>
 </dom-module>
