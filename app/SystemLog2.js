@@ -60,7 +60,6 @@ function _startWSS(port) {
   if (!port) {
     port = 8881;
   }
-  _init(LOG_PREFIX, `Starting WebSocket server on port ${port}`);
   _wss = new WSServer('LOG', port);
 }
 

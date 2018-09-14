@@ -5,7 +5,7 @@ const request = require('request');
 const log = require('./SystemLog2');
 const EventEmitter = require('events').EventEmitter;
 
-const LOG_PREFIX = 'MyIP';
+const LOG_PREFIX = 'My_IP';
 
 /**
  * MyIP API.
@@ -28,7 +28,8 @@ function MyIP(dnsAccount) {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     if (_dnsAccount) {
-      log.debug(LOG_PREFIX, `DNS update enabled for ${_dnsAccount.hostname}`);
+      log.log(LOG_PREFIX, `DNS update enabled for ${_dnsAccount.hostname}`);
+      _self.myIP = _dnsAccount.externalIP;
     }
     _getIP();
     setInterval(_getIP, REFRESH_INTERVAL);
@@ -39,18 +40,19 @@ function MyIP(dnsAccount) {
    *  Fires an event (change) when the IP has been updated.
   */
   function _getIP() {
+    const LOG_PREFIX = 'IPIFY';
     request(_ipifyURL, function(error, response, body) {
-      const msg = 'IPify request error';
+      const msgErr = `IPify request failed.`;
       if (error) {
-        log.error(LOG_PREFIX, msg, error);
+        log.error(LOG_PREFIX, `${msgErr} (Request Error)`, error);
         return;
       }
       if (!response) {
-        log.error(LOG_PREFIX, msg + ': no response.');
+        log.error(LOG_PREFIX, `${msgErr} (No Response Obj)`);
         return;
       }
       if (response.statusCode !== 200) {
-        log.error(LOG_PREFIX, msg + ': response code:' + response.statusCode);
+        log.error(LOG_PREFIX, `${msgErr} (${response.statusCode})`, body);
         return;
       }
       try {
@@ -62,13 +64,17 @@ function MyIP(dnsAccount) {
          */
         if (myIP !== _self.myIP) {
           _self.myIP = myIP;
-          _self.emit('change', _self.myIP);
-          log.log(LOG_PREFIX, `IP Address changed to ${_self.myIP}`);
+          _self.emit('change', myIP);
+          log.log(LOG_PREFIX, `IP address changed to: ${myIP}`, body);
           _updateDNS();
         }
         return;
       } catch (ex) {
-        log.exception(LOG_PREFIX, 'Unable to parse IPify response', ex);
+        const extra = {
+          exception: ex,
+          respBody: body,
+        };
+        log.exception(LOG_PREFIX, `${msgErr} (Parse Response)`, extra);
         return;
       }
     });
@@ -81,6 +87,7 @@ function MyIP(dnsAccount) {
     if (!_dnsAccount) {
       return;
     }
+    const LOG_PREFIX = 'G_DNS';
     if (_dnsTimer) {
       log.log(LOG_PREFIX, 'DNS update timer active, skipping this request.');
       return;
@@ -99,24 +106,26 @@ function MyIP(dnsAccount) {
       agent: false,
     };
     log.log(LOG_PREFIX, 'Updating DNS entry...');
-    request(requestOptions, (error, response, respBody) => {
+    request(requestOptions, (error, response, body) => {
+      const msgErr = `DNS update failed.`;
+      const msgOK = `DNS updated.`;
       if (error) {
-        log.exception(LOG_PREFIX, 'Request error', error);
+        log.exception(LOG_PREFIX, `${msgErr} (Request Error)`, error);
         return;
       }
-      if (respBody.indexOf('good') >= 0 || respBody.indexOf('nochg') >= 0) {
-        log.info(LOG_PREFIX, `DNS entry updated: ${respBody}`);
+      if (body.indexOf('good') >= 0 || body.indexOf('nochg') >= 0) {
+        log.info(LOG_PREFIX, msgOK, body);
         return;
       }
-      if (respBody.indexOf('911') >= 0) {
-        log.warn(LOG_PREFIX, `DNS entry update server error, will retry...`);
+      if (body.indexOf('911') >= 0) {
+        log.warn(LOG_PREFIX, `${msgErr} (Server Error), will retry.`, body);
         _dnsTimer = setTimeout(() => {
           _dnsTimer = null;
           _updateDNS();
         }, 5 * 60 * 1000);
         return;
       }
-      log.error(LOG_PREFIX, `DNS entry update failed: ${respBody}`);
+      log.error(LOG_PREFIX, msgErr, body);
     });
   }
 
