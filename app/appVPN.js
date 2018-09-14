@@ -3,6 +3,7 @@
 'use strict';
 
 const fs = require('fs');
+const MyIP = require('./MyIP');
 const Tail = require('tail').Tail;
 const log = require('./SystemLog2');
 const Keys = require('./Keys').keys;
@@ -11,8 +12,13 @@ const DeviceMonitor = require('./DeviceMonitor');
 
 let _fb;
 let _tail;
+let _myIP;
 let _config;
 let _deviceMonitor;
+
+const APP_NAME = 'VPN_MONITOR';
+const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
+const LOG_PREFIX = 'VPN_LOG';
 
 // Read config file
 try {
@@ -27,15 +33,6 @@ try {
   console.error(ex);
   process.exit(1);
 }
-
-// Verify config has appName
-if (!_config.appName) {
-  console.error(`'appName' not set in config.`);
-  process.exit(1);
-}
-
-const APP_NAME = _config.appName;
-const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
 
 // Setup logging
 log.setAppName(APP_NAME);
@@ -70,6 +67,11 @@ function init() {
     _deviceMonitor.restart('FB', 'connection_timedout', false);
   });
 
+  _myIP = new MyIP(_config.googleDNS);
+  _myIP.on('change', (ip) => {
+    _fb.child(`config/${APP_NAME}/googleDNS/externalIP`).set(ip);
+  });
+
   _initWatcher(_config.fileToWatch);
 
   setInterval(function() {
@@ -87,17 +89,17 @@ function _initWatcher(filename) {
   if (!filename) {
     return;
   }
-  log.log(APP_NAME, `Setting up log watcher for: ${filename}`);
+  log.init(VPN_LOG_PREFIX, `Setting up log watcher for: ${filename}`);
   try {
     fs.accessSync(filename, fs.R_OK);
   } catch (ex) {
-    log.exception(APP_NAME, `Unable to read '${filename}'`, ex);
+    log.exception(VPN_LOG_PREFIX, `Unable to read '${filename}'`, ex);
     return;
   }
   _tail = new Tail(_config.fileToWatch);
   _tail.on('line', _handleLogLine);
   _tail.on('error', (err) => {
-    log.exception(APP_NAME, 'Error reading log file', err);
+    log.exception(VPN_LOG_PREFIX, 'Error reading log file', err);
   });
 }
 
@@ -107,7 +109,7 @@ function _initWatcher(filename) {
  * @param {String} line New log line to handle.
  */
 function _handleLogLine(line) {
-  log.log(APP_NAME, 'item received', line);
+  log.log(VPN_LOG_PREFIX, 'item received', line);
 }
 
 process.on('SIGINT', function() {
