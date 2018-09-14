@@ -935,7 +935,7 @@ function Home(initialConfig, fbRef) {
    * Init IP
    */
   function _initMyIP() {
-    myIP = new MyIP();
+    myIP = new MyIP(_config.googleDNS);
     myIP.on('change', (ip) => {
       _fbSet('state/ip_address', ip);
     });
