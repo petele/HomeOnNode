@@ -27,6 +27,8 @@ let _secure = false;
 let _trial = false;
 let _address;
 let _key;
+let _cachedData;
+let _cachedDataExpiresAt = 0;
 
 
 /** ***************************************************************************
@@ -230,6 +232,17 @@ function updateScene(sceneObj, lightList) {
   return makeRequest('PUT', `scenes/${sceneId}`, scene);
 }
 
+function getAllData(useCached) {
+  if (useCached && _cachedData && _cachedDataExpiresAt < Date.now()) {
+    return Promise.resolve(_cachedData);
+  }
+  return makeRequest('GET', '').then((resp) => {
+    _cachedData = resp;
+    return resp;
+  });
+}
+
+
 /**
  * Makes a request to the Hue API
  *
@@ -286,6 +299,7 @@ exports.allOff = allOff;
 exports.setLight = setLight;
 exports.getScene = getScene;
 exports.getRecipes = getRecipes;
+exports.getAllData = getAllData;
 exports.listScenes = listScenes;
 exports.createScene = createScene;
 exports.renameScene = renameScene;

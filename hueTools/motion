@@ -38,10 +38,13 @@ function initHSE() {
   hseLib.init(opts);
 }
 
-function getHueDimmers(sensors) {
+function getMotionSensor(sensors) {
   return _.filter(sensors, (sensor, key) => {
     sensor.$key = key;
-    return sensor.modelid.startsWith('RWL02');
+    if (sensor.modelid.startsWith('SML001')) {
+      return true;
+    }
+    return false;
   });
 }
 
@@ -168,113 +171,95 @@ function getID(path) {
 commander
   .command('get <dimmerID>')
   .description('Lists all of the current scenes')
-  .action((dimmerID) => {
+  .action((sensorID) => {
     initHSE();
-    return hseLib.getAllData(true).then((hueObj) => {
-      const dimmerObj = {
-        sensor: null,
-        sceneCycle: {
-          sensor: null,
-          schedule: null,
-        },
-        groups: {},
-        rules: {
-          on0: null,
-          on1: null,
-          on2: null,
-          on3: null,
-          on4: null,
-          off: null,
-          dimUpPress: null,
-          dimUpHold: null,
-          dimUpRelease: null,
-          dimDownPress: null,
-          dimDownHold: null,
-          dimDownRelease: null,
-          sceneCycleReset: null,
-          other: [],
-        },
-        scenes: {},
-        resourceLinks: {},
-      };
-      let sceneCycleID;
-      const dimmer = getSensor(hueObj.sensors, dimmerID);
-      if (!dimmer) {
-        console.log('dimmer not found');
+    const hueObj = hseLib.readJSONFile('/Users/petele/Desktop/petele-at-home-hue-export.json');
+    const motionSensorObj = {
+      uniqueID: null,
+      sensors: {
+        temperature: null,
+        motion: null,
+        light: null,
+        other: {},
+      },
+      groups: {},
+      rules: {},
+      scenes: {},
+      schedules: {},
+      resourceLinks: {},
+    };
+
+    const motionSensor = getSensor(hueObj.sensors, sensorID);
+    if (!motionSensor) {
+      console.log('motionSensor not found');
+      return;
+    }
+    if (!motionSensor.modelid.startsWith('SML001')) {
+      console.log('not a motion sensor');
+      return;
+    }
+
+    // const sensorKey = motionSensor.uniqueid.substr(0, 20);
+    motionSensorObj.uniqueID = motionSensor.uniqueid.substr(0, 20);
+    const sensors = getMotionSensor(hueObj.sensors);
+    sensors.forEach((m) => {
+      if (!m.uniqueid.startsWith(motionSensorObj.uniqueID)) {
         return;
       }
-      if (!dimmer.modelid.startsWith('RWL02')) {
-        console.log('not a dimmer');
-        return;
+      if (m.type === 'ZLLTemperature') {
+        motionSensorObj.sensors.temperature = m;
+      } else if (m.type === 'ZLLPresence') {
+        motionSensorObj.sensors.motion = m;
+        sensorID = m.$key;
+      } else if (m.type === 'ZLLLightLevel') {
+        motionSensorObj.sensors.light = m;
       }
-
-      dimmerObj.sensor = dimmer;
-      const rLinks = getResourceLinkForSensorID(hueObj.resourcelinks, dimmerID);
-      dimmerObj.resourceLinks = rLinks;
-
-      _.filter(rLinks.links, (val) => val.startsWith('/sensors/'))
-        .forEach((sensorPath) => {
-          const sensorID = getID(sensorPath);
-          const sensor = getSensor(hueObj.sensors, sensorID);
-          if (sensor.modelid === 'PHWA01') {
-            dimmerObj.sceneCycle.sensor = sensor;
-            sceneCycleID = sensor.$key;
-          }
-        });
-      _.filter(rLinks.links, (val) => val.startsWith('/schedules/'))
-        .forEach((schedulePath) => {
-          const scheduleID = getID(schedulePath);
-          dimmerObj.sceneCycle.schedule = getSchedule(hueObj.schedules, scheduleID);
-        });
-      _.filter(rLinks.links, (val) => val.startsWith('/scenes/'))
-        .forEach((scenePath) => {
-          const sceneID = getID(scenePath);
-          const scene = getScene(hueObj.scenes, sceneID);
-          dimmerObj.scenes[scene.$key] = scene;
-        });
-      _.filter(rLinks.links, (val) => val.startsWith('/groups/'))
-        .forEach((groupPath) => {
-          const groupID = getID(groupPath);
-          const group = getGroup(hueObj.groups, groupID);
-          dimmerObj.groups[group.$key] = group;
-        });
-      _.filter(rLinks.links, (val) => val.startsWith('/rules/'))
-        .forEach((rulePath) => {
-          const ruleID = getID(rulePath);
-          const rule = getRule(hueObj.rules, ruleID);
-          if (isRulePress(rule, dimmerID, sceneCycleID, 'lt', '1')) {
-            dimmerObj.rules.on0 = rule;
-          } else if (isRulePress(rule, dimmerID, sceneCycleID, 'eq', '1')) {
-            dimmerObj.rules.on1 = rule;
-          } else if (isRulePress(rule, dimmerID, sceneCycleID, 'eq', '2')) {
-            dimmerObj.rules.on2 = rule;
-          } else if (isRulePress(rule, dimmerID, sceneCycleID, 'eq', '3')) {
-            dimmerObj.rules.on3 = rule;
-          } else if (isRulePress(rule, dimmerID, sceneCycleID, 'gt', '3')) {
-            dimmerObj.rules.on4 = rule;
-          } else if (isRuleSimplePress(rule, dimmerID, '4000')) {
-            dimmerObj.rules.off = rule;
-          } else if (isRuleSimplePress(rule, dimmerID, '2000')) {
-            dimmerObj.rules.dimUpPress = rule;
-          } else if (isRuleSimplePress(rule, dimmerID, '2001')) {
-            dimmerObj.rules.dimUpHold = rule;
-          } else if (isRuleSimplePress(rule, dimmerID, '2003')) {
-            dimmerObj.rules.dimUpRelease = rule;
-          } else if (isRuleSimplePress(rule, dimmerID, '3000')) {
-            dimmerObj.rules.dimDownPress = rule;
-          } else if (isRuleSimplePress(rule, dimmerID, '3001')) {
-            dimmerObj.rules.dimDownHold = rule;
-          } else if (isRuleSimplePress(rule, dimmerID, '3003')) {
-            dimmerObj.rules.dimDownRelease = rule;
-          } else if (isRuleResetTimer(rule, dimmerID)) {
-            dimmerObj.rules.sceneCycleReset = rule;
-          } else {
-            dimmerObj.rules.other.push(rule);
-          }
-        });
-      // console.log(util.inspect(dimmerObj, UTIL_OPTS_PRETTY));
-      printDimmerInfo(dimmerObj)
     });
+
+    const rLinks = getResourceLinkForSensorID(hueObj.resourcelinks, sensorID);
+    motionSensorObj.resourceLinks = rLinks;
+
+    _.filter(rLinks.links, (val) => val.startsWith('/sensors/'))
+      .forEach((sensorPath) => {
+        const sensorID = getID(sensorPath);
+        const sensor = getSensor(hueObj.sensors, sensorID);
+        if (sensor.modelid === 'SML001') {
+          return;
+        }
+        motionSensorObj.sensors.other[sensorID] = sensor;
+      });
+
+    _.filter(rLinks.links, (val) => val.startsWith('/rules/'))
+      .forEach((rulePath) => {
+        const ruleID = getID(rulePath);
+        const rule = getRule(hueObj.rules, ruleID);
+        motionSensorObj.rules[ruleID] = rule;
+      });
+
+
+    _.filter(rLinks.links, (val) => val.startsWith('/schedules/'))
+      .forEach((schedulePath) => {
+        const scheduleID = getID(schedulePath);
+        motionSensorObj.schedules = getSchedule(hueObj.schedules, scheduleID);
+      });
+
+    _.filter(rLinks.links, (val) => val.startsWith('/scenes/'))
+      .forEach((scenePath) => {
+        const sceneID = getID(scenePath);
+        const scene = getScene(hueObj.scenes, sceneID);
+        motionSensorObj.scenes[scene.$key] = scene;
+      });
+
+    _.filter(rLinks.links, (val) => val.startsWith('/groups/'))
+      .forEach((groupPath) => {
+        const groupID = getID(groupPath);
+        const group = getGroup(hueObj.groups, groupID);
+        motionSensorObj.groups[group.$key] = group;
+      });
+
+    console.log(util.inspect(motionSensorObj, UTIL_OPTS_PRETTY));
+    // printDimmerInfo(dimmerObj)
+
   });
 
 function printDimmerInfo(dimmerObj) {
@@ -298,12 +283,13 @@ commander
   .description('Lists all of the current scenes')
   .action(() => {
     initHSE();
-    return hseLib.getAllData(true).then((hueObj) => {
-      const dimmers = getHueDimmers(hueObj.sensors);
-      Object.keys(dimmers).forEach((key) => {
-        const dimmer = dimmers[key];
-        console.log(dimmer.$key.padStart(2), chalk.cyan(dimmer.name));
-      });
+    const hueObj = hseLib.readJSONFile('/Users/petele/Desktop/petele-at-home-hue-export.json')
+    const sensors = getMotionSensor(hueObj.sensors);
+    Object.keys(sensors).forEach((key) => {
+      const sensor = sensors[key];
+      if (sensor.type === 'ZLLPresence') {
+        console.log(sensor.$key.padStart(2), chalk.cyan(sensor.name));
+      }
     });
   });
 
