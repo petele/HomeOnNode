@@ -16,7 +16,7 @@ let _myIP;
 let _config;
 let _deviceMonitor;
 
-const APP_NAME = 'VPN_MONITOR';
+const APP_NAME = 'VPNMonitor';
 const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
 const LOG_PREFIX = 'VPN_LOG';
 
@@ -89,17 +89,17 @@ function _initWatcher(filename) {
   if (!filename) {
     return;
   }
-  log.init(VPN_LOG_PREFIX, `Setting up log watcher for: ${filename}`);
+  log.init(LOG_PREFIX, `Setting up log watcher for: ${filename}`);
   try {
     fs.accessSync(filename, fs.R_OK);
   } catch (ex) {
-    log.exception(VPN_LOG_PREFIX, `Unable to read '${filename}'`, ex);
+    log.exception(LOG_PREFIX, `Unable to read '${filename}'`, ex);
     return;
   }
   _tail = new Tail(_config.fileToWatch);
   _tail.on('line', _handleLogLine);
   _tail.on('error', (err) => {
-    log.exception(VPN_LOG_PREFIX, 'Error reading log file', err);
+    log.exception(LOG_PREFIX, 'Error reading log file', err);
   });
 }
 
@@ -109,7 +109,7 @@ function _initWatcher(filename) {
  * @param {String} line New log line to handle.
  */
 function _handleLogLine(line) {
-  log.log(VPN_LOG_PREFIX, 'item received', line);
+  log.log(LOG_PREFIX, 'item received', line);
 }
 
 process.on('SIGINT', function() {
