@@ -169,11 +169,8 @@ function _handleLogLine(line) {
       return;
     }
   } catch (ex) {
-    const r = {
-      line: line,
-      ex: ex,
-    };
-    log.log(LOG_PREFIX, 'handleLogLine failed', r);
+    log.exception(LOG_PREFIX, 'handleLogLine failed', ex);
+    log.error(LOG_PREFIX, 'Line', line);
   }
 }
 
