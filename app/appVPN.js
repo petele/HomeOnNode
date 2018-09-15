@@ -15,6 +15,7 @@ let _tail;
 let _myIP;
 let _config;
 let _deviceMonitor;
+const _connections = {};
 
 const APP_NAME = 'VPNMonitor';
 const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
@@ -103,13 +104,77 @@ function _initWatcher(filename) {
   });
 }
 
+const RE_START = /pppd\[(\d+)\]: pppd \d+?\.\d+?\.\d+? started by .+?, uid \d+?/;
+const RE_USER = /pppd\[(\d+)\]: rcvd \[CHAP Response id=0x\w{2} <\w+?>, name = "(\w+?)"\]/;
+const RE_SUCCESS = /pppd\[(\d+)\]: sent \[CHAP Success id=0x\w{2} "Access granted\"]/
+const RE_TIME = /pppd\[(\d+)\]: Connect time (.*?) (.*?)\./
+const RE_STATS = /pppd\[(\d+)\]: Sent (\d+) bytes, received (\d+) bytes/
+const RE_DISCONNECT = /pppd\[(\d+)\]: Exit\./;
+
 /**
  * Handle an incoming log line
  *
  * @param {String} line New log line to handle.
  */
 function _handleLogLine(line) {
-  log.log(LOG_PREFIX, 'item received', line);
+  try {
+    let match;
+    match = line.match(RE_START);
+    if (match) {
+      const pid = match[1];
+      connection[pid].connectAt = Date.now();
+      log.log(LOG_PREFIX, `pppd started: ${pid}`, line);
+      return;
+    }
+    match = line.match(RE_USER);
+    if (match) {
+      const pid = match[1];
+      const user = match[2];
+      connection[pid].user = user;
+      log.log(LOG_PREFIX, `Login attempt for ${user} on ${pid}`, line);
+      return;
+    }
+    match = line.match(RE_SUCCESS);
+    if (match) {
+      const pid = match[1];
+      connection[pid].success = true;
+      log.log(LOG_PREFIX, `Login success for ${user} on ${pid}`, line);
+      return;
+    }
+    match = line.match(RE_TIME);
+    if (match) {
+      const pid = match[1];
+      const timeVal = match[2];
+      const timeUnits = match[3];
+      connection[pid].connectionLength = `${timeVal} ${timeUnits}`;
+      log.log(LOG_PREFIX, `Connection time: ${timeVal} ${timeUnits} on ${pid}`, line);
+      return;
+    }
+    match = line.match(RE_STATS);
+    if (match) {
+      const pid = match[1];
+      const bytesSent = match[2];
+      const bytesRecv = match[3];
+      connection[pid].bytesSent = bytesSent;
+      connection[pid].bytesRecv = bytesRecv;
+      log.log(LOG_PREFIX, `Bytes sent: ${bytesSent} / received: ${bytesRecv} on ${pid}`, line);
+      return;
+    }
+    match = line.match(RE_DISCONNECT);
+    if (match) {
+      const pid = match[1];
+      log.log(LOG_PREFIX, `Disconnected: ${pid}`, line);
+      log.log(LOG_PREFIX, 'Connection X', connection[pid]);
+      connection[pid] = null;
+      return;
+    }
+  } catch (ex) {
+    const r = {
+      line: line,
+      ex: ex,
+    };
+    log.log(LOG_PREFIX, 'handleLogLine failed', r);
+  }
 }
 
 process.on('SIGINT', function() {
