@@ -21,6 +21,14 @@ const APP_NAME = 'VPNMonitor';
 const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
 const LOG_PREFIX = 'VPN_LOG';
 
+const RE_PPPD_PID = /pppd\[(\d+)\]: /;
+const RE_START = /pppd\[(\d+)\]: pppd \d+?\.\d+?\.\d+? started by .+?, uid \d+?/;
+const RE_USER = /pppd\[(\d+)\]: rcvd \[CHAP Response id=0x\w{2} <\w+?>, name = "(\w+?)"\]/;
+const RE_SUCCESS = /pppd\[(\d+)\]: sent \[CHAP Success id=0x\w{2} "Access granted\"]/
+const RE_TIME = /pppd\[(\d+)\]: Connect time (.*?) (.*?)\./
+const RE_STATS = /pppd\[(\d+)\]: Sent (\d+) bytes, received (\d+) bytes/
+const RE_DISCONNECT = /pppd\[(\d+)\]: Exit\./;
+
 // Read config file
 try {
   // eslint-disable-next-line no-console
@@ -104,12 +112,23 @@ function _initWatcher(filename) {
   });
 }
 
-const RE_START = /pppd\[(\d+)\]: pppd \d+?\.\d+?\.\d+? started by .+?, uid \d+?/;
-const RE_USER = /pppd\[(\d+)\]: rcvd \[CHAP Response id=0x\w{2} <\w+?>, name = "(\w+?)"\]/;
-const RE_SUCCESS = /pppd\[(\d+)\]: sent \[CHAP Success id=0x\w{2} "Access granted\"]/
-const RE_TIME = /pppd\[(\d+)\]: Connect time (.*?) (.*?)\./
-const RE_STATS = /pppd\[(\d+)\]: Sent (\d+) bytes, received (\d+) bytes/
-const RE_DISCONNECT = /pppd\[(\d+)\]: Exit\./;
+/**
+ * Saves a value to the connection log
+ *
+ * @param {String} pid PPPD pid.
+ * @param {String} prop Property to set.
+ * @param {String} value Value to set on the property.
+ * @return {Object} The connection object for the specified PID.
+ */
+function _setConnectionProperty(pid, prop, value) {
+  let connection = _connections[pid];
+  if (!connection) {
+    connection = {};
+    _connections[pid] = connection;
+  }
+  connection[prop] = value;
+  return connection;
+}
 
 /**
  * Handle an incoming log line
@@ -117,60 +136,68 @@ const RE_DISCONNECT = /pppd\[(\d+)\]: Exit\./;
  * @param {String} line New log line to handle.
  */
 function _handleLogLine(line) {
+  let match = line.match(RE_PPPD_PID);
+  if (!match || !match[1]) {
+    return;
+  }
+  const pid = match[1];
+  const now = Date.now();
+  const nowPretty = new Date();
   try {
-    let match;
     match = line.match(RE_START);
     if (match) {
-      const pid = match[1];
-      connection[pid].connectAt = Date.now();
-      log.log(LOG_PREFIX, `pppd started: ${pid}`, line);
+      _setConnectionProperty(pid, 'connectedAt', now);
+      _setConnectionProperty(pid, 'connectedAt_', nowPretty);
+      log.debug(`PPPD_${pid}`, `Started pppd`, line);
       return;
     }
     match = line.match(RE_USER);
     if (match) {
-      const pid = match[1];
       const user = match[2];
-      connection[pid].user = user;
-      log.log(LOG_PREFIX, `Login attempt for ${user} on ${pid}`, line);
+      _setConnectionProperty(pid, 'user', user);
+      _setConnectionProperty(pid, 'loginSuccess', false);
+      log.debug(`PPPD_${pid}`, `Login for: '${user}'`, line);
       return;
     }
     match = line.match(RE_SUCCESS);
     if (match) {
-      const pid = match[1];
-      connection[pid].success = true;
-      log.log(LOG_PREFIX, `Login success for ${user} on ${pid}`, line);
+      const connection = _setConnectionProperty(pid, 'loginSuccess', true);
+      const user = connection['user'];
+      log.log(`PPPD_${pid}`, `Connected: '${user}'`, connection);
       return;
     }
     match = line.match(RE_TIME);
     if (match) {
-      const pid = match[1];
       const timeVal = match[2];
       const timeUnits = match[3];
-      connection[pid].connectionLength = `${timeVal} ${timeUnits}`;
-      log.log(LOG_PREFIX, `Connection time: ${timeVal} ${timeUnits} on ${pid}`, line);
+      const connectionLength = `${timeVal} ${timeUnits}`;
+      _setConnectionProperty(pid, 'connectionTime', connectionLength);
+      const msg = `Connection time: ${timeVal} ${timeUnits}`;
+      log.debug(`PPPD_${pid}`, msg, line);
       return;
     }
     match = line.match(RE_STATS);
     if (match) {
-      const pid = match[1];
       const bytesSent = match[2];
       const bytesRecv = match[3];
-      connection[pid].bytesSent = bytesSent;
-      connection[pid].bytesRecv = bytesRecv;
-      log.log(LOG_PREFIX, `Bytes sent: ${bytesSent} / received: ${bytesRecv} on ${pid}`, line);
+      _setConnectionProperty(pid, 'bytesSent', bytesSent);
+      _setConnectionProperty(pid, 'bytesRecv', bytesRecv);
+      log.debug(`PPPD_${pid}`, `Sent: ${bytesSent} bytes`, line);
+      log.debug(`PPPD_${pid}`, `Received: ${bytesRecv} bytes`, line);
       return;
     }
     match = line.match(RE_DISCONNECT);
     if (match) {
-      const pid = match[1];
-      log.log(LOG_PREFIX, `Disconnected: ${pid}`, line);
-      log.log(LOG_PREFIX, 'Connection X', connection[pid]);
-      connection[pid] = null;
+      _setConnectionProperty(pid, 'disconnectedAt_', nowPretty);
+      const connection = _setConnectionProperty(pid, 'disconnectedAt', now);
+      const msg = `Disconnected: '${connection['user']}'`;
+      log.log(`PPPD_${pid}`, msg, connection);
+      _connections[pid] = null;
       return;
     }
   } catch (ex) {
-    log.exception(LOG_PREFIX, 'handleLogLine failed', ex);
-    log.error(LOG_PREFIX, 'Line', line);
+    log.exception(`PPPD_${pid}`, 'handleLogLine error', ex);
+    log.exception(`PPPD_${pid}`, 'handleLogLine error', line);
   }
 }
 
