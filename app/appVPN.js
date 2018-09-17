@@ -184,7 +184,7 @@ function _handlePPPLog(pid, line) {
       const connectionLength = `${timeVal} ${timeUnits}`;
       _setConnectionProperty(pid, 'connectionTime', connectionLength);
       const msg = `Connection time: ${timeVal} ${timeUnits}`;
-      log.debug(preifx, msg, line);
+      log.debug(prefix, msg, line);
       return;
     }
     match = line.match(RE_STATS);
