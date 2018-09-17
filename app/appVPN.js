@@ -21,14 +21,6 @@ const APP_NAME = 'VPNMonitor';
 const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
 const LOG_PREFIX = 'VPN_LOG';
 
-const RE_PPPD_PID = /pppd\[(\d+)\]: /;
-const RE_START = /pppd\[(\d+)\]: pppd \d+?\.\d+?\.\d+? started by .+?, uid \d+?/;
-const RE_USER = /pppd\[(\d+)\]: rcvd \[CHAP Response id=0x\w{2} <\w+?>, name = "(\w+?)"\]/;
-const RE_SUCCESS = /pppd\[(\d+)\]: sent \[CHAP Success id=0x\w{2} "Access granted\"]/
-const RE_TIME = /pppd\[(\d+)\]: Connect time (.*?) (.*?)\./
-const RE_STATS = /pppd\[(\d+)\]: Sent (\d+) bytes, received (\d+) bytes/
-const RE_DISCONNECT = /pppd\[(\d+)\]: Exit\./;
-
 // Read config file
 try {
   // eslint-disable-next-line no-console
@@ -89,6 +81,9 @@ function init() {
   }, 60 * 60 * 24 * 1000);
 }
 
+const RE_PPPD_PID = /pppd\[(\d+)\]: /;
+const RE_XL2TPD_PID = /xl2tpd\[(\d+?)\]: /;
+
 /**
  * Setup the log watcher
  *
@@ -106,7 +101,18 @@ function _initWatcher(filename) {
     return;
   }
   _tail = new Tail(_config.fileToWatch);
-  _tail.on('line', _handleLogLine);
+  _tail.on('line', (line) => {
+    let match = line.match(RE_PPPD_PID);
+    if (match && match[1]) {
+      _handlePPPLog(match[1], line);
+      return;
+    }
+    match = line.match(RE_XL2TPD_PID);
+    if (match && match[1]) {    
+      _handleXL2TPDLog(match[1], line);
+      return;
+    }
+  });
   _tail.on('error', (err) => {
     log.exception(LOG_PREFIX, 'Error reading log file', err);
   });
@@ -130,25 +136,30 @@ function _setConnectionProperty(pid, prop, value) {
   return connection;
 }
 
+
+const RE_START = /pppd\[(\d+)\]: pppd \d+?\.\d+?\.\d+? started by .+?, uid \d+?/;
+const RE_USER = /pppd\[(\d+)\]: rcvd \[CHAP Response id=0x\w{2} <\w+?>, name = "(\w+?)"\]/;
+const RE_SUCCESS = /pppd\[(\d+)\]: sent \[CHAP Success id=0x\w{2} "Access granted\"]/
+const RE_TIME = /pppd\[(\d+)\]: Connect time (.*?) (.*?)\./
+const RE_STATS = /pppd\[(\d+)\]: Sent (\d+) bytes, received (\d+) bytes/
+const RE_DISCONNECT = /pppd\[(\d+)\]: Exit\./;
+
 /**
  * Handle an incoming log line
  *
+ * @param {String} pid The pid of the PPPD process.
  * @param {String} line New log line to handle.
  */
-function _handleLogLine(line) {
-  let match = line.match(RE_PPPD_PID);
-  if (!match || !match[1]) {
-    return;
-  }
-  const pid = match[1];
+function _handlePPPLog(pid, line) {
+  const prefix = `PPPD_${pid}`;
   const now = Date.now();
   const nowPretty = new Date();
   try {
-    match = line.match(RE_START);
+    let match = line.match(RE_START);
     if (match) {
       _setConnectionProperty(pid, 'connectedAt', now);
       _setConnectionProperty(pid, 'connectedAt_', nowPretty);
-      log.debug(`PPPD_${pid}`, `Started pppd`, line);
+      log.debug(prefix, `Started pppd`, line);
       return;
     }
     match = line.match(RE_USER);
@@ -156,14 +167,14 @@ function _handleLogLine(line) {
       const user = match[2];
       _setConnectionProperty(pid, 'user', user);
       _setConnectionProperty(pid, 'loginSuccess', false);
-      log.debug(`PPPD_${pid}`, `Login for: '${user}'`, line);
+      log.debug(prefix, `Login for: '${user}'`, line);
       return;
     }
     match = line.match(RE_SUCCESS);
     if (match) {
       const connection = _setConnectionProperty(pid, 'loginSuccess', true);
       const user = connection['user'];
-      log.log(`PPPD_${pid}`, `Connected: '${user}'`, connection);
+      log.log(prefix, `Connected: '${user}'`, connection);
       return;
     }
     match = line.match(RE_TIME);
@@ -173,7 +184,7 @@ function _handleLogLine(line) {
       const connectionLength = `${timeVal} ${timeUnits}`;
       _setConnectionProperty(pid, 'connectionTime', connectionLength);
       const msg = `Connection time: ${timeVal} ${timeUnits}`;
-      log.debug(`PPPD_${pid}`, msg, line);
+      log.debug(preifx, msg, line);
       return;
     }
     match = line.match(RE_STATS);
@@ -182,8 +193,8 @@ function _handleLogLine(line) {
       const bytesRecv = match[3];
       _setConnectionProperty(pid, 'bytesSent', bytesSent);
       _setConnectionProperty(pid, 'bytesRecv', bytesRecv);
-      log.debug(`PPPD_${pid}`, `Sent: ${bytesSent} bytes`, line);
-      log.debug(`PPPD_${pid}`, `Received: ${bytesRecv} bytes`, line);
+      log.debug(prefix, `Sent: ${bytesSent} bytes`, line);
+      log.debug(prefix, `Received: ${bytesRecv} bytes`, line);
       return;
     }
     match = line.match(RE_DISCONNECT);
@@ -191,15 +202,56 @@ function _handleLogLine(line) {
       _setConnectionProperty(pid, 'disconnectedAt_', nowPretty);
       const connection = _setConnectionProperty(pid, 'disconnectedAt', now);
       const msg = `Disconnected: '${connection['user']}'`;
-      log.log(`PPPD_${pid}`, msg, connection);
+      log.log(prefix, msg, connection);
       _connections[pid] = null;
       return;
     }
   } catch (ex) {
-    log.exception(`PPPD_${pid}`, 'handleLogLine error', ex);
-    log.exception(`PPPD_${pid}`, 'handleLogLine error', line);
+    log.exception(prefix, '_handlePPPLog error', ex);
+    log.exception(prefix, '_handlePPPLog error', line);
   }
 }
+
+const RE_CNX_ESTABLISHED = /xl2tpd\[\d+?\]: Connection established to (.*?), (\d+?)\./;
+const RE_CALL_ESTABLISHED = /xl2tpd\[\d+?\]: Call established with (.*?),/;
+const RE_CNX_CLOSED = /xl2tpd\[\d+?\]: control_finish: Connection closed to (.*?),/;
+const RE_CNX_TERMINATED = /xl2tpd\[\d+?\]: Terminating pppd: sending TERM signal to pid/;
+
+/**
+ * Handle an incoming log line
+ *
+ * @param {String} pid The pid of the XL2TPD process.
+ * @param {String} line New log line to handle.
+ */
+function _handleXL2TPDLog(pid, line) {
+  const prefix = `XL2TPD_${pid}`;
+  try {
+    let match = line.match(RE_CNX_ESTABLISHED);
+    if (match) {
+      log.log(prefix, `Connection established to ${match[1]}.`, line);
+      return;
+    }
+    match = line.match(RE_CALL_ESTABLISHED);
+    if (match) {
+      log.log(prefix, `Call established with ${match[1]}.`, line);
+      return;
+    }
+    match = line.match(RE_CNX_CLOSED);
+    if (match) {
+      log.log(prefix, `Connection to ${match[1]} closed.`, line);
+      return;
+    }
+    match = line.match(RE_CNX_TERMINATED);
+    if (match) {
+      log.log(prefix, `Connection to ${match[1]} terminated.`, line);
+      return;
+    }
+  } catch (ex) {
+    log.exception(prefix, '_handleXL2TPDLog error', ex);
+    log.exception(prefix, '_handleXL2TPDLog error', line);
+  }
+}
+
 
 process.on('SIGINT', function() {
   log.log(APP_NAME, 'SIGINT received.');
