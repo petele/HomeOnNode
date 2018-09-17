@@ -215,7 +215,7 @@ function _handlePPPLog(pid, line) {
 const RE_CNX_ESTABLISHED = /xl2tpd\[\d+?\]: Connection established to (.*?), (\d+?)\./;
 const RE_CALL_ESTABLISHED = /xl2tpd\[\d+?\]: Call established with (.*?),/;
 const RE_CNX_CLOSED = /xl2tpd\[\d+?\]: control_finish: Connection closed to (.*?),/;
-const RE_CNX_TERMINATED = /xl2tpd\[\d+?\]: Terminating pppd: sending TERM signal to pid/;
+const RE_CNX_TERMINATED = /xl2tpd\[\d+?\]: Terminating pppd: sending TERM signal to pid (\d+?)$/;
 
 /**
  * Handle an incoming log line
@@ -243,7 +243,7 @@ function _handleXL2TPDLog(pid, line) {
     }
     match = line.match(RE_CNX_TERMINATED);
     if (match) {
-      log.log(prefix, `Connection to ${match[1]} terminated.`, line);
+      log.log(prefix, `Terminated PPP daemon id: ${match[1]}.`, line);
       return;
     }
   } catch (ex) {
