@@ -28,7 +28,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
         padding: 0 8px;
       }
-      .ERROR, .EXCPT, .STOP {
+      .FATAL, .STOP {
+        background-color: var(--paper-red-900);
+      }
+      .ERROR, .EXCPT {
         background-color: var(--paper-red-500);
       }
       .WARN {
@@ -37,8 +40,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .INFO, .POST {
         background-color: var(--paper-blue-500);
       }
-      .INIT, .START {
+      .INIT {
         background-color: var(--paper-green-500);
+      }
+      .START {
+        background-color: var(--paper-green-100);
+        color: var(--paper-green-900);
       }
       .TODO {
         background-color: var(--paper-cyan-300);
@@ -194,9 +201,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       getIcon(level) {
-        const LEVELS_FOR_ERROR = ['ERROR', 'EXCPT', 'STOP'];
-        const LEVELS_FOR_WARN = ['WARN'];
-        const LEVELS_FOR_OK = ['INIT', 'START'];
+        const LEVELS_FOR_STOP = ['FATAL', 'STOP'];
+        const LEVELS_FOR_ERROR = ['ERROR', 'EXCPT'];
+        const LEVELS_FOR_WARN = ['WARN', 'TODO'];
+        const LEVELS_FOR_OK = ['INIT', 'INFO', 'POST'];
+        const LEVELS_FOR_START = ['START'];
+        if (LEVELS_FOR_STOP.indexOf(level) >= 0) {
+          return 'hon-icons:restart';
+        }
         if (LEVELS_FOR_ERROR.indexOf(level) >= 0) {
           return 'hon-icons:error';
         }
@@ -206,12 +218,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (LEVELS_FOR_OK.indexOf(level) >= 0) {
           return 'hon-icons:light';
         }
+        if (LEVELS_FOR_START.indexOf(level) >= 0) {
+          return 'hon-icons:light';
+        }
         return 'hon-icons:light';
       }
 
       tapLogItem(event) {
         this.selectedLogItem = event.model.item;
         this.$.logDetailDialog.open();
+        window.lastUserInput = Date.now();
       }
 
     }
