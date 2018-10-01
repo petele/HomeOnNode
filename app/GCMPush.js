@@ -18,10 +18,7 @@ const LOG_PREFIX = 'GCMPush';
 function GCMPush(fb) {
   const _fb = fb;
   const _self = this;
-  const _options = {
-    gcmAPIKey: Keys.gcm.apiKey,
-    TTL: 120,
-  };
+  const _options = {};
   let _sendReady = false;
   let _subscribers = [];
 
@@ -30,19 +27,20 @@ function GCMPush(fb) {
   */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
-    _fb.child('pushSubscribers').on('value', (snapshot) => {
-      let subscribers = [];
-      snapshot.forEach((subscriberObj) => {
-        let subscriber = subscriberObj.val();
-        subscriber.key = subscriberObj.key();
+    _fb.child('config/GCMPush').on('value', (snapshot) => {
+      const config = snapshot.val();
+      _options.gcmAPIKey = config.key;
+      _options.TTL = config.ttl || 3600;
+      const subscribers = [];
+      Object.keys(config.subscribers).forEach((key) => {
+        const subscriber = config.subscribers[key];
+        subscriber.key = key;
         subscribers.push(subscriber);
       });
       _subscribers = subscribers;
       log.log(LOG_PREFIX, `Subscribers updated: ${_subscribers.length}`);
-      if (_sendReady === false) {
-        _sendReady = true;
-        _self.emit('ready');
-      }
+      _sendReady = true;
+      _self.emit('ready');
     });
   }
 
@@ -85,17 +83,17 @@ function GCMPush(fb) {
       const shortKey = subscriberObj.key.substring(0, 11);
       const subscriber = subscriberObj.subscriptionInfo;
       return new Promise(function(resolve, reject) {
-        webpush.sendNotification(subscriber, payload, _options)
-        .then((resp) => {
-          log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
-          log.debug(LOG_PREFIX, '', resp);
-          resolve(true);
-        })
-        .catch((err) => {
-          log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
-          _fb.child(`pushSubscribers/${key}/lastAttemptFailed`).set(true);
-          resolve(false);
-        });
+        return webpush.sendNotification(subscriber, payload, _options)
+          .then((resp) => {
+            log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
+            log.debug(LOG_PREFIX, '', resp);
+            resolve(true);
+          })
+          .catch((err) => {
+            log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
+            _fb.child(`pushSubscribers/${key}/lastAttemptFailed`).set(true);
+            resolve(false);
+          });
       });
     }));
   };

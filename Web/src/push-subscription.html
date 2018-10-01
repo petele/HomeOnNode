@@ -15,7 +15,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="push-subscription">
   <template>
 
-    <firebase-document id="fbPush" path="pushSubscribers">
+    <firebase-document id="fbPush" path="config/GCMPush/subscribers">
     </firebase-document>
 
     <paper-checkbox
@@ -38,11 +38,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        navigator.serviceWorker.ready.then((swReg) => {
-          this.swRegistration = swReg;
-          return swReg;
-        }).then(() => {
-          this._checkSubscription();
+        Polymer.RenderStatus.afterNextRender(this, () => {
+          navigator.serviceWorker.ready.then((swReg) => {
+            this.swRegistration = swReg;
+            return swReg;
+          }).then(() => {
+            this._checkSubscription();
+          });
         });
       }
 
@@ -76,7 +78,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _verifySubscription(sub) {
         const subKey = this._getSubscriptionKey(sub.endpoint);
-        const path = `pushSubscribers/${subKey}`;
+        const path = `config/GCMPush/subscribers/${subKey}`;
         this.$.fbPush.getStoredValue(path).then((val) => {
           if (!val.hasOwnProperty('subscriptionInfo')) {
             this._sendSubscription(sub);
