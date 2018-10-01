@@ -224,7 +224,7 @@ function Home(initialConfig, fbRef) {
     if (command.hasOwnProperty('nestThermostatAuto')) {
       if (nest) {
         const autoMode = command.nestThermostatAuto.toUpperCase();
-        const temperatures = _config.hvac.auto[autoMode];
+        const temperatures = _config.nest.hvacAuto[autoMode];
         if (temperatures) {
           Object.keys(temperatures).forEach((roomId) => {
             let temperature = temperatures[roomId];
@@ -973,7 +973,7 @@ function Home(initialConfig, fbRef) {
       log.error(LOG_PREFIX, `Nest unavailable, no API key available.`);
       return;
     }
-    nest = new Nest.Nest(apiKey, _config.hvac.thermostats);
+    nest = new Nest.Nest(apiKey, _config.nest.thermostats);
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
       _self.state.nest = data;
