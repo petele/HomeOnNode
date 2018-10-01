@@ -1083,12 +1083,20 @@ function Home(initialConfig, fbRef) {
    * @param {Object} msg Incoming message
    */
   function _receivedPushBulletNotification(msg) {
-    let cmdName;
-    if (msg.application_name && _self.state.systemState === 'HOME') {
-      cmdName = _config.pushBulletNotifications[msg.application_name];
-      if (cmdName) {
-        _self.executeCommandByName(cmdName, null, 'PushBullet');
-      }
+    if (!_config.pushBullet.notificationTypes) {
+      log.warn(LOG_PREFIX, `No notification types defined.`, msg);
+      return;
+    }
+    if (_self.state.systemState !== 'HOME') {
+      return;
+    }
+    const msgAppName = msg.application_name;
+    if (!msgAppName) {
+      return;
+    }
+    const cmdName = _config.pushBullet.notificationTypes[msgAppName];
+    if (cmdName) {
+      _self.executeCommandByName(cmdName, null, 'PushBullet');
     }
   }
 
