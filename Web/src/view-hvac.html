@@ -68,7 +68,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       data="{{nestState}}">
     </fb-document>
 
-    <fb-document path="config/HomeOnNode/hvac" data="{{hvacConfig}}">
+    <fb-document path="config/HomeOnNode/nest" data="{{nestConfig}}">
     </fb-document>
 
     <div class="card">
@@ -98,13 +98,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           label="Day"
           type="number"
           min="60" max="80"
-          value="{{hvacConfig.auto.DAY.LR}}">
+          value="{{nestConfig.hvacAuto.DAY.LR}}">
         </paper-input>
         <paper-input
           label="Night"
           type="number"
           min="60" max="80"
-          value="{{hvacConfig.auto.SLEEP.LR}}">
+          value="{{nestConfig.hvacAuto.SLEEP.LR}}">
         </paper-input>
       </div>
       <div id="lrChart"></div>
@@ -129,13 +129,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           label="Day"
           type="number"
           min="60" max="80"
-          value="{{hvacConfig.auto.DAY.BR}}">
+          value="{{nestConfig.hvacAuto.DAY.BR}}">
         </paper-input>
         <paper-input
           label="Night"
           type="number"
           min="60" max="80"
-          value="{{hvacConfig.auto.SLEEP.BR}}">
+          value="{{nestConfig.hvacAuto.SLEEP.BR}}">
       </div>
       <div id="brChart"></div>
     </div>

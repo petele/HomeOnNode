@@ -33,10 +33,7 @@ function Nest(authToken, roomIdMap) {
   const RECONNECT_TIMEOUT = 1 * 60 * 1000;
   const FAN_TIMES = [0, 15, 30, 45, 60, 120, 240, 480, 960];
   const _self = this;
-  const _roomIdMap = roomIdMap || {
-    BR: 'dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1',
-    LR: 'dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1',
-  };
+  const _roomIdMap = roomIdMap || {};
   const _authToken = authToken;
   let _fbNest;
   let _disconnectedTimer;
