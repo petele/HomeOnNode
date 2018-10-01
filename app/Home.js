@@ -9,7 +9,6 @@ const Nest = require('./Nest');
 const Wemo = require('./Wemo');
 const Sonos = require('./Sonos');
 const log = require('./SystemLog2');
-const Keys = require('./Keys').keys;
 const GCMPush = require('./GCMPush');
 const Harmony = require('./Harmony');
 const Weather = require('./Weather');
@@ -842,7 +841,12 @@ function Home(initialConfig, fbRef) {
    * Init Harmony API
    */
   function _initHarmony() {
-    harmony = new Harmony(Keys.harmony.key);
+    const apiKey = _config.apiKeys.harmony;
+    if (!apiKey) {
+      log.error(LOG_PREFIX, `Harmony unavailable, no API key available.`);
+      return;
+    }
+    harmony = new Harmony(apiKey);
     harmony.on('activity_changed', (activity) => {
       _fbSet('state/harmony', activity);
       const honCmdName = `HARMONY_${activity.label.toUpperCase()}`;
@@ -877,7 +881,12 @@ function Home(initialConfig, fbRef) {
    * Init Hue
    */
   function _initHue() {
-    hue = new Hue(Keys.hueBridge.key);
+    const apiKey = _config.apiKeys.hueBridge;
+    if (!apiKey) {
+      log.error(LOG_PREFIX, `Hue unavailable, no API key available.`);
+      return;
+    }
+    hue = new Hue(apiKey);
     hue.on('config_changed', (config) => {
       _fbSet('state/hue', config);
     });
@@ -932,9 +941,18 @@ function Home(initialConfig, fbRef) {
    * Init NanoLeaf
    */
   function _initNanoLeaf() {
-    let ip = '192.168.86.208';
-    let port = 16021;
-    nanoLeaf = new NanoLeaf(Keys.nanoLeaf, ip, port);
+    const ip = _config.nanoLeaf.ip;
+    const port = _config.nanoLeaf.port || 16021;
+    const apiKey = _config.apiKeys.nanoLeaf;
+    if (!apiKey) {
+      log.error(LOG_PREFIX, `NanoLeaf unavailable, no API key available.`);
+      return;
+    }
+    if (!ip || !port) {
+      log.error(LOG_PREFIX, `NanoLeaf unavailable, no IP or port specified.`);
+      return;
+    }
+    nanoLeaf = new NanoLeaf(apiKey, ip, port);
     nanoLeaf.on('state_changed', (state) => {
       _fbSet('state/nanoLeaf', state);
     });
@@ -950,7 +968,12 @@ function Home(initialConfig, fbRef) {
    * Init Nest
    */
   function _initNest() {
-    nest = new Nest.Nest(Keys.nest.token, _config.hvac.thermostats);
+    const apiKey = _config.apiKeys.nest;
+    if (!apiKey) {
+      log.error(LOG_PREFIX, `Nest unavailable, no API key available.`);
+      return;
+    }
+    nest = new Nest.Nest(apiKey, _config.hvac.thermostats);
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
       _self.state.nest = data;
@@ -1045,7 +1068,12 @@ function Home(initialConfig, fbRef) {
    * Init Push Bullet
    */
   function _initPushBullet() {
-    pushBullet = new PushBullet(Keys.pushBullet);
+    const apiKey = _config.apiKeys.pushBullet;
+    if (!apiKey) {
+      log.error(LOG_PREFIX, `PushBullet unavailable, no API key available.`);
+      return;
+    }
+    pushBullet = new PushBullet(apiKey);
     pushBullet.on('notification', _receivedPushBulletNotification);
   }
 
@@ -1128,7 +1156,12 @@ function Home(initialConfig, fbRef) {
    * Init Weather
    */
   function _initWeather() {
-    weather = new Weather(_config.weatherLatLong, Keys.forecastIO.key);
+    const apiKey = _config.apiKeys.forecastIO;
+    if (!apiKey) {
+      log.error(LOG_PREFIX, `ForecastIO unavailable, no API key available.`);
+      return;
+    }
+    weather = new Weather(_config.weatherLatLong, apiKey);
     weather.on('weather', (forecast) => {
       _fbSet('state/weather', forecast);
     });
