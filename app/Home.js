@@ -841,7 +841,7 @@ function Home(initialConfig, fbRef) {
    * Init Harmony API
    */
   function _initHarmony() {
-    const apiKey = _config.apiKeys.harmony;
+    const apiKey = _config.harmony.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `Harmony unavailable, no API key available.`);
       return;
@@ -881,7 +881,7 @@ function Home(initialConfig, fbRef) {
    * Init Hue
    */
   function _initHue() {
-    const apiKey = _config.apiKeys.hueBridge;
+    const apiKey = _config.philipsHue.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `Hue unavailable, no API key available.`);
       return;
@@ -943,7 +943,7 @@ function Home(initialConfig, fbRef) {
   function _initNanoLeaf() {
     const ip = _config.nanoLeaf.ip;
     const port = _config.nanoLeaf.port || 16021;
-    const apiKey = _config.apiKeys.nanoLeaf;
+    const apiKey = _config.nanoLeaf.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `NanoLeaf unavailable, no API key available.`);
       return;
@@ -968,7 +968,7 @@ function Home(initialConfig, fbRef) {
    * Init Nest
    */
   function _initNest() {
-    const apiKey = _config.apiKeys.nest;
+    const apiKey = _config.nest.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `Nest unavailable, no API key available.`);
       return;
@@ -1068,7 +1068,7 @@ function Home(initialConfig, fbRef) {
    * Init Push Bullet
    */
   function _initPushBullet() {
-    const apiKey = _config.apiKeys.pushBullet;
+    const apiKey = _config.pushBullet.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `PushBullet unavailable, no API key available.`);
       return;
@@ -1156,12 +1156,12 @@ function Home(initialConfig, fbRef) {
    * Init Weather
    */
   function _initWeather() {
-    const apiKey = _config.apiKeys.forecastIO;
+    const apiKey = _config.forecastIO.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `ForecastIO unavailable, no API key available.`);
       return;
     }
-    weather = new Weather(_config.weatherLatLong, apiKey);
+    weather = new Weather(_config.forecastIO.latLon, apiKey);
     weather.on('weather', (forecast) => {
       _fbSet('state/weather', forecast);
     });
