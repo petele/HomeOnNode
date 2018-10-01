@@ -2,7 +2,6 @@
 
 const util = require('util');
 const moment = require('moment');
-const Keys = require('./Keys').keys;
 const log = require('./SystemLog2');
 const webpush = require('web-push');
 const EventEmitter = require('events').EventEmitter;
