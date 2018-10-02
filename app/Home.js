@@ -7,6 +7,7 @@ const exec = require('child_process').exec;
 const Hue = require('./Hue');
 const Nest = require('./Nest');
 const Wemo = require('./Wemo');
+const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
 const log = require('./SystemLog2');
 const GCMPush = require('./GCMPush');
@@ -45,6 +46,7 @@ function Home(initialConfig, fbRef) {
   let pushBullet;
   // let soma;
   let sonos;
+  let tivo;
   let weather;
   let wemo;
 
@@ -114,12 +116,10 @@ function Home(initialConfig, fbRef) {
       msg += ' ** NoOp **';
     }
     log.log(LOG_PREFIX, msg);
-
     // If it's a NoOp, stop here.
     if (command.noop === true) {
       return;
     }
-
     // Door Open/Close event
     if (command.hasOwnProperty('door')) {
       const doorName = command.door.name;
@@ -173,6 +173,20 @@ function Home(initialConfig, fbRef) {
     // Doorbell
     if (command.hasOwnProperty('doorbell')) {
       _ringDoorbell(source);
+    }
+    // TiVo
+    if (command.hasOwnProperty('tivo')) {
+      if (tivo) {
+        let cmds = command.tivo;
+        if (Array.isArray(cmds) === false) {
+          cmds = [cmds];
+        }
+        cmds.forEach((cmd) => {
+          tivo.send(cmd);
+        });
+      } else {
+        log.warn(LOG_PREFIX, 'TiVo unavailable.');
+      }
     }
     // NanoLeaf
     if (command.hasOwnProperty('nanoLeaf')) {
@@ -381,6 +395,7 @@ function Home(initialConfig, fbRef) {
     _shutdownBluetooth();
     _shutdownHarmony();
     _shutdownPushBullet();
+    _shutdownTivo();
   };
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -425,6 +440,7 @@ function Home(initialConfig, fbRef) {
     _initHarmony();
     _initPresence();
     _initSoma();
+    _initTivo();
     _initPushBullet();
     _initWeather();
     _initWemo();
@@ -1152,6 +1168,36 @@ function Home(initialConfig, fbRef) {
       favorites = JSON.parse(JSON.stringify(favorites));
       _fbSet('state/sonos/favorites', favorites);
     });
+  }
+
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
+ * TiVo API
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init TiVo
+   */
+  function _initTivo() {
+    const tivoIP = _config.tivo.ip;
+    if (!tivoIP) {
+      log.warn(LOG_PREFIX, `Tivo unavailable, no IP address specified.`);
+      return;
+    }
+    tivo = new Tivo(tivoIP);
+  }
+
+  /**
+   * Shutdown the Tivo API
+   */
+  function _shutdownTivo() {
+    log.log(LOG_PREFIX, 'Shutting down Tivo.');
+    if (tivo) {
+      tivo.close();
+    }
+    tivo = null;
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **

@@ -24,7 +24,7 @@ const LOG_PREFIX = 'HUE';
  */
 function Hue(key, explicitIPAddress) {
   const REQUEST_TIMEOUT = 15 * 1000;
-  const BATTERY_CHECK_INTERVAL = 24 * 60 * 1000;
+  const BATTERY_CHECK_INTERVAL = 12 * 60 * 60 * 1000;
   const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
   const GROUPS_REFRESH_INTERVAL = 100 * 1000;
   const LIGHTS_REFRESH_INTERVAL = 40 * 1000;
@@ -351,7 +351,7 @@ function Hue(key, explicitIPAddress) {
       }
       log.log(LOG_PREFIX, 'Searching for Hue Hub...');
       const nupnp = {
-        url: 'https://www.meethue.com/api/nupnp',
+        url: 'https://discovery.meethue.com',
         method: 'GET',
         json: true,
       };

@@ -63,6 +63,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
+    <div class="card hidden" id="tivoControls">
+      <div class="app-grid grid-narrow">
+        <paper-icon-button icon="hon-icons:tivo" on-tap="tapTivo">
+        </paper-icon-button>
+        <paper-icon-button icon="hon-icons:tivo-guide" on-tap="tapGuide">
+        </paper-icon-button>
+        <paper-icon-button icon="hon-icons:skip-30" on-tap="tapSkip30">
+        </paper-icon-button>
+        <paper-icon-button icon="hon-icons:tivo-skip" on-tap="tapSkip">
+        </paper-icon-button>
+      </div>
+    </div>
+
     <fb-query path="state/sonos/favorites" data="{{sonosFavorites}}">
     </fb-query>
     <div class="card">
@@ -90,11 +103,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get observers() {
         return [
           'sonosVisibleChanged(sonosVisible)',
+          'harmonyActivityChanged(currentHarmonyActivity.label)',
         ];
       }
 
       sonosVisibleChanged(val) {
         this.$.sonosController.parentElement.classList.toggle('hidden', !val);
+      }
+
+      harmonyActivityChanged(val) {
+        let hidden = true;
+        if (val && val.toLowerCase() === 'tivo') {
+          hidden = false;
+        }
+        this.$.tivoControls.classList.toggle('hidden', hidden);
       }
 
       filterActivities(item) {
@@ -155,6 +177,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (this.currentHarmonyActivity.label !== 'Sonos') {
           this.$.sendCommand.send({harmonyActivity: 'Sonos'});
         }
+      }
+
+      tapTivo(event) {
+        const cmd = {tivo: 'TELEPORT TIVO'};
+        this.$.sendCommand.send(cmd);
+      }
+
+      tapGuide(event) {
+        const cmd = {tivo: 'TELEPORT GUIDE'};
+        this.$.sendCommand.send(cmd);
+      }
+
+      tapSkip30(event) {
+        const cmd = {tivo: 'IRCODE ADVANCE'};
+        this.$.sendCommand.send(cmd);
+      }
+
+      tapSkip(event) {
+        const cmd = {tivo: 'IRCODE ACTION_B'};
+        this.$.sendCommand.send(cmd);
       }
 
       startIndterminate(button) {
