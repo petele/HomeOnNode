@@ -73,7 +73,7 @@ function Bluetooth() {
       log.warn(LOG_PREFIX, 'Noble warning', message);
     });
     _noble.on('discover', (peripheral) => {
-      log.debug(LOG_PREFIX, 'Discovered');
+      // log.debug(LOG_PREFIX, 'Discovered');
       _self.emit('discover', peripheral);
     });
     log.log(LOG_PREFIX, 'Noble started.');
