@@ -19,28 +19,61 @@ function GCMPush(fb) {
   const _self = this;
   const _options = {};
   let _sendReady = false;
-  let _subscribers = [];
+  const _subscribers = {};
 
   /**
    * Init
   */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
-    _fb.child('config/GCMPush').on('value', (snapshot) => {
+    _fb.child('config/GCMPush').once('value', (snapshot) => {
       const config = snapshot.val();
       _options.gcmAPIKey = config.key;
       _options.TTL = config.ttl || 3600;
-      const subscribers = [];
       Object.keys(config.subscribers).forEach((key) => {
-        const subscriber = config.subscribers[key];
-        subscriber.key = key;
-        subscribers.push(subscriber);
+        _addSubscriber(key, config.subscribers[key]);
       });
-      _subscribers = subscribers;
-      log.log(LOG_PREFIX, `Subscribers updated: ${_subscribers.length}`);
       _sendReady = true;
       _self.emit('ready');
+    }).then(() => {
+      const fbPath = 'config/GCMPush/subscribers';
+      _fb.child(fbPath).on('child_added', (snapshot) => {
+        const key = snapshot.key();
+        _addSubscriber(key, snapshot.val());
+      });
+      _fb.child(fbPath).on('child_removed', (snapshot) => {
+        _removeSubscriber(snapshot.key());
+      });
     });
+  }
+
+  /**
+   * Adds a subscriber to the list
+   *
+   * @param {string} key The subscriber key.
+   * @param {Object} subscriber The subscriber object.
+  */
+  function _addSubscriber(key, subscriber) {
+    if (_subscribers[key]) {
+      return;
+    }
+    subscriber.key = key;
+    subscriber.shortKey = key.substring(0, 11);
+    _subscribers[key] = subscriber;
+    log.log(LOG_PREFIX, `Subscriber added: ${subscriber.shortKey}`);
+  }
+
+  /**
+   * Removes a subscriber from the list
+   *
+   * @param {string} key The subscriber key.
+  */
+  function _removeSubscriber(key) {
+    if (!_subscribers[key]) {
+      return;
+    }
+    delete _subscribers[key];
+    log.log(LOG_PREFIX, `Subscriber removed: ${key.substring(0, 11)}`);
   }
 
   /**
@@ -77,24 +110,27 @@ function GCMPush(fb) {
     }
     const payload = JSON.stringify(message);
 
-    return Promise.all(_subscribers.map((subscriberObj) => {
-      const key = subscriberObj.key;
-      const shortKey = subscriberObj.key.substring(0, 11);
-      const subscriber = subscriberObj.subscriptionInfo;
-      return new Promise(function(resolve, reject) {
-        return webpush.sendNotification(subscriber, payload, _options)
-          .then((resp) => {
-            log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
-            log.debug(LOG_PREFIX, '', resp);
-            resolve(true);
-          })
-          .catch((err) => {
-            log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
-            _fb.child(`pushSubscribers/${key}/lastAttemptFailed`).set(true);
-            resolve(false);
-          });
-      });
-    }));
+    const promises = [];
+    Object.keys(_subscribers).forEach((key) => {
+      if (!_subscribers[key]) {
+        return;
+      }
+      const shortKey = _subscribers[key].shortKey;
+      const subscriber = _subscribers[key].subscriptionInfo;
+      const lprPath = `config/GCMPush/subscribers/${key}/lastResult`;
+      const promise = webpush.sendNotification(subscriber, payload, _options)
+        .then((resp) => {
+          log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
+          log.debug(LOG_PREFIX, '', resp);
+          return _fb.child(lprPath).set(resp);
+        })
+        .catch((err) => {
+          log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
+          return _fb.child(lprPath).set(err);
+        });
+      promises.push(promise);
+    });
+    return Promise.all(promises);
   };
 
   _init();
