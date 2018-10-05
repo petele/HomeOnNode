@@ -117,16 +117,20 @@ function GCMPush(fb) {
       }
       const shortKey = _subscribers[key].shortKey;
       const subscriber = _subscribers[key].subscriptionInfo;
-      const lprPath = `config/GCMPush/subscribers/${key}/lastResult`;
+      const fbPath = `config/GCMPush/subscribers/${key}`;
       const promise = webpush.sendNotification(subscriber, payload, _options)
         .then((resp) => {
           log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
           log.debug(LOG_PREFIX, '', resp);
-          return _fb.child(lprPath).set(resp);
+          return _fb.child(`${fbPath}/lastResult`).set(resp);
         })
         .catch((err) => {
+          if (err.statusCode === 410) {
+            log.error(LOG_PREFIX, `Removed subscriber: ${shortKey}`, err.body);
+            return _fb.child(fbPath).remove();
+          }
           log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
-          return _fb.child(lprPath).set(err);
+          return _fb.child(`${fbPath}/lastResult`).set(err);
         });
       promises.push(promise);
     });
