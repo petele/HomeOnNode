@@ -18,7 +18,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="fb-document.html">
 <link rel="import" href="fb-query.html">
 <link rel="import" href="send-command.html">
-<link rel="import" href="sonos-controller.html">
+<link rel="import" href="media-controller.html">
 
 <dom-module id="view-media">
   <template>
@@ -34,16 +34,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <send-command id="sendCommand"></send-command>
 
     <div class="card">
-      <sonos-controller
-          id="sonosController"
-          visible="{{sonosVisible}}"
-          source="{{sonosSource}}"></sonos-controller>
+      <media-controller id="mediaController"
+        sonos-source="{{sonosSource}}"
+        visible="{{mediaControllerVisible}}"></media-controller>
     </div>
 
     <fb-document path="state/harmony" data="{{currentHarmonyActivity}}">
     </fb-document>
+
     <fb-query path="state/harmonyConfig/activity" data="{{harmonyActivities}}">
     </fb-query>
+
     <div class="card activities">
       <div class="app-grid grid-medium" id="harmonyButtons">
         <paper-button on-tap="tapOff"
@@ -58,21 +59,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </template>
         <paper-button on-tap="tapRadio"
             class$="[[harmonyActivityClass('radio', currentHarmonyActivity.label, sonosSource)]]">
-          Radio
+          WNYC
         </paper-button>
-      </div>
-    </div>
-
-    <div class="card hidden" id="tivoControls">
-      <div class="app-grid grid-narrow">
-        <paper-icon-button icon="hon-icons:tivo" on-tap="tapTivo">
-        </paper-icon-button>
-        <paper-icon-button icon="hon-icons:tivo-guide" on-tap="tapGuide">
-        </paper-icon-button>
-        <paper-icon-button icon="hon-icons:skip-30" on-tap="tapSkip30">
-        </paper-icon-button>
-        <paper-icon-button icon="hon-icons:tivo-skip" on-tap="tapSkip">
-        </paper-icon-button>
       </div>
     </div>
 
@@ -96,27 +84,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get properties() {
         return {
-          sonosVisible: Boolean,
+          mediaControllerVisible: Boolean,
+          sonosSource: String,
         };
       }
 
       static get observers() {
         return [
-          'sonosVisibleChanged(sonosVisible)',
-          'harmonyActivityChanged(currentHarmonyActivity.label)',
+          'mediaControllerVisibleChanged(mediaControllerVisible)',
         ];
       }
 
-      sonosVisibleChanged(val) {
-        this.$.sonosController.parentElement.classList.toggle('hidden', !val);
-      }
-
-      harmonyActivityChanged(val) {
-        let hidden = true;
-        if (val && val.toLowerCase() === 'tivo') {
-          hidden = false;
-        }
-        this.$.tivoControls.classList.toggle('hidden', hidden);
+      mediaControllerVisibleChanged(show) {
+        this.$.mediaController.parentElement.classList.toggle('hidden', !show);
       }
 
       filterActivities(item) {
@@ -179,31 +159,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      tapTivo(event) {
-        const cmd = {tivo: 'TELEPORT TIVO'};
-        this.$.sendCommand.send(cmd);
-      }
-
-      tapGuide(event) {
-        const cmd = {tivo: 'TELEPORT GUIDE'};
-        this.$.sendCommand.send(cmd);
-      }
-
-      tapSkip30(event) {
-        const cmd = {tivo: 'IRCODE ADVANCE'};
-        this.$.sendCommand.send(cmd);
-      }
-
-      tapSkip(event) {
-        const cmd = {tivo: 'IRCODE ACTION_B'};
-        this.$.sendCommand.send(cmd);
-      }
-
       startIndterminate(button) {
         button.classList.add('toggle-ind');
         setTimeout(() => {
           button.classList.remove('toggle-ind');
-        }, 15000);
+        }, 20000);
       }
     }
 

@@ -1,0 +1,360 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="fb-document.html">
+<link rel="import" href="hon-icons.html">
+<link rel="import" href="send-command.html">
+
+<dom-module id="media-controller">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: none;
+        --marquee-shift-left: 0px;
+        --marquee-shift-right: 0px;
+      }
+      .container {
+        display: flex;
+      }
+      .middle {
+        text-align: center;
+        flex-grow: 1;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .trackNavButtons {
+        display: flex;
+        align-items: center;
+      }
+      .trackNavButtons paper-icon-button {
+        width: 52px;
+        height: 52px;
+      }
+      .lineTop {
+        font-size: 1.8em;
+      }
+      .lineBot {
+        font-size: 1.25em;
+      }
+      paper-icon-button[disabled] {
+        opacity: 0.4;
+      }
+      .hidden {
+        display: none !important;
+      }
+
+      #marquee {
+        display: inline-block;
+      }
+      .marquee {
+        animation-name: marquee;
+        animation-duration: var(--marquee-speed);
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+      }
+      @keyframes marquee {
+        0%  { transform: translate(0%, 0); }
+        30% { transform: translate(var(--marquee-shift-left), 0); }
+        70% { transform: translate(var(--marquee-shift-right), 0); }
+        100% { transform: translate(0%, 0); }
+      }
+    </style>
+
+    <send-command id="sendCommand"></send-command>
+
+    <fb-document path="state/harmony/label" data="{{harmonyActivity}}">
+    </fb-document>
+    <fb-document path="state/sonos/state" data="{{sonosState}}">
+    </fb-document>
+
+
+    <div class="outerContainer">
+      <div class="container">
+
+        <div class="trackNavButtons">
+          <paper-icon-button id="skipBack" icon="hon-icons:skip-back"
+              cmd="SONOS_PREVIOUS" on-tap="tapSonos"></paper-icon-button>
+        </div>
+
+        <div class="middle" id="marqueeContainer">
+          <div id="marquee">
+            <span class="lineTop">[[nowPlaying.top]]</span><br>
+            <span class="lineBot">[[nowPlaying.bottom]]</span>
+          </div>
+        </div>
+
+        <div class="trackNavButtons">
+          <paper-icon-button id="skipForward" icon="hon-icons:skip-forward"
+              cmd="SONOS_NEXT" on-tap="tapSonos"></paper-icon-button>
+        </div>
+
+      </div>
+
+      <div class="middle">
+
+        <paper-icon-button id="butVolDown" icon="hon-icons:volume-down"
+          cmd="SONOS_VOL_DOWN" on-tap="tapSonos">
+        </paper-icon-button>
+
+        <paper-icon-button class="hidden" id="butVolTV"
+          icon="hon-icons:volume-tv" cmd="ACTION_TV_VOL" on-tap="tapSonos">
+        </paper-icon-button>
+
+        <paper-icon-button class="hidden" id="butTivo"
+          icon="hon-icons:tivo" cmd="TELEPORT TIVO" on-tap="tapTivo">
+        </paper-icon-button>
+
+        <paper-icon-button class="hidden" id="butTivoGuide"
+          icon="hon-icons:tivo-guide" cmd="TELEPORT GUIDE" on-tap="tapTivo">
+        </paper-icon-button>
+
+        <paper-icon-button class="hidden" id="butSonosPlayPause"
+          icon="hon-icons:play" on-tap="tapSonosPlayPause">
+        </paper-icon-button>
+
+        <paper-icon-button class="hidden" id="butTivoSkip30"
+          icon="hon-icons:skip-30" cmd="IRCODE ADVANCE" on-tap="tapTivo">
+        </paper-icon-button>
+
+        <paper-icon-button class="hidden" id="butTivoSkip"
+          icon="hon-icons:tivo-skip" cmd="IRCODE ACTION_D" on-tap="tapTivo">
+        </paper-icon-button>
+
+        <paper-icon-button id="butVolUp" icon="hon-icons:volume-up"
+          cmd="SONOS_VOL_UP" on-tap="tapSonos">
+        </paper-icon-button>
+
+      </div>
+    </div>
+
+  </template>
+
+  <script>
+    class MediaController extends Polymer.Element {
+      static get is() { return 'media-controller'; }
+
+      static get properties() {
+        return {
+          sonosState: Object,
+          harmonyActivity: String,
+          nowPlaying: {
+            type: Object,
+            value: {
+              top: null,
+              bottom: null,
+            },
+          },
+          sonosSource: {
+            type: String,
+            notify: true,
+            reflectToAttribute: true,
+            value: null,
+          },
+          visible: {
+            type: Boolean,
+            notify: true,
+            reflectToAttribute: true,
+            value: false,
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          '_harmonyActivityChanged(harmonyActivity)',
+          '_sonosTrackChanged(sonosState.currentTrack)',
+          '_sonosPlayStateChanged(sonosState.playbackState)',
+          '_startMarquee(nowPlaying)',
+        ];
+      }
+
+      _harmonyActivityChanged(activity) {
+        if (typeof activity !== 'string') {
+          return;
+        }
+        const currentActivity = activity.toLowerCase();
+        if (currentActivity === 'poweroff') {
+          return this._onPowerOff();
+        }
+        if (currentActivity === 'androidtv') {
+          this._onAndroidTV();
+        } else if (currentActivity === 'rpi') {
+          this._onRPi();
+        } else if (currentActivity === 'tivo') {
+          this._onTivo();
+        } else if (currentActivity === 'sonos') {
+          this._onSonos();
+        }
+        this.updateStyles({display: 'block'});
+        this.visible = true;
+      }
+
+      _onPowerOff() {
+        this.visible = false;
+        this.updateStyles({display: 'none'});
+        this.nowPlaying = {
+          top: null,
+          bottom: null,
+        };
+        this.$.butVolTV.classList.toggle('hidden', true);
+        this._showTivoControls(false);
+        this._showPlayPause(false);
+        this._showSkipControls(false);
+        return;
+      }
+
+      _onAndroidTV() {
+        this.nowPlaying = {
+          top: 'AndroidTV',
+          bottom: null,
+        };
+        this.$.butVolTV.classList.toggle('hidden', false);
+        this._showTivoControls(false);
+        this._showPlayPause(false);
+        this._showSkipControls(false);
+      }
+
+      _onRPi() {
+        this.nowPlaying = {
+          top: 'HomeOnNode',
+          bottom: null,
+        };
+        this.$.butVolTV.classList.toggle('hidden', true);
+        this._showTivoControls(false);
+        this._showPlayPause(false);
+        this._showSkipControls(false);
+      }
+
+      _onTivo() {
+        this.nowPlaying = {
+          top: 'TiVO',
+          bottom: null,
+        };
+        this.$.butVolTV.classList.toggle('hidden', false);
+        this._showTivoControls(true);
+        this._showPlayPause(false);
+        this._showSkipControls(false);
+      }
+
+      _onSonos() {
+        this.$.butVolTV.classList.toggle('hidden', true);
+        this._showTivoControls(false);
+        this._showPlayPause(true);
+      }
+
+      _sonosTrackChanged(currentTrack) {
+        if (!currentTrack) {
+          return;
+        }
+        if (currentTrack.uri.includes('spdif')) {
+          return;
+        }
+        if (currentTrack.type === 'line_in') {
+          if (this.nowPlaying.top === 'WNYC') {
+            return;
+          }
+          this.nowPlaying = {
+            top: 'WNYC',
+            bottom: 'FM Radio',
+          };
+          this.sonosSource = 'line_in';
+          this._showSkipControls(false);
+          return;
+        }
+        let lineBottom;
+        if (currentTrack.artist && currentTrack.album) {
+          lineBottom = currentTrack.artist + ' - ' + currentTrack.album;
+        } else if (currentTrack.artist || currentTrack.album) {
+          lineBottom = currentTrack.artist || currentTrack.album;
+        }
+        if (this.nowPlaying.top === currentTrack.title &&
+            this.nowPlaying.bottom === lineBottom) {
+          return;
+        }
+        this.sonosSource = 'music';
+        this.nowPlaying = {
+          top: currentTrack.title,
+          bottom: lineBottom,
+        };
+        this._showSkipControls(true);
+      }
+
+      _sonosPlayStateChanged(state) {
+        if (!state) {
+          return;
+        }
+        if (state === 'PLAYING') {
+          this.$.butSonosPlayPause.icon = 'hon-icons:pause';
+          this.$.butSonosPlayPause.setAttribute('cmd', 'SONOS_PAUSE');
+        } else {
+          this.$.butSonosPlayPause.icon = 'hon-icons:play';
+          this.$.butSonosPlayPause.setAttribute('cmd', 'SONOS_PLAY');
+        }
+      }
+
+      _showTivoControls(visible) {
+        this.$.butTivo.classList.toggle('hidden', !visible);
+        this.$.butTivoGuide.classList.toggle('hidden', !visible);
+        this.$.butTivoSkip.classList.toggle('hidden', !visible);
+        this.$.butTivoSkip30.classList.toggle('hidden', !visible);
+      }
+
+      _showPlayPause(visible) {
+        this.$.butSonosPlayPause.classList.toggle('hidden', !visible);
+      }
+
+      _showSkipControls(visible) {
+        this.$.skipBack.classList.toggle('hidden', !visible);
+        this.$.skipForward.classList.toggle('hidden', !visible);
+      }
+
+      tapSonos(event) {
+        const cmd = {cmdName: event.target.getAttribute('cmd')};
+        this.$.sendCommand.send(cmd);
+      }
+
+      tapTivo(event) {
+        const cmd = {tivo: event.target.getAttribute('cmd')};
+        this.$.sendCommand.send(cmd);
+      }
+
+      tapSonosPlayPause(event) {
+        const cmd = {cmdName: event.target.getAttribute('cmd')};
+        this.$.sendCommand.send(cmd);
+      }
+
+      _startMarquee() {
+        const marqueeWidth = this.$.marquee.offsetWidth;
+        const marqueeContainer = this.$.marqueeContainer.offsetWidth;
+        const marqueeDiff = marqueeWidth - marqueeContainer;
+        if (marqueeDiff <= 0) {
+          this.$.marquee.style.marginLeft = `0px`;
+          this.$.marquee.classList.toggle('marquee', false);
+          return;
+        }
+        const halfWidth = marqueeDiff / 2;
+        const marqueeSpeed = Math.round(marqueeWidth / 30);
+        this.$.marquee.style.marginLeft = `-${halfWidth}px`;
+        this.updateStyles({
+          '--marquee-shift-left': `-${halfWidth + 10}px`,
+          '--marquee-shift-right': `${halfWidth + 10}px`,
+          '--marquee-speed': `${marqueeSpeed}s`,
+        });
+        this.$.marquee.classList.toggle('marquee', true);
+      }
+
+    }
+    window.customElements.define(MediaController.is, MediaController);
+  </script>
+</dom-module>
