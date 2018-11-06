@@ -9,6 +9,7 @@ const Nest = require('./Nest');
 const Wemo = require('./Wemo');
 const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
+const moment = require('moment');
 const log = require('./SystemLog2');
 const GCMPush = require('./GCMPush');
 const Harmony = require('./Harmony');
@@ -385,6 +386,25 @@ function Home(initialConfig, fbRef) {
         log.log(LOG_PREFIX, msg, cmd);
       });
     }
+    // Only run on time range
+    if (command.hasOwnProperty('runBetween')) {
+      let cmds = command.runBetween;
+      if (Array.isArray(cmds) === false) {
+        cmds = [cmds];
+      }
+      cmds.forEach((cmd) => {
+        if (_inRange(cmd.range)) {
+          if (cmd.hasOwnProperty('cmdName')) {
+            _self.executeCommandByName(cmd.cmdName, cmd.modifier, 'TIME_RANGE');
+          } else {
+            _self.executeCommand(cmd.command, 'TIME_RANGE');
+          }
+        } else {
+          const msg = `Command not run, not in time range: ${cmd.range}`;
+          log.log(LOG_PREFIX, msg, cmd);
+        }
+      });
+    }
   };
 
   /**
@@ -753,6 +773,50 @@ function Home(initialConfig, fbRef) {
     _fbPush('logs/systemState', stateLog);
     _self.executeCommandByName('RUN_ON_' + newState, null, 'SET_STATE');
     return Promise.resolve({state: newState});
+  }
+
+  /**
+   * Checks if the current time is between the specified range
+   *
+   * @param {string} range - Format smtwtfsThh:hhDmm.
+   *                         - 0-6: days to run, use '-' to skip day.
+   *                         - 7: Must be 'T'.
+   *                         - 8-12: Time to start 24 hr format, eg 23:30.
+   *                         - 13: Must be 'D'.
+   *                         - 14+: Number of minutes the duration lasts.
+   *                         - EG: '---X---T23:30D60'
+   * @return {boolean}
+   */
+  function _inRange(range) {
+    const RE_RANGE = /^(.{7})T(\d\d):(\d\d)D(\d+)$/;
+    const matched = range.match(RE_RANGE);
+    if (!matched || matched.length !== 5) {
+      return false;
+    }
+    const maDay = matched[1];
+    const maHour = matched[2];
+    const maMinute = matched[3];
+    const maDuration = parseInt(matched[4]);
+    const now = moment().second(0).millisecond(0);
+    const tomorrow = now.clone().hour(0).minute(0).add(1, 'day');
+
+    const mStart = now.clone().hour(maHour).minute(maMinute);
+    const mStop = mStart.clone().add(maDuration, 'minutes');
+
+    if (mStop.isAfter(tomorrow)) {
+      const numMinIntoDay = moment.duration(tomorrow.diff(now)).asMinutes();
+      if (numMinIntoDay > maDuration) {
+        mStart.subtract(1, 'day');
+        mStop.subtract(1, 'day');
+      }
+    }
+    if (maDay[mStart.isoWeekday() % 7] === '-') {
+      return false;
+    }
+    if (now.isBetween(mStart, mStop)) {
+      return true;
+    }
+    return false;
   }
 
 
