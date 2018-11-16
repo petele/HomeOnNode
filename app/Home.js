@@ -401,7 +401,22 @@ function Home(initialConfig, fbRef) {
           }
         } else {
           const msg = `Command not run, not in time range: ${cmd.range}`;
-          log.log(LOG_PREFIX, msg, cmd);
+          log.debug(LOG_PREFIX, msg, cmd);
+        }
+      });
+    }
+    // Run other cmdNames
+    if (command.hasOwnProperty('alsoRun')) {
+      let cmds = command.alsoRun;
+      if (Array.isArray(cmds) === false) {
+        cmds = [cmds];
+      }
+      cmds.forEach((cmd) => {
+        const src = `ALSO_RUN-${source}`;
+        if (cmd.hasOwnProperty('cmdName')) {
+          _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
+        } else {
+          _self.executeCommand(cmd.command, src);
         }
       });
     }
