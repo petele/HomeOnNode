@@ -116,7 +116,7 @@ function Home(initialConfig, fbRef) {
     if (command.noop === true) {
       msg += ' ** NoOp **';
     }
-    log.log(LOG_PREFIX, msg);
+    log.log(LOG_PREFIX, msg, command);
     // If it's a NoOp, stop here.
     if (command.noop === true) {
       return;
@@ -386,6 +386,21 @@ function Home(initialConfig, fbRef) {
         log.log(LOG_PREFIX, msg, cmd);
       });
     }
+    // Run other cmdNames
+    if (command.hasOwnProperty('alsoRun')) {
+      let cmds = command.alsoRun;
+      if (Array.isArray(cmds) === false) {
+        cmds = [cmds];
+      }
+      cmds.forEach((cmd) => {
+        const src = `ALSO_RUN-${source}`;
+        if (cmd.hasOwnProperty('cmdName')) {
+          _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
+        } else {
+          _self.executeCommand(cmd.command, src);
+        }
+      });
+    }
     // Only run on time range
     if (command.hasOwnProperty('runBetween')) {
       let cmds = command.runBetween;
@@ -402,21 +417,6 @@ function Home(initialConfig, fbRef) {
         } else {
           const msg = `Command not run, not in time range: ${cmd.range}`;
           log.debug(LOG_PREFIX, msg, cmd);
-        }
-      });
-    }
-    // Run other cmdNames
-    if (command.hasOwnProperty('alsoRun')) {
-      let cmds = command.alsoRun;
-      if (Array.isArray(cmds) === false) {
-        cmds = [cmds];
-      }
-      cmds.forEach((cmd) => {
-        const src = `ALSO_RUN-${source}`;
-        if (cmd.hasOwnProperty('cmdName')) {
-          _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
-        } else {
-          _self.executeCommand(cmd.command, src);
         }
       });
     }
