@@ -130,7 +130,7 @@ function Harmony(uuid) {
       return;
     }
     if (_attemptingReconnect === true) {
-      log.log(LOG_PREFIX, 'Reset already in progres...');
+      log.warn(LOG_PREFIX, 'Reset already in progres...');
       return;
     }
     _attemptingReconnect = true;
@@ -220,7 +220,7 @@ function Harmony(uuid) {
    * @param {Object} connection Connection string
   */
   function _handleOnline(connection) {
-    log.log(LOG_PREFIX, 'Online.', connection);
+    log.debug(LOG_PREFIX, 'Online.', connection);
     _updateConfigRequest();
     _updateActivityRequest();
   }
@@ -277,7 +277,7 @@ function Harmony(uuid) {
       id: activityId,
       label: _activitiesById[activityId],
     };
-    log.log(LOG_PREFIX, `activityChanged(${activityId}, '${activity.label}')`);
+    log.debug(LOG_PREFIX, `activityChanged(${activityId},'${activity.label}')`);
     /**
      * Fired when the activity has changed
      * @event Harmony#activity_changed
@@ -325,14 +325,14 @@ function Harmony(uuid) {
    * @param {Object} connection
   */
   function _handleConnect(connection) {
-    log.log(LOG_PREFIX, 'Connected.');
+    log.debug(LOG_PREFIX, 'Connected.');
   }
 
   /**
    * Log a reconnect event
   */
   function _handleReconnect() {
-    log.log(LOG_PREFIX, 'Reconnected.');
+    log.debug(LOG_PREFIX, 'Reconnected.');
   }
 
   /**
@@ -425,7 +425,7 @@ function Harmony(uuid) {
       return false;
     }
     const msg = `setActivity('${activityName}')`;
-    log.log(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     let cmdText = 'activityId=' + activityId.toString();
     cmdText += ':timestamp=' + Date.now();
     let cmd = new XMPP.Stanza.Iq({'id': _uuid, 'type': 'get'})
@@ -447,7 +447,7 @@ function Harmony(uuid) {
     if (_isReady() !== true) {
       return false;
     }
-    log.log(LOG_PREFIX, 'sendCommand: ' + cmd.command);
+    log.debug(LOG_PREFIX, 'sendCommand: ' + cmd.command);
     cmd = JSON.stringify(cmd);
     cmd = cmd.replace(/:/g, '::');
     const cmdText = 'action=' + cmd + ':status=press';

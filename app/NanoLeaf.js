@@ -40,7 +40,7 @@ function NanoLeaf(key, ip, port) {
     }
     if (command.hasOwnProperty('authorize')) {
       return _makeLeafRequest('new', 'POST').then((resp) => {
-        log.log(LOG_PREFIX, resp);
+        log.debug(LOG_PREFIX, resp);
         return resp;
       });
     }

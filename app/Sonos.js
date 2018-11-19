@@ -158,7 +158,7 @@ function Sonos() {
       log.error(LOG_PREFIX, `${msg} failed, speaker not found.`);
       return Promise.resolve('speaker_not_found');
     }
-    log.log(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     return speaker.setVolume(vol)
       .catch((err) => {
         log.exception(LOG_PREFIX, `${msg} failed, with exception.`, err);
@@ -206,7 +206,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _applyPreset(preset) {
-    log.log(LOG_PREFIX, 'applyPreset()', preset);
+    log.debug(LOG_PREFIX, 'applyPreset()', preset);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -222,7 +222,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _play() {
-    log.log(LOG_PREFIX, 'play()');
+    log.debug(LOG_PREFIX, 'play()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -239,7 +239,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _pause() {
-    log.log(LOG_PREFIX, 'pause()');
+    log.debug(LOG_PREFIX, 'pause()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -263,7 +263,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _next() {
-    log.log(LOG_PREFIX, 'next()');
+    log.debug(LOG_PREFIX, 'next()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -280,7 +280,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _previous() {
-    log.log(LOG_PREFIX, 'previous()');
+    log.debug(LOG_PREFIX, 'previous()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -297,7 +297,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _volumeDown() {
-    log.log(LOG_PREFIX, 'volumeDown()');
+    log.debug(LOG_PREFIX, 'volumeDown()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -310,7 +310,7 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _volumeUp() {
-    log.log(LOG_PREFIX, 'volumeUp()');
+    log.debug(LOG_PREFIX, 'volumeUp()');
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }

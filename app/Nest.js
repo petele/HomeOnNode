@@ -186,7 +186,7 @@ function Nest(authToken, roomIdMap) {
         log.exception(LOG_PREFIX, 'Authentication Error', err);
         return;
       }
-      log.log(LOG_PREFIX, 'Authenticated.');
+      log.debug(LOG_PREFIX, 'Authenticated.');
       _fbNest.once('value', function(snapshot) {
         let data = snapshot.val();
         _nestData = data;
@@ -290,7 +290,7 @@ function Nest(authToken, roomIdMap) {
       log.warn(LOG_PREFIX, msg, extra);
       return true;
     }
-    log.log(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     return true;
   }
 
@@ -359,7 +359,7 @@ function Nest(authToken, roomIdMap) {
         reject(new Error('not_ready'));
         return;
       }
-      log.log(LOG_PREFIX, msg);
+      log.debug(LOG_PREFIX, msg);
       const path = `structures/${_structureId}/away`;
       _fbNest.child(path).set(state, (err) => {
         if (err) {
@@ -388,7 +388,7 @@ function Nest(authToken, roomIdMap) {
     let cameras = _nestData.structures[_structureId].cameras;
     return Promise.all(cameras.map((cameraId) => {
       const path = `devices/cameras/${cameraId}/is_streaming`;
-      log.log(LOG_PREFIX, msg);
+      log.debug(LOG_PREFIX, msg);
       return new Promise(function(resolve, reject) {
         _fbNest.child(path).set(state, (err) => {
           if (err) {
@@ -439,7 +439,7 @@ function Nest(authToken, roomIdMap) {
         reject(new Error('incompatible_hvac_mode'));
         return;
       }
-      log.log(LOG_PREFIX, msg);
+      log.debug(LOG_PREFIX, msg);
       const path = `devices/thermostats/${thermostatId}/target_temperature_f`;
       _fbNest.child(path).set(temperature, (err) => {
         if (err) {
@@ -495,7 +495,7 @@ function Nest(authToken, roomIdMap) {
         reject(new Error('incompatible_hvac_mode'));
         return;
       }
-      log.log(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
+      log.debug(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
       let opts = {
         fan_timer_active: false,
       };

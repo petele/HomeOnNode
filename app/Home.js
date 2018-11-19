@@ -383,7 +383,7 @@ function Home(initialConfig, fbRef) {
           }
         }, delay);
         const msg = `Scheduled command to run in ${delay / 1000}s`;
-        log.log(LOG_PREFIX, msg, cmd);
+        log.debug(LOG_PREFIX, msg, cmd);
       });
     }
     // Run other cmdNames
@@ -682,7 +682,7 @@ function Home(initialConfig, fbRef) {
         return;
       }
       _lastSoundPlayedAt = now;
-      log.log(LOG_PREFIX, `playSound('${file}', ${force})`);
+      log.debug(LOG_PREFIX, `playSound('${file}', ${force})`);
       const cmd = `mplayer ${file}`;
       exec(cmd, function(error, stdout, stderr) {
         if (error) {
@@ -704,7 +704,7 @@ function Home(initialConfig, fbRef) {
    */
   function _sayThis(utterance, force) {
     return new Promise(function(resolve, reject) {
-      log.log(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
+      log.debug(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
       if (_self.state.doNotDisturb === false || force === true) {
         const sayObj = {
           sayAt: Date.now(),

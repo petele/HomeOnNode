@@ -11,6 +11,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/polymerfire/polymerfire.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-toast/paper-toast.html">
 
 <dom-module id="say-this">
   <template>
@@ -24,6 +25,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <paper-checkbox id="cbSayThis" checked="{{isEnabled}}" on-change="changeSayThis">
       Say This
     </paper-checkbox>
+
+    <paper-toast id="toast"></paper-toast>
 
   </template>
 
@@ -66,11 +69,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       sayThis(sentence, lang) {
-        lang = lang || 'en-US';
-        let utterance = new window.SpeechSynthesisUtterance(sentence);
-        utterance.lang = lang;
-        window.speechSynthesis.speak(utterance);
-        return utterance;
+        try {
+          const utterance = new window.SpeechSynthesisUtterance(sentence);
+          utterance.lang = lang || 'en-US';
+          window.speechSynthesis.speak(utterance);
+          return utterance;
+        } catch (ex) {
+          console.log('speechSynthesis failed', ex);
+          this.$.toast.text = 'Speech synthesis unavailable.';
+          this.$.toast.show();
+        }
       }
     }
 

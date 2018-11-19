@@ -53,7 +53,7 @@ function init() {
     if (error) {
       log.exception(APP_NAME, 'Firebase auth failed.', error);
     } else {
-      log.log(APP_NAME, 'Firebase auth success.');
+      log.debug(APP_NAME, 'Firebase auth success.');
     }
   });
   log.setFirebaseRef(_fb);

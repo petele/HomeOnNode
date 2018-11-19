@@ -56,7 +56,7 @@ function Presence(bt) {
     person.lastSeen = 0;
     person.state = USER_STATES.AWAY;
     _people[uuid] = person;
-    log.log(LOG_PREFIX, msg, person);
+    log.debug(LOG_PREFIX, msg, person);
   };
 
   /**
@@ -98,7 +98,7 @@ function Presence(bt) {
       _numPresent =- 1;
       p.state = USER_STATES.AWAY;
     }
-    log.log(LOG_PREFIX, msg, p);
+    log.debug(LOG_PREFIX, msg, p);
   };
 
   /**
@@ -126,7 +126,7 @@ function Presence(bt) {
    * @param {Object} person The person who's state has changed.
   */
   function _emitChange(person) {
-    log.log(LOG_PREFIX, `${person.name} is ${person.state}`, person);
+    log.debug(LOG_PREFIX, `${person.name} is ${person.state}`, person);
     _self.emit('change', person, _numPresent, _people);
   }
 
