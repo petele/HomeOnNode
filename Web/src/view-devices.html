@@ -89,12 +89,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </iron-icon>
           </div>
         </div>
-        <template is="dom-if" if="[[item.appName]]">
-          <div>
-            <span class="label">App</span>
-            <span>[[item.appName]]</span>
-          </div>
-        </template>
         <div>
           <span class="label">Last Updated</span>
           <span class$="[[isStale(item.heartbeat)]]">
@@ -103,6 +97,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
         <details>
           <summary class="label">Expand</summary>
+          <template is="dom-if" if="[[item.appName]]">
+            <div>
+              <span class="label">App</span>
+              <span>[[item.appName]]</span>
+            </div>
+          </template>
           <template is="dom-if" if="[[item.host]]">
             <div>
               <span class="label">IP Address</span>
