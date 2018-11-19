@@ -83,7 +83,7 @@ function Sonos() {
     _sonosSystem = new SonosSystem();
     _sonosSystem.on('initialized', () => {
       _ready = true;
-      log.log(LOG_PREFIX, 'Ready.');
+      log.debug(LOG_PREFIX, 'Ready.');
       _self.emit('ready');
       _getFavorites();
       setInterval(_getFavorites, FAV_INTERVAL);

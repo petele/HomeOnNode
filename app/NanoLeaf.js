@@ -197,7 +197,7 @@ function NanoLeaf(key, ip, port) {
    * @return {Promise} A promise that resolves to the response.
   */
   function _setPower(turnOn) {
-    log.info(LOG_PREFIX, `setPower(${turnOn})`);
+    log.debug(LOG_PREFIX, `setPower(${turnOn})`);
     return new Promise(function(resolve, reject) {
       if (_isReady() !== true) {
         reject(new Error('not_ready'));
@@ -219,7 +219,7 @@ function NanoLeaf(key, ip, port) {
     if (effectName === 'OFF') {
       return _setPower(false);
     }
-    log.info(LOG_PREFIX, `setEffect('${effectName}')`);
+    log.debug(LOG_PREFIX, `setEffect('${effectName}')`);
     return new Promise(function(resolve, reject) {
       if (_isReady() === false) {
         reject(new Error('not_ready'));
@@ -236,7 +236,7 @@ function NanoLeaf(key, ip, port) {
    * @return {Promise} A promise that resolves to the response.
   */
   function _cycleEffect() {
-    log.info(LOG_PREFIX, `cycleEffect()`);
+    log.debug(LOG_PREFIX, `cycleEffect()`);
     let newEffect;
     try {
       const effects = _state.effects.effectsList;
@@ -263,7 +263,7 @@ function NanoLeaf(key, ip, port) {
    * @return {Promise} A promise that resolves to the response.
   */
   function _setBrightness(level) {
-    log.info(LOG_PREFIX, `setBrightness(${level})`);
+    log.debug(LOG_PREFIX, `setBrightness(${level})`);
     return new Promise(function(resolve, reject) {
       if (_isReady() === false) {
         reject(new Error('not_ready'));
@@ -287,7 +287,7 @@ function NanoLeaf(key, ip, port) {
    * @return {Promise} A promise that resolves to the response.
   */
   function _setColorTemperature(ct) {
-    log.info(LOG_PREFIX, `setColorTemperature(${ct})`);
+    log.debug(LOG_PREFIX, `setColorTemperature(${ct})`);
     return new Promise(function(resolve, reject) {
       if (_isReady() === false) {
         reject(new Error('not_ready'));
@@ -313,7 +313,7 @@ function NanoLeaf(key, ip, port) {
    * @return {Promise} A promise that resolves to the response.
   */
   function _setHueAndSat(hue, sat) {
-    log.info(LOG_PREFIX, `setHueAndSat(${hue}, ${sat})`);
+    log.debug(LOG_PREFIX, `setHueAndSat(${hue}, ${sat})`);
     return new Promise(function(resolve, reject) {
       if (_isReady() === false) {
         reject(new Error('not_ready'));

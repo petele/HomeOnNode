@@ -138,7 +138,7 @@ function Hue(key, explicitIPAddress) {
       _updateLights();
       _updateGroups();
       _ready = true;
-      log.log(LOG_PREFIX, 'Ready.');
+      log.debug(LOG_PREFIX, 'Ready.');
       setInterval(_updateConfig, CONFIG_REFRESH_INTERVAL);
       setInterval(_updateGroups, GROUPS_REFRESH_INTERVAL);
       setInterval(_updateLights, LIGHTS_REFRESH_INTERVAL);

@@ -39,7 +39,7 @@ function Bluetooth() {
     }
     _noble.on('stateChange', function(state) {
       _self.adapterState = state;
-      log.log(LOG_PREFIX, 'State Change: ' + state);
+      log.debug(LOG_PREFIX, 'State Change: ' + state);
       if (state === 'poweredOn') {
         _self.ready = true;
         _self.startScanning();
@@ -56,12 +56,12 @@ function Bluetooth() {
         clearTimeout(_scanTimeout);
         _scanTimeout = null;
       }
-      log.log(LOG_PREFIX, 'Scanning started.');
+      log.debug(LOG_PREFIX, 'Scanning started.');
       _self.emit('scanning', true);
     });
     _noble.on('scanStop', function() {
       _self.scanning = false;
-      log.log(LOG_PREFIX, 'Scanning stopped.');
+      log.debug(LOG_PREFIX, 'Scanning stopped.');
       if (_scanTimeout) {
         clearTimeout(_scanTimeout);
         _scanTimeout = null;
@@ -76,7 +76,6 @@ function Bluetooth() {
       // log.debug(LOG_PREFIX, 'Discovered');
       _self.emit('discover', peripheral);
     });
-    log.log(LOG_PREFIX, 'Noble started.');
   }
 
   /**

@@ -84,7 +84,7 @@ function Tivo(ipAddress) {
    * Connect to the Tivo.
    */
   function _connectToTivo() {
-    log.log(LOG_PREFIX, 'Connecting to the Tivo...');
+    log.debug(LOG_PREFIX, 'Connecting to the Tivo...');
     _reconnecting = false;
     _tivo = net.connect({host: _host, port: 31339});
     _tivo.on('connect', () => {
