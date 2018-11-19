@@ -71,6 +71,7 @@ function Sonos() {
       });
       return Promise.all(results);
     }
+    log.error(LOG_PREFIX, 'Unknown command sent.', command);
     return Promise.reject(new Error('unknown_command'));
   };
 
