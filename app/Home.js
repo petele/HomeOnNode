@@ -398,7 +398,7 @@ function Home(initialConfig, fbRef) {
         cmds = [cmds];
       }
       cmds.forEach((cmd) => {
-        const src = `ALSO_RUN-${source}`;
+        const src = `${source}-ALSO_RUN`;
         if (cmd.hasOwnProperty('cmdName')) {
           _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
         } else {
