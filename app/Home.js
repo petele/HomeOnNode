@@ -118,9 +118,6 @@ function Home(initialConfig, fbRef) {
       msg += 'null, ';
     }
     msg += `'${source}')`;
-    if (command.noop === true) {
-      msg += ' ** NoOp **';
-    }
     log.log(LOG_PREFIX, msg, command);
     // If it's a NoOp, stop here.
     if (command.noop === true) {
