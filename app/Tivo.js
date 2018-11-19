@@ -56,7 +56,7 @@ function Tivo(ipAddress) {
    * @return {Promise} The promise that will be resolved on completion.
    */
   this.send = function(cmd) {
-    log.log(LOG_PREFIX, `send('${cmd}')`);
+    log.debug(LOG_PREFIX, `send('${cmd}')`);
     if (!_isReady()) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -115,7 +115,7 @@ function Tivo(ipAddress) {
       return;
     }
     _reconnecting = true;
-    log.log(LOG_PREFIX, `Reconnecting in 3 second...`);
+    log.debug(LOG_PREFIX, `Reconnecting in 3 second...`);
     setTimeout(() => {
       _connectToTivo();
     }, 3000);
@@ -173,7 +173,7 @@ function Tivo(ipAddress) {
       return;
     }
     const cmd = _commandQueue.shift();
-    log.log(LOG_PREFIX, `Sending command: ${cmd}`);
+    log.debug(LOG_PREFIX, `Sending command: ${cmd}`);
     _tivo.write(cmd + '\r', undefined, () => {
       log.verbose(LOG_PREFIX, `Send complete`);
       setTimeout(() => {

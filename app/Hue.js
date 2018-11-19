@@ -49,7 +49,7 @@ function Hue(key, explicitIPAddress) {
   */
   this.setLights = function(lights, cmd) {
     let msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
-    log.log(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -86,7 +86,7 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves to the response body.
   */
   this.setScene = function(sceneId) {
-    log.log(LOG_PREFIX, `setScene('${sceneId}')`);
+    log.debug(LOG_PREFIX, `setScene('${sceneId}')`);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -113,7 +113,7 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves with the response
   */
   this.sendRequest = function(requestPath, method, body) {
-    log.log(LOG_PREFIX, `sendRequest('${requestPath}', '${method}', ${body})`);
+    log.debug(LOG_PREFIX, `sendRequest('${requestPath}', '${method}', ${body})`);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -252,7 +252,6 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} True if updated, false if failed.
    */
   function _updateGroups() {
-    // log.log(LOG_PREFIX, '_updateGroups()');
     const requestPath = '/groups';
     return _makeHueRequest(requestPath, 'GET', null, false)
     .then((groups) => {
@@ -279,7 +278,6 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} True if updated, false if failed.
   */
   function _updateLights() {
-    // log.log(LOG_PREFIX, '_updateLights()');
     const requestPath = '/lights';
     return _makeHueRequest(requestPath, 'GET', null, false)
     .then((lights) => {
@@ -343,13 +341,13 @@ function Hue(key, explicitIPAddress) {
   function _findHub() {
     return new Promise(function(resolve, reject) {
       if (explicitIPAddress) {
-        log.log(LOG_PREFIX, `Using provided IP address: ${explicitIPAddress}`);
+        log.debug(LOG_PREFIX, `Using provided IP: ${explicitIPAddress}`);
         let ip = explicitIPAddress;
         explicitIPAddress = null;
         resolve(ip);
         return;
       }
-      log.log(LOG_PREFIX, 'Searching for Hue Hub...');
+      log.debug(LOG_PREFIX, 'Searching for Hue Hub...');
       const nupnp = {
         url: 'https://discovery.meethue.com',
         method: 'GET',
@@ -359,8 +357,9 @@ function Hue(key, explicitIPAddress) {
         if (Array.isArray(respBody) &&
             respBody.length >= 1 &&
             respBody[0].internalipaddress) {
-          log.log(LOG_PREFIX, `Bridge found: ${respBody[0].internalipaddress}`);
-          resolve(respBody[0].internalipaddress);
+          const ip = respBody[0].internalipaddress;
+          log.debug(LOG_PREFIX, `Bridge found: ${ip}`);
+          resolve(ip);
           return;
         }
         let errMsg = 'NUPNP search failed:';

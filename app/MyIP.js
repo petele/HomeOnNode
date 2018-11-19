@@ -89,7 +89,7 @@ function MyIP(dnsAccount) {
     }
     const LOG_PREFIX = 'G_DNS';
     if (_dnsTimer) {
-      log.log(LOG_PREFIX, 'DNS update timer active, skipping this request.');
+      log.debug(LOG_PREFIX, 'DNS update timer active, skipping this request.');
       return;
     }
     const user = _dnsAccount.user;
@@ -114,7 +114,7 @@ function MyIP(dnsAccount) {
         return;
       }
       if (body.indexOf('good') >= 0 || body.indexOf('nochg') >= 0) {
-        log.log(LOG_PREFIX, msgOK, body);
+        log.debug(LOG_PREFIX, msgOK, body);
         return;
       }
       if (body.indexOf('911') >= 0) {

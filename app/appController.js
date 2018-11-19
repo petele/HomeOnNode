@@ -34,7 +34,7 @@ function init() {
     if (error) {
       log.exception(APP_NAME, 'Firebase auth failed.', error);
     } else {
-      log.log(APP_NAME, 'Firebase auth success.');
+      log.debug(APP_NAME, 'Firebase auth success.');
     }
   });
   log.setFirebaseRef(_fb);
@@ -139,21 +139,21 @@ function init() {
   Keypad.listen(_config.keypad.modifiers, _handleKeyPress);
 
   const cron15m = _getCronIntervalValue(15, 30);
-  log.log(APP_NAME, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
+  log.debug(APP_NAME, `CRON_15 - ${Math.floor(cron15m / 1000)} seconds`);
   setInterval(function() {
     log.verbose(APP_NAME, 'CRON 15');
     _loadAndRunJS('cron15.js');
   }, cron15m);
 
   const cron60m = _getCronIntervalValue(60, 2 * 60);
-  log.log(APP_NAME, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
+  log.debug(APP_NAME, `CRON_60 - ${Math.floor(cron60m / 1000)} seconds`);
   setInterval(function() {
     log.verbose(APP_NAME, 'CRON Hourly');
     _loadAndRunJS('cron60.js');
   }, cron60m);
 
   const cron24h = _getCronIntervalValue(24 * 60, 5 * 60);
-  log.log(APP_NAME, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
+  log.debug(APP_NAME, `CRON_24 - ${Math.floor(cron24h / 1000)} seconds`);
   setInterval(function() {
     log.verbose(APP_NAME, 'CRON Daily');
     log.cleanLogs(FB_LOG_PATH, 7);

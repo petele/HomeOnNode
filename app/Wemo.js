@@ -43,7 +43,7 @@ function Wemo() {
    */
   this.setState = function(id, state) {
     const msg = `setState('${id}', ${state})`;
-    log.log(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     return new Promise((resolve, reject) => {
       if (!_isReady()) {
         reject(new Error('not_ready'));
@@ -76,7 +76,7 @@ function Wemo() {
    */
   this.getState = function(id) {
     const msg = `getState('${id}')`;
-    log.log(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     return new Promise((resolve, reject) => {
       if (!_isReady()) {
         reject(new Error('not_ready'));
@@ -108,7 +108,7 @@ function Wemo() {
    * @return {boolean} True if the setup will be completed.
    */
   this.addDevice = function(setupURL) {
-    log.log(LOG_PREFIX, `addDevice('${setupURL}')`);
+    log.debug(LOG_PREFIX, `addDevice('${setupURL}')`);
     if (_isReady() === false) {
       return false;
     }
@@ -176,8 +176,7 @@ function Wemo() {
     client.on('binaryState', (value) => {
       deviceInfo.value = value;
       _self.emit('change', dMac, deviceInfo);
-      const val = value === 1 ? true : false;
-      log.log(LOG_PREFIX, `binaryState for ${dName} changed to ${val}`);
+      log.debug(LOG_PREFIX, `binaryState for ${dName} changed to ${value}`);
     });
   }
 
