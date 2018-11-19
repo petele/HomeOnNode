@@ -28,7 +28,7 @@ function WSServer(name, port) {
     if (!port) {
       port = 8881;
     }
-    log.init(_logPrefix, `Starting WebSocket server on port ${port}`);
+    log.init(_logPrefix, `Starting...`, port);
     try {
       _wss = new WebSocket.Server({port: port});
     } catch (ex) {
@@ -36,7 +36,7 @@ function WSServer(name, port) {
       return;
     }
     _self.running = true;
-    log.log(_logPrefix, 'WebSocket server started...');
+    log.debug(_logPrefix, 'WebSocket server started...');
     _wss.on('connection', _wsConnection);
     _wss.on('error', _wsError);
     _pingInterval = setInterval(_pingClients, PING_INTERVAL);

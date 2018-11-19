@@ -161,7 +161,7 @@ function Wemo() {
     const dName = deviceInfo.friendlyName;
     const dMac = deviceInfo.macAddress.toUpperCase();
     const msg = `Wemo ${dName} (${dMac}) found.`;
-    log.log(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     _self.emit('device_found', dMac, deviceInfo);
 
     const client = wemo.client(deviceInfo);

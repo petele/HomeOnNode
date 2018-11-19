@@ -176,7 +176,7 @@ function NanoLeaf(key, ip, port) {
         _state = state;
         // If we weren't ready before, change to ready & fire ready event
         if (_ready === false) {
-          log.log(LOG_PREFIX, 'Ready.');
+          log.debug(LOG_PREFIX, 'Ready.');
           _ready = true;
         }
         /**

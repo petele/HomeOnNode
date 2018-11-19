@@ -112,7 +112,12 @@ function Home(initialConfig, fbRef) {
     } else {
       msg += `([${Object.keys(command)}], `;
     }
-    msg += `'${modifier}', '${source}')`;
+    if (modifier) {
+      msg += `'${modifier}', `;
+    } else {
+      msg += 'null, ';
+    }
+    msg += `'${source}')`;
     if (command.noop === true) {
       msg += ' ** NoOp **';
     }
@@ -275,7 +280,7 @@ function Home(initialConfig, fbRef) {
     }
     // SOMA Smart Shades
     if (command.hasOwnProperty('somaSmartShades')) {
-      log.log(LOG_PREFIX, 'SOMA disabled');
+      log.warn(LOG_PREFIX, 'SOMA disabled');
       // if (soma) {
       //   let cmds = command.somaSmartShades;
       //   if (Array.isArray(cmds) === false) {
@@ -443,7 +448,7 @@ function Home(initialConfig, fbRef) {
    * Initialize the HOME Api
    */
   function _init() {
-    log.init(LOG_PREFIX, 'Initializing home.');
+    log.init(LOG_PREFIX, 'Starting...');
     const now = Date.now();
     _self.state = {
       doNotDisturb: false,
@@ -481,7 +486,6 @@ function Home(initialConfig, fbRef) {
     _initWemo();
     _initCron();
     setTimeout(function() {
-      log.log(LOG_PREFIX, 'Ready');
       _self.emit('ready');
       _playSound(_config.readySound);
     }, 750);
@@ -1215,7 +1219,7 @@ function Home(initialConfig, fbRef) {
    * Init the SOMA Smart Shades API
    */
   function _initSoma() {
-    log.log(LOG_PREFIX, 'SOMA INIT skipped.');
+    log.debug(LOG_PREFIX, 'SOMA INIT skipped.');
     // const fbSomaConfigPath = 'config/HomeOnNode/somaSmartShades';
     // _fb.child(fbSomaConfigPath).once('value', function(snapshot) {
     //   soma = new SomaSmartShades(bluetooth, snapshot.val());

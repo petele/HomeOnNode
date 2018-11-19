@@ -38,7 +38,7 @@ function WSClient(host, retry) {
     if ((host.indexOf('ws://') === -1) && (host.indexOf('wss://') === -1)) {
       _wsURL = `ws://${host}`;
     }
-    log.init(LOG_PREFIX, _wsURL);
+    log.init(LOG_PREFIX, 'Starting...', _wsURL);
     _connect();
   }
 
