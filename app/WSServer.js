@@ -61,7 +61,7 @@ function WSServer(name, port) {
     ws.on('message', (msg) => {
       _wsMessage(msg, fromIP);
     });
-    log.log(_logPrefix, `Client connected from ${fromIP}`);
+    log.debug(_logPrefix, `Client connected from ${fromIP}`);
   }
 
   /**

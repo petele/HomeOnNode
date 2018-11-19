@@ -34,6 +34,7 @@ function DeviceMonitor(fb, deviceName) {
    * Init the DeviceMonitor
   */
   function _init() {
+    log.init('DeviceMonitor', 'Starting...');
     if (!_fb) {
       log.error(_deviceName, 'Firebase reference not provided.');
       _self.emit('error', 'no_firebase_ref');
@@ -183,7 +184,7 @@ function DeviceMonitor(fb, deviceName) {
       log.warn(_deviceName, 'Disconnected from Firebase.');
       return;
     }
-    log.log(_deviceName, 'Connected to Firebase.');
+    log.debug(_deviceName, 'Connected to Firebase.');
     const now = Date.now();
     const details = {
       heartbeat: now,
@@ -205,7 +206,7 @@ function DeviceMonitor(fb, deviceName) {
    */
   function _authChanged(authData) {
     if (authData) {
-      log.log(_deviceName, 'Firebase client authenticated.', authData);
+      log.debug(_deviceName, 'Firebase client authenticated.', authData);
       return;
     }
     log.warn(_deviceName, 'Firebase client unauthenticated.');
@@ -220,7 +221,7 @@ function DeviceMonitor(fb, deviceName) {
   function _getHostname() {
     try {
       const hostname = os.hostname();
-      log.log(_deviceName, `Hostname: ${hostname}`);
+      log.debug(_deviceName, `Hostname: ${hostname}`);
       return hostname;
     } catch (ex) {
       log.exception(_deviceName, `Unable to retreive hostname.`, ex);

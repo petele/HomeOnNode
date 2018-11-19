@@ -96,7 +96,7 @@ function HTTPServer(port) {
   });
 
   server = exp.listen(exp.get('port'), function() {
-    log.log(LOG_PREFIX, 'Express server started on port ' + exp.get('port'));
+    log.debug(LOG_PREFIX, 'Express server started on port ' + exp.get('port'));
   });
 }
 util.inherits(HTTPServer, EventEmitter);

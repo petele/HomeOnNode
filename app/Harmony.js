@@ -134,7 +134,7 @@ function Harmony(uuid) {
       return;
     }
     _attemptingReconnect = true;
-    log.log(LOG_PREFIX, 'Resetting Harmony Hub connection...');
+    log.debug(LOG_PREFIX, 'Resetting Harmony Hub connection...');
     if (_client) {
       try {
         _client.end();
@@ -157,7 +157,7 @@ function Harmony(uuid) {
       log.warn(LOG_PREFIX, 'Already searching for Harmony Hubs...');
       return;
     }
-    log.init(LOG_PREFIX, 'Searching for Harmony Hub...');
+    log.debug(LOG_PREFIX, 'Searching for Harmony Hub...');
     try {
       _discoveryClient = new HarmonyHubDiscovery(61991);
     } catch (ex) {
@@ -166,7 +166,7 @@ function Harmony(uuid) {
       return;
     }
     _discoveryClient.on('online', function(hub) {
-      log.log(LOG_PREFIX, 'Hub found on IP address: ' + hub.ip);
+      log.debug(LOG_PREFIX, 'Hub found on IP address: ' + hub.ip);
       _stopDiscoveryClient();
       _connect(hub.ip);
     });

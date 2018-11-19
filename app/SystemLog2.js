@@ -97,7 +97,7 @@ function _setOptions(options) {
     newOpts[key] = options[key] || DEFAULT_OPTIONS[key];
   });
   _opts = newOpts;
-  _log(LOG_PREFIX, `setOptions(${JSON.stringify(options)})`);
+  _log(LOG_PREFIX, `setOptions(opts)`, options);
 }
 
 /**

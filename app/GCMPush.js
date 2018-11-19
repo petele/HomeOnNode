@@ -60,7 +60,7 @@ function GCMPush(fb) {
     subscriber.key = key;
     subscriber.shortKey = key.substring(0, 11);
     _subscribers[key] = subscriber;
-    log.log(LOG_PREFIX, `Subscriber added: ${subscriber.shortKey}`);
+    log.debug(LOG_PREFIX, `Subscriber added: ${subscriber.shortKey}`);
   }
 
   /**
@@ -73,7 +73,7 @@ function GCMPush(fb) {
       return;
     }
     delete _subscribers[key];
-    log.log(LOG_PREFIX, `Subscriber removed: ${key.substring(0, 11)}`);
+    log.debug(LOG_PREFIX, `Subscriber removed: ${key.substring(0, 11)}`);
   }
 
   /**
@@ -95,10 +95,10 @@ function GCMPush(fb) {
       log.error(LOG_PREFIX, 'sendMessage() failed, not ready.');
       return Promise.reject(new Error('not_ready'));
     }
-    log.log(LOG_PREFIX, 'Sending notifications...');
     const message = Object.assign({}, srcMessage);
     const now = Date.now();
     message.sentAt = now;
+    log.debug(LOG_PREFIX, 'Sending notifications...', message);
     if (!message.tag) {
       message.tag = 'HoN-generic';
     }
@@ -120,7 +120,7 @@ function GCMPush(fb) {
       const fbPath = `config/GCMPush/subscribers/${key}`;
       const promise = webpush.sendNotification(subscriber, payload, _options)
         .then((resp) => {
-          log.log(LOG_PREFIX, `Message sent to ${shortKey}`);
+          log.debug(LOG_PREFIX, `Message sent to ${shortKey}`);
           log.debug(LOG_PREFIX, '', resp);
           return _fb.child(`${fbPath}/lastResult`).set(resp);
         })

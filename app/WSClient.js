@@ -95,7 +95,7 @@ function WSClient(host, retry) {
   function _wsOpen() {
     _self.connected = true;
     _self.emit('connect');
-    log.log(LOG_PREFIX, 'WebSocket opened');
+    log.debug(LOG_PREFIX, 'WebSocket opened');
     _interval = setInterval(() => {
       _ws.ping('', false, true);
     }, PING_INTERVAL);
