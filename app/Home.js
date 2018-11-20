@@ -19,7 +19,6 @@ const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
 const Bluetooth = require('./Bluetooth');
 const PushBullet = require('./PushBullet');
-// const SomaSmartShades = require('./SomaSmartShades');
 
 const LOG_PREFIX = 'HOME';
 
@@ -31,6 +30,9 @@ const LOG_PREFIX = 'HOME';
  * @param {Object} fbRef Firebase object
 */
 function Home(initialConfig, fbRef) {
+  const ALSO_RUN_EXT = 'ALSO_RUN';
+  const DELAYED_EXT = 'DELAYED';
+  const TIME_RANGE_EXT = 'TIME_RANGE';
   const _self = this;
   _self.state = {};
 
@@ -45,7 +47,6 @@ function Home(initialConfig, fbRef) {
   let nest;
   let presence;
   let pushBullet;
-  // let soma;
   let sonos;
   let tivo;
   let weather;
@@ -118,7 +119,12 @@ function Home(initialConfig, fbRef) {
       msg += 'null, ';
     }
     msg += `'${source}')`;
-    log.log(LOG_PREFIX, msg, command);
+    if ((source.indexOf(ALSO_RUN_EXT) >= 0) ||
+        (source.indexOf(TIME_RANGE_EXT) >= 0)) {
+          log.debug(LOG_PREFIX, msg, command);
+    } else {
+      log.log(LOG_PREFIX, msg, command);
+    }
     // If it's a NoOp, stop here.
     if (command.noop === true) {
       return;
@@ -275,29 +281,6 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
       }
     }
-    // SOMA Smart Shades
-    if (command.hasOwnProperty('somaSmartShades')) {
-      log.warn(LOG_PREFIX, 'SOMA disabled');
-      // if (soma) {
-      //   let cmds = command.somaSmartShades;
-      //   if (Array.isArray(cmds) === false) {
-      //     cmds = [cmds];
-      //   }
-      //   cmds.forEach((cmd) => {
-      //     if (cmd.position === 'OPEN') {
-      //       soma.open(cmd.blindId, true);
-      //     } else if (cmd.position === 'CLOSE') {
-      //       soma.close(cmd.blindId, true);
-      //     } else if (cmd.position === 'TOGGLE') {
-      //       soma.toggle(cmd.blindId, true);
-      //     } else {
-      //       soma.setPosition(cmd.blindId, parseInt(cmd.position, 10), true);
-      //     }
-      //   });
-      // } else {
-      //   log.warn(LOG_PREFIX, 'SOMA unavailable.');
-      // }
-    }
     // Wemo Command
     if (command.hasOwnProperty('wemo')) {
       if (wemo) {
@@ -375,13 +358,14 @@ function Home(initialConfig, fbRef) {
       if (Array.isArray(cmds) === false) {
         cmds = [cmds];
       }
+      const src = `${source}-${DELAYED_EXT}`;
       cmds.forEach((cmd) => {
         const delay = cmd.delayMS || 30 * 1000;
         setTimeout(() => {
           if (cmd.hasOwnProperty('cmdName')) {
-            _self.executeCommandByName(cmd.cmdName, cmd.modifier, 'DELAYED');
+            _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
           } else {
-            _self.executeCommand(cmd.command, 'DELAYED');
+            _self.executeCommand(cmd.command, src);
           }
         }, delay);
         const msg = `Scheduled command to run in ${delay / 1000}s`;
@@ -394,8 +378,8 @@ function Home(initialConfig, fbRef) {
       if (Array.isArray(cmds) === false) {
         cmds = [cmds];
       }
+      const src = `${source}-${ALSO_RUN_EXT}`;
       cmds.forEach((cmd) => {
-        const src = `${source}-ALSO_RUN`;
         if (cmd.hasOwnProperty('cmdName')) {
           _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
         } else {
@@ -409,12 +393,13 @@ function Home(initialConfig, fbRef) {
       if (Array.isArray(cmds) === false) {
         cmds = [cmds];
       }
+      const src = `${source}-${TIME_RANGE_EXT}`;
       cmds.forEach((cmd) => {
         if (_inRange(cmd.range)) {
           if (cmd.hasOwnProperty('cmdName')) {
-            _self.executeCommandByName(cmd.cmdName, cmd.modifier, 'TIME_RANGE');
+            _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
           } else {
-            _self.executeCommand(cmd.command, 'TIME_RANGE');
+            _self.executeCommand(cmd.command, src);
           }
         } else {
           const msg = `Command not run, not in time range: ${cmd.range}`;
@@ -476,7 +461,6 @@ function Home(initialConfig, fbRef) {
     _initSonos();
     _initHarmony();
     _initPresence();
-    _initSoma();
     _initTivo();
     _initPushBullet();
     _initWeather();
@@ -616,12 +600,12 @@ function Home(initialConfig, fbRef) {
       _setState('HOME');
       _announceDoorOpened(doorName);
     }
-    const cmdName = 'DOOR_' + doorName;
-    let modifier;
-    if (doorState === 'CLOSED') {
-      modifier = 'OFF';
-    }
-    _self.executeCommandByName(cmdName, modifier, cmdName);
+    // const cmdName = 'DOOR_' + doorName;
+    // let modifier;
+    // if (doorState === 'CLOSED') {
+    //   modifier = 'OFF';
+    // }
+    // _self.executeCommandByName(cmdName, modifier, cmdName);
   }
 
   /**
@@ -1206,28 +1190,6 @@ function Home(initialConfig, fbRef) {
     pushBullet = null;
   }
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * SOMA Smart Shades API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Init the SOMA Smart Shades API
-   */
-  function _initSoma() {
-    log.debug(LOG_PREFIX, 'SOMA INIT skipped.');
-    // const fbSomaConfigPath = 'config/HomeOnNode/somaSmartShades';
-    // _fb.child(fbSomaConfigPath).once('value', function(snapshot) {
-    //   soma = new SomaSmartShades(bluetooth, snapshot.val());
-    //   soma.on('level', function(id, value) {
-    //     _fbSet(`state/somaSmartShades/${id}/level`, value);
-    //   });
-    //   soma.on('battery', function(id, value) {
-    //     _fbSet(`state/somaSmartShades/${id}/battery`, value);
-    //   });
-    // });
-  }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
