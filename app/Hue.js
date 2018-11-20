@@ -24,7 +24,7 @@ const LOG_PREFIX = 'HUE';
  */
 function Hue(key, explicitIPAddress) {
   const REQUEST_TIMEOUT = 15 * 1000;
-  const BATTERY_CHECK_INTERVAL = 12 * 60 * 60 * 1000;
+  const BATTERY_CHECK_INTERVAL = 24 * 60 * 60 * 1000;
   const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
   const GROUPS_REFRESH_INTERVAL = 100 * 1000;
   const LIGHTS_REFRESH_INTERVAL = 40 * 1000;
@@ -33,7 +33,9 @@ function Hue(key, explicitIPAddress) {
 
   let _bridgeIP;
   let _ready = false;
-  let _requestsInProgress = 0;
+
+  const _requestQueue = {};
+  let _requestId = 0;
 
   this.lights = {};
   this.groups = {};
@@ -113,7 +115,7 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves with the response
   */
   this.sendRequest = function(requestPath, method, body) {
-    log.debug(LOG_PREFIX, `sendRequest('${requestPath}', '${method}', ${body})`);
+    log.debug(LOG_PREFIX, `sendRequest('${requestPath}', '${method}')`, body);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
@@ -172,7 +174,7 @@ function Hue(key, explicitIPAddress) {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         resolve(_makeHueRequest(requestPath, method, body, retry));
-      }, delayMS);
+      }, delayMS || 30 * 1000);
     });
   }
 
@@ -186,21 +188,24 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves with the response
   */
   function _makeHueRequest(requestPath, method, body, retry) {
-    _requestsInProgress++;
-    let msg = `makeHueRequest('${method}', '${requestPath}')`;
-    if (_requestsInProgress >= 5) {
-      const xrpMsg = `Excessive requests in progress (${_requestsInProgress})`;
-      const reqInfo = {
-        requestPath,
-        method,
-        body,
-        retry,
-      };
-      log.warn(LOG_PREFIX, xrpMsg, reqInfo);
-    }
+    const msg = `makeHueRequest('${method}', '${requestPath}', body, ${retry})`;
     log.verbose(LOG_PREFIX, msg, body);
-    return new Promise(function(resolve, reject) {
-      let requestOptions = {
+
+    const requestId = _requestId++;
+    _requestQueue[requestId] = {
+      requestId: requestId,
+      path: `${method}://${requestPath}`,
+      startedAt: Date.now(),
+    };
+
+    const requestsInProgress = Object.keys(_requestQueue).length;
+    if (requestsInProgress >= 5) {
+      const xrpMsg = `Excessive requests in progress (${requestsInProgress})`;
+      log.warn(LOG_PREFIX, xrpMsg, _requestQueue);
+    }
+
+    return new Promise((resolve, reject) => {
+      const requestOptions = {
         uri: `https://${_bridgeIP}/api/${_key}${requestPath}`,
         method: method,
         json: true,
@@ -212,8 +217,8 @@ function Hue(key, explicitIPAddress) {
         requestOptions.body = body;
       }
       request(requestOptions, (error, response, respBody) => {
-        _requestsInProgress -= 1;
-        let errors = [];
+        delete _requestQueue[requestId];
+        const errors = [];
         if (error) {
           log.verbose(LOG_PREFIX, `${msg} Response error: request`, error);
           if (retry !== true) {
