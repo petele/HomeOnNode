@@ -93,7 +93,7 @@ function _initWatcher(filename) {
   if (!filename) {
     return;
   }
-  log.init(LOG_PREFIX, `Setting up log watcher for: ${filename}`);
+  log.debug(LOG_PREFIX, `Setting up log watcher for: ${filename}`);
   try {
     fs.accessSync(filename, fs.R_OK);
   } catch (ex) {
