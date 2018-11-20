@@ -360,6 +360,9 @@ function Home(initialConfig, fbRef) {
       }
       const src = `${source}-${DELAYED_EXT}`;
       cmds.forEach((cmd) => {
+        if (!cmd) {
+          return;
+        }
         const delay = cmd.delayMS || 30 * 1000;
         setTimeout(() => {
           if (cmd.hasOwnProperty('cmdName')) {
@@ -380,6 +383,9 @@ function Home(initialConfig, fbRef) {
       }
       const src = `${source}-${ALSO_RUN_EXT}`;
       cmds.forEach((cmd) => {
+        if (!cmd) {
+          return;
+        }
         if (cmd.hasOwnProperty('cmdName')) {
           _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
         } else {
@@ -395,6 +401,9 @@ function Home(initialConfig, fbRef) {
       }
       const src = `${source}-${TIME_RANGE_EXT}`;
       cmds.forEach((cmd) => {
+        if (!cmd) {
+          return;
+        }
         if (_inRange(cmd.range)) {
           if (cmd.hasOwnProperty('cmdName')) {
             _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
