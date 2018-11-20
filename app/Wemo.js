@@ -135,7 +135,7 @@ function Wemo() {
    * @return {boolean} True if search started.
    */
   function _searchForDevices() {
-    log.debug(LOG_PREFIX, '_searchForDevices()');
+    log.verbose(LOG_PREFIX, '_searchForDevices()');
     if (_isReady() === false) {
       return false;
     }

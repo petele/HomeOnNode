@@ -880,7 +880,7 @@ function Home(initialConfig, fbRef) {
    * Cron Tick
    */
   function _onCronTick() {
-    log.debug(LOG_PREFIX, 'CRON: tick');
+    log.verbose(LOG_PREFIX, 'CRON: tick');
     const now = Date.now();
     const nowPretty = log.formatTime(now);
     const msg = {
