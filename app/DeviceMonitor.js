@@ -29,6 +29,7 @@ function DeviceMonitor(fb, deviceName) {
   let _ipAddressInterval;
   let _lastWrite = Date.now();
   let _hasExceededTimeout = false;
+  let _hasConnected = false;
 
   /**
    * Init the DeviceMonitor
@@ -181,10 +182,13 @@ function DeviceMonitor(fb, deviceName) {
   function _connectionChanged(snapshot) {
     const isConnected = snapshot.val();
     if (isConnected === false) {
-      log.warn(_deviceName, 'Disconnected from Firebase.');
+      if (_hasConnected === true) {
+        log.warn(_deviceName, 'Disconnected from Firebase.');
+      }
       return;
     }
-    log.debug(_deviceName, 'Connected to Firebase.');
+    _hasConnected = true;
+    log.log(_deviceName, 'Connected to Firebase.');
     const now = Date.now();
     const details = {
       heartbeat: now,

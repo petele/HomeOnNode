@@ -604,17 +604,11 @@ function Home(initialConfig, fbRef) {
       date_: nowPretty,
     };
     _fbPush('logs/doors', doorLogObj);
-    log.log(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
       _setState('HOME');
       _announceDoorOpened(doorName);
     }
-    // const cmdName = 'DOOR_' + doorName;
-    // let modifier;
-    // if (doorState === 'CLOSED') {
-    //   modifier = 'OFF';
-    // }
-    // _self.executeCommandByName(cmdName, modifier, cmdName);
   }
 
   /**
@@ -719,7 +713,7 @@ function Home(initialConfig, fbRef) {
    * @return {Promise} A promise that resolves to the result of the request
    */
   function _setDoNotDisturb(val) {
-    log.log(LOG_PREFIX, `setDoNotDisturb('${val}')`);
+    log.debug(LOG_PREFIX, `setDoNotDisturb('${val}')`);
     const doNotDisturb = val === 'ON' ? true : false;
     _fbSet('state/doNotDisturb', doNotDisturb);
     return Promise.resolve({doNotDisturb: doNotDisturb});
@@ -731,7 +725,7 @@ function Home(initialConfig, fbRef) {
    * @param {String} source Where doorbell was rung/sender
    */
   function _ringDoorbell(source) {
-    log.log(LOG_PREFIX, `Doorbell from ${source}`);
+    log.verbose(LOG_PREFIX, `Doorbell from ${source}`);
     _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
     const now = Date.now();
     _fbSet('state/lastDoorbell', now);
