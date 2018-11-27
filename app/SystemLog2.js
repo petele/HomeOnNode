@@ -553,7 +553,7 @@ function _cleanFile(logFile) {
       logFile = _opts.fileFilename;
     }
     const msg = `cleanFile('${logFile}')`;
-    _log(LOG_PREFIX, msg);
+    _debug(LOG_PREFIX, msg);
     fs.stat(logFile, function(err, stats) {
       if (err) {
         if (err.code === 'ENOENT') {
