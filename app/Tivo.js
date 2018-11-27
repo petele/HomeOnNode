@@ -45,7 +45,7 @@ function Tivo(ipAddress) {
    * Init
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
+    log.init(LOG_PREFIX, 'Starting...', {ip: _host});
     _connectToTivo();
   }
 

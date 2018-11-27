@@ -29,7 +29,8 @@ function DeviceMonitor(fb, deviceName) {
   let _ipAddressInterval;
   let _lastWrite = Date.now();
   let _hasExceededTimeout = false;
-  let _hasConnected = false;
+  let _firstConnect = true;
+  let _firstAuth = true;
 
   /**
    * Init the DeviceMonitor
@@ -73,7 +74,7 @@ function DeviceMonitor(fb, deviceName) {
       shutdown: null,
       exitDetails: null,
     };
-    log.debug(_deviceName, 'Device Settings', deviceData);
+    log.log(_deviceName, 'Device Settings', deviceData);
     _lastWrite = now;
     _fb.child(_deviceName).set(deviceData);
     _fb.root().child(`.info/connected`).on('value', _connectionChanged);
@@ -180,14 +181,15 @@ function DeviceMonitor(fb, deviceName) {
    * @param {Object} snapshot Firebase snapshot.
    */
   function _connectionChanged(snapshot) {
-    const isConnected = snapshot.val();
-    if (isConnected === false) {
-      if (_hasConnected === true) {
-        log.warn(_deviceName, 'Disconnected from Firebase.');
-      }
+    if (_firstConnect) {
+      _firstConnect = false;
       return;
     }
-    _hasConnected = true;
+    const isConnected = snapshot.val();
+    if (isConnected === false) {
+      log.warn(_deviceName, 'Disconnected from Firebase.');
+      return;
+    }
     log.log(_deviceName, 'Connected to Firebase.');
     const now = Date.now();
     const details = {
@@ -209,8 +211,12 @@ function DeviceMonitor(fb, deviceName) {
    * @param {Object} authData Firebase authentication data.
    */
   function _authChanged(authData) {
+    if (_firstAuth) {
+      _firstAuth = false;
+      return;
+    }
     if (authData) {
-      log.debug(_deviceName, 'Firebase client authenticated.', authData);
+      log.log(_deviceName, 'Firebase client authenticated.', authData);
       return;
     }
     log.warn(_deviceName, 'Firebase client unauthenticated.');

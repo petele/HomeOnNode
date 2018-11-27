@@ -160,7 +160,7 @@ function Nest(authToken, roomIdMap) {
    * Initialize the API
    */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
+    log.init(LOG_PREFIX, 'Starting...', _roomIdMap);
     if (!authToken) {
       let msg = 'No Nest authToken provided.';
       log.error(LOG_PREFIX, msg);

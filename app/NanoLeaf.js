@@ -71,7 +71,7 @@ function NanoLeaf(key, ip, port) {
    * Init
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
+    log.init(LOG_PREFIX, 'Starting...', {ip: ip, port: port});
     _getState();
     setInterval(_getState, REFRESH_INTERVAL);
   }
