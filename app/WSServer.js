@@ -28,7 +28,7 @@ function WSServer(name, port) {
     if (!port) {
       port = 8881;
     }
-    log.init(_logPrefix, `Starting...`, port);
+    log.init(_logPrefix, `Starting...`, {port: port});
     try {
       _wss = new WebSocket.Server({port: port});
     } catch (ex) {

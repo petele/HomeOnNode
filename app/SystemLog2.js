@@ -235,7 +235,9 @@ function _handleLog(logObj) {
   if (logObj.levelValue <= _opts.firebaseLogLevel) {
     _saveLogToFirebase(logObj);
   }
-  _sendLogToWSS(logObj);
+  setImmediate(() => {
+    _sendLogToWSS(logObj);
+  });
 }
 
 /**

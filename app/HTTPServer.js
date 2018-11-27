@@ -32,7 +32,7 @@ function HTTPServer(port) {
 
   const exp = express();
 
-  log.init(LOG_PREFIX, 'Starting...', _port);
+  log.init(LOG_PREFIX, 'Starting...', {port: _port});
   exp.set('port', _port);
   exp.use(methodOverride());
   exp.use(bodyParser.json());

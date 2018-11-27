@@ -24,7 +24,7 @@ function Weather(latLon, key) {
    * Init
   */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
+    log.init(LOG_PREFIX, 'Starting...', {latLon: latLon});
     _getWeather();
     setInterval(_getWeather, REFRESH_INTERVAL);
   }
