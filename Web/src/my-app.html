@@ -51,6 +51,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="view-system-logs.html">
 <link rel="lazy-import" href="view-weather.html">
 <link rel="lazy-import" href="view-vpn-logs.html">
+<link rel="lazy-import" href="view-alarms.html">
 
 
 <dom-module id="my-app">
@@ -108,6 +109,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <app-toolbar>Home On Node</app-toolbar>
         <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
           <a name="home" href="/">Home</a>
+          <a name="alarms" href="/alarms">Alarms</a>
           <a name="hvac" href="/hvac">Heat &amp; Air</a>
           <a href="https://home.nest.com/#structures/ec1dea10-787f-11e3-82cb-123139253bf1">Nest</a>
           <a href="sonos://">Sonos</a>
@@ -167,6 +169,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <view-presence-logs name="presence-logs"></view-presence-logs>
           <view-door-logs name="door-logs"></view-door-logs>
           <view-vpn-logs name="vpn-logs"></view-vpn-logs>
+          <view-alarms name="alarms"></view-alarms>
           <view-404 name="404"></view-404>
         </iron-pages>
         <paper-toast id="toast" text="Hello world!"></paper-toast>
