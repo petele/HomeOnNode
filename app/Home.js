@@ -19,6 +19,7 @@ const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
 const Bluetooth = require('./Bluetooth');
 const PushBullet = require('./PushBullet');
+const AlarmClock = require('./AlarmClock');
 
 const LOG_PREFIX = 'HOME';
 
@@ -39,6 +40,7 @@ function Home(initialConfig, fbRef) {
   let _config = initialConfig;
   let _fb = fbRef;
 
+  let alarmClock;
   let bluetooth;
   let gcmPush;
   let harmony;
@@ -462,6 +464,7 @@ function Home(initialConfig, fbRef) {
     _fbSet('state/time/updated_', _self.state.time.started_);
     _fbSet('state/gitHead', _self.state.gitHead);
     gcmPush = new GCMPush(_fb);
+    _initAlarmClock();
     _initBluetooth();
     _initNotifications();
     _initNest();
@@ -820,6 +823,34 @@ function Home(initialConfig, fbRef) {
       return true;
     }
     return false;
+  }
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
+ * Alarm Clock API
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the Alarm Clock API
+   */
+  function _initAlarmClock() {
+    _fbSet('state/alarmClock', false);
+    const fbAlarms = _fb.child('config/HomeOnNode/alarmClock');
+    alarmClock = new AlarmClock(fbAlarms);
+
+    alarmClock.on('alarm_set', (key, details) => {
+      _fbSet(`state/alarmClock/${key}`, details);
+    });
+
+    alarmClock.on('alarm', (key, details) => {
+      log.debug(LOG_PREFIX, `Alarm event received: ${key}`, details);
+      if (details.hasOwnProperty('cmdName')) {
+        _self.executeCommandByName(details.cmdName, null, 'AlarmClock');
+      } else {
+        log.error(LOG_PREFIX, 'Unknown alarm command', details);
+      }
+    });
   }
 
 
