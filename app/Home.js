@@ -20,6 +20,7 @@ const Presence = require('./Presence');
 const Bluetooth = require('./Bluetooth');
 const PushBullet = require('./PushBullet');
 const AlarmClock = require('./AlarmClock');
+const GoogleHome = require('./GoogleHome');
 
 const LOG_PREFIX = 'HOME';
 
@@ -45,6 +46,7 @@ function Home(initialConfig, fbRef) {
   let gcmPush;
   let harmony;
   let hue;
+  let googleHome;
   let nanoLeaf;
   let nest;
   let presence;
@@ -340,7 +342,11 @@ function Home(initialConfig, fbRef) {
     }
     // Play Sound
     if (command.hasOwnProperty('sound')) {
-      _playSound(command.sound, command.soundForce);
+      const opts = {
+        force: command.soundForce,
+        useHome: command.useHome,
+      };
+      _playSound(command.sound, opts);
     }
     // Say This
     if (command.hasOwnProperty('sayThis')) {
@@ -458,6 +464,7 @@ function Home(initialConfig, fbRef) {
     _fb.child('state').once('value', function(snapshot) {
       _self.state = snapshot.val();
     });
+    _fbSet('state/doors', false);
     _fbSet('state/time/started', _self.state.time.started);
     _fbSet('state/time/updated', _self.state.time.started);
     _fbSet('state/time/started_', _self.state.time.started_);
@@ -478,6 +485,7 @@ function Home(initialConfig, fbRef) {
     _initWeather();
     _initWemo();
     _initCron();
+    _initGoogleHome();
     setTimeout(function() {
       _self.emit('ready');
       _playSound(_config.readySound);
@@ -651,34 +659,46 @@ function Home(initialConfig, fbRef) {
     }, presenceAlarmTimeout);
   }
 
-
   /**
    * Plays a sound
    *
    * @param {String} file The audio file to play
-   * @param {Boolean} force Override doNotDisturb settings
+   * @param {Object} opts Options object
    * @return {Promise} A promise that resolves to the result of the request
    */
-  function _playSound(file, force) {
+  function _playSound(file, opts) {
+    opts = opts || {};
+    const now = Date.now();
+    if (now - _lastSoundPlayedAt < (20 * 1000) && opts.force !== true) {
+      log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
+      return;
+    }
+    if (_self.state.doNotDisturb === true && opts.force !== true) {
+      log.debug(LOG_PREFIX, 'playSound skipped, do not disturb.');
+      return;
+    }
+    _lastSoundPlayedAt = now;
+    log.debug(LOG_PREFIX, `playSound('${file}', ...)`, opts);
+    if (opts.useHome) {
+      return _playSoundGoogleHome(file, opts.contentType);
+    }
+    return _playSoundLocal(file);
+  }
+
+  /**
+   * Plays a sound through the local speaker
+   *
+   * @param {String} file The audio file to play
+   * @return {Promise} A promise that resolves to the result of the request
+   */
+  function _playSoundLocal(file) {
     return new Promise(function(resolve, reject) {
-      const now = Date.now();
-      if (now - _lastSoundPlayedAt < (20 * 1000) && force !== true) {
-        log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
-        resolve({playSound: false, reason: 'too_soon'});
-        return;
-      }
-      if (_self.state.doNotDisturb === true && force !== true) {
-        log.debug(LOG_PREFIX, 'playSound skipped, do not disturb.');
-        resolve({playSound: false, reason: 'do_not_disturb'});
-        return;
-      }
-      _lastSoundPlayedAt = now;
-      log.debug(LOG_PREFIX, `playSound('${file}', ${force})`);
+      log.verbose(LOG_PREFIX, `playSoundLocal('${file}')`);
       const cmd = `mplayer ${file}`;
       exec(cmd, function(error, stdout, stderr) {
         if (error) {
           log.exception(LOG_PREFIX, 'PlaySound Error', error);
-          resolve({playSound: false, reason: 'error', error: error});
+          resolve({playSound: false, reason: error});
           return;
         }
         resolve({playSound: true});
@@ -687,26 +707,38 @@ function Home(initialConfig, fbRef) {
   }
 
   /**
-   * Adds an Utterance to the Firebase queue
+   * Plays a sound through a Google Home Speaker
+   *
+   * @param {String} url The audio URL to play
+   * @param {String} [contentType] default: 'audio/mp3'.
+   * @return {Promise} A promise that resolves to the result of the request
+   */
+  function _playSoundGoogleHome(url, contentType) {
+    if (!googleHome) {
+      log.error(LOG_PREFIX, 'Unable to play sound, Google Home not available.');
+      return _playSoundLocal(url);
+    }
+    log.verbose(LOG_PREFIX, `playSoundGoogleHome('${url}')`);
+    return googleHome.play(url, contentType);
+  }
+
+  /**
+   * Uses Google Home to speak
    *
    * @param {String} utterance The words to say
    * @param {Boolean} force Override doNotDisturb settings
    * @return {Promise} A promise that resolves to the result of the request
    */
   function _sayThis(utterance, force) {
-    return new Promise(function(resolve, reject) {
-      log.debug(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
-      if (_self.state.doNotDisturb === false || force === true) {
-        const sayObj = {
-          sayAt: Date.now(),
-          utterance: utterance,
-        };
-        _fbPush('sayThis', sayObj);
-        resolve({sayThis: true});
-        return;
-      }
-      resolve({sayThis: false, reason: 'do_not_disturb'});
-    });
+    if (!googleHome) {
+      log.error(LOG_PREFIX, 'Unable to speak, Google Home not available.');
+      return Promise.resolve({sayThis: false, reason: 'gh_not_available'});
+    }
+    log.debug(LOG_PREFIX, `sayThis('${utterance}', ${!!force})`);
+    if (_self.state.doNotDisturb === false || force === true) {
+      return googleHome.say(utterance);
+    }
+    return Promise.resolve({sayThis: false, reason: 'do_not_disturb'});
   }
 
   /**
@@ -731,7 +763,11 @@ function Home(initialConfig, fbRef) {
     log.verbose(LOG_PREFIX, `Doorbell from ${source}`);
     _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
     const now = Date.now();
-    _fbSet('state/lastDoorbell', now);
+    const details = {
+      date: now,
+      date_: log.formatTime(now),
+    };
+    _fbSet('state/lastDoorbell', details);
   }
 
   /**
@@ -836,6 +872,7 @@ function Home(initialConfig, fbRef) {
    */
   function _initAlarmClock() {
     _fbSet('state/alarmClock', false);
+
     const fbAlarms = _fb.child('config/HomeOnNode/alarmClock');
     alarmClock = new AlarmClock(fbAlarms);
 
@@ -864,6 +901,8 @@ function Home(initialConfig, fbRef) {
    * Init the Bluetooth API
    */
   function _initBluetooth() {
+    _fbSet('state/bluetooth', false);
+
     bluetooth = new Bluetooth();
     bluetooth.on('scanning', (scanning) => {
       _fbSet('state/bluetooth/scanning', scanning);
@@ -879,6 +918,7 @@ function Home(initialConfig, fbRef) {
   function _shutdownBluetooth() {
     bluetooth.stopScanning();
   }
+
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
@@ -945,6 +985,7 @@ function Home(initialConfig, fbRef) {
     _fbPush('logs/cron', msg);
   }
 
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
  * Harmony API
@@ -955,6 +996,9 @@ function Home(initialConfig, fbRef) {
    * Init Harmony API
    */
   function _initHarmony() {
+    _fbSet('state/harmony', false);
+    _fbSet('state/harmonyConfig', false);
+
     const apiKey = _config.harmony.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `Harmony unavailable, no API key available.`);
@@ -985,6 +1029,7 @@ function Home(initialConfig, fbRef) {
     harmony = null;
   }
 
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
  * Philips Hue API
@@ -995,6 +1040,8 @@ function Home(initialConfig, fbRef) {
    * Init Hue
    */
   function _initHue() {
+    _fbSet('state/hue', false);
+
     const apiKey = _config.philipsHue.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `Hue unavailable, no API key available.`);
@@ -1045,6 +1092,32 @@ function Home(initialConfig, fbRef) {
     return {bri: 254, ct: 369, on: true};
   }
 
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
+ * Google Home API
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the Google Home API
+   */
+  function _initGoogleHome() {
+    _fbSet('state/googleHome', false);
+
+    const ghConfig = _config.googleHome;
+    if (!ghConfig || !ghConfig.ipAddress) {
+      log.error(LOG_PREFIX, `Google Home unavailable, no config`, ghConfig);
+      return;
+    }
+
+    googleHome = new GoogleHome(ghConfig.ipAddress);
+    googleHome.on('device_info_changed', (data) => {
+      _fbSet('state/googleHome', data);
+    });
+  }
+
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
  * NanoLeaf API
@@ -1055,6 +1128,8 @@ function Home(initialConfig, fbRef) {
    * Init NanoLeaf
    */
   function _initNanoLeaf() {
+    _fbSet('state/nanoLeaf', false);
+
     const ip = _config.nanoLeaf.ip;
     const port = _config.nanoLeaf.port || 16021;
     const apiKey = _config.nanoLeaf.key;
@@ -1072,6 +1147,7 @@ function Home(initialConfig, fbRef) {
     });
   }
 
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
  * Nest API
@@ -1082,6 +1158,8 @@ function Home(initialConfig, fbRef) {
    * Init Nest
    */
   function _initNest() {
+    _fbSet('state/nest', false);
+
     const apiKey = _config.nest.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `Nest unavailable, no API key available.`);
@@ -1093,6 +1171,7 @@ function Home(initialConfig, fbRef) {
       _self.state.nest = data;
     });
   }
+
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
@@ -1115,6 +1194,7 @@ function Home(initialConfig, fbRef) {
     });
   }
 
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
  * Presence API
@@ -1125,6 +1205,8 @@ function Home(initialConfig, fbRef) {
    * Init Presence
    */
   function _initPresence() {
+    _fbSet('state/presence', false);
+
     presence = new Presence(bluetooth);
     // Set up the presence detection
     presence.on('change', _presenceChanged);
@@ -1171,6 +1253,7 @@ function Home(initialConfig, fbRef) {
     }
     _self.executeCommandByName(cmdName, null, 'PRESENCE');
   }
+
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
@@ -1235,6 +1318,8 @@ function Home(initialConfig, fbRef) {
    * Init Sonos
    */
   function _initSonos() {
+    _fbSet('state/sonos', false);
+
     sonos = new Sonos();
     sonos.on('player-state', (transportState) => {
       transportState = JSON.parse(JSON.stringify(transportState));
@@ -1276,6 +1361,7 @@ function Home(initialConfig, fbRef) {
     tivo = null;
   }
 
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
  * Weather API
@@ -1286,6 +1372,8 @@ function Home(initialConfig, fbRef) {
    * Init Weather
    */
   function _initWeather() {
+    _fbSet('state/weather', false);
+
     const apiKey = _config.forecastIO.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `ForecastIO unavailable, no API key available.`);
@@ -1297,6 +1385,7 @@ function Home(initialConfig, fbRef) {
     });
   }
 
+
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
  * Wemo API
@@ -1307,6 +1396,8 @@ function Home(initialConfig, fbRef) {
    * Init Wemo
    */
   function _initWemo() {
+    _fbSet('state/wemo', false);
+
     wemo = new Wemo();
     wemo.on('device_found', (id, data) => {
       _fbSet(`state/wemo/${id}`, data);
@@ -1322,6 +1413,7 @@ function Home(initialConfig, fbRef) {
       wemo.addDevice(snapshot.val());
     });
   }
+
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
