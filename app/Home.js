@@ -342,15 +342,15 @@ function Home(initialConfig, fbRef) {
     }
     // Play Sound
     if (command.hasOwnProperty('sound')) {
-      const opts = {
-        force: command.soundForce,
-        useHome: command.useHome,
-      };
-      _playSound(command.sound, opts);
+      const pathToFile = command.sound.soundFile;
+      const opts = command.sound.opts || {};
+     _playSound(pathToFile, opts);
     }
     // Say This
     if (command.hasOwnProperty('sayThis')) {
-      _sayThis(command.sayThis, command.soundForce);
+      const utterance = command.sayThis.utterance;
+      const opts = command.sayThis.opts || {};
+      _sayThis(utterance, opts);
     }
     // Do Not Disturb
     if (command.hasOwnProperty('doNotDisturb')) {
@@ -726,15 +726,16 @@ function Home(initialConfig, fbRef) {
    * Uses Google Home to speak
    *
    * @param {String} utterance The words to say
-   * @param {Boolean} force Override doNotDisturb settings
+   * @param {Object} opts Options
    * @return {Promise} A promise that resolves to the result of the request
    */
-  function _sayThis(utterance, force) {
+  function _sayThis(utterance, opts) {
+    const force = !!opts.force;
     if (!googleHome) {
       log.error(LOG_PREFIX, 'Unable to speak, Google Home not available.');
       return Promise.resolve({sayThis: false, reason: 'gh_not_available'});
     }
-    log.debug(LOG_PREFIX, `sayThis('${utterance}', ${!!force})`);
+    log.debug(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
     if (_self.state.doNotDisturb === false || force === true) {
       return googleHome.say(utterance);
     }
