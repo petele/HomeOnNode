@@ -12,7 +12,8 @@ const LOG_PREFIX = 'ALARM_CLOCK';
  * @constructor
  *
  * @fires AlarmClock#alarm
- * @fires AlarmClock#alarm_set
+ * @fires AlarmClock#alarm_changed
+ * @fires AlarmClock#alarm_removed
  * @param {Object} fbRef Firebase reference to alarms config
 */
 function AlarmClock(fbRef) {
@@ -27,8 +28,8 @@ function AlarmClock(fbRef) {
    * Init
    */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...', _fbRef.key());
     const fbRefKey = _fbRef.key();
+    log.init(LOG_PREFIX, 'Starting...', {key: fbRefKey});
     if (fbRefKey !== FB_REF_KEY) {
       const details = {
         actual: fbRefKey,
@@ -54,6 +55,7 @@ function AlarmClock(fbRef) {
       log.debug(LOG_PREFIX, `removeAlarm('${key}')`);
       _cancelJob(key);
       delete _alarms[key];
+      _self.emit('alarm_removed', key);
     });
 
     _fbRef.on('child_changed', (snapshot) => {
@@ -163,8 +165,8 @@ function AlarmClock(fbRef) {
     log.verbose(LOG_PREFIX, `alarm ${key}`, details);
     _self.emit('alarm', key, details);
     if (!details.repeat) {
-      details.enabled = false;
-      _cancelJob(key);
+      _fbRef.child(`${key}/enabled`).set(false);
+      return;
     }
     _notify(key);
   }
@@ -184,7 +186,7 @@ function AlarmClock(fbRef) {
     }
     alarm.details.nextInvocation = nextInvocation;
     log.verbose(LOG_PREFIX, `_notify('${key}')`, alarm.details);
-    _self.emit('alarm_set', key, alarm.details);
+    _self.emit('alarm_changed', key, alarm.details);
   }
 
   _init();

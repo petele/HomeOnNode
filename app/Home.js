@@ -877,14 +877,22 @@ function Home(initialConfig, fbRef) {
     const fbAlarms = _fb.child('config/HomeOnNode/alarmClock');
     alarmClock = new AlarmClock(fbAlarms);
 
-    alarmClock.on('alarm_set', (key, details) => {
-      _fbSet(`state/alarmClock/${key}`, details);
+    alarmClock.on('alarm_changed', (key, details) => {
+      const data = {
+        status: details.status,
+        nextInvocation: details.nextInvocation,
+      };
+      _fbSet(`state/alarmClock/${key}`, data);
+    });
+
+    alarmClock.on('alarm_removed', (key) => {
+      _fbSet(`state/alarmClock/${key}`, null);
     });
 
     alarmClock.on('alarm', (key, details) => {
-      log.debug(LOG_PREFIX, `Alarm event received: ${key}`, details);
+      log.debug(LOG_PREFIX, `Alarm fired: ${key}`, details);
       if (details.hasOwnProperty('cmdName')) {
-        _self.executeCommandByName(details.cmdName, null, 'AlarmClock');
+        _self.executeCommandByName(details.cmdName, null, `alarm-${key}`);
       } else {
         log.error(LOG_PREFIX, 'Unknown alarm command', details);
       }
