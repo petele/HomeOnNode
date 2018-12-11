@@ -61,6 +61,8 @@ function HTTPServer(port) {
     res.sendFile(fileName, opts, (err) => {
       if (err) {
         log.error(LOG_PREFIX, `Sending sound file failed: ${fileName}`, err);
+        res.status(404);
+        res.send('Requested URL not found.');
       }
     });
   });
