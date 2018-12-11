@@ -141,6 +141,7 @@ function GoogleHome(ipAddress) {
 
           player.on('status', (status) => {
             if (status && status.idleReason === 'FINISHED') {
+              player.close();
               client.close();
               resolve(status);
             }
@@ -155,6 +156,7 @@ function GoogleHome(ipAddress) {
           player.load(media, {autoplay: true}, (err, status) => {
             if (err) {
               log.error(LOG_PREFIX, 'Play error', err);
+              player.close();
               client.close();
               reject(err);
               return;
