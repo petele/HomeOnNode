@@ -20,13 +20,23 @@ function AlarmClock(fbRef) {
   const _fbRef = fbRef;
   const _alarms = {};
 
+  const FB_REF_KEY = 'alarmClock';
   const RE_PARSE_TIME = /(\d{1,2}):(\d{2})\s?([a-z]*)/i;
 
   /**
    * Init
    */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
+    log.init(LOG_PREFIX, 'Starting...', _fbRef.key());
+    const fbRefKey = _fbRef.key();
+    if (fbRefKey !== FB_REF_KEY) {
+      const details = {
+        actual: fbRefKey,
+        expected: FB_REF_KEY,
+      };
+      log.error(LOG_PREFIX, 'Invalid Firebase reference passed', details);
+      return;
+    }
 
     _fbRef.on('child_added', (snapshot) => {
       const key = snapshot.key();
@@ -152,6 +162,10 @@ function AlarmClock(fbRef) {
     const details = alarm.details;
     log.verbose(LOG_PREFIX, `alarm ${key}`, details);
     _self.emit('alarm', key, details);
+    if (!details.repeat) {
+      details.enabled = false;
+      _cancelJob(key);
+    }
     _notify(key);
   }
 
