@@ -53,6 +53,18 @@ function HTTPServer(port) {
     res.sendFile(path.join(__dirname, '/web/favicon.ico'));
   });
 
+  exp.get('/sounds/:fileName', function(req, res) {
+    const fileName = req.params.fileName;
+    const opts = {
+      root: path.join(__dirname, 'sounds'),
+    };
+    res.sendFile(fileName, opts, (err) => {
+      if (err) {
+        log.error(LOG_PREFIX, `Sending sound file failed: ${fileName}`, err);
+      }
+    });
+  });
+
   exp.post('/execute/name', function(req, res) {
     let body = req.body;
     if (typeof body === 'string') {
