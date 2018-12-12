@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
@@ -16,64 +17,112 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/polymerfire/polymerfire.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="hon-icons.html">
 <link rel="import" href="shared-styles.html">
 
 
 <dom-module id="view-alarms">
   <template>
-    <style include="shared-styles app-grid-style">
+    <style include="shared-styles app-grid-style iron-flex">
       :host {
         display: block;
       }
       .hidden {
         display: none !important;
       }
+      .card h1 {
+        margin: 0;
+      }
+      summary {
+        list-style: none;
+        cursor: pointer;
+        display: inline-block;
+        float: right;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      details {
+        min-height: 2em;
+      }
+      details > summary {
+        width: 100%;
+        height: 2em;
+        outline: none;
+      }
+      .recurringButtons paper-button {
+        min-width: inherit;
+        border-radius: 100%;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        
+      }
     </style>
 
-
-
-
-    <firebase-query
+    <firebase-document
         id="fbAlarmState"
         data="{{alarmState}}"
         path="state/alarmClock">
-    </firebase-query>
-    <firebase-document
+    </firebase-document>
+    <firebase-query
         id="fbAlarmConfig"
         data="{{alarmConfig}}"
         path="config/HomeOnNode/alarmClock">
-    </firebase-document>
-
+    </firebase-query>
 
     <div>
-      <template is="dom-repeat" items="[[alarmState]]">
+      <template is="dom-repeat" items="{{alarmConfig}}">
         <div class="card">
-          <div>
-            <div>[[item.time]]</div>
-            <div>
-              <paper-toggle-button checked="{{item.enabled}}" on-change="toggleEnabled">
-              </paper-toggle-button>
+          <div class="layout horizontal">
+            <h1 class="flex">[[item.time]]</h1>
+            <paper-toggle-button checked="{{item.enabled}}" on-change="userInteraction">
+            </paper-toggle-button>
+          </div>
+          <details on-toggle="userInteraction">
+            <summary>
+              <div class="layout horizontal">
+                <div class="flex">
+                  [[getNextInvocation(item.$key)]]
+                </div>
+                <div>expand</div>
+              </div>
+            </summary>
+          
+            <div class="recurringButtons">
+              <paper-button day="0"
+                class$="[[recurClass(0, item.repeat)]]"
+                on-tap="tapRecur">S</paper-button>
+              <paper-button day="1"
+                class$="[[recurClass(1, item.repeat)]]"
+                on-tap="tapRecur">M</paper-button>
+              <paper-button day="2"
+                class$="[[recurClass(2, item.repeat)]]"
+                on-tap="tapRecur">T</paper-button>
+              <paper-button day="3"
+                class$="[[recurClass(3, item.repeat)]]"
+                on-tap="tapRecur">W</paper-button>
+              <paper-button day="4"
+                class$="[[recurClass(4, item.repeat)]]"
+                on-tap="tapRecur">T</paper-button>
+              <paper-button day="5"
+                class$="[[recurClass(5, item.repeat)]]"
+                on-tap="tapRecur">F</paper-button>
+              <paper-button day="6"
+                class$="[[recurClass(6, item.repeat)]]"
+                on-tap="tapRecur">S</paper-button>
             </div>
-          </div>
-          <div>
-            <paper-checkbox checked="" on-change="">Sun</paper-checkbox>
-            <paper-checkbox checked="" on-change="">Mon</paper-checkbox>
-            <paper-checkbox checked="" on-change="">Tue</paper-checkbox>
-            <paper-checkbox checked="" on-change="">Wed</paper-checkbox>
-            <paper-checkbox checked="" on-change="">Thu</paper-checkbox>
-            <paper-checkbox checked="" on-change="">Fri</paper-checkbox>
-            <paper-checkbox checked="" on-change="">Sat</paper-checkbox>
-          </div>
-          <div>[[item.cmdName]]</div>
-          <div>[[item.nextInvocation]]</div>
-          <div>[[item.$key]] || [[item.status]]</div>
+          
+            <div>[[item.cmdName]]</div>
+            <div>[[item.$key]] || [[item.status]]</div>
+          
+          
+          </details>
+          
         </div>
       </template>
     </div>
-
-
-
 
   </template>
 
@@ -88,7 +137,90 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get observers() {
         return [
+          'alarmsChanged(alarmConfig.*)',
         ];
+      }
+
+      alarmsChanged(items) {
+        items.base.forEach((item) => {
+          item._repeat = this.splitRepeat(item.repeat);
+        });
+      }
+
+      userInteraction() {
+        console.log('user interaction')
+        window.lastUserInput = Date.now();
+      }
+      
+      splitRepeat(repeat) {
+        if (repeat) {
+          const result = [];
+          repeat.split('').forEach((day) => {
+            if (day.toLowerCase() === 'x') {
+              result.push(true);
+              return;
+            }
+            result.push(false);
+          });
+          return result;
+        }
+        return false;
+      }
+      
+      createRecur() {}
+      
+      recurClass(val, repeat) {
+        const classes = ['button'];
+        if (repeat) {
+          const byDay = repeat.split('');
+          if (byDay[val].toLowerCase() === 'x') {
+            classes.push('toggle-on');
+          } else {
+            classes.push('toggle-off');
+          }
+        } else {
+          classes.push('toggle-off');
+        }
+        return classes.join(' ');
+      }
+      
+      tapRecur(event) {
+        const elem = event.target;
+        const day = parseInt(elem.getAttribute('day'), 10);
+        const item = event.model.item;
+        if (!item._repeat) {
+          return;
+        }
+        console.log('item', item);
+        const key = item.$key;
+        const was = item._repeat[day];
+        const now = !was;
+        
+        item._repeat[day] = now;
+        const result = [];
+        item._repeat.forEach((day) => {
+          if (day) {
+            result.push('x');
+            return;
+          }
+          result.push('-');
+        });
+        
+        
+        console.log('e', day, item, was, now, result.join(''));
+        const path = `${key}/repeat`;
+        this.$.fbAlarmConfig.ref.child(path).set(result.join(''));
+
+        this.userInteraction();
+      }
+      
+      getNextInvocation(key) {
+        const nextInvocation = this.$.fbAlarmState.data[key].nextInvocation;
+        if (nextInvocation) {
+          const when = moment(nextInvocation);
+          return when.format('LLLL');
+        }
+        return '';
       }
 
       toggleEnabled(event) {
