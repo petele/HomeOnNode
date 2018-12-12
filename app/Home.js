@@ -883,9 +883,9 @@ function Home(initialConfig, fbRef) {
         if (details.repeatDays &&
             details.repeatDays.charAt(i).toLowerCase() === 'x') {
           repeat.push(true);
-          return;
+        } else {
+          repeat.push(false);
         }
-        repeat.push(false);
       }
       details.repeatDays = repeat;
       _fbSet(`state/alarmClock/${key}`, details);
