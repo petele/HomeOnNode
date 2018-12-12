@@ -878,11 +878,7 @@ function Home(initialConfig, fbRef) {
     alarmClock = new AlarmClock(fbAlarms);
 
     alarmClock.on('alarm_changed', (key, details) => {
-      const data = {
-        status: details.status,
-        nextInvocation: details.nextInvocation,
-      };
-      _fbSet(`state/alarmClock/${key}`, data);
+      _fbSet(`state/alarmClock/${key}`, details);
     });
 
     alarmClock.on('alarm_removed', (key) => {
