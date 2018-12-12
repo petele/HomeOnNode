@@ -878,6 +878,15 @@ function Home(initialConfig, fbRef) {
     alarmClock = new AlarmClock(fbAlarms);
 
     alarmClock.on('alarm_changed', (key, details) => {
+      const repeat = [];
+      details.repeatDays.split('').forEach((char, index) => {
+        if (char.toLowerCase() === 'x') {
+          repeat.push(true);
+        } else {
+          repeat.push(false);
+        }
+      });
+      details.repeatDays = repeat;
       _fbSet(`state/alarmClock/${key}`, details);
     });
 
