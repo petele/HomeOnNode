@@ -133,7 +133,9 @@ function AlarmClock(fbRef) {
       log.error(LOG_PREFIX, `${msg} - failed, invalid time`, details);
       throw new Error('Invalid time');
     }
-    if (details.repeat && details.repeat.length !== 7) {
+    if (details.repeat &&
+        details.repeatDays &&
+        details.repeatDays.length !== 7) {
       log.error(LOG_PREFIX, `${msg} - failed, invalid repeat`, details);
       throw new Error('Unable to parse repeat');
     }
@@ -144,7 +146,7 @@ function AlarmClock(fbRef) {
 
     if (details.repeat) {
       const dayOfWeek = [];
-      details.repeat.split('').forEach((char, index) => {
+      details.repeatDays.split('').forEach((char, index) => {
         if (char.toLowerCase() === 'x') {
           dayOfWeek.push(index);
         }
