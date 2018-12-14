@@ -878,19 +878,36 @@ function Home(initialConfig, fbRef) {
     alarmClock = new AlarmClock(fbAlarms);
 
     alarmClock.on('alarm_changed', (key, details) => {
+      const clone = Object.assign({}, details);
       const repeat = [];
-      if (!details.repeatDays) {
-        details.repeatDays = '-------';
-      }
-      details.repeatDays.split('').forEach((day) => {
-        if (day && day.toLowerCase() === 'x') {
-          repeat.push(true);
-        } else {
-          repeat.push(false);
+      try {
+        if (!clone.repeatDays) {
+          clone.repeatDays = '-------';
         }
-      });
-      details.repeatDays = repeat;
-      _fbSet(`state/alarmClock/${key}`, details);
+        clone.repeatDays.split('').forEach((day) => {
+          if (day && day.toLowerCase() === 'x') {
+            repeat.push(true);
+          } else {
+            repeat.push(false);
+          }
+        });
+        clone.repeatDays = repeat;
+        _fbSet(`state/alarmClock/${key}`, clone);
+      } catch (ex) {
+        const data = {
+          details: details,
+          clone: clone,
+          repeat: repeat,
+          ex: {
+            name: ex.name,
+            message: ex.message,
+          },
+        };
+        if (ex.stack) {
+          data.ex.stack = ex.stack;
+        }
+        log.exception(LOG_PREFIX, `alarmChanged failed`, data);
+      }
     });
 
     alarmClock.on('alarm_removed', (key) => {
