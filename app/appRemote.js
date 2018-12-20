@@ -85,7 +85,7 @@ function init() {
     log.log(APP_NAME, `Log level changed to ${logLevel}`);
   });
 
-  _wsClient = new WSClient(_config.wsServer, true);
+  _wsClient = new WSClient(_config.wsServer, true, 'server');
 
   _fb.child(`config/${APP_NAME}/keypad`).on('value', function(snapshot) {
     _config.keypad = snapshot.val();

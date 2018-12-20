@@ -84,7 +84,7 @@ function init() {
 
   // Connect to the web socket server
   if (_config.wsServer) {
-    _wsClient = new WSClient(_config.wsServer, true);
+    _wsClient = new WSClient(_config.wsServer, true, 'server');
   }
 
   // Initialize the GCM client

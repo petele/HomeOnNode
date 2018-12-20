@@ -201,7 +201,7 @@ function HarmonyWS(ipAddress) {
   function _connect() {
     const wsQuery = `domain=svcs.myharmony.com&hubId=${_hubId}`;
     const wsURL = `ws://${_ipAddress}:${HUB_PORT}/?${wsQuery}`;
-    _wsClient = new WSClient(wsURL, true);
+    _wsClient = new WSClient(wsURL, true, 'harmony');
     _wsClient.on('message', (msg) => {
       _wsMessageReceived(msg);
     });

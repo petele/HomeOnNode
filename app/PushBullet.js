@@ -46,7 +46,7 @@ function PushBullet(token) {
       return;
     }
     const wsURL = PUSHBULLET_URL + _pushBulletToken;
-    _wsClient = new WSClient(wsURL, true);
+    _wsClient = new WSClient(wsURL, true, 'pushbullet');
     _wsClient.on('message', _wsMessageReceived);
   }
 

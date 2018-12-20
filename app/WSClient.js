@@ -13,10 +13,12 @@ const EventEmitter = require('events').EventEmitter;
  * @fires WSClient#message
  * @param {String} host Host and port to connect to.
  * @param {Boolean} retry Automatically try to reconnect.
+ * @param {String} serverName Name of the server we're connecting to.
 */
-function WSClient(host, retry) {
+function WSClient(host, retry, serverName) {
   const PING_INTERVAL = 30 * 1000;
   const _self = this;
+  const _logPrefix = `WS_${serverName.toUpperCase()}`;
   this.connected = false;
   let _ws;
   let _wsURL;
@@ -24,23 +26,20 @@ function WSClient(host, retry) {
   let _interval;
   let _lastError;
   let _lastErrorAt = 0;
-  let _logPrefix;
 
   /**
    * Init the WebSocket Client and connect to the server
   */
   function _init() {
     if (!host) {
-      log.error('WS_CLIENT', 'No hostname provided.');
+      log.error(_logPrefix, 'No hostname provided.');
       return;
     }
     _wsURL = host;
     if ((host.indexOf('ws://') === -1) && (host.indexOf('wss://') === -1)) {
       _wsURL = `ws://${host}`;
     }
-    const parsedURL = url.parse(_wsURL);
-    _logPrefix = `WSC_${parsedURL.hostname}`;
-    log.init(_logPrefix, 'Starting...', parsedURL);
+    log.init(_logPrefix, 'Starting...', url.parse(_wsURL));
     _connect();
   }
 
