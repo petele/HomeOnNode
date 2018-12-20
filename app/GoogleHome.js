@@ -195,8 +195,6 @@ function GoogleHome(ipAddress) {
           reject(error);
           return;
         }
-        // const statusCode = response.statusCode;
-        // log.verbose(LOG_PREFIX, `${msg} completed. (${statusCode}).`, respBody);
         resolve(respBody);
       });
     });
