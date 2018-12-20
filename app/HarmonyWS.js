@@ -14,6 +14,8 @@ const LOG_PREFIX = 'HARMONY_WS';
  * Harmony Hub via Web Sockets API
  * @constructor
  *
+ * @see https://github.com/home-assistant/pyharmony/blob/websockets/pyharmony/client.py
+ *
  * @fires Harmony#activity_changed
  * @fires Harmony#config_changed
  * @param {String} ipAddress IP Address to the Hub
@@ -34,6 +36,7 @@ function HarmonyWS(ipAddress) {
     RUN_ACTIVITY: 'harmony.activityengine?runactivity',
     METADATA: 'harmonyengine.metadata?notify',
     BUTTON_PRESS: 'control.button?pressType',
+    SYNC: 'setup.sync',
     HOLD_ACTION: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?holdAction',
   };
   const _ipAddress = ipAddress;
@@ -133,6 +136,24 @@ function HarmonyWS(ipAddress) {
       reject(new Error('send_key_failed'));
     });
   };
+
+
+  // /**
+  // * Syncs the hub to the web service
+  // *
+  // * @return {Promise}
+  // */
+  // this.sync = function() {
+  //   const msg = `sync()`;
+  //   log.debug(LOG_PREFIX, msg);
+  //   if (_isReady()) {
+  //     return _sendCommand(COMMAND_STRINGS.SYNC)
+  //       .then(() => {
+  //         return {sync: true};
+  //       });
+  //   }
+  //   return Promise.reject(new Error('sync_failed'));
+  // };
 
 
   /**
