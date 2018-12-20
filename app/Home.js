@@ -12,7 +12,7 @@ const Sonos = require('./Sonos');
 const moment = require('moment');
 const log = require('./SystemLog2');
 const GCMPush = require('./GCMPush');
-const Harmony = require('./Harmony');
+const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
 const version = require('./version');
 const NanoLeaf = require('./NanoLeaf');
@@ -1031,16 +1031,17 @@ function Home(initialConfig, fbRef) {
    */
   function _initHarmony() {
     _fbSet('state/harmony', false);
-    _fbSet('state/harmonyConfig', false);
-
-    const apiKey = _config.harmony.key;
-    if (!apiKey) {
-      log.error(LOG_PREFIX, `Harmony unavailable, no API key available.`);
+    const ip = _config.harmony.ipAddress;
+    if (!ip) {
+      log.error(LOG_PREFIX, `Harmony unavailable, no IP address specified.`);
       return;
     }
-    harmony = new Harmony(apiKey);
+    harmony = new Harmony(ip);
+    harmony.on('hub_info', (data) => {
+      _fbSet('state/harmony/info', data);
+    });
     harmony.on('activity_changed', (activity) => {
-      _fbSet('state/harmony', activity);
+      _fbSet('state/harmony/activity', activity);
       const honCmdName = `HARMONY_${activity.label.toUpperCase()}`;
       const honCmd = _config.commands[honCmdName];
       if (honCmd) {
@@ -1048,7 +1049,13 @@ function Home(initialConfig, fbRef) {
       }
     });
     harmony.on('config_changed', (config) => {
-      _fbSet('state/harmonyConfig', config);
+      _fbSet('state/harmony/config', config);
+    });
+    harmony.on('state_notify', (data) => {
+      _fbSet('state/harmony/state', data);
+    });
+    harmony.on('metadata_changed', (data) => {
+      _fbSet('state/harmony/meta', data);
     });
   }
 
