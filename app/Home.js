@@ -1054,7 +1054,7 @@ function Home(initialConfig, fbRef) {
     harmony.on('state_notify', (data) => {
       _fbSet('state/harmony/state', data);
     });
-    harmony.on('metadata_changed', (data) => {
+    harmony.on('metadata_notify', (data) => {
       _fbSet('state/harmony/meta', data);
     });
   }

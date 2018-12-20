@@ -16,8 +16,11 @@ const LOG_PREFIX = 'HARMONY_WS';
  *
  * @see https://github.com/home-assistant/pyharmony/blob/websockets/pyharmony/client.py
  *
+ * @fires Harmony#hub_info
  * @fires Harmony#activity_changed
  * @fires Harmony#config_changed
+ * @fires Harmony#metadata_notify
+ * @fires Harmony#state_notify
  * @param {String} ipAddress IP Address to the Hub
 */
 function HarmonyWS(ipAddress) {
@@ -26,18 +29,18 @@ function HarmonyWS(ipAddress) {
   const CONFIG_REFRESH_INTERVAL = 18 * 60 * 1000;
   const COMMAND_PREFIX = 'vnd.logitech.harmony/';
   const COMMAND_STRINGS = {
+    BUTTON_PRESS: 'control.button?pressType',
     CONFIG: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?config',
     GET_ACTIVITY: COMMAND_PREFIX +
         'vnd.logitech.harmony.engine?getCurrentActivity',
-    START_ACTIVITY_FINISHED: 'harmony.engine?startActivityFinished',
-    STATE_DIGEST_NOTIFY: 'connect.stateDigest?notify',
+    HOLD_ACTION: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?holdAction',
+    METADATA: 'harmonyengine.metadata?notify',
+    RUN_ACTIVITY: 'harmony.activityengine?runactivity',
     START_ACTIVITY_1: 'harmony.engine?startActivity',
     START_ACTIVITY_2: 'harmony.engine?startactivity',
-    RUN_ACTIVITY: 'harmony.activityengine?runactivity',
-    METADATA: 'harmonyengine.metadata?notify',
-    BUTTON_PRESS: 'control.button?pressType',
+    START_ACTIVITY_FINISHED: 'harmony.engine?startActivityFinished',
+    STATE_DIGEST_NOTIFY: 'connect.stateDigest?notify',
     SYNC: 'setup.sync',
-    HOLD_ACTION: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?holdAction',
   };
   const _ipAddress = ipAddress;
   let _wsClient;
@@ -53,114 +56,98 @@ function HarmonyWS(ipAddress) {
    */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
-    _getHubInfo().then(() => {
-      const wsQuery = `domain=svcs.myharmony.com&hubId=${_hubId}`;
-      const wsURL = `ws://${_ipAddress}:${HUB_PORT}/?${wsQuery}`;
-      _wsClient = new WSClient(wsURL, true);
-      _wsClient.on('message', (msg) => {
-        _wsMessageReceived(msg);
-      });
-      _wsClient.on('connect', () => {
-        log.debug(LOG_PREFIX, `WebSocket connected.`);
-        _getConfig();
-        _getActivity();
-      });
-      setInterval(_getConfig, CONFIG_REFRESH_INTERVAL);
+    _getHubInfo().then((hubInfo) => {
+      log.debug(LOG_PREFIX, 'Hub info received', hubInfo);
+      _hubId = hubInfo.remoteId;
+      _self.emit('hub_info', hubInfo);
+      _connect();
     }).catch((err) => {
       log.exception(LOG_PREFIX, 'Init failed', err);
     });
   }
 
-
   /**
    * Start the activity by ID
    *
    * @param {Number} activityId
-   * @return {Promise}
+   * @return {Boolean}
    */
   this.setActivityById = function(activityId) {
-    const msg = `setActivityId(${activityId})`;
-    log.debug(LOG_PREFIX, msg);
-    return new Promise(function(resolve, reject) {
-      if (_setActivityById(activityId)) {
-        resolve({setHueActivity: true});
-        return;
-      }
-      log.error(LOG_PREFIX, `${msg} failed.`);
-      reject(new Error('activity_not_started'));
-    });
+    const msg = `setActivityById('${activityId}')`;
+    if (!activityId) {
+      log.error(LOG_PREFIX, `${msg} failed, missing 'activityId'`);
+      return false;
+    }
+    const params = {
+      async: true,
+      timestamp: Date.now(),
+      args: {
+        rule: 'start',
+      },
+      activityId: activityId.toString(),
+    };
+    log.debug(LOG_PREFIX, msg, params);
+    return _sendCommand(COMMAND_STRINGS.RUN_ACTIVITY, params);
   };
-
 
   /**
    * Start the named activity
    *
    * @param {String} activityName
-   * @return {Promise}
+   * @return {Boolean}
    */
   this.setActivityByName = function(activityName) {
-    const msg = `setActivityName('${activityName}')`;
-    log.debug(LOG_PREFIX, msg);
-    return new Promise(function(resolve, reject) {
-      const activityId = _activitiesByName[activityName];
-      if (!activityId) {
-        log.error(LOG_PREFIX, `${msg} failed, activity not found.`);
-        reject(new Error('activity_not_found'));
-        return;
-      }
-      if (_setActivityById(activityId)) {
-        resolve({setHueActivity: true});
-        return;
-      }
-      log.error(LOG_PREFIX, `${msg} failed.`);
-      reject(new Error('activity_not_started'));
-    });
+    const msg = `setActivityByName('${activityName}')`;
+    if (!activityName) {
+      log.error(LOG_PREFIX, `${msg} failed, missing 'activityName'`);
+      return false;
+    }
+    const activityId = _activitiesByName[activityName];
+    if (!activityId) {
+      log.error(LOG_PREFIX, `${msg} failed, activity not found.`);
+      return false;
+    }
+    return _self.setActivityById(activityId);
   };
-
 
   /**
    * Sends the specified key
    *
    * @param {String} cmd
-   * @return {Promise}
+   * @return {Boolean}
    */
   this.sendKey = function(cmd) {
-    const msg = `sendKey(...)`;
-    log.debug(LOG_PREFIX, msg, cmd);
-    return new Promise(function(resolve, reject) {
-      if (_sendHarmonyKey(cmd)) {
-        resolve({sendCommand: true});
-        return;
-      }
-      log.error(LOG_PREFIX, `${msg} failed.`);
-      reject(new Error('send_key_failed'));
-    });
+    const msg = `sendKey({...})`;
+    if (!cmd || typeof cmd !== 'string') {
+      log.error(LOG_PREFIX, `${msg} failed, invalid command.`);
+      return false;
+    }
+    const params = {
+      status: 'press',
+      timestamp: Date.now(),
+      verb: 'render',
+      action: cmd,
+    };
+    log.debug(LOG_PREFIX, msg, params);
+    return _sendCommand(COMMAND_STRINGS.HOLD_ACTION, params);
   };
 
-
-  // /**
-  // * Syncs the hub to the web service
-  // *
-  // * @return {Promise}
-  // */
-  // this.sync = function() {
-  //   const msg = `sync()`;
-  //   log.debug(LOG_PREFIX, msg);
-  //   if (_isReady()) {
-  //     return _sendCommand(COMMAND_STRINGS.SYNC)
-  //       .then(() => {
-  //         return {sync: true};
-  //       });
-  //   }
-  //   return Promise.reject(new Error('sync_failed'));
-  // };
-
+  /**
+  * Syncs the hub to the web service
+  *
+  * @return {Boolean}
+  */
+  this.sync = function() {
+    const msg = `sync()`;
+    log.debug(LOG_PREFIX, msg);
+    return _sendCommand(COMMAND_STRINGS.SYNC);
+  };
 
   /**
    * Close the Harmony Hub connection and shut down
    */
   this.close = function() {
-    log.log(LOG_PREFIX, 'Shutting down.');
+    log.log(LOG_PREFIX, 'close()');
     if (_wsClient) {
       try {
         _wsClient.shutdown();
@@ -170,7 +157,6 @@ function HarmonyWS(ipAddress) {
       _wsClient = null;
     }
   };
-
 
   /**
    * Get hub info
@@ -201,16 +187,31 @@ function HarmonyWS(ipAddress) {
         }
         if (!respBody || respBody.code !== '200' || !respBody.code) {
           log.error(LOG_PREFIX, `_getHubInfo() response error`, respBody);
-          reject(true);
+          reject(new Error('get_hubo_info'));
           return;
         }
-        _self.emit('hub_info', respBody.data);
-        _hubId = respBody.data.remoteId;
-        resolve();
+        resolve(respBody.data);
       });
     });
   }
 
+  /**
+   * Open WebSocket port & connect to the Harmony Hub
+   */
+  function _connect() {
+    const wsQuery = `domain=svcs.myharmony.com&hubId=${_hubId}`;
+    const wsURL = `ws://${_ipAddress}:${HUB_PORT}/?${wsQuery}`;
+    _wsClient = new WSClient(wsURL, true);
+    _wsClient.on('message', (msg) => {
+      _wsMessageReceived(msg);
+    });
+    _wsClient.on('connect', () => {
+      log.debug(LOG_PREFIX, `Connected to Harmony Hub.`);
+      _getConfig();
+      _getActivity();
+    });
+    setInterval(_getConfig, CONFIG_REFRESH_INTERVAL);
+  }
 
   /**
    * Handle incoming web socket message
@@ -237,11 +238,13 @@ function HarmonyWS(ipAddress) {
       return;
     }
     if (msgJSON.type === COMMAND_STRINGS.STATE_DIGEST_NOTIFY) {
+      log.verbose(LOG_PREFIX, `State Digest Notify`, msgJSON.data);
       _self.emit('state_notify', msgJSON.data);
       return;
     }
     if (msgJSON.type === COMMAND_STRINGS.METADATA) {
-      _self.emit('metadata_changed', msgJSON.data);
+      log.verbose(LOG_PREFIX, `Metadata Notify`, msgJSON.data);
+      _self.emit('metadata_notify', msgJSON.data);
       return;
     }
     // Message types we don't care about
@@ -262,19 +265,21 @@ function HarmonyWS(ipAddress) {
    * @return {boolean} True if message was sent.
    */
   function _sendCommand(command, params) {
-    if (_isReady() !== true) {
+    if (!_wsClient || _wsClient.connected === false) {
+      log.error(LOG_PREFIX, 'Unable to send command, no WebSocket connection.');
       return false;
     }
+    const defaultParams = {
+      verb: 'get',
+      format: 'json',
+    };
     const payload = {
       hubId: _hubId,
       timeout: 30,
       hbus: {
         cmd: command,
         id: _msgId++,
-        params: params || {
-          verb: 'get',
-          format: 'json',
-        },
+        params: params || defaultParams,
       },
     };
     log.verbose(LOG_PREFIX, '_sendCommand({...})', payload);
@@ -302,8 +307,8 @@ function HarmonyWS(ipAddress) {
      * @event Harmony#activity_changed
      * @type {Object}
      */
+    log.debug(LOG_PREFIX, `activityChanged(...)`, activity);
     _self.emit('activity_changed', activity);
-    log.verbose(LOG_PREFIX, `activityChanged(...)`, activity);
   }
 
 
@@ -314,8 +319,8 @@ function HarmonyWS(ipAddress) {
    * @param {Object} config
   */
   function _configChanged(config) {
-    if (!diff(config, _config)) {
-      // config is the same, drop out.
+    if (!diff(_config, config)) {
+      // Config hasn't changed, we can skip.
       return;
     }
     _config = config;
@@ -333,100 +338,28 @@ function HarmonyWS(ipAddress) {
      * @event Harmony#config_changed
      * @type {Object}
      */
+    log.debug(LOG_PREFIX, 'Config changed.', config);
     _self.emit('config_changed', config);
-    log.verbose(LOG_PREFIX, 'Config changed.', config);
   }
-
-
-  /**
-   * Is Ready?
-   *
-   * @return {Boolean}
-  */
-  function _isReady() {
-    if (_wsClient) {
-      return true;
-    }
-    log.error(LOG_PREFIX, 'HarmonyHub not ready.');
-    return false;
-  }
-
 
   /**
    * Request an update to the config info
    *   Response will be sent as an event when the Hub returns the data
    *
-   * @fires Harmony#tbd
    * @return {Boolean}
   */
   function _getConfig() {
-    if (_isReady() !== true) {
-      return false;
-    }
-    _sendCommand(COMMAND_STRINGS.CONFIG);
-    return true;
+    return _sendCommand(COMMAND_STRINGS.CONFIG);
   }
-
 
   /**
    * Request an update to the current activity
    *   Response will be sent as an event when the hub returns the data
    *
-   * @fires Harmony#tbd
    * @return {Boolean}
   */
   function _getActivity() {
-    if (_isReady() !== true) {
-      return false;
-    }
-    _sendCommand(COMMAND_STRINGS.GET_ACTIVITY);
-    return true;
-  }
-
-
-  /**
-   * Starts the selected activity
-   *
-   * @param {Number} activityId
-   * @return {Boolean}
-  */
-  function _setActivityById(activityId) {
-    if (_isReady() !== true) {
-      return false;
-    }
-    const params = {
-      async: true,
-      timestamp: Date.now(),
-      args: {
-        rule: 'start',
-      },
-      activityId: activityId.toString(),
-    };
-    log.verbose(LOG_PREFIX, `_setActivityById(${activityId})`, params);
-    _sendCommand(COMMAND_STRINGS.RUN_ACTIVITY, params);
-    return true;
-  }
-
-
-  /**
-   * Send a key command
-   *
-   * @param {String} cmd
-   * @return {Boolean}
-  */
-  function _sendHarmonyKey(cmd) {
-    if (_isReady() !== true) {
-      return false;
-    }
-    const params = {
-      status: 'press',
-      timestamp: Date.now(),
-      verb: 'render',
-      action: cmd,
-    };
-    log.verbose(LOG_PREFIX, `_sendHarmonyKey({...})`, params);
-    _sendCommand(COMMAND_STRINGS.HOLD_ACTION, params);
-    return true;
+    return _sendCommand(COMMAND_STRINGS.GET_ACTIVITY);
   }
 
   _init();
