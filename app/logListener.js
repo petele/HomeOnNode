@@ -35,5 +35,5 @@ function printLog(logObj) {
   }
 }
 
-_ws = new WSClient(_host, commander.retry);
+_ws = new WSClient(_host, commander.retry, 'server');
 _ws.on('message', printLog);
