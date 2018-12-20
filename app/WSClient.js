@@ -1,11 +1,10 @@
 'use strict';
 
+const url = require('url');
 const util = require('util');
 const WebSocket = require('ws');
 const log = require('./SystemLog2');
 const EventEmitter = require('events').EventEmitter;
-
-const LOG_PREFIX = 'WS_CLIENT';
 
 /**
  * WebSocket Client
@@ -25,20 +24,23 @@ function WSClient(host, retry) {
   let _interval;
   let _lastError;
   let _lastErrorAt = 0;
+  let _logPrefix;
 
   /**
    * Init the WebSocket Client and connect to the server
   */
   function _init() {
     if (!host) {
-      log.error(LOG_PREFIX, 'No hostname provided.');
+      log.error('WS_CLIENT', 'No hostname provided.');
       return;
     }
     _wsURL = host;
     if ((host.indexOf('ws://') === -1) && (host.indexOf('wss://') === -1)) {
       _wsURL = `ws://${host}`;
     }
-    log.init(LOG_PREFIX, 'Starting...', {url: _wsURL});
+    const parsedURL = url.parse(_wsURL);
+    _logPrefix = `WSC_${parsedURL.hostname}`;
+    log.init(_logPrefix, 'Starting...', parsedURL);
     _connect();
   }
 
@@ -46,30 +48,12 @@ function WSClient(host, retry) {
    * Connects to the WebSocket Server
    */
   function _connect() {
-    log.debug(LOG_PREFIX, `Connecting to ${_wsURL}`);
+    log.debug(_logPrefix, `Connecting to ${_wsURL}`);
     _ws = new WebSocket(_wsURL);
     _ws.on('open', _wsOpen);
     _ws.on('close', _wsClose);
     _ws.on('message', _wsMessage);
     _ws.on('error', _wsError);
-    _ws.on('ping', _wsPing);
-    _ws.on('pong', _wsPong);
-  }
-
-  /**
-   * Handles the ping event
-   */
-  function _wsPing() {
-    // log.verbose(LOG_PREFIX, 'Ping.');
-    _self.emit('ping');
-  }
-
-  /**
-   * Handles the ping event
-   */
-  function _wsPong() {
-    // log.verbose(LOG_PREFIX, 'Pong.');
-    _self.emit('pong');
   }
 
   /**
@@ -77,15 +61,14 @@ function WSClient(host, retry) {
    */
   function _wsClose() {
     _self.connected = false;
+    log.log(_logPrefix, `WebSocket closed.`);
     _self.emit('disconnect');
     _clearPingPong();
     if (_retry === true) {
-      log.debug(LOG_PREFIX, `Will retry in 3 seconds...`);
+      log.debug(_logPrefix, `Will reconnect in 3 seconds...`);
       setTimeout(() => {
         _connect();
       }, 3000);
-    } else {
-      log.log(LOG_PREFIX, 'WebSocket closed.');
     }
   }
 
@@ -94,8 +77,8 @@ function WSClient(host, retry) {
    */
   function _wsOpen() {
     _self.connected = true;
+    log.verbose(_logPrefix, 'WebSocket opened.');
     _self.emit('connect');
-    log.debug(LOG_PREFIX, 'WebSocket opened');
     _interval = setInterval(() => {
       _ws.ping('', false, true);
     }, PING_INTERVAL);
@@ -110,7 +93,7 @@ function WSClient(host, retry) {
     try {
       msg = JSON.parse(msg);
     } catch (ex) {
-      log.error(LOG_PREFIX, `Unable to parse message ${msg}`, ex);
+      log.error(_logPrefix, `Unable to parse message ${msg}`, ex);
       return;
     }
     _self.emit('message', msg);
@@ -129,7 +112,7 @@ function WSClient(host, retry) {
       return;
     }
     _lastError = err.code;
-    log.error(LOG_PREFIX, `Client error on ${_wsURL}`, err);
+    log.error(_logPrefix, `Client error on ${_wsURL}`, err);
   }
 
   /**
@@ -151,22 +134,22 @@ function WSClient(host, retry) {
   this.send = function(msg) {
     return new Promise(function(resolve, reject) {
       if (!_ws) {
-        log.error(LOG_PREFIX, 'No WebSocket connection available.');
+        log.error(_logPrefix, 'No WebSocket connection available.');
         reject(new Error('no_connection'));
         return;
       }
       if (_ws.readyState !== WebSocket.OPEN) {
-        log.error(LOG_PREFIX, 'WebSocket connection not open.', _ws.readyState);
+        log.error(_logPrefix, 'WebSocket connection not open.', _ws.readyState);
         reject(new Error('not_open'));
         return;
       }
       _ws.send(msg, (err) => {
         if (err) {
-          log.error(LOG_PREFIX, 'Error sending message.', err);
+          log.error(_logPrefix, 'Error sending message.', err);
           reject(err);
           return;
         }
-        log.verbose(LOG_PREFIX, 'Message sent.', JSON.parse(msg));
+        log.verbose(_logPrefix, 'Message sent.', JSON.parse(msg));
         resolve();
       });
     });
@@ -176,15 +159,13 @@ function WSClient(host, retry) {
    * Shutdown the WebSocket client connection
    */
   this.shutdown = function() {
-    log.log(LOG_PREFIX, 'Shutting down...');
+    log.log(_logPrefix, 'Shutting down...');
     _retry = false;
     _clearPingPong();
     if (_ws) {
       _ws.removeAllListeners('open');
       _ws.removeAllListeners('close');
       _ws.removeAllListeners('message');
-      _ws.removeAllListeners('ping');
-      _ws.removeAllListeners('pong');
       _ws.close();
       _ws.removeAllListeners('error');
     }
