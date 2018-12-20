@@ -60,7 +60,7 @@ function WSClient(host, retry) {
    * Handles the ping event
    */
   function _wsPing() {
-    log.verbose(LOG_PREFIX, 'Ping.');
+    // log.verbose(LOG_PREFIX, 'Ping.');
     _self.emit('ping');
   }
 
@@ -68,7 +68,7 @@ function WSClient(host, retry) {
    * Handles the ping event
    */
   function _wsPong() {
-    log.verbose(LOG_PREFIX, 'Pong.');
+    // log.verbose(LOG_PREFIX, 'Pong.');
     _self.emit('pong');
   }
 

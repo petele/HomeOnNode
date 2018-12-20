@@ -2,6 +2,7 @@
 
 const util = require('util');
 const log = require('./SystemLog2');
+const diff = require('deep-diff').diff;
 const SonosSystem = require('sonos-discovery');
 const EventEmitter = require('events').EventEmitter;
 
@@ -22,6 +23,7 @@ function Sonos() {
   const FAV_INTERVAL = 12 * 60 * 1000;
   let _ready = false;
   let _sonosSystem;
+  let _favorites;
   const _self = this;
 
   /**
@@ -194,8 +196,10 @@ function Sonos() {
     }
     let player = _getPlayer();
     player.system.getFavorites().then((favs) => {
-      _self.emit('favorites-changed', favs);
-      log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
+      if (diff(_favorites, favs)) {
+        _self.emit('favorites-changed', favs);
+        log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
+      }
     });
   }
 
