@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 const methodOverride = require('method-override');
 const EventEmitter = require('events').EventEmitter;
 
-const LOG_PREFIX = 'HTTPRequest';
+const LOG_PREFIX = 'HTTP_SERVER';
 
 /**
  * Starts the local HTTP server.
