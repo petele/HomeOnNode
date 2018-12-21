@@ -197,8 +197,9 @@ function Sonos() {
     let player = _getPlayer();
     player.system.getFavorites().then((favs) => {
       if (diff(_favorites, favs)) {
-        _self.emit('favorites-changed', favs);
         log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
+        _self.emit('favorites-changed', favs);
+        _favorites = favs;
       }
     });
   }
