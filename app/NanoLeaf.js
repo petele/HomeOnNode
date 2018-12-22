@@ -168,8 +168,13 @@ function NanoLeaf(key, ip, port) {
     return _makeLeafRequest('', 'GET', null)
     .catch(function(err) {
       log.error(LOG_PREFIX, err.message);
+      return {error: err};
     })
     .then((resp) => {
+      if (resp.error) {
+        // Bail, we've already logged the error above.
+        return;
+      }
       let state = resp.body;
       // Has the state changed since last time?
       if (diff(_state, state)) {

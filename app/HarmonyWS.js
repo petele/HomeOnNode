@@ -33,6 +33,7 @@ function HarmonyWS(ipAddress) {
     CONFIG: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?config',
     GET_ACTIVITY: COMMAND_PREFIX +
         'vnd.logitech.harmony.engine?getCurrentActivity',
+    HELP_DISCRETES: 'harmony.engine?helpdiscretes',
     HOLD_ACTION: COMMAND_PREFIX + 'vnd.logitech.harmony.engine?holdAction',
     METADATA: 'harmonyengine.metadata?notify',
     RUN_ACTIVITY: 'harmony.activityengine?runactivity',
@@ -249,6 +250,7 @@ function HarmonyWS(ipAddress) {
     }
     // Message types we don't care about
     if (msgJSON.type === COMMAND_STRINGS.BUTTON_PRESS ||
+        msgJSON.cmd === COMMAND_STRINGS.HELP_DISCRETES ||
         msgJSON.cmd === COMMAND_STRINGS.START_ACTIVITY_1 ||
         msgJSON.cmd === COMMAND_STRINGS.START_ACTIVITY_2) {
       return;
