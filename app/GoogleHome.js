@@ -15,6 +15,7 @@ const LOG_PREFIX = 'GOOGLE_HOME';
  * @constructor
  *
  * @see https://rithvikvibhu.github.io/GHLocalApi/
+ * @see https://developers.google.com/cast/docs/media
  *
  * @param {string} ipAddress IP Address of the Google Home
 */
@@ -62,6 +63,21 @@ function GoogleHome(ipAddress) {
     if (!_isReady()) {
       return;
     }
+    // const opts = {
+    //   metadata: {
+    //     metadataType: 0,
+    //     title: utterance,
+    //     subtitle: 'HomeOnNode',
+    //     images: [{
+    //       url: 'https://gdrinker.com/images/sadpanda.png',
+    //       width: 200,
+    //       height: 300,
+    //     }],
+    //   },
+    // };
+    // if (volume && volume <= 100 && volume > 0) {
+    //   opts.volume = volume / 100;
+    // }
     return tts(utterance, 'en', 1).then((url) => {
       return _self.play(url);
     });
@@ -91,7 +107,7 @@ function GoogleHome(ipAddress) {
   /**
    * Makes the Google Home to set the volume.
    *
-   * @param {number} level Volume level (0-100).
+   * @param {number} level Volume level (1-100).
    * @return {number}
    */
   this.setVolume = function(level) {
@@ -100,7 +116,7 @@ function GoogleHome(ipAddress) {
     if (!_isReady()) {
       return;
     }
-    if (level > 100 || level < 0) {
+    if (level > 100 || level < 1) {
       log.error(LOG_PREFIX, `${msg} failed, level out of bounds.`);
       return;
     }
@@ -120,12 +136,13 @@ function GoogleHome(ipAddress) {
    * Makes the Google Home play the specific URL.
    *
    * @param {string} url A sound URL to play.
-   * @param {string} [contentType] default: 'audio/mp3'.
+   * @param {Object} [options]
    * @return {Promise}
    */
-  this.play = function(url, contentType) {
-    const msg = `play('${url}', contentType)`;
-    log.debug(LOG_PREFIX, msg, contentType);
+  this.play = function(url, options) {
+    options = options || {};
+    const msg = `play('${url}', {...})`;
+    log.debug(LOG_PREFIX, msg, options);
     if (!_isReady()) {
       return;
     }
@@ -140,6 +157,8 @@ function GoogleHome(ipAddress) {
           }
 
           player.on('status', (status) => {
+            log.verbose(LOG_PREFIX, 'Player status', status);
+            _self.emit('player_status', status);
             if (status && status.idleReason === 'FINISHED') {
               player.close();
               client.close();
@@ -149,18 +168,29 @@ function GoogleHome(ipAddress) {
 
           const media = {
             contentId: url,
-            contentType: contentType || 'audio/mp3',
-            streamType: 'BUFFERED',
+            contentType: options.contentType || 'audio/mp3',
+            streamType: options.streamType || 'BUFFERED',
           };
+          if (options.duration) {
+            media.duration = options.duration;
+          }
+          if (options.metadata) {
+            media.metadata = options.metadata;
+          }
+          // if (options.volume) {
+          //   media.volume = options.volume;
+          // }
 
           player.load(media, {autoplay: true}, (err, status) => {
             if (err) {
-              log.error(LOG_PREFIX, 'Play error', err);
+              log.error(LOG_PREFIX, 'Player load error', err);
               player.close();
               client.close();
               reject(err);
               return;
             }
+            log.verbose(LOG_PREFIX, 'Player load', status);
+            _self.emit('player_loaded', status);
           });
         });
       });
