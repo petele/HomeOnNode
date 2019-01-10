@@ -201,7 +201,7 @@ function _listenToButton(bdAddr) {
   const cc = new FlicConnectionChannel(bdAddr);
   cc.on('connectionStatusChanged', (status, disconnectReason) => {
     const msg = `connectionStatusChanged for ${bdAddr} to ${status}`;
-    log.log(APP_NAME, msg);
+    log.log(APP_NAME, msg, disconnectReason);
   });
   cc.on('removed', (reason) => {
     log.warn(APP_NAME, `Button ${bdAddr} was removed because ${reason}`);
