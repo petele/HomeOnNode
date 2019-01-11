@@ -360,6 +360,22 @@ function Home(initialConfig, fbRef) {
         _setDoNotDisturb('ON');
       }
     }
+    // Remote log
+    if (command.hasOwnProperty('log')) {
+      const level = command.log.level || 'LOG';
+      const sender = command.log.sender || src;
+      const message = command.log.message;
+      const extra = command.log.extra;
+      if (level === 'LOG') {
+        log.log(sender, message, extra);
+      } else if (level === 'ERROR') {
+        log.error(sender, message, extra);
+      } else if (level === 'EXCEPTION') {
+        log.exception(sender, message, extra);
+      } else {
+        log.debug(sender, message, exception);
+      }
+    }
     // Schedule a delayed command
     if (command.hasOwnProperty('delay')) {
       let cmds = command.delay;
