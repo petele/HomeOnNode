@@ -363,7 +363,7 @@ function Home(initialConfig, fbRef) {
     // Remote log
     if (command.hasOwnProperty('log')) {
       const level = command.log.level || 'LOG';
-      const sender = command.log.sender || src;
+      const sender = command.log.sender || source;
       const message = command.log.message;
       const extra = command.log.extra;
       if (level === 'LOG') {
@@ -373,7 +373,7 @@ function Home(initialConfig, fbRef) {
       } else if (level === 'EXCEPTION') {
         log.exception(sender, message, extra);
       } else {
-        log.debug(sender, message, exception);
+        log.debug(sender, message, extra);
       }
     }
     // Schedule a delayed command
@@ -651,26 +651,20 @@ function Home(initialConfig, fbRef) {
     if (!_config.presenceAlarm) {
       return;
     }
+    if (!_self.state.presence || !_self.state.presence.state) {
+      return;
+    }
     log.debug(LOG_PREFIX, `_doorOpenAccounceTimer('${doorName}')`);
     const presenceAlarmTimeout = _config.presenceAlarm.timeout;
     _doorOpenAccounceTimer = setTimeout(() => {
       _doorOpenAccounceTimer = null;
-      let isSomeonePresent = false;
-      Object.keys(_self.state.presence).forEach((k) => {
-        const person = _self.state.presence[k];
-        if (person.track && person.state === 'PRESENT') {
-          isSomeonePresent = true;
-        }
-      });
-      if (isSomeonePresent === false) {
+      if (_self.state.presence.state === 'PRESENCE_NONE') {
         log.warn(LOG_PREFIX, `${doorName} opened, but no one was present.`);
         const cmdName = _config.presenceAlarm.cmdName;
         if (cmdName) {
           const cmd = _config.commands[cmdName];
           _self.executeCommand(cmd, 'doorAlarm');
         }
-      } else {
-        log.debug(LOG_PREFIX, `${doorName} opened, someone was present.`);
       }
     }, presenceAlarmTimeout);
   }
@@ -1022,11 +1016,11 @@ function Home(initialConfig, fbRef) {
       log.exception(LOG_PREFIX, 'CRON: Unable to store Thermostat info', ex);
     }
     try {
-      if (_self.state.presence) {
-        const keys = Object.keys(_self.state.presence);
+      if (_self.state.presence && _self.state.presence.people) {
+        const keys = Object.keys(_self.state.presence.people);
         msg.presence = {};
         keys.forEach((k) => {
-          msg.presence[k] = _self.state.presence[k].state;
+          msg.presence[k] = _self.state.presence.people[k].state;
         });
       }
     } catch (ex) {
@@ -1298,16 +1292,18 @@ function Home(initialConfig, fbRef) {
       date: person.lastSeen,
     };
     _fbPush('logs/presence', presenceLog);
-    _fbSet('state/presence', who);
+    _fbSet('state/presence/people', who);
     _self.state.presence = who;
     let cmdName = 'PRESENCE_SOME';
     if (numPresent === 0) {
       cmdName = 'PRESENCE_NONE';
     } else {
+      // TODO: Replace this with a command & condition
       if (_self.state.systemState === 'AWAY') {
         _setState('HOME');
       }
     }
+    _fbSet('state/presence/state', cmdName);
     _self.executeCommandByName(cmdName, null, 'PRESENCE');
   }
 
