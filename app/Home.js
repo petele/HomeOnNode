@@ -552,7 +552,9 @@ function Home(initialConfig, fbRef) {
       });
       fbSetLastUpdated();
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to PUSH data to Firebase. (TC)', ex);
+      const msg = 'Unable to PUSH data to Firebase. (TC)'
+      log.exception(LOG_PREFIX, `${msg}: ex`, ex);
+      log.error(LOG_PREFIX, `${msg}: data`, {path: path, value: value});
     }
   }
 
@@ -658,7 +660,7 @@ function Home(initialConfig, fbRef) {
     const presenceAlarmTimeout = _config.presenceAlarm.timeout;
     _doorOpenAccounceTimer = setTimeout(() => {
       _doorOpenAccounceTimer = null;
-      if (_self.state.presence.state === 'PRESENCE_NONE') {
+      if (_self.state.presence.state === 'NONE') {
         log.warn(LOG_PREFIX, `${doorName} opened, but no one was present.`);
         const cmdName = _config.presenceAlarm.cmdName;
         if (cmdName) {
@@ -1293,18 +1295,18 @@ function Home(initialConfig, fbRef) {
     };
     _fbPush('logs/presence', presenceLog);
     _fbSet('state/presence/people', who);
-    _self.state.presence = who;
-    let cmdName = 'PRESENCE_SOME';
+    // _self.state.presence.people = who;
+    let presenceState = 'SOME';
     if (numPresent === 0) {
-      cmdName = 'PRESENCE_NONE';
+      presenceState = 'NONE';
     } else {
       // TODO: Replace this with a command & condition
-      if (_self.state.systemState === 'AWAY') {
-        _setState('HOME');
-      }
+      // if (_self.state.systemState === 'AWAY') {
+      //   _setState('HOME');
+      // }
     }
-    _fbSet('state/presence/state', cmdName);
-    _self.executeCommandByName(cmdName, null, 'PRESENCE');
+    _fbSet('state/presence/state', presenceState);
+    _self.executeCommandByName(`PRESENCE_${presenceState}`, null, 'PRESENCE');
   }
 
 
