@@ -36,7 +36,7 @@ function Presence(bt) {
     }
     _bluetooth.on('discover', (peripheral) => {
       const uuid = peripheral.uuid.toLowerCase();
-      let person = _people[uuid];
+      const person = _people[uuid];
       if (person) {
         _sawPerson(person, peripheral);
       }
@@ -57,6 +57,7 @@ function Presence(bt) {
     person.state = USER_STATES.AWAY;
     _people[uuid] = person;
     log.debug(LOG_PREFIX, msg, person);
+    _emitChange(person);
   };
 
   /**
@@ -67,14 +68,16 @@ function Presence(bt) {
   this.remove = function(uuid) {
     uuid = uuid.toLowerCase();
     const msg = `remove('${uuid}')`;
-    let person = _people[uuid];
+    const person = _people[uuid];
     if (!person) {
       log.warn(LOG_PREFIX, msg + ' failed, person does not exist.');
       return;
     }
     if (person.state = USER_STATES.PRESENT) {
       _numPresent -= 1;
+      person.state = USER_STATES.AWAY;
     }
+    _emitChange(person);
     _people[uuid] = null;
   };
 
@@ -82,23 +85,24 @@ function Presence(bt) {
    * Updates a person in the tracking list.
    *
    * @param {Object} uuid The UUID of the person to update
-   * @param {Object} person The info to update.
+   * @param {Object} newInfo The info to update.
   */
-  this.update = function(uuid, person) {
+  this.update = function(uuid, newInfo) {
     uuid = uuid.toLowerCase();
     const msg = `update('${uuid}')`;
-    let p = _people[uuid];
-    if (!p) {
+    const person = _people[uuid];
+    if (!person) {
       log.warn(LOG_PREFIX, msg + ' failed, person does not exist.');
       return;
     }
-    p.name = person.name;
-    p.track = person.track;
-    if (p.track === false && p.state === USER_STATES.PRESENT) {
+    person.name = newInfo.name;
+    person.track = newInfo.track;
+    if (person.track === false && person.state === USER_STATES.PRESENT) {
       _numPresent =- 1;
-      p.state = USER_STATES.AWAY;
+      person.state = USER_STATES.AWAY;
     }
-    log.debug(LOG_PREFIX, msg, p);
+    _emitChange(person);
+    log.debug(LOG_PREFIX, msg, person);
   };
 
   /**
@@ -110,7 +114,7 @@ function Presence(bt) {
   function _sawPerson(person, peripheral) {
     const now = Date.now();
     person.lastSeen = now;
-    person.lastSeenFormatted = log.formatTime(now);
+    person.lastSeen_ = log.formatTime(now);
     if (person.track === true && person.state === USER_STATES.AWAY) {
       person.state = USER_STATES.PRESENT;
       _numPresent += 1;
@@ -140,15 +144,18 @@ function Presence(bt) {
     }
     const now = Date.now();
     Object.keys(_people).forEach((key) => {
-      let person = _people[key];
-      if (person.track === true) {
-        const timeSinceLastSeen = (now - person.lastSeen);
-        if ((timeSinceLastSeen > MAX_AWAY) &&
-            (person.state === USER_STATES.PRESENT)) {
-          person.state = USER_STATES.AWAY;
-          _numPresent -= 1;
-          _emitChange(person);
-        }
+      const person = _people[key];
+      if (!person) {
+        return;
+      }
+      if (!person.track || person.state === USER_STATES.AWAY) {
+        return;
+      }
+      const timeSinceLastSeen = (now - person.lastSeen);
+      if (timeSinceLastSeen > MAX_AWAY) {
+        person.state = USER_STATES.AWAY;
+        _numPresent -= 1;
+        _emitChange(person);
       }
     });
   }

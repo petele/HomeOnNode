@@ -89,22 +89,24 @@ function init() {
 
   if (_config.cmdPorts.http) {
     _httpServer = new HTTPServer(_config.cmdPorts.http);
-    _httpServer.on('executeCommandByName', (name, modifier, sender) => {
-      _home.executeCommandByName(name, modifier, sender);
+    _httpServer.on('executeCommandByName', (name, sender) => {
+      _home.executeCommandByName(name, sender);
     });
-    _httpServer.on('executeCommand', (cmd, sender) => {
-      _home.executeCommand(cmd, sender);
+    _httpServer.on('executeActions', (actions, sender) => {
+      _home.executeActions(actions, sender);
     });
   }
 
   if (_config.cmdPorts.wss) {
     _wss = new WSServer('CMD', _config.cmdPorts.wss);
-    _wss.on('message', (cmd, source) => {
+    _wss.on('message', (cmd, sender) => {
       if (cmd.hasOwnProperty('cmdName')) {
-        _home.executeCommandByName(cmd.cmdName, cmd.modifier, source);
-      } else {
-        _home.executeCommand(cmd, source);
+        return _home.executeCommandByName(cmd.cmdName, sender);
       }
+      if (cmd.hasOwnProperty('actions')) {
+        return _home.executeActions(cmd.actions, sender);
+      }
+      log.warn(APP_NAME, `Unknown command from WSS`, cmd);
     });
   }
 
@@ -122,16 +124,12 @@ function init() {
 
   _fb.child('commands').on('child_added', function(snapshot) {
     const cmd = snapshot.val();
-    try {
-      if (cmd.hasOwnProperty('cmdName')) {
-        _home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
-      } else {
-        _home.executeCommand(cmd, 'FB');
-      }
-    } catch (ex) {
-      let msg = 'Unable to execute Firebase Command: ';
-      msg += JSON.stringify(cmd);
-      log.exception(APP_NAME, msg, ex);
+    if (cmd.hasOwnProperty('cmdName')) {
+      _home.executeCommandByName(cmd.cmdName, 'FB');
+    } else if (cmd.hasOwnProperty('actions')) {
+      _home.executeActions(cmd.actions, 'FB');
+    } else {
+      log.error(APP_NAME, `Unknown command received from Firebase.`, cmd);
     }
     snapshot.ref().remove();
   });
@@ -183,13 +181,14 @@ function _handleKeyPress(key, modifier, exitApp) {
   }
   const cmd = _config.keypad.keys[key];
   if (cmd && cmd.hasOwnProperty('cmdName')) {
-    _home.executeCommandByName(cmd.cmdName, modifier, 'KEYPAD');
+    _home.executeCommandByName(cmd.cmdName, 'KEYPAD');
     return;
   }
-  if (cmd) {
-    _home.executeCommand(cmd, modifier, 'KEYPAD');
+  if (cmd && cmd.hasOwnProperty('actions')) {
+    _home.executeActions(cmd.actions, 'KEYPAD');
     return;
   }
+  log.error(APP_NAME, `Unknown keypress type`, cmd);
 }
 
 /**
