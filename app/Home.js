@@ -240,10 +240,15 @@ function Home(initialConfig, fbRef) {
         return;
       }
       const lights = action.hueCommand.lights;
-      const receipeName = action.hueCommand.receipeName;
-      const receipe = _getLightReceipeByName(receipeName);
+      let receipe;
+      if (action.hueCommand.lightState) {
+        receipe = action.hueCommand.lightState;
+      } else if (action.hueCommand.receipeName) {
+        const receipeName = action.hueCommand.receipeName;
+        receipe = _getLightReceipeByName(receipeName);
+      }
       if (!receipe) {
-        log.error(LOG_PREFIX, `Unable to retreive receipe: ${receipeName}`);
+        log.error(LOG_PREFIX, `Unable to retreive receipe.`, action.hueCommand);
         return;
       }
       return hue.setLights(lights, receipe);
