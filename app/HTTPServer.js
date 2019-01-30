@@ -73,7 +73,17 @@ function HTTPServer(port) {
       body = JSON.parse(body);
     }
     const sender = '[HTTP ' + req.ip + ']';
-    _self.emit('executeCommandByName', body.cmdName, body.modifier, sender);
+    _self.emit('executeCommandByName', body.cmdName, sender);
+    res.send({result: 'done'});
+  });
+
+  exp.post('/execute/actions', function(req, res) {
+    let body = req.body;
+    if (typeof body === 'string') {
+      body = JSON.parse(body);
+    }
+    const sender = '[HTTP ' + req.ip + ']';
+    _self.emit('executeActions', body.actions, sender);
     res.send({result: 'done'});
   });
 
@@ -83,14 +93,15 @@ function HTTPServer(port) {
       body = JSON.parse(body);
     }
     const sender = '[HTTP ' + req.ip + ']';
-    _self.emit('executeCommand', body, sender);
-    res.send({result: 'done'});
+    const msg = `executeCommand not supported anymore. From: ${sender}`;
+    log.error(LOG_PREFIX, msg, body);
+    res.send({result: 'failed'});
   });
 
   exp.post('/doorbell', function(req, res) {
     const sender = '[HTTP ' + req.ip + ']';
     const body = {doorbell: true};
-    _self.emit('executeCommand', body, sender);
+    _self.emit('executeActions', body, sender);
     res.send({result: 'done'});
     log.warn(LOG_PREFIX, `Deprecated path '/doorbell' hit`);
   });
