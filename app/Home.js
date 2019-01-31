@@ -382,14 +382,14 @@ function Home(initialConfig, fbRef) {
         return;
       }
       const autoMode = action.nestThermostatAuto;
-      const temperatures = _config.nest.hvacAuto[autoMode];
-      if (!temperatures) {
+      const rooms = _config.nest.hvacAuto[autoMode];
+      if (!rooms) {
         log.warn(LOG_PREFIX, `Nest auto mode '${autoMode}' not found.`);
         return;
       }
       const results = [];
-      Object.keys(temperatures).forEach((roomId) => {
-        const temperature = temperatures[roomId];
+      Object.keys(rooms).forEach((roomId) => {
+        const temperature = rooms[roomId];
         const result = nest.setTemperature(roomId, temperature)
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: nestThermostatAuto failed.`, err);
@@ -865,7 +865,7 @@ function Home(initialConfig, fbRef) {
       date_: log.formatTime(now),
     };
     _fbPush('logs/systemState', stateLog);
-    _self.executeCommandByName('RUN_ON_' + newState, 'SET_STATE');
+    _self.executeCommandByName(`RUN_ON_${newState}`, 'SET_STATE');
     return {state: newState};
   }
 
