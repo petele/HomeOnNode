@@ -114,8 +114,10 @@ function init() {
     _wss.on('message', (cmd, sender) => {
       if (cmd.hasOwnProperty('cmdName')) {
         return _home.executeCommandByName(cmd.cmdName, sender);
+      } else if (cmd.hasOwnProperty('actions')) {
+        return _home.executeActions(cmd.actions, sender);
       }
-      return _home.executeActions(cmd.actions, sender);
+      return _home.executeActions(cmd, sender);
     });
   }
 
@@ -123,6 +125,8 @@ function init() {
     const cmd = snapshot.val();
     if (cmd.hasOwnProperty('cmdName')) {
       _home.executeCommandByName(cmd.cmdName, 'FB');
+    } if (cmd.hasOwnProperty('actions')) {
+      _home.executeActions(cmd.actions, 'FB');
     } else {
       _home.executeActions(cmd, 'FB');
     }
