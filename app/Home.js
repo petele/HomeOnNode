@@ -325,7 +325,7 @@ function Home(initialConfig, fbRef) {
       }
       const roomId = action.nestFan.roomId;
       const minutes = action.nestFan.minutes || 60;
-      return nest.runNestFan(roomId, minutes)
+      return nest.runFan(roomId, minutes)
         .catch((err) => {
           log.verbose(LOG_PREFIX, `Whoops: nestFan failed.`, err);
         });
@@ -402,7 +402,11 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('sayThis')) {
       const utterance = action.sayThis.utterance;
       const opts = action.sayThis.opts || {};
-      return _sayThis(utterance, opts);
+      return _sayThis(utterance, opts)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: sayThis failed.`, err);
+          return {sayThis: false, reason: err};
+        });
     }
 
     if (action.hasOwnProperty('sendNotification')) {
@@ -424,7 +428,11 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('sound')) {
       const soundFile = action.sound.soundFile;
       const opts = action.sound.opts || {};
-      return _playSound(soundFile, opts);
+      return _playSound(soundFile, opts)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: sound failed.`, err);
+          return {sound: false, reason: err};
+        });
     }
 
     if (action.hasOwnProperty('state')) {
@@ -458,7 +466,7 @@ function Home(initialConfig, fbRef) {
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
-   * Initialize the HOME Api
+   * Initialize the HOME API
    */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
@@ -519,8 +527,8 @@ function Home(initialConfig, fbRef) {
   /**
    * Update System State from fbSet
    *
-   * @param {String} path The path to set
-   * @param {Object} value The value to set
+   * @param {String} path The path to set.
+   * @param {Object} value The value to set.
    */
   function _updateLocalState(path, value) {
     let currentObj = _self.state;
@@ -538,8 +546,8 @@ function Home(initialConfig, fbRef) {
   /**
    * Push value to Firebase
    *
-   * @param {String} path Path to push object to
-   * @param {Object} value The value to push
+   * @param {String} path Path to push object to.
+   * @param {Object} value The value to push.
    */
   function _fbPush(path, value) {
     let fbObj = _fb;
@@ -591,7 +599,7 @@ function Home(initialConfig, fbRef) {
   }
 
   /**
-   * Set state last updated
+   * Set state last updated.
    */
   function fbSetLastUpdated() {
     const now = Date.now();
@@ -706,16 +714,16 @@ function Home(initialConfig, fbRef) {
     opts = opts || {};
     if (!file) {
       log.error(LOG_PREFIX, `playSound failed, no file specified.`);
-      return;
+      return Promise.resolve({sound: false, reason: 'no_file'});
     }
     const now = Date.now();
     if (now - _lastSoundPlayedAt < (20 * 1000) && opts.force !== true) {
       log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
-      return;
+      return Promise.resolve({sound: false, reason: 'too_soon'});
     }
     if (_self.state.doNotDisturb === true && opts.force !== true) {
       log.debug(LOG_PREFIX, 'playSound skipped, do not disturb.');
-      return;
+      return Promise.resolve({sound: false, reason: 'do_not_disturb'});
     }
     _lastSoundPlayedAt = now;
     log.debug(LOG_PREFIX, `playSound('${file}', ...)`, opts);
@@ -738,10 +746,10 @@ function Home(initialConfig, fbRef) {
       exec(cmd, function(error, stdout, stderr) {
         if (error) {
           log.exception(LOG_PREFIX, '_playSoundLocal failed', error);
-          resolve({playSound: false, reason: error});
+          resolve({sound: false, reason: error});
           return;
         }
-        resolve({playSound: true});
+        resolve({sound: true});
       });
     });
   }
@@ -773,17 +781,17 @@ function Home(initialConfig, fbRef) {
     const force = !!opts.force;
     if (!utterance) {
       log.error(LOG_PREFIX, 'sayThis failed, no utterance provided.');
-      return;
+      return Promise.resolve({sayThis: false, reason: 'no_utterance'});
     }
     if (!googleHome) {
       log.error(LOG_PREFIX, 'Unable to speak, Google Home not available.');
-      return {sayThis: false, reason: 'gh_not_available'};
+      return Promise.resolve({sayThis: false, reason: 'gh_not_available'});
     }
     log.debug(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
     if (_self.state.doNotDisturb === false || force === true) {
       return googleHome.say(utterance);
     }
-    return {sayThis: false, reason: 'do_not_disturb'};
+    return Promise.resolve({sayThis: false, reason: 'do_not_disturb'});
   }
 
   /**
