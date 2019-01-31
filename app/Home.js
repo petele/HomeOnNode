@@ -204,7 +204,11 @@ function Home(initialConfig, fbRef) {
 
     // Logging
     const k = Object.keys(action).join(', ');
-    log.log(LOG_PREFIX, `executeAction([${k}], '${source}')`, action);
+    if (k.length === 1) {
+      log.debug(LOG_PREFIX, `executeAction(${k}, '${source}')`, action);
+    } else {
+      log.warn(LOG_PREFIX, `executeAction(${k}, '${source}')`, action);
+    }
 
     if (action.hasOwnProperty('doNotDisturb')) {
       return _setDoNotDisturb(action.doNotDisturb);

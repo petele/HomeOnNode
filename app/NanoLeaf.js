@@ -115,6 +115,7 @@ function NanoLeaf(key, ip, port) {
       log.verbose(LOG_PREFIX, msg, body);
       request(requestOptions, function(error, response, respBody) {
         if (error) {
+          log.error(LOG_PREFIX, 'Request error', error);
           reject(error);
           return;
         }
