@@ -61,7 +61,7 @@ function GoogleHome(ipAddress) {
     const msg = `say('${utterance}')`;
     log.debug(LOG_PREFIX, msg);
     if (!_isReady()) {
-      return;
+      return Promise.resolve({googleHome: false, reason: 'not_ready'});
     }
     // const opts = {
     //   metadata: {
@@ -114,11 +114,11 @@ function GoogleHome(ipAddress) {
     const msg = `setVolume(${level})`;
     log.debug(LOG_PREFIX, msg);
     if (!_isReady()) {
-      return;
+      return Promise.resolve({googleHome: false, reason: 'not_ready'});
     }
     if (level > 100 || level < 1) {
       log.error(LOG_PREFIX, `${msg} failed, level out of bounds.`);
-      return;
+      return Promise.resolve({googleHome: false, reason: 'not_ready'});
     }
     return _getCastClient().then((client) => {
       client.setVolume({level: level / 100}, (err, resp) => {
@@ -144,7 +144,7 @@ function GoogleHome(ipAddress) {
     const msg = `play('${url}', {...})`;
     log.debug(LOG_PREFIX, msg, options);
     if (!_isReady()) {
-      return;
+      return Promise.resolve({googleHome: false, reason: 'not_ready'});
     }
     return new Promise((resolve, reject) => {
       _getCastClient().then((client) => {
@@ -269,7 +269,6 @@ function GoogleHome(ipAddress) {
   this.getDeviceInfo = function() {
     const msg = `getDeviceInfo()`;
     log.verbose(LOG_PREFIX, msg);
-
     return _getDeviceInfo();
   };
 
@@ -282,7 +281,6 @@ function GoogleHome(ipAddress) {
   this.setNightMode = function(isNight) {
     const msg = `setNightMode(${isNight})`;
     log.verbose(LOG_PREFIX, msg);
-
     const url = '/setup/assistant/set_night_mode_params';
     const body = {
       enabled: isNight,
@@ -300,7 +298,6 @@ function GoogleHome(ipAddress) {
   this.setDoNotDisturb = function(doNotDisturb) {
     const msg = `setDoNotDisturb(${doNotDisturb})`;
     log.verbose(LOG_PREFIX, msg);
-
     const url = '/setup/assistant/notifications';
     const body = {
       notifications_enabled: !doNotDisturb,
@@ -316,7 +313,6 @@ function GoogleHome(ipAddress) {
   this.getDoNotDisturb = function() {
     const msg = `getDoNotDisturb()`;
     log.verbose(LOG_PREFIX, msg);
-
     const url = '/setup/assistant/notifications';
     return _makeRequest('POST', url);
   };
