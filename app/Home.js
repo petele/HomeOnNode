@@ -209,7 +209,12 @@ function Home(initialConfig, fbRef) {
       log.debug(LOG_PREFIX, `executeAction(${k[0]}, '${source}')`, action);
     } else {
       const keys = k.join(', ');
-      log.warn(LOG_PREFIX, `executeAction([${keys}], '${source}')`, action);
+      log.error(LOG_PREFIX, `executeAction([${keys}], '${source}')`, action);
+      return;
+    }
+
+    if (action.hasOwnProperty('noop')) {
+      return;
     }
 
     if (action.hasOwnProperty('doNotDisturb')) {
@@ -290,7 +295,10 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'nanoLeaf unavailable.');
         return;
       }
-      return nanoLeaf.executeCommand(action.nanoLeaf);
+      return nanoLeaf.executeCommand(action.nanoLeaf)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: nanoLeaf failed.`, err);
+        });
     }
 
     if (action.hasOwnProperty('nestCam')) {
@@ -298,7 +306,10 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
         return;
       }
-      return nest.enableCamera(action.nestCam);
+      return nest.enableCamera(action.nestCam)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: nestCam failed.`, err);
+        });
     }
 
     if (action.hasOwnProperty('nestFan')) {
@@ -308,7 +319,10 @@ function Home(initialConfig, fbRef) {
       }
       const roomId = action.nestFan.roomId;
       const minutes = action.nestFan.minutes || 60;
-      return nest.runNestFan(roomId, minutes);
+      return nest.runNestFan(roomId, minutes)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: nestFan failed.`, err);
+        });
     }
 
     if (action.hasOwnProperty('nestState')) {
@@ -317,10 +331,16 @@ function Home(initialConfig, fbRef) {
         return;
       }
       if (action.nestState === 'HOME') {
-        return nest.setHome();
+        return nest.setHome()
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
+          });
       }
       if (action.nestState === 'AWAY') {
-        return nest.setAway();
+        return nest.setAway()
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
+          });
       }
       log.warn(LOG_PREFIX, `Invalid nestState: ${action.nestState}`);
       return;
@@ -334,11 +354,17 @@ function Home(initialConfig, fbRef) {
       const roomId = action.nestThermostat.roomId;
       if (action.nestThermostat.temperature) {
         const temperature = action.nestThermostat.temperature;
-        return nest.setTemperature(roomId, temperature);
+        return nest.setTemperature(roomId, temperature)
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
+          });
       }
       if (action.nestThermostat.adjust) {
         const direction = action.nestThermostat.adjust;
-        return nest.adjustTemperature(roomId, direction);
+        return nest.adjustTemperature(roomId, direction)
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
+          });
       }
       log.warn(LOG_PREFIX, `Invalid nestThermostat command.`, action);
       return;
@@ -358,7 +384,11 @@ function Home(initialConfig, fbRef) {
       const results = [];
       Object.keys(temperatures).forEach((roomId) => {
         const temperature = temperatures[roomId];
-        results.push(nest.setTemperature(roomId, temperature));
+        const result = nest.setTemperature(roomId, temperature)
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestThermostatAuto failed.`, err);
+          });
+        results.push(result);
       });
       return results;
     }

@@ -24,9 +24,9 @@ function prompt() {
     const command = commands[key];
     const item = {};
     if (command.label) {
-      item.name = `${command.label} (${key})`;
+      item.name = `${command.label} (${key}) [${command.kind}]`;
     } else {
-      item.name = key;
+      item.name = `${key} [${command.kind}]`;
     }
     item.value = key;
     choices.push(item);
