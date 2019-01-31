@@ -262,7 +262,10 @@ function Home(initialConfig, fbRef) {
         log.error(LOG_PREFIX, `Unable to retreive receipe.`, action.hueCommand);
         return;
       }
-      return hue.setLights(lights, receipe);
+      return hue.setLights(lights, receipe)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hue.setLights failed.`, err);
+        });
     }
 
     if (action.hasOwnProperty('hueScene')) {
@@ -270,7 +273,10 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Hue unavailable.');
         return;
       }
-      return hue.setScene(action.hueScene);
+      return hue.setScene(action.hueScene)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hue.setScene failed.`, err);
+        });
     }
 
     if (action.hasOwnProperty('log')) {
