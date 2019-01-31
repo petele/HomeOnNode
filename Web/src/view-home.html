@@ -259,10 +259,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       toggleDoNotDisturb() {
-        let newVal = 'ON';
-        if (this.dataDnD === true) {
-          newVal = 'OFF';
-        }
+        const newVal = !this.dataDnD;
         this.$.sendCommand.send({doNotDisturb: newVal});
       }
 
@@ -275,10 +272,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       toggleNestCam() {
-        let newVal = 'ON';
-        if (this.dataNestCam === true) {
-          newVal = 'OFF';
-        }
+        const newVal = !this.dataNestCam;
         this.$.sendCommand.send({nestCam: newVal});
       }
 
