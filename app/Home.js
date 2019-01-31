@@ -424,7 +424,10 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('sound')) {
       const soundFile = action.sound.soundFile;
       const opts = action.sound.opts || {};
-      return _playSound(soundFile, opts);
+      return _playSound(soundFile, opts)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: sound failed.`, err);
+        });
     }
 
     if (action.hasOwnProperty('state')) {
@@ -794,7 +797,7 @@ function Home(initialConfig, fbRef) {
    */
   function _setDoNotDisturb(val) {
     val = !!val;
-    log.debug(LOG_PREFIX, `setDoNotDisturb('${val}')`);
+    log.debug(LOG_PREFIX, `setDoNotDisturb(${val})`);
     _fbSet('state/doNotDisturb', val);
     return {doNotDisturb: val};
   }
