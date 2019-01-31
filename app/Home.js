@@ -203,11 +203,13 @@ function Home(initialConfig, fbRef) {
     }
 
     // Logging
-    const k = Object.keys(action).join(', ');
+    const k = Object.keys(action);
+    // const k = Object.keys(action).join(', ');
     if (k.length === 1) {
-      log.debug(LOG_PREFIX, `executeAction(${k}, '${source}')`, action);
+      log.debug(LOG_PREFIX, `executeAction(${k[0]}, '${source}')`, action);
     } else {
-      log.warn(LOG_PREFIX, `executeAction(${k}, '${source}')`, action);
+      const keys = k.join(', ');
+      log.warn(LOG_PREFIX, `executeAction([${keys}], '${source}')`, action);
     }
 
     if (action.hasOwnProperty('doNotDisturb')) {
