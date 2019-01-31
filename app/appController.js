@@ -87,6 +87,18 @@ function init() {
     return;
   }
 
+  _fb.child('config/HomeOnNode').on('value', function(snapshot) {
+    _config = snapshot.val();
+    _home.updateConfig(_config);
+    fs.writeFile('config.json', JSON.stringify(_config, null, 2), (err) => {
+      if (err) {
+        log.exception(APP_NAME, `Unable to save 'config.json'`, err);
+        return;
+      }
+      log.debug(APP_NAME, `Updated config saved to 'config.json'`);
+    });
+  });
+
   if (_config.cmdPorts.http) {
     _httpServer = new HTTPServer(_config.cmdPorts.http);
     _httpServer.on('executeCommandByName', (name, sender) => {
@@ -103,33 +115,16 @@ function init() {
       if (cmd.hasOwnProperty('cmdName')) {
         return _home.executeCommandByName(cmd.cmdName, sender);
       }
-      if (cmd.hasOwnProperty('actions')) {
-        return _home.executeActions(cmd.actions, sender);
-      }
-      log.warn(APP_NAME, `Unknown command from WSS`, cmd);
+      return _home.executeActions(cmd.actions, sender);
     });
   }
-
-  _fb.child('config/HomeOnNode').on('value', function(snapshot) {
-    _config = snapshot.val();
-    _home.updateConfig(_config);
-    fs.writeFile('config.json', JSON.stringify(_config, null, 2), (err) => {
-      if (err) {
-        log.exception(APP_NAME, `Unable to save 'config.json'`, err);
-        return;
-      }
-      log.debug(APP_NAME, `Updated config saved to 'config.json'`);
-    });
-  });
 
   _fb.child('commands').on('child_added', function(snapshot) {
     const cmd = snapshot.val();
     if (cmd.hasOwnProperty('cmdName')) {
       _home.executeCommandByName(cmd.cmdName, 'FB');
-    } else if (cmd.hasOwnProperty('actions')) {
-      _home.executeActions(cmd.actions, 'FB');
     } else {
-      log.error(APP_NAME, `Unknown command received from Firebase.`, cmd);
+      _home.executeActions(cmd, 'FB');
     }
     snapshot.ref().remove();
   });
