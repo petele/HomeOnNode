@@ -210,9 +210,8 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateConfigTick() {
     return _updateConfig()
-      .then((val) => {
-        const timer = val ? CONFIG_REFRESH_INTERVAL : 2500;
-        return _promisedSleep(timer);
+      .then(() => {
+        return _promisedSleep(CONFIG_REFRESH_INTERVAL);
       })
       .then(() => {
         _updateConfigTick();
@@ -225,9 +224,8 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateGroupsTick() {
     return _updateGroups()
-      .then((val) => {
-        const timer = val ? GROUPS_REFRESH_INTERVAL : 2500;
-        return _promisedSleep(timer);
+      .then(() => {
+        return _promisedSleep(GROUPS_REFRESH_INTERVAL);
       })
       .then(() => {
         _updateGroupsTick();
@@ -240,9 +238,8 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateLightsTick() {
     return _updateLights()
-      .then((val) => {
-        const timer = val ? LIGHTS_REFRESH_INTERVAL : 2500;
-        return _promisedSleep(timer);
+      .then(() => {
+        return _promisedSleep(LIGHTS_REFRESH_INTERVAL);
       })
       .then(() => {
         _updateLightsTick();
@@ -255,9 +252,8 @@ function Hue(key, explicitIPAddress) {
    */
   function _checkBatteriesTick() {
     return _checkBatteries()
-      .then((val) => {
-        const timer = val ? BATTERY_CHECK_INTERVAL : 2500;
-        return _promisedSleep(timer);
+      .then(() => {
+        return _promisedSleep(BATTERY_CHECK_INTERVAL);
       })
       .then(() => {
         _checkBatteriesTick();
