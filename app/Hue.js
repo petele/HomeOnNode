@@ -38,6 +38,16 @@ function Hue(key, explicitIPAddress) {
   let _capabilities = {};
 
   /**
+   * Is API ready?
+   *
+   * @return {Boolean} true if ready, false if not
+  */
+  this.isReady = function() {
+    return _ready === true;
+  };
+
+
+  /**
    * Turn the lights (or groups) on and off, modify the hue and effects.
    *
    * @param {Array} lights The lights to set
@@ -46,7 +56,7 @@ function Hue(key, explicitIPAddress) {
   */
   this.setLights = function(lights, cmd) {
     const msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
-    if (!_isReady()) {
+    if (!_self.isReady()) {
       log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
@@ -86,7 +96,7 @@ function Hue(key, explicitIPAddress) {
   */
   this.setScene = function(sceneId) {
     const msg = `setScene('${sceneId}')`;
-    if (!_isReady()) {
+    if (!_self.isReady()) {
       log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
@@ -115,7 +125,7 @@ function Hue(key, explicitIPAddress) {
   */
   this.sendRequest = function(requestPath, method, body) {
     const msg = `sendRequest('${requestPath}', '${method}')`;
-    if (!_isReady()) {
+    if (!_self.isReady()) {
       log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`, body);
       return Promise.reject(new Error('not_ready'));
     }
@@ -136,7 +146,7 @@ function Hue(key, explicitIPAddress) {
    */
   this.updateHub = function() {
     const msg = `updateHub()`;
-    if (!_isReady()) {
+    if (!_self.isReady()) {
       log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
@@ -178,15 +188,6 @@ function Hue(key, explicitIPAddress) {
           _checkBatteriesTick();
         }, BATTERY_CHECK_INTERVAL);
       });
-  }
-
-  /**
-   * Is API ready?
-   *
-   * @return {Boolean} true if ready, false if not
-  */
-  function _isReady() {
-    return _ready === true;
   }
 
   /**
