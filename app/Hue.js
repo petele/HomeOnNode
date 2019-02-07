@@ -131,7 +131,7 @@ function Hue(key, explicitIPAddress) {
     }
     log.debug(LOG_PREFIX, msg, body);
     if (!requestPath || !method) {
-      return Promise.reject(new Error('missing_parameter'));
+      return Promise.reject(new TypeError('missing_parameter'));
     }
     return _makeHueRequest(requestPath, method, body)
       .catch((err) => {

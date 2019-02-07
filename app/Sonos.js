@@ -35,7 +35,8 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   this.executeCommand = function(command, presetOptions) {
-    if (_isReady() !== true) {
+    if (!_isReady()) {
+      log.error(LOG_PREFIX, `Sonos is not ready`, command);
       return Promise.reject(new Error('not_ready'));
     }
     if (command.name === 'PRESET') {
@@ -63,7 +64,7 @@ function Sonos() {
     }
     if (command.name === 'SET_VOLUME') {
       const results = [];
-      if (typeof command.speakers != 'object') {
+      if (typeof command.speakers !== 'object') {
         return Promise.reject(new Error('invalid_speakers'));
       }
       const keys = Object.keys(command.speakers);
@@ -158,12 +159,13 @@ function Sonos() {
     const speaker = _getPlayer(speakerName, true);
     if (!speaker) {
       log.error(LOG_PREFIX, `${msg} failed, speaker not found.`);
-      return Promise.resolve('speaker_not_found');
+      return Promise.reject(new Error('speaker_not_found'));
     }
     log.debug(LOG_PREFIX, msg);
     return speaker.setVolume(vol)
       .catch((err) => {
         log.exception(LOG_PREFIX, `${msg} failed, with exception.`, err);
+        return {success: false};
       });
   }
 
@@ -177,9 +179,13 @@ function Sonos() {
     return Promise.all(
       _sonosSystem.zones.map((zone) => {
         const player = _sonosSystem.getPlayerByUUID(zone.uuid);
+        if (!player) {
+          return Promise.resolve({success: false});
+        }
         return player.coordinator.setGroupVolume(vol)
           .catch((err) => {
             log.exception(LOG_PREFIX, `_adjustVolume(${vol}) failed.`, err);
+            return {success: false};
           });
       })
     );
@@ -191,10 +197,10 @@ function Sonos() {
    * Fires an event (favorites-changed) when the favorites have been updated.
   */
   function _getFavorites() {
-    if (_isReady() !== true) {
+    if (!_isReady()) {
       return;
     }
-    let player = _getPlayer();
+    const player = _getPlayer();
     player.system.getFavorites().then((favs) => {
       if (diff(_favorites, favs)) {
         log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
@@ -212,13 +218,7 @@ function Sonos() {
   */
   function _applyPreset(preset) {
     log.debug(LOG_PREFIX, 'applyPreset()', preset);
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
-    }
-    return _sonosSystem.applyPreset(preset)
-      .catch((err) => {
-        log.exception(LOG_PREFIX, `_applyPreset() failed`, err);
-      });
+    return _sonosSystem.applyPreset(preset);
   }
 
   /**
@@ -228,14 +228,11 @@ function Sonos() {
   */
   function _play() {
     log.debug(LOG_PREFIX, 'play()');
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
+    const player = _getPlayer();
+    if (!player) {
+      return Promise.reject(new Error('speaker_not_found'));
     }
-    let player = _getPlayer();
-    return player.play()
-      .catch((err) => {
-        log.exception(LOG_PREFIX, `_play() failed`, err);
-      });
+    return player.play();
   }
 
   /**
@@ -244,10 +241,8 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _pause() {
+    // todo move after is ready
     log.debug(LOG_PREFIX, 'pause()');
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
-    }
     return Promise.all(
       _sonosSystem.zones.filter((zone) => {
         return zone.coordinator.state.playbackState === 'PLAYING';
@@ -257,6 +252,7 @@ function Sonos() {
         return player.pause()
           .catch((err) => {
             log.exception(LOG_PREFIX, `Error pausing ${zone.uuid}`, err);
+            return {success: false};
           });
       })
     );
@@ -269,14 +265,11 @@ function Sonos() {
   */
   function _next() {
     log.debug(LOG_PREFIX, 'next()');
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
+    const player = _getPlayer();
+    if (!player) {
+      return Promise.reject(new Error('speaker_not_found'));
     }
-    let player = _getPlayer();
-    return player.nextTrack()
-      .catch((err) => {
-        log.exception(LOG_PREFIX, `_next() failed`, err);
-      });
+    return player.nextTrack();
   }
 
   /**
@@ -286,14 +279,11 @@ function Sonos() {
   */
   function _previous() {
     log.debug(LOG_PREFIX, 'previous()');
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
+    const player = _getPlayer();
+    if (!player) {
+      return Promise.reject(new Error('speaker_not_found'));
     }
-    let player = _getPlayer();
-    return player.previousTrack()
-      .catch((err) => {
-        log.exception(LOG_PREFIX, `_previous() failed`, err);
-      });
+    return player.previousTrack();
   }
 
   /**
@@ -303,9 +293,6 @@ function Sonos() {
   */
   function _volumeDown() {
     log.debug(LOG_PREFIX, 'volumeDown()');
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
-    }
     return _adjustVolume('-2');
   }
 
@@ -316,9 +303,6 @@ function Sonos() {
   */
   function _volumeUp() {
     log.debug(LOG_PREFIX, 'volumeUp()');
-    if (_isReady() !== true) {
-      return Promise.reject(new Error('not_ready'));
-    }
     return _adjustVolume('+2');
   }
 
