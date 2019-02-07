@@ -50,12 +50,12 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves to the response body.
   */
   this.setLights = function(lights, cmd) {
-    let msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
+    const msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
     log.debug(LOG_PREFIX, msg);
-    if (_isReady() !== true) {
+    if (!_isReady()) {
       return Promise.reject(new Error('not_ready'));
     }
-    if (Array.isArray(lights) === false) {
+    if (!Array.isArray(lights)) {
       lights = [lights];
     }
     if (cmd.on === false) {
@@ -75,7 +75,8 @@ function Hue(key, explicitIPAddress) {
           return resp;
         })
         .catch((err) => {
-          log.error(LOG_PREFIX, 'setLights() failed.', err);
+          err.requestPath = requestPath;
+          log.error(LOG_PREFIX, `${msg} failed.`, err);
           return err;
         });
       }));
@@ -88,8 +89,9 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves to the response body.
   */
   this.setScene = function(sceneId) {
-    log.debug(LOG_PREFIX, `setScene('${sceneId}')`);
-    if (_isReady() !== true) {
+    const msg = `setScene('${sceneId}')`;
+    log.debug(LOG_PREFIX, msg);
+    if (!_isReady()) {
       return Promise.reject(new Error('not_ready'));
     }
     const requestPath = '/groups/0/action';
@@ -101,7 +103,7 @@ function Hue(key, explicitIPAddress) {
         return resp;
       })
       .catch((err) => {
-        log.error(LOG_PREFIX, `setScene('${sceneId}')`, err);
+        log.error(LOG_PREFIX, `${msg} failed.`, err);
         return err;
       });
   };
@@ -115,14 +117,43 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves with the response
   */
   this.sendRequest = function(requestPath, method, body) {
-    log.debug(LOG_PREFIX, `sendRequest('${requestPath}', '${method}')`, body);
+    const msg = `sendRequest('${requestPath}', '${method}')`;
+    log.debug(LOG_PREFIX, msg, body);
     if (_isReady() !== true) {
       return Promise.reject(new Error('not_ready'));
     }
     if (!requestPath || !method) {
       return Promise.reject(new Error('missing_parameter'));
     }
-    return _makeHueRequest(requestPath, method, body);
+    return _makeHueRequest(requestPath, method, body)
+      .catch((err) => {
+        log.error(LOG_PREFIX, `${msg} failed.`, err);
+        return err;
+      });
+  };
+
+  /**
+   * Update all data from the hub.
+   * @return {Promise}
+   */
+  this.updateHub = function() {
+    const msg = `updateHub()`;
+    log.debug(LOG_PREFIX, msg);
+    return _updateConfig()
+      .then(() => {
+        return _updateLights();
+      })
+      .then(() => {
+        return _updateGroups();
+      })
+      .then(() => {
+        log.verbose(LOG_PREFIX, `${msg} completed.`);
+        return;
+      })
+      .catch((err) => {
+        log.warn(LOG_PREFIX, `${msg} failed.`, err);
+        return;
+      });
   };
 
   /**
@@ -131,21 +162,31 @@ function Hue(key, explicitIPAddress) {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     _findHub()
-    .then((bridgeIP) => {
-      _bridgeIP = bridgeIP;
-      _updateConfig()
-        .then(() => {
-          _checkBatteries();
-        });
-      _updateLights();
-      _updateGroups();
-      _ready = true;
-      log.debug(LOG_PREFIX, 'Ready.');
-      setInterval(_updateConfig, CONFIG_REFRESH_INTERVAL);
-      setInterval(_updateGroups, GROUPS_REFRESH_INTERVAL);
-      setInterval(_updateLights, LIGHTS_REFRESH_INTERVAL);
-      setInterval(_checkBatteries, BATTERY_CHECK_INTERVAL);
-    });
+      .then((bridgeIP) => {
+        _bridgeIP = bridgeIP;
+        return _updateConfig();
+      }).then(() => {
+        _ready = true;
+        log.debug(LOG_PREFIX, 'Ready.');
+      }).then(() => {
+        return _updateLights();
+      }).then(() => {
+        return _updateGroups();
+      }).then(() => {
+        log.debug(LOG_PREFIX, 'Starting interval timers...');
+        setTimeout(() => {
+          _updateConfigTick();
+        }, CONFIG_REFRESH_INTERVAL);
+        setTimeout(() => {
+          _updateGroupsTick();
+        }, GROUPS_REFRESH_INTERVAL);
+        setTimeout(() => {
+          _updateLightsTick();
+        }, LIGHTS_REFRESH_INTERVAL);
+        setTimeout(() => {
+          _checkBatteriesTick();
+        }, BATTERY_CHECK_INTERVAL);
+      });
   }
 
   /**
@@ -159,6 +200,80 @@ function Hue(key, explicitIPAddress) {
     }
     log.error(LOG_PREFIX, 'Hue not ready.');
     return false;
+  }
+
+  /**
+   * A function that sleeps for the specified length of time.
+   *
+   * @param {number} timeout Length of time to sleep (ms).
+   * @return {Promise} An empty promise once the time is up.
+   */
+  function _promisedSleep(timeout) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, timeout || 30000);
+    });
+  }
+
+  /**
+   * Timer tick for updating config information.
+   * @return {Promise}
+   */
+  function _updateConfigTick() {
+    return _updateConfig()
+      .then((val) => {
+        const timer = val ? CONFIG_REFRESH_INTERVAL : 2500;
+        return _promisedSleep(timer);
+      })
+      .then(() => {
+        _updateConfigTick();
+      });
+  }
+
+  /**
+   * Timer tick for updating group information.
+   * @return {Promise}
+   */
+  function _updateGroupsTick() {
+    return _updateGroups()
+      .then((val) => {
+        const timer = val ? GROUPS_REFRESH_INTERVAL : 2500;
+        return _promisedSleep(timer);
+      })
+      .then(() => {
+        _updateGroupsTick();
+      });
+  }
+
+  /**
+   * Timer tick for updating lights information.
+   * @return {Promise}
+   */
+  function _updateLightsTick() {
+    return _updateLights()
+      .then((val) => {
+        const timer = val ? LIGHTS_REFRESH_INTERVAL : 2500;
+        return _promisedSleep(timer);
+      })
+      .then(() => {
+        _updateLightsTick();
+      });
+  }
+
+  /**
+   * Timer tick for checking the batteries.
+   * @return {Promise}
+   */
+  function _checkBatteriesTick() {
+    return _checkBatteries()
+      .then((val) => {
+        const timer = val ? BATTERY_CHECK_INTERVAL : 2500;
+        return _promisedSleep(timer);
+      })
+      .then(() => {
+        _checkBatteriesTick();
+      });
   }
 
   /**
@@ -189,14 +304,13 @@ function Hue(key, explicitIPAddress) {
   */
   function _makeHueRequest(requestPath, method, body, retry) {
     const msg = `makeHueRequest('${method}', '${requestPath}', body, ${retry})`;
-    log.verbose(LOG_PREFIX, msg, body);
-
     const requestId = _requestId++;
     _requestQueue[requestId] = {
       requestId: requestId,
       path: `${method}://${requestPath}`,
       startedAt: Date.now(),
     };
+    log.verbose(LOG_PREFIX, `${msg} [${requestId}]`, body);
 
     const requestsInProgress = Object.keys(_requestQueue).length;
     if (requestsInProgress >= 5) {
@@ -353,9 +467,7 @@ function Hue(key, explicitIPAddress) {
     return new Promise(function(resolve, reject) {
       if (explicitIPAddress) {
         log.debug(LOG_PREFIX, `Using provided IP: ${explicitIPAddress}`);
-        let ip = explicitIPAddress;
-        explicitIPAddress = null;
-        resolve(ip);
+        resolve(explicitIPAddress);
         return;
       }
       log.debug(LOG_PREFIX, 'Searching for Hue Hub...');
