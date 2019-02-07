@@ -199,22 +199,21 @@ function Home(initialConfig, fbRef) {
   function _executeAction(action, source) {
     if (!action || typeof action !== 'object') {
       log.error(LOG_PREFIX, `executeAction failed, invalid action.`, action);
-      return;
+      return {error: 'action', reason: 'invalid', value: action};
     }
 
     // Logging
     const k = Object.keys(action);
-    // const k = Object.keys(action).join(', ');
     if (k.length === 1) {
       log.debug(LOG_PREFIX, `executeAction(${k[0]}, '${source}')`, action);
     } else {
       const keys = k.join(', ');
       log.error(LOG_PREFIX, `executeAction([${keys}], '${source}')`, action);
-      return;
+      return {error: 'action', reason: 'too_many', value: action};
     }
 
     if (action.hasOwnProperty('noop')) {
-      return;
+      return {noop: true};
     }
 
     if (action.hasOwnProperty('doNotDisturb')) {
@@ -232,7 +231,7 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('harmonyActivity')) {
       if (!harmony) {
         log.warn(LOG_PREFIX, 'Harmony unavailable.');
-        return;
+        return {error: 'harmony', reason: 'unavailable'};
       }
       return harmony.setActivityByName(action.harmonyActivity);
     }
@@ -240,7 +239,7 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('harmonyKey')) {
       if (!harmony) {
         log.warn(LOG_PREFIX, 'Harmony unavailable.');
-        return;
+        return {error: 'harmony', reason: 'unavailable'};
       }
       return harmony.sendKey(action.harmonyKey);
     }
@@ -248,7 +247,7 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('hueCommand')) {
       if (!hue) {
         log.warn(LOG_PREFIX, 'Hue unavailable.');
-        return;
+        return {error: 'hue', reason: 'unavailable'};
       }
       const lights = action.hueCommand.lights;
       let receipe;
@@ -260,23 +259,36 @@ function Home(initialConfig, fbRef) {
       }
       if (!receipe) {
         log.error(LOG_PREFIX, `Unable to retreive receipe.`, action.hueCommand);
-        return;
+        return {error: 'harmony', reason: 'receipe_not_found'};
       }
-      return hue.setLights(lights, receipe)
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: hue.setLights failed.`, err);
-        });
+      return hue.setLights(lights, receipe);
+    }
+
+    if (action.hasOwnProperty('hueRequest')) {
+      if (!hue) {
+        log.warn(LOG_PREFIX, 'Hue unavailable.');
+        return {error: 'hue', reason: 'unavailable'};
+      }
+      const path = action.hueRequest.path;
+      const method = action.hueRequest.method;
+      const body = action.hueRequest.body;
+      return hue.sendRequest(path, method, body);
     }
 
     if (action.hasOwnProperty('hueScene')) {
       if (!hue) {
         log.warn(LOG_PREFIX, 'Hue unavailable.');
-        return;
+        return {error: 'hue', reason: 'unavailable'};
       }
-      return hue.setScene(action.hueScene)
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: hue.setScene failed.`, err);
-        });
+      return hue.setScene(action.hueScene);
+    }
+
+    if (action.hasOwnProperty('hueUpdate')) {
+      if (!hue) {
+        log.warn(LOG_PREFIX, 'Hue unavailable.');
+        return {error: 'hue', reason: 'unavailable'};
+      }
+      return hue.updateHub();
     }
 
     if (action.hasOwnProperty('log')) {
@@ -299,63 +311,68 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('nanoLeaf')) {
       if (!nanoLeaf) {
         log.warn(LOG_PREFIX, 'nanoLeaf unavailable.');
-        return;
+        return {error: 'nanoLeaf', reason: 'unavailable'};
       }
       return nanoLeaf.executeCommand(action.nanoLeaf)
         .catch((err) => {
           log.verbose(LOG_PREFIX, `Whoops: nanoLeaf failed.`, err);
+          return {error: 'nanoLeaf'};
         });
     }
 
     if (action.hasOwnProperty('nestCam')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return;
+        return {error: 'nest', reason: 'unavailable'};
       }
       return nest.enableCamera(action.nestCam)
         .catch((err) => {
           log.verbose(LOG_PREFIX, `Whoops: nestCam failed.`, err);
+          return {error: 'nest'};
         });
     }
 
     if (action.hasOwnProperty('nestFan')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return;
+        return {error: 'nest', reason: 'unavailable'};
       }
       const roomId = action.nestFan.roomId;
       const minutes = action.nestFan.minutes || 60;
       return nest.runFan(roomId, minutes)
         .catch((err) => {
           log.verbose(LOG_PREFIX, `Whoops: nestFan failed.`, err);
+          return {error: 'nest'};
         });
     }
 
     if (action.hasOwnProperty('nestState')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return;
+        return {error: 'nest', reason: 'unavailable'};
       }
       if (action.nestState === 'HOME') {
         return nest.setHome()
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
+            return {error: 'nest'};
           });
       }
       if (action.nestState === 'AWAY') {
         return nest.setAway()
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
+            return {error: 'nest'};
           });
       }
       log.warn(LOG_PREFIX, `Invalid nestState: ${action.nestState}`);
-      return;
+      return {error: 'nest', reason: 'invalid_state'};
     }
 
     if (action.hasOwnProperty('nestThermostat')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return;
+        return {error: 'nest', reason: 'unavailable'};
       }
       const roomId = action.nestThermostat.roomId;
       if (action.nestThermostat.temperature) {
@@ -363,6 +380,7 @@ function Home(initialConfig, fbRef) {
         return nest.setTemperature(roomId, temperature)
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
+            return {error: 'nest'};
           });
       }
       if (action.nestThermostat.adjust) {
@@ -370,22 +388,23 @@ function Home(initialConfig, fbRef) {
         return nest.adjustTemperature(roomId, direction)
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
+            return {error: 'nest'};
           });
       }
       log.warn(LOG_PREFIX, `Invalid nestThermostat command.`, action);
-      return;
+      return {error: 'nest', reason: 'invalid_command'};
     }
 
     if (action.hasOwnProperty('nestThermostatAuto')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return;
+        return {error: 'nest', reason: 'unavailable'};
       }
       const autoMode = action.nestThermostatAuto;
       const rooms = _config.nest.hvacAuto[autoMode];
       if (!rooms) {
         log.warn(LOG_PREFIX, `Nest auto mode '${autoMode}' not found.`);
-        return;
+        return {error: 'nest', reason: 'auto_mode_not_found'};
       }
       const results = [];
       Object.keys(rooms).forEach((roomId) => {
@@ -393,6 +412,7 @@ function Home(initialConfig, fbRef) {
         const result = nest.setTemperature(roomId, temperature)
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: nestThermostatAuto failed.`, err);
+            return {error: 'nest'};
           });
         results.push(result);
       });
@@ -405,14 +425,14 @@ function Home(initialConfig, fbRef) {
       return _sayThis(utterance, opts)
         .catch((err) => {
           log.verbose(LOG_PREFIX, `Whoops: sayThis failed.`, err);
-          return {sayThis: false, reason: err};
+          return {error: 'sayThis', reason: err};
         });
     }
 
     if (action.hasOwnProperty('sendNotification')) {
       if (!gcmPush) {
-        log.warn(LOG_PREFIX, 'GCMPush unavailable.');
-        return;
+        log.warn(LOG_PREFIX, 'gcmPush unavailable.');
+        return {error: 'gcmPush', reason: 'unavailable'};
       }
       return gcmPush.sendMessage(action.sendNotification);
     }
@@ -420,7 +440,7 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('sonos')) {
       if (!sonos) {
         log.warn(LOG_PREFIX, 'Sonos unavailable.');
-        return;
+        return {error: 'sonos', reason: 'unavailable'};
       }
       return sonos.executeCommand(action.sonos, _config.sonosPresetOptions);
     }
@@ -431,7 +451,7 @@ function Home(initialConfig, fbRef) {
       return _playSound(soundFile, opts)
         .catch((err) => {
           log.verbose(LOG_PREFIX, `Whoops: sound failed.`, err);
-          return {sound: false, reason: err};
+          return {error: 'sound', reason: err};
         });
     }
 
@@ -442,7 +462,7 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('tivo')) {
       if (!tivo) {
         log.warn(LOG_PREFIX, 'TiVo unavailable.');
-        return;
+        return {error: 'tivo', reason: 'unavailable'};
       }
       return tivo.send(action.tivo);
     }
@@ -450,13 +470,14 @@ function Home(initialConfig, fbRef) {
     if (action.hasOwnProperty('wemo')) {
       if (!wemo) {
         log.warn(LOG_PREFIX, 'Wemo unavailable.');
-        return;
+        return {error: 'wemo', reason: 'unavailable'};
       }
       return wemo.setState(action.wemo.id, action.wemo.on);
     }
 
     // Unknown action received
     log.warn(LOG_PREFIX, `Unknown action received from ${source}.`, action);
+    return {error: 'action', reason: 'unknown', value: action};
   }
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
