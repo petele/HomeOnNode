@@ -444,7 +444,7 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateConfig() {
     const pDataStore = _makeHueRequest('', 'GET', null, false);
-    const pCapabilities = _delayedHueRequest('/capabilities', null, false, 300);
+    const pCapabilities = _delayedHueRequest('/capabilities', 'GET', null, false, 500);
     return Promise.all([pDataStore, pCapabilities])
       .then((results) => {
         const newDataStore = results[0];
