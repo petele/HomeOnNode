@@ -34,7 +34,7 @@ const COMMANDS = [
  *
 */
 function Tivo(ipAddress) {
-  // const _self = this;
+  const KEYPRESS_TIMEOUT = 350;
   let _tivo;
   let _ready = false;
   let _host = ipAddress;
@@ -56,15 +56,17 @@ function Tivo(ipAddress) {
    * @return {Promise} The promise that will be resolved on completion.
    */
   this.send = function(cmd) {
-    log.debug(LOG_PREFIX, `send('${cmd}')`);
+    const msg = `send('${cmd}')`;
     if (!_isReady()) {
+      log.warn(LOG_PREFIX, `${msg} failed, Tivo not ready.`, cmd);
       return Promise.reject(new Error('not_ready'));
     }
     if (!COMMANDS.includes(cmd)) {
+      log.warn(LOG_PREFIX, `${msg} failed, invalid command.`);
       return Promise.reject(new Error('invalid_command'));
     }
-    _send(cmd);
-    return Promise.resolve();
+    log.debug(LOG_PREFIX, msg);
+    return Promise.resolve(_send(cmd));
   };
 
   /**
@@ -155,14 +157,16 @@ function Tivo(ipAddress) {
    * Sends a command, or queues it up for sending.
    *
    * @param {String} cmd
+   * @return {String}
    */
   function _send(cmd) {
     _commandQueue.push(cmd);
     if (_commandQueue.length === 1) {
       _sendNextCommand();
-      return;
+      return 'sent';
     }
     log.debug(LOG_PREFIX, `Command (${cmd}) queued...`);
+    return 'queued';
   }
 
   /**
@@ -178,7 +182,7 @@ function Tivo(ipAddress) {
       log.verbose(LOG_PREFIX, `Send complete`);
       setTimeout(() => {
         _sendNextCommand();
-      }, 1000);
+      }, KEYPRESS_TIMEOUT);
     });
   }
 
