@@ -46,10 +46,11 @@ function Hue(key, explicitIPAddress) {
   */
   this.setLights = function(lights, cmd) {
     const msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
-    log.debug(LOG_PREFIX, msg);
     if (!_isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
+    log.debug(LOG_PREFIX, msg);
     if (!Array.isArray(lights)) {
       lights = [lights];
     }
@@ -85,10 +86,11 @@ function Hue(key, explicitIPAddress) {
   */
   this.setScene = function(sceneId) {
     const msg = `setScene('${sceneId}')`;
-    log.debug(LOG_PREFIX, msg);
     if (!_isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
+    log.debug(LOG_PREFIX, msg);
     const requestPath = '/groups/0/action';
     const cmd = {scene: sceneId};
     return _makeHueRequest(requestPath, 'PUT', cmd, true)
@@ -113,10 +115,11 @@ function Hue(key, explicitIPAddress) {
   */
   this.sendRequest = function(requestPath, method, body) {
     const msg = `sendRequest('${requestPath}', '${method}')`;
-    log.debug(LOG_PREFIX, msg, body);
-    if (_isReady() !== true) {
+    if (!_isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`, body);
       return Promise.reject(new Error('not_ready'));
     }
+    log.debug(LOG_PREFIX, msg, body);
     if (!requestPath || !method) {
       return Promise.reject(new Error('missing_parameter'));
     }
@@ -133,6 +136,10 @@ function Hue(key, explicitIPAddress) {
    */
   this.updateHub = function() {
     const msg = `updateHub()`;
+    if (!_isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
     log.debug(LOG_PREFIX, msg);
     return _updateConfig()
       .then(() => {
@@ -179,11 +186,7 @@ function Hue(key, explicitIPAddress) {
    * @return {Boolean} true if ready, false if not
   */
   function _isReady() {
-    if (_ready) {
-      return true;
-    }
-    log.error(LOG_PREFIX, 'Hue not ready.');
-    return false;
+    return _ready === true;
   }
 
   /**
