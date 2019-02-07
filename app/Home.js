@@ -261,7 +261,11 @@ function Home(initialConfig, fbRef) {
         log.error(LOG_PREFIX, `Unable to retreive receipe.`, action.hueCommand);
         return {error: 'harmony', reason: 'receipe_not_found'};
       }
-      return hue.setLights(lights, receipe);
+      return hue.setLights(lights, receipe)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hueCommand failed.`, err);
+          return {error: 'hue'};
+        });
     }
 
     if (action.hasOwnProperty('hueRequest')) {
@@ -272,7 +276,11 @@ function Home(initialConfig, fbRef) {
       const path = action.hueRequest.path;
       const method = action.hueRequest.method;
       const body = action.hueRequest.body;
-      return hue.sendRequest(path, method, body);
+      return hue.sendRequest(path, method, body)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hueRequest failed.`, err);
+          return {error: 'hue'};
+        });
     }
 
     if (action.hasOwnProperty('hueScene')) {
@@ -280,7 +288,11 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Hue unavailable.');
         return {error: 'hue', reason: 'unavailable'};
       }
-      return hue.setScene(action.hueScene);
+      return hue.setScene(action.hueScene)
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hueScene failed.`, err);
+          return {error: 'hue'};
+        });
     }
 
     if (action.hasOwnProperty('hueUpdate')) {
@@ -288,7 +300,11 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Hue unavailable.');
         return {error: 'hue', reason: 'unavailable'};
       }
-      return hue.updateHub();
+      return hue.updateHub()
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hueUpdate failed.`, err);
+          return {error: 'hue'};
+        });
     }
 
     if (action.hasOwnProperty('log')) {
