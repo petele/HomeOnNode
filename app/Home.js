@@ -157,11 +157,11 @@ function Home(initialConfig, fbRef) {
       // Execute the action.
       results.push(_executeAction(action, source));
     });
-    return Promise.all(results)
-      .then((r) => {
-        log.log(LOG_PREFIX, 'executeActions(...) complete.', r);
-        return r;
-      });
+    return Promise.all(results);
+      // .then((r) => {
+      //   log.log(LOG_PREFIX, 'executeActions(...) complete.', r);
+      //   return r;
+      // });
   };
 
   /**
@@ -209,7 +209,7 @@ function Home(initialConfig, fbRef) {
     // Logging
     const k = Object.keys(action);
     if (k.length === 1) {
-      log.debug(LOG_PREFIX, `executeAction(${k[0]}, '${source}')`, action);
+      log.log(LOG_PREFIX, `executeAction('${k[0]}', '${source}')`, action);
     } else {
       const keys = k.join(', ');
       log.error(LOG_PREFIX, `executeAction([${keys}], '${source}')`, action);
