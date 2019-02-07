@@ -122,7 +122,6 @@ function Home(initialConfig, fbRef) {
    */
   this.executeActions = function(actions, source) {
     const results = [];
-    log.log(LOG_PREFIX, 'L1', actions);
     // Loop through the actions in the list
     _arrayify(actions).forEach((actionSrc) => {
       if (!actionSrc) {
@@ -131,7 +130,6 @@ function Home(initialConfig, fbRef) {
 
       // Make an editable copy of the action.
       const action = Object.assign({}, actionSrc);
-      log.log(LOG_PREFIX, 'L2', action);
 
       // Run the action on a delay.
       if (action.delay) {
@@ -159,11 +157,11 @@ function Home(initialConfig, fbRef) {
       // Execute the action.
       results.push(_executeAction(action, source));
     });
-    return Promise.all(results);
-      // .then((r) => {
-      //   log.log(LOG_PREFIX, 'executeActions(...) complete.', r);
-      //   return r;
-      // });
+    return Promise.all(results)
+      .then((r) => {
+        log.debug(LOG_PREFIX, 'executeActions(...) complete.', r);
+        return r;
+      });
   };
 
   /**

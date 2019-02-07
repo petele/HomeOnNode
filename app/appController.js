@@ -125,7 +125,7 @@ function init() {
     const cmd = snapshot.val();
     if (cmd.hasOwnProperty('cmdName')) {
       _home.executeCommandByName(cmd.cmdName, 'FB');
-    } if (cmd.hasOwnProperty('actions')) {
+    } else if (cmd.hasOwnProperty('actions')) {
       _home.executeActions(cmd.actions, 'FB');
     } else {
       _home.executeActions(cmd, 'FB');
