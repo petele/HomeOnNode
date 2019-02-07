@@ -122,6 +122,7 @@ function Home(initialConfig, fbRef) {
    */
   this.executeActions = function(actions, source) {
     const results = [];
+    log.log(LOG_PREFIX, 'L1', actions);
     // Loop through the actions in the list
     _arrayify(actions).forEach((actionSrc) => {
       if (!actionSrc) {
@@ -130,6 +131,7 @@ function Home(initialConfig, fbRef) {
 
       // Make an editable copy of the action.
       const action = Object.assign({}, actionSrc);
+      log.log(LOG_PREFIX, 'L2', action);
 
       // Run the action on a delay.
       if (action.delay) {
