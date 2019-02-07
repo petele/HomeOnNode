@@ -15,9 +15,6 @@ const LOG_PREFIX = 'HUE';
  * @fires Hue#config_changed
  * @fires Hue#groups_changed
  * @fires Hue#lights_changed
- * @property {Object} lights - List of all lights and their current state
- * @property {Object} groups - List of all groups and their current state
- * @property {Object} capabilities - Current Hub capabilities
  * @property {Object} dataStore - Entire Hub data store
  * @param {String} key Hue authentication key.
  * @param {String} [explicitIPAddress] IP Address of the Hub
@@ -37,10 +34,8 @@ function Hue(key, explicitIPAddress) {
   const _requestQueue = {};
   let _requestId = 0;
 
-  this.lights = {};
-  this.groups = {};
-  this.capabilities = {};
   this.dataStore = {};
+  let _capabilities = {};
 
   /**
    * Turn the lights (or groups) on and off, modify the hue and effects.
@@ -141,12 +136,6 @@ function Hue(key, explicitIPAddress) {
     log.debug(LOG_PREFIX, msg);
     return _updateConfig()
       .then(() => {
-        return _updateLights();
-      })
-      .then(() => {
-        return _updateGroups();
-      })
-      .then(() => {
         log.verbose(LOG_PREFIX, `${msg} completed.`);
         return;
       })
@@ -168,12 +157,7 @@ function Hue(key, explicitIPAddress) {
       }).then(() => {
         _ready = true;
         log.debug(LOG_PREFIX, 'Ready.');
-      }).then(() => {
-        return _updateLights();
-      }).then(() => {
-        return _updateGroups();
-      }).then(() => {
-        log.debug(LOG_PREFIX, 'Starting interval timers...');
+        log.verbose(LOG_PREFIX, 'Starting interval timers...');
         setTimeout(() => {
           _updateConfigTick();
         }, CONFIG_REFRESH_INTERVAL);
@@ -379,22 +363,38 @@ function Hue(key, explicitIPAddress) {
   function _updateGroups() {
     const requestPath = '/groups';
     return _makeHueRequest(requestPath, 'GET', null, false)
-    .then((groups) => {
-      if (diff(_self.groups, groups)) {
-        _self.groups = groups;
-        /**
-         * see {@link https://developers.meethue.com/documentation/groups-api#21_get_all_groups}
-         * @event Hue#groups_changed
-         */
-        _self.emit('groups_changed', groups);
-      }
-      return true;
-    })
-    .catch((error) => {
-      log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
-      return false;
-    });
+      .then(_checkGroups)
+      .catch((error) => {
+        log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
+        return false;
+      });
   }
+
+  /**
+   * Checks if the new group data matches the current group data.
+   *
+   * @fires Hue#groups_changed.
+   * @param {Object} groups new group data.
+   * @return {boolean} True if it's changed, false for invalid or same.
+   */
+  function _checkGroups(groups) {
+    if (typeof groups !== 'object') {
+      return false;
+    }
+    if (Object.keys(groups) === 0) {
+      return false;
+    }
+    if (!_self.dataStore.groups) {
+      _self.dataStore.groups = {};
+    }
+    if (diff(_self.dataStore.groups, groups)) {
+      _self.dataStore.groups = groups;
+      _self.emit('groups_changed', groups);
+      return true;
+    }
+    return false;
+  }
+
 
   /**
    * Updates this.lights to the latest state from the hub.
@@ -405,21 +405,36 @@ function Hue(key, explicitIPAddress) {
   function _updateLights() {
     const requestPath = '/lights';
     return _makeHueRequest(requestPath, 'GET', null, false)
-    .then((lights) => {
-      if (diff(_self.lights, lights)) {
-        _self.lights = lights;
-        /**
-         * see {@link https://developers.meethue.com/documentation/lights-api#11_get_all_lights}
-         * @event Hue#lights_changed
-         */
-        _self.emit('lights_changed', lights);
-      }
-      return true;
-    })
-    .catch((error) => {
-      log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
+      .then(_checkLights)
+      .catch((error) => {
+        log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
+        return false;
+      });
+  }
+
+  /**
+   * Checks if the new light data matches the current light data.
+   *
+   * @fires Hue#lights_changed.
+   * @param {Object} lights new light data.
+   * @return {boolean} True if it's changed, false for invalid or same.
+   */
+  function _checkLights(lights) {
+    if (typeof lights !== 'object') {
       return false;
-    });
+    }
+    if (Object.keys(lights) === 0) {
+      return false;
+    }
+    if (!_self.dataStore.lights) {
+      _self.dataStore.lights = {};
+    }
+    if (diff(_self.dataStore.lights, lights)) {
+      _self.dataStore.lights = lights;
+      _self.emit('lights_changed', lights);
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -429,25 +444,37 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateConfig() {
     const pDataStore = _makeHueRequest('', 'GET', null, false);
-    const pCapabilities = _delayedHueRequest('/capabilities', null, false, 800);
+    const pCapabilities = _delayedHueRequest('/capabilities', null, false, 300);
     return Promise.all([pDataStore, pCapabilities])
       .then((results) => {
-        let hasChanged = false;
+        const newDataStore = results[0];
+        const newCapabilities = results[1];
+        let capabilitiesChanged = false;
+        let configChanged = false;
+
+        // Verify we have a dataStore to work with.
+        if (!_self.dataStore) {
+          _self.dataStore = {};
+        }
 
         // Has the dataStore changed?
-        if (diff(_self.dataStore, results[0])) {
-          _self.dataStore = results[0];
-          hasChanged = true;
+        if (diff(_self.dataStore, newDataStore)) {
+          _checkLights(newDataStore.lights);
+          _checkGroups(newDataStore.groups);
+          _self.dataStore = newDataStore;
+          configChanged = true;
         }
+
         // Have the capabilities changed?
-        if (diff(_self.capabilities, results[1])) {
-          _self.capabilities = results[1];
-          hasChanged = true;
+        if (diff(_capabilities, newCapabilities)) {
+          _capabilities = newCapabilities;
+          capabilitiesChanged = true;
         }
+
         // Has something changed?
-        if (hasChanged) {
-          const config = Object.assign({}, _self.dataStore);
-          config.capabilities = _self.capabilities;
+        if (capabilitiesChanged || configChanged) {
+          const config = Object.assign({}, newDataStore);
+          config.capabilities = Object.assign({}, _capabilities);
           _self.emit('config_changed', config);
         }
         return true;
