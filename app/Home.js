@@ -101,7 +101,7 @@ function Home(initialConfig, fbRef) {
     // Logging
     const msg = `executeCommandByName('${commandName}', '${source}')`;
     if (source.endsWith('+')) {
-      log.debug(LOG_PREFIX, msg, command);
+      log.verbose(LOG_PREFIX, msg, command);
     } else {
       log.log(LOG_PREFIX, msg, command);
     }
@@ -159,7 +159,7 @@ function Home(initialConfig, fbRef) {
     });
     return Promise.all(results)
       .then((r) => {
-        log.debug(LOG_PREFIX, 'executeActions(...) complete.', r);
+        log.verbose(LOG_PREFIX, 'executeActions(...) complete.', r);
         return r;
       });
   };
@@ -910,11 +910,11 @@ function Home(initialConfig, fbRef) {
     }
     const now = Date.now();
     if (now - _lastSoundPlayedAt < (20 * 1000) && opts.force !== true) {
-      log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
+      log.verbose(LOG_PREFIX, 'playSound skipped, too soon.');
       return Promise.reject(new Error('too_soon'));
     }
     if (_self.state.doNotDisturb === true && opts.force !== true) {
-      log.debug(LOG_PREFIX, 'playSound skipped, do not disturb.');
+      log.verbose(LOG_PREFIX, 'playSound skipped, do not disturb.');
       return Promise.reject(new Error('do_not_disturb'));
     }
     _lastSoundPlayedAt = now;
