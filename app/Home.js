@@ -108,7 +108,7 @@ function Home(initialConfig, fbRef) {
 
     // Execute any actions in the command
     if (command.actions) {
-      return _self.executeActions(command.actions, source);
+      return _self.executeActions(command.actions, commandName);
     }
     log.warn(LOG_PREFIX, `Command '${commandName}' has no actions.`, command);
   };
