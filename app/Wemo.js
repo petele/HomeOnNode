@@ -97,7 +97,7 @@ function Wemo() {
           return;
         }
         log.debug(LOG_PREFIX, `${msg} success: ${val}`);
-        resolve(val == true);
+        resolve(val === true);
       });
     });
   };
@@ -126,7 +126,7 @@ function Wemo() {
    * @return {boolean} True if the ready.
    */
   function _isReady() {
-    return wemo === true;
+    return wemo ? true : false;
   }
 
   /**
