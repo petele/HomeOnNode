@@ -176,7 +176,7 @@ function Wemo() {
     client.on('binaryState', (value) => {
       deviceInfo.value = value;
       _self.emit('change', dMac, deviceInfo);
-      log.debug(LOG_PREFIX, `binaryState for ${dName} changed to ${value}`);
+      log.verbose(LOG_PREFIX, `binaryState for ${dName} changed to ${value}`);
     });
   }
 

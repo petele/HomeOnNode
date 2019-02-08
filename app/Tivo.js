@@ -86,12 +86,12 @@ function Tivo(ipAddress) {
    * Connect to the Tivo.
    */
   function _connectToTivo() {
-    log.debug(LOG_PREFIX, 'Connecting to the Tivo...');
+    log.verbose(LOG_PREFIX, 'Connecting to the Tivo...');
     _reconnecting = false;
     _tivo = net.connect({host: _host, port: 31339});
     _tivo.on('connect', () => {
       _ready = true;
-      log.debug(LOG_PREFIX, `Connected`);
+      log.verbose(LOG_PREFIX, `Connected`);
     });
      _tivo.on('ready', () => {
       _ready = true;
@@ -130,7 +130,7 @@ function Tivo(ipAddress) {
    */
   function _handleData(data) {
     const str = data.toString();
-    log.debug(LOG_PREFIX, 'handleData', str);
+    log.verbose(LOG_PREFIX, 'handleData', str);
   }
 
   /**
@@ -165,7 +165,7 @@ function Tivo(ipAddress) {
       _sendNextCommand();
       return 'sent';
     }
-    log.debug(LOG_PREFIX, `Command (${cmd}) queued...`);
+    log.verbose(LOG_PREFIX, `Command (${cmd}) queued...`);
     return 'queued';
   }
 
@@ -177,7 +177,7 @@ function Tivo(ipAddress) {
       return;
     }
     const cmd = _commandQueue.shift();
-    log.debug(LOG_PREFIX, `Sending command: ${cmd}`);
+    log.verbose(LOG_PREFIX, `Sending command: ${cmd}`);
     _tivo.write(cmd + '\r', undefined, () => {
       log.verbose(LOG_PREFIX, `Send complete`);
       setTimeout(() => {
