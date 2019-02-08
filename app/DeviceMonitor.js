@@ -27,6 +27,7 @@ function DeviceMonitor(fb, deviceName) {
   const _self = this;
   let _heartbeatInterval;
   let _ipAddressInterval;
+  let _memUsageInterval;
   let _lastWrite = Date.now();
   let _hasExceededTimeout = false;
   let _firstConnect = true;
@@ -70,6 +71,7 @@ function DeviceMonitor(fb, deviceName) {
         hostname: _getHostname(),
         ipAddress: _getIPAddress(),
       },
+      memory: _getMemoryUsage(),
       restart: null,
       shutdown: null,
       exitDetails: null,
@@ -83,6 +85,7 @@ function DeviceMonitor(fb, deviceName) {
     _fb.root().onAuth(_authChanged);
     _heartbeatInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
     _ipAddressInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
+    _memUsageInterval = setInterval(_tickMemUsage, 5 * 60 * 1000);
     _initUncaught();
     _initUnRejected();
   }
@@ -113,6 +116,13 @@ function DeviceMonitor(fb, deviceName) {
    */
   function _tickIPAddress() {
     fb.child(`${_deviceName}/host/ipAddress`).set(_getIPAddress());
+  }
+
+  /**
+   * Refreshes the memory usage
+   */
+  function _tickMemUsage() {
+    fb.child(`${_deviceName}/memory`).set(_getMemoryUsage());
   }
 
   /**
@@ -222,6 +232,20 @@ function DeviceMonitor(fb, deviceName) {
     log.warn(_deviceName, 'Firebase client unauthenticated.');
   }
 
+  /**
+   * Gets the amount of memory used.
+   *
+   * @return {Object}
+   */
+  function _getMemoryUsage() {
+    const result = {};
+    const memUsage = process.memoryUsage();
+    Object.keys(memUsage).forEach((key) => {
+      result[key] = `${Math.round(memUsage[key] / 1024 / 1024 * 100) / 100} MB`;
+    });
+    return result;
+  }
+
 
   /**
    * Get's the hostname from the device.
@@ -281,6 +305,10 @@ function DeviceMonitor(fb, deviceName) {
     if (_ipAddressInterval) {
       clearInterval(_ipAddressInterval);
       _ipAddressInterval = null;
+    }
+    if (_memUsageInterval) {
+      clearInterval(_memUsageInterval);
+      _memUsageInterval = null;
     }
     const now = Date.now();
     const details = {
