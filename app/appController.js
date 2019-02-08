@@ -128,6 +128,7 @@ function init() {
     } else if (cmd.hasOwnProperty('actions')) {
       _home.executeActions(cmd.actions, 'FB');
     } else {
+      log.warn(APP_NAME, `Potential invalid command.`, cmd);
       _home.executeActions(cmd, 'FB');
     }
     snapshot.ref().remove();
@@ -156,6 +157,11 @@ function init() {
     log.cleanLogs(FB_LOG_PATH, 7);
     _loadAndRunJS('cronDaily.js');
   }, cron24h);
+
+  // Run the daily cronjob shorty after app startup.
+  setTimeout(() => {
+    _loadAndRunJS('cronDaily.js');
+  }, 4 * 60 * 1000);
 }
 
 
@@ -217,23 +223,24 @@ function _getCronIntervalValue(minutes, delaySeconds) {
  * @param {Function} [callback] Callback to run once completed.
 */
 function _loadAndRunJS(file, callback) {
-  let msg = `loadAndRunJS('${file}')`;
+  const msg = `loadAndRunJS('${file}')`;
   log.debug(APP_NAME, msg);
   fs.readFile(file, function(err, data) {
     if (err) {
-      log.exception(APP_NAME, msg + ' Unable to load file.', err);
+      log.exception(APP_NAME, `${msg} - Unable to read file.`, err);
       if (callback) {
         callback(err, file);
       }
-    } else {
-      try {
-        eval(data.toString());
-      } catch (ex) {
-        log.exception(APP_NAME, msg + ' Exception on eval.', ex);
-        if (callback) {
-          callback(ex, file);
-        }
+      return;
+    }
+    try {
+      eval(data.toString());
+    } catch (ex) {
+      log.exception(APP_NAME, `${msg} - Exception on eval.`, ex);
+      if (callback) {
+        callback(ex, file);
       }
+      return;
     }
     if (callback) {
       callback(null, file);

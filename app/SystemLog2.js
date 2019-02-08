@@ -182,6 +182,8 @@ function _generateLog(level, prefix, message, extra) {
       } catch (ex) {
         result.extra = {circular: true};
         _exception(LOG_PREFIX, 'generateLog() circular exception', ex);
+        // eslint-disable-next-line no-console
+        console.log(extra);
       }
     }
   }
