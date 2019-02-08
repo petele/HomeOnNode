@@ -502,7 +502,7 @@ function Home(initialConfig, fbRef) {
       }
 
       const rooms = _config.nest.hvacAuto[autoMode];
-      if (!Array.isArray(rooms)) {
+      if (typeof rooms !== 'object') {
         log.warn(LOG_PREFIX, `No rooms provided for nestAutoMode`, action);
         return _genResult(action, false, 'no_rooms_provided');
       }
