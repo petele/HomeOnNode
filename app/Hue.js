@@ -28,9 +28,6 @@ function Hue(key, explicitIPAddress) {
   const _self = this;
   const _key = key;
 
-  const _updateGroupsThrottled = _throttle(_updateGroups, 1000);
-  const _updateLightsThrottled = _throttle(_updateLights, 1000);
-
   let _bridgeIP;
   let _ready = false;
 
@@ -48,6 +45,36 @@ function Hue(key, explicitIPAddress) {
   this.isReady = function() {
     return _ready === true;
   };
+
+  /**
+   * Create a throttled version of a function.
+   *
+   * @param {Function} func function to throttle.
+   * @param {Number} limit Time limit to run at.
+   * @return {Function} a throttled version of the function.
+   */
+  const _throttle = (func, limit) => {
+    let lastFunc;
+    let lastRan;
+    return function(...args) {
+      // eslint-disable-next-line no-invalid-this
+      const context = this;
+      if (!lastRan) {
+        lastRan = Date.now();
+        return func.apply(context, args);
+      }
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(() => {
+        if ((Date.now() - lastRan) >= limit) {
+          lastRan = Date.now();
+          func.apply(context, args);
+        }
+      }, limit - (Date.now() - lastRan));
+    };
+  };
+  
+  const _updateGroupsThrottled = _throttle(_updateGroups, 1000);
+  const _updateLightsThrottled = _throttle(_updateLights, 1000);
 
 
   /**
@@ -192,33 +219,6 @@ function Hue(key, explicitIPAddress) {
         }, BATTERY_CHECK_INTERVAL);
       });
   }
-
-    /**
-     * Create a throttled version of a function.
-     *
-     * @param {Function} func function to throttle.
-     * @param {Number} limit Time limit to run at.
-     * @return {Function} a throttled version of the function.
-     */
-    const _throttle = (func, limit) => {
-      let lastFunc;
-      let lastRan;
-      return function(...args) {
-        // eslint-disable-next-line no-invalid-this
-        const context = this;
-        if (!lastRan) {
-          lastRan = Date.now();
-          return func.apply(context, args);
-        }
-        clearTimeout(lastFunc);
-        lastFunc = setTimeout(() => {
-          if ((Date.now() - lastRan) >= limit) {
-            lastRan = Date.now();
-            func.apply(context, args);
-          }
-        }, limit - (Date.now() - lastRan));
-      };
-    };
 
   /**
    * A function that sleeps for the specified length of time.
