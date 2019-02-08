@@ -536,7 +536,7 @@ function Hue(key, explicitIPAddress) {
       log.warn(LOG_PREFIX, 'checkBatteries() failed, no sensors available.');
       return;
     }
-    log.debug(LOG_PREFIX, 'Checking batteries...');
+    log.verbose(LOG_PREFIX, 'Checking batteries...');
     const keys = Object.keys(_self.dataStore.sensors);
     keys.forEach((key) => {
       const sensor = _self.dataStore.sensors[key];

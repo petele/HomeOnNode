@@ -58,7 +58,7 @@ function HarmonyWS(ipAddress) {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
     _getHubInfo().then((hubInfo) => {
-      log.debug(LOG_PREFIX, 'Hub info received', hubInfo);
+      log.verbose(LOG_PREFIX, 'Hub info received', hubInfo);
       _hubId = hubInfo.remoteId;
       _self.emit('hub_info', hubInfo);
       _connect();
@@ -340,7 +340,7 @@ function HarmonyWS(ipAddress) {
      * @event Harmony#config_changed
      * @type {Object}
      */
-    log.debug(LOG_PREFIX, 'Config changed.', config);
+    log.verbose(LOG_PREFIX, 'Config changed.', config);
     _self.emit('config_changed', config);
   }
 
