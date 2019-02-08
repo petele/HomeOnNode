@@ -34,7 +34,7 @@ const COMMANDS = [
  *
 */
 function Tivo(ipAddress) {
-  // const _self = this;
+  const KEYPRESS_TIMEOUT = 350;
   let _tivo;
   let _ready = false;
   let _host = ipAddress;
@@ -56,15 +56,17 @@ function Tivo(ipAddress) {
    * @return {Promise} The promise that will be resolved on completion.
    */
   this.send = function(cmd) {
-    log.debug(LOG_PREFIX, `send('${cmd}')`);
+    const msg = `send('${cmd}')`;
     if (!_isReady()) {
+      log.warn(LOG_PREFIX, `${msg} failed, Tivo not ready.`, cmd);
       return Promise.reject(new Error('not_ready'));
     }
     if (!COMMANDS.includes(cmd)) {
+      log.warn(LOG_PREFIX, `${msg} failed, invalid command.`);
       return Promise.reject(new Error('invalid_command'));
     }
-    _send(cmd);
-    return Promise.resolve();
+    log.debug(LOG_PREFIX, msg);
+    return Promise.resolve(_send(cmd));
   };
 
   /**
@@ -84,12 +86,12 @@ function Tivo(ipAddress) {
    * Connect to the Tivo.
    */
   function _connectToTivo() {
-    log.debug(LOG_PREFIX, 'Connecting to the Tivo...');
+    log.verbose(LOG_PREFIX, 'Connecting to the Tivo...');
     _reconnecting = false;
     _tivo = net.connect({host: _host, port: 31339});
     _tivo.on('connect', () => {
       _ready = true;
-      log.debug(LOG_PREFIX, `Connected`);
+      log.verbose(LOG_PREFIX, `Connected`);
     });
      _tivo.on('ready', () => {
       _ready = true;
@@ -128,7 +130,7 @@ function Tivo(ipAddress) {
    */
   function _handleData(data) {
     const str = data.toString();
-    log.debug(LOG_PREFIX, 'handleData', str);
+    log.verbose(LOG_PREFIX, 'handleData', str);
   }
 
   /**
@@ -155,14 +157,16 @@ function Tivo(ipAddress) {
    * Sends a command, or queues it up for sending.
    *
    * @param {String} cmd
+   * @return {String}
    */
   function _send(cmd) {
     _commandQueue.push(cmd);
     if (_commandQueue.length === 1) {
       _sendNextCommand();
-      return;
+      return 'sent';
     }
-    log.debug(LOG_PREFIX, `Command (${cmd}) queued...`);
+    log.verbose(LOG_PREFIX, `Command (${cmd}) queued...`);
+    return 'queued';
   }
 
   /**
@@ -173,12 +177,12 @@ function Tivo(ipAddress) {
       return;
     }
     const cmd = _commandQueue.shift();
-    log.debug(LOG_PREFIX, `Sending command: ${cmd}`);
+    log.verbose(LOG_PREFIX, `Sending command: ${cmd}`);
     _tivo.write(cmd + '\r', undefined, () => {
       log.verbose(LOG_PREFIX, `Send complete`);
       setTimeout(() => {
         _sendNextCommand();
-      }, 1000);
+      }, KEYPRESS_TIMEOUT);
     });
   }
 

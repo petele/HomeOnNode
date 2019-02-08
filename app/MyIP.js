@@ -114,7 +114,7 @@ function MyIP(dnsAccount) {
         return;
       }
       if (body.indexOf('good') >= 0 || body.indexOf('nochg') >= 0) {
-        log.debug(LOG_PREFIX, msgOK, body);
+        log.verbose(LOG_PREFIX, msgOK, body);
         return;
       }
       if (body.indexOf('911') >= 0) {

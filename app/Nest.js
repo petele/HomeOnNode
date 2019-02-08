@@ -50,7 +50,7 @@ function Nest(authToken, roomIdMap) {
    * @param {Number} minutes Not yet used
    * @return {Promise} Resolves to a boolean, with the result of the request
    */
-  this.runNestFan = function(roomId, minutes) {
+  this.runFan = function(roomId, minutes) {
     const thermostatId = _findThermostatId(roomId);
     if (!thermostatId) {
       return Promise.reject(new Error('room_id_not_found'));

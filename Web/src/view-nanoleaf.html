@@ -46,6 +46,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
     <fb-document path="state/nanoLeaf" data="{{nanoLeaf}}"></fb-document>
+    <fb-query path="config/HomeOnNode/commands" data="{{commandsObj}}">
+    </fb-query>
 
     <div class="card card-narrow" style="padding-top: 12px;">
       <div class="layout horizontal">
@@ -60,9 +62,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <div class="card">
       <div class="app-grid grid-medium" id="nlEffects">
         <template items="[[nanoLeaf.effects.effectsList]]"
-          is="dom-repeat" sort="sort" >
+          is="dom-repeat" sort="sortEffects" >
           <paper-button class$="[[effectClass(item, nanoLeaf.effects.select, nanoLeaf.state.on.value)]]" on-tap="tapNanoLeafEffect">
             [[item]]
+          </paper-button>
+        </template>
+        <template items="[[commandsObj]]"
+          is="dom-repeat" sort="sortActions" filter="isNanoLeafAction">
+          <paper-button class="button" on-tap="tapNanoLeafAction">
+            [[item.label]]
           </paper-button>
         </template>
       </div>
@@ -77,10 +85,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get properties() {
         return {
           page: String,
+          nanoLeafActions: Array,
         };
       }
 
-      sort(val1, val2) {
+      isNanoLeafAction(item) {
+        return item.kind === 'nanoleaf';
+      }
+
+      sortActions(val1, val2) {
+        const a = val1.label.toLowerCase();
+        const b = val2.label.toLowerCase();
+        if (a > b) {
+          return 1;
+        }
+        if (a < b) {
+          return -1;
+        }
+        return 0;
+      }
+
+      sortEffects(val1, val2) {
         const a = val1.toLowerCase();
         const b = val2.toLowerCase();
         if (a > b) {
@@ -106,6 +131,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         let cmd = {nanoLeaf: {effect: event.model.item}};
         event.target.classList.add('toggle-ind');
         this.$.sendCommand.send(cmd);
+      }
+
+      tapNanoLeafAction(event) {
+        const item = event.model.item;
+        this.$.sendCommand.send({cmdName: item.$key});
       }
 
       tapPower(event) {
