@@ -28,19 +28,58 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     class SendCommand extends Polymer.Element {
       static get is() { return 'send-command'; }
 
-      send(cmd) {
+      executeCommandByName(cmdName) {
         window.lastUserInput = Date.now();
-        let ref = this.$.fbDoc.ref.push(cmd, (err) => {
+        const cmd = {cmdName: cmdName};
+        const ref = this.$.fbDoc.ref.push(cmd, (err) => {
           if (err) {
             // eslint-disable-next-line no-console
-            console.log('ERROR', '[-sendCommand-]', err);
+            console.log('ERROR', '[-executeCommandByName-]', err);
             this.$.toast.text = err.message;
             this.$.toast.show();
           }
         });
         // eslint-disable-next-line no-console
-        console.log('[-sendCommand-]', ref.key, cmd);
+        console.log('[executeCommandByName]', ref.key, cmd);
       }
+
+      executeActions(actions) {
+        window.lastUserInput = Date.now();
+        const cmd = {actions: actions};
+        const ref = this.$.fbDoc.ref.push(cmd, (err) => {
+          if (err) {
+            // eslint-disable-next-line no-console
+            console.log('ERROR', '[-executeActions-]', err);
+            this.$.toast.text = err.message;
+            this.$.toast.show();
+          }
+        });
+        // eslint-disable-next-line no-console
+        console.log('[executeActions]', ref.key, cmd);
+      }
+
+      send(cmd) {
+        // eslint-disable-next-line no-console
+        console.log('[-sendCommand-]', cmd);
+        if (cmd.cmdName) {
+          return this.executeCommandByName(cmd.cmdName);
+        }
+        return this.executeActions(cmd);
+      }
+
+      // send(cmd) {
+      //   window.lastUserInput = Date.now();
+      //   let ref = this.$.fbDoc.ref.push(cmd, (err) => {
+      //     if (err) {
+      //       // eslint-disable-next-line no-console
+      //       console.log('ERROR', '[-sendCommand-]', err);
+      //       this.$.toast.text = err.message;
+      //       this.$.toast.show();
+      //     }
+      //   });
+      //   // eslint-disable-next-line no-console
+      //   console.log('[-sendCommand-]', ref.key, cmd);
+      // }
 
     }
 

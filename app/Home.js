@@ -32,9 +32,6 @@ const LOG_PREFIX = 'HOME';
  * @param {Object} fbRef Firebase object
 */
 function Home(initialConfig, fbRef) {
-  const ALSO_RUN_EXT = 'ALSO_RUN';
-  const DELAYED_EXT = 'DELAYED';
-  const TIME_RANGE_EXT = 'TIME_RANGE';
   const _self = this;
   _self.state = {};
 
@@ -85,361 +82,98 @@ function Home(initialConfig, fbRef) {
    * Executes the specified named command.
    *
    * @param {String} commandName The name of the command to execute.
-   * @param {String} modifier Any applied modifier.
    * @param {String} source The source of the command.
+   * @return {Object} result of command or undefined if it failed.
    */
-  this.executeCommandByName = function(commandName, modifier, source) {
+  this.executeCommandByName = function(commandName, source) {
     if (!commandName) {
       log.warn(LOG_PREFIX, 'commandName not provided.');
       return;
     }
+
+    // Find the command
     const command = _config.commands[commandName];
     if (!command) {
       log.warn(LOG_PREFIX, `Command ${commandName} not found.`);
       return;
     }
-    command.modifier = modifier;
-    command.commandName = commandName;
-    _self.executeCommand(command, source);
-  };
 
-  /**
-   * Executes a command.
-   *
-   * @param {Object} command The command to execute.
-   * @param {String} source The source of the command.
-   */
-  this.executeCommand = function(command, source) {
-    const modifier = command.modifier;
-    let msg = 'executeCommand';
-    if (command.commandName) {
-      msg += `ByName('${command.commandName}', `;
-    } else {
-      msg += `([${Object.keys(command)}], `;
-    }
-    if (modifier) {
-      msg += `'${modifier}', `;
-    } else {
-      msg += 'null, ';
-    }
-    msg += `'${source}')`;
-    if ((source.indexOf(ALSO_RUN_EXT) >= 0) ||
-        (source.indexOf(TIME_RANGE_EXT) >= 0)) {
-          log.debug(LOG_PREFIX, msg, command);
+    // Logging
+    const msg = `executeCommandByName('${commandName}', '${source}')`;
+    if (source.endsWith('+')) {
+      log.verbose(LOG_PREFIX, msg, command);
     } else {
       log.log(LOG_PREFIX, msg, command);
     }
-    // If it's a NoOp, stop here.
-    if (command.noop === true) {
-      return;
+
+    // Execute any actions in the command
+    if (command.actions) {
+      return _self.executeActions(command.actions, commandName);
     }
-    // Door Open/Close event
-    if (command.hasOwnProperty('door')) {
-      const doorName = command.door.name;
-      const state = command.door.state;
-      if (doorName && state) {
-        _handleDoorEvent(doorName, state);
-      } else {
-        log.warn(LOG_PREFIX, `Invalid door params: ${doorName} / ${state}`);
+    log.warn(LOG_PREFIX, `Command '${commandName}' has no actions.`, command);
+  };
+
+  /**
+   * Executes a collection of actions.
+   *
+   * @param {Array} actions The collection of actions to execute.
+   * @param {String} source The source of the command.
+   * @return {Array} result of the actions or undefined if it failed.
+   */
+  this.executeActions = function(actions, source) {
+    const results = [];
+    // Loop through the actions in the list
+    _arrayify(actions).forEach((actionSrc) => {
+      if (!actionSrc) {
+        return;
       }
-    }
-    // systemState
-    if (command.hasOwnProperty('state')) {
-      _setState(command.state);
-    }
-    // Hue Scenes
-    if (command.hasOwnProperty('hueScene')) {
-      if (hue) {
-        let scenes = command.hueScene;
-        if (Array.isArray(scenes) === false) {
-          scenes = [scenes];
-        }
-        scenes.forEach(function(sceneId) {
-          hue.setScene(sceneId);
-        });
-      } else {
-        log.warn(LOG_PREFIX, 'Hue unavailable.');
-      }
-    }
-    // Hue Commands
-    if (command.hasOwnProperty('hueCommand')) {
-      if (hue) {
-        let cmds = command.hueCommand;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
-        }
-        cmds.forEach(function(cmd) {
-          let scene;
-          if (modifier) {
-            scene = _getLightReceipeByName(modifier);
-          } else if (cmd.lightState) {
-            scene = cmd.lightState;
-          } else {
-            scene = _getLightReceipeByName(cmd.receipeName);
-          }
-          hue.setLights(cmd.lights, scene);
-        });
-      } else {
-        log.warn(LOG_PREFIX, 'Hue unavailable.');
-      }
-    }
-    // Doorbell
-    if (command.hasOwnProperty('doorbell')) {
-      _ringDoorbell(source);
-    }
-    // TiVo
-    if (command.hasOwnProperty('tivo')) {
-      if (tivo) {
-        let cmds = command.tivo;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
-        }
-        cmds.forEach((cmd) => {
-          tivo.send(cmd);
-        });
-      } else {
-        log.warn(LOG_PREFIX, 'TiVo unavailable.');
-      }
-    }
-    // NanoLeaf
-    if (command.hasOwnProperty('nanoLeaf')) {
-      if (nanoLeaf) {
-        let cmds = command.nanoLeaf;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
-        }
-        cmds.forEach((cmd) => {
-          nanoLeaf.executeCommand(cmd, modifier);
-        });
-      } else {
-        log.warn(LOG_PREFIX, 'NanoLeaf unavailable.');
-      }
-    }
-    // Nest Home State
-    if (command.hasOwnProperty('nestState')) {
-      if (nest) {
-        if (command.nestState === 'HOME') {
-          nest.setHome();
-        } else if (command.nestState === 'AWAY') {
-          nest.setAway();
-        } else {
-          log.warn(LOG_PREFIX, `Unknown Nest state: ${command.nestState}`);
-        }
-      } else {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-      }
-    }
-    // Nest Thermostat
-    if (command.hasOwnProperty('nestThermostat')) {
-      if (nest) {
-        let cmds = command.nestThermostat;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
-        }
-        cmds.forEach((cmd) => {
-          if (modifier) {
-            nest.adjustTemperature(cmd.roomId, modifier);
-          } else {
-            nest.setTemperature(cmd.roomId, cmd.temperature);
-          }
-        });
-      } else {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-      }
-    }
-    // Nest Thermostat Auto
-    if (command.hasOwnProperty('nestThermostatAuto')) {
-      if (nest) {
-        const autoMode = command.nestThermostatAuto.toUpperCase();
-        const temperatures = _config.nest.hvacAuto[autoMode];
-        if (temperatures) {
-          Object.keys(temperatures).forEach((roomId) => {
-            let temperature = temperatures[roomId];
-            nest.setTemperature(roomId, temperature);
-          });
-        } else {
-          log.warn(LOG_PREFIX, `Nest auto mode '${autoMode}' not found.`);
-        }
-      } else {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-      }
-    }
-    // Nest Fan
-    if (command.hasOwnProperty('nestFan')) {
-      if (nest) {
-        let cmd = command.nestFan;
-        nest.runNestFan(cmd.roomId, cmd.minutes);
-      } else {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-      }
-    }
-    // Nest Cam
-    if (command.hasOwnProperty('nestCam')) {
-      if (nest) {
-        let enabled = command.nestCam === 'ON';
-        if (modifier === 'OFF') {
-          enabled = false;
-        }
-        nest.enableCamera(enabled);
-      } else {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-      }
-    }
-    // Wemo Command
-    if (command.hasOwnProperty('wemo')) {
-      if (wemo) {
-        let cmds = command.wemo;
-        if (!Array.isArray(cmds)) {
-          cmds = [cmds];
-        }
-        cmds.forEach((cmd) => {
-          if (modifier === 'OFF') {
-            cmd.on = false;
-          }
-          wemo.setState(cmd.id, cmd.on);
-        });
-      } else {
-        log.warn(LOG_PREFIX, 'Wemo unavailable.');
-      }
-    }
-    // Harmony Activity
-    if (command.hasOwnProperty('harmonyActivity')) {
-      if (harmony) {
-        harmony.setActivityByName(command.harmonyActivity);
-      } else {
-        log.warn(LOG_PREFIX, 'Harmony unavailable.');
-      }
-    }
-    // Harmony Key
-    if (command.hasOwnProperty('harmonyKey')) {
-      if (harmony) {
-        let cmds = command.harmonyKey;
-        if (Array.isArray(cmds) === false) {
-          cmds = [cmds];
-        }
-        cmds.forEach((cmd) => {
-          harmony.sendKey(cmd);
-        });
-      } else {
-        log.warn(LOG_PREFIX, 'Harmony unavailable.');
-      }
-    }
-    // Sonos
-    if (command.hasOwnProperty('sonos')) {
-      if (sonos) {
-          sonos.executeCommand(command.sonos, _config.sonosPresetOptions);
-      } else {
-        log.error('[HOME] Sonos command failed, Sonos unavailable.');
-      }
-    }
-    // Send Notification
-    if (command.hasOwnProperty('sendNotification')) {
-      if (gcmPush) {
-        gcmPush.sendMessage(command.sendNotification);
-      } else {
-        log.warn(LOG_PREFIX, 'GCMPush unavailable.');
-      }
-    }
-    // Play Sound
-    if (command.hasOwnProperty('sound')) {
-      const pathToFile = command.sound.soundFile;
-      const opts = command.sound.opts || {};
-     _playSound(pathToFile, opts);
-    }
-    // Say This
-    if (command.hasOwnProperty('sayThis')) {
-      const utterance = command.sayThis.utterance;
-      const opts = command.sayThis.opts || {};
-      _sayThis(utterance, opts);
-    }
-    // Do Not Disturb
-    if (command.hasOwnProperty('doNotDisturb')) {
-      if (modifier === 'OFF' || command.doNotDisturb === 'OFF') {
-        _setDoNotDisturb('OFF');
-      } else {
-        _setDoNotDisturb('ON');
-      }
-    }
-    // Remote log
-    if (command.hasOwnProperty('log')) {
-      const level = command.log.level || 'LOG';
-      const sender = command.log.sender || source;
-      const message = command.log.message;
-      const extra = command.log.extra;
-      if (level === 'LOG') {
-        log.log(sender, message, extra);
-      } else if (level === 'ERROR') {
-        log.error(sender, message, extra);
-      } else if (level === 'EXCEPTION') {
-        log.exception(sender, message, extra);
-      } else {
-        log.debug(sender, message, extra);
-      }
-    }
-    // Schedule a delayed command
-    if (command.hasOwnProperty('delay')) {
-      let cmds = command.delay;
-      if (Array.isArray(cmds) === false) {
-        cmds = [cmds];
-      }
-      const src = `${source}-${DELAYED_EXT}`;
-      cmds.forEach((cmd) => {
-        if (!cmd) {
-          return;
-        }
-        const delay = cmd.delayMS || 30 * 1000;
+
+      // Make an editable copy of the action.
+      const action = Object.assign({}, actionSrc);
+
+      // Run the action on a delay.
+      if (action.delay) {
         setTimeout(() => {
-          if (cmd.hasOwnProperty('cmdName')) {
-            _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
-          } else {
-            _self.executeCommand(cmd.command, src);
-          }
-        }, delay);
-        const msg = `Scheduled command to run in ${delay / 1000}s`;
-        log.debug(LOG_PREFIX, msg, cmd);
-      });
-    }
-    // Run other cmdNames
-    if (command.hasOwnProperty('alsoRun')) {
-      let cmds = command.alsoRun;
-      if (Array.isArray(cmds) === false) {
-        cmds = [cmds];
+          delete action.delay;
+          results.push(_self.executeActions(action, `${source}*`));
+        }, action.delay * 1000);
+        return;
       }
-      const src = `${source}-${ALSO_RUN_EXT}`;
-      cmds.forEach((cmd) => {
-        if (!cmd) {
+
+      // Check if the required conditions are met
+      if (action.conditions) {
+         if (!_checkConditions(action.conditions)) {
           return;
-        }
-        if (cmd.hasOwnProperty('cmdName')) {
-          _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
-        } else {
-          _self.executeCommand(cmd.command, src);
-        }
-      });
-    }
-    // Only run on time range
-    if (command.hasOwnProperty('runBetween')) {
-      let cmds = command.runBetween;
-      if (Array.isArray(cmds) === false) {
-        cmds = [cmds];
+         }
+         delete action.conditions;
       }
-      const src = `${source}-${TIME_RANGE_EXT}`;
-      cmds.forEach((cmd) => {
-        if (!cmd) {
-          return;
-        }
-        if (_inRange(cmd.range)) {
-          if (cmd.hasOwnProperty('cmdName')) {
-            _self.executeCommandByName(cmd.cmdName, cmd.modifier, src);
-          } else {
-            _self.executeCommand(cmd.command, src);
-          }
-        } else {
-          const msg = `Command not run, not in time range: ${cmd.range}`;
-          log.debug(LOG_PREFIX, msg, cmd);
-        }
+
+      // If it's a cmdName, load the command and run that.
+      if (action.cmdName) {
+        results.push(_self.executeCommandByName(action.cmdName, `${source}+`));
+        return;
+      }
+
+      // Execute the action.
+      results.push(_executeAction(action, source));
+    });
+    return Promise.all(results)
+      .then((r) => {
+        log.verbose(LOG_PREFIX, 'executeActions(...) complete.', r);
+        return r;
       });
-    }
+  };
+
+  /**
+   * Wrapper to catch old function calls.
+   * @param {Object} command The command to execute.
+   * @param {String} source The source of the command.
+   * @return {bool} Always returns false.
+   */
+  this.executeCommand = function(command, source) {
+    const msg = `executeCommand not longer supported! Called by: '${source}'.`;
+    log.error(LOG_PREFIX, msg, command);
+    return false;
   };
 
   /**
@@ -455,12 +189,450 @@ function Home(initialConfig, fbRef) {
 
 /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
  *
+ * Execute Action - handles the actual execution of an action.
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Executes a single of action.
+   *
+   * @param {Object} action The action to execute.
+   * @param {String} source The source of the command.
+   * @return {Object} result of the action or undefined if it failed.
+   */
+  function _executeAction(action, source) {
+    if (!action || typeof action !== 'object') {
+      log.error(LOG_PREFIX, `executeAction failed, invalid action.`, action);
+      return _genResult(action, false, 'invalid_param');
+    }
+
+    // Logging
+    const k = Object.keys(action);
+    if (k.length === 1) {
+      log.log(LOG_PREFIX, `executeAction('${k[0]}', '${source}')`, action);
+    } else {
+      const keys = k.join(', ');
+      log.error(LOG_PREFIX, `executeAction([${keys}], '${source}')`, action);
+      return _genResult(action, false, 'num_param_exceeded');
+    }
+
+    // No operation
+    if (action.hasOwnProperty('noop')) {
+      return _genResult(action, true, 'noop');
+    }
+
+    // Do not disturb
+    if (action.hasOwnProperty('doNotDisturb')) {
+      return _setDoNotDisturb(action.doNotDisturb)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Door open/closed
+    if (action.hasOwnProperty('door')) {
+      return _handleDoorEvent(action.door.name, action.door.state)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Doorbell
+    if (action.hasOwnProperty('doorbell')) {
+      return _ringDoorbell(source)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Harmony activity
+    if (action.hasOwnProperty('harmonyActivity')) {
+      if (!harmony) {
+        log.error(LOG_PREFIX, 'Harmony unavailable.', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      return harmony.setActivityByName(action.harmonyActivity)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Harmony key
+    if (action.hasOwnProperty('harmonyKey')) {
+      if (!harmony) {
+        log.error(LOG_PREFIX, 'Harmony unavailable.', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      return harmony.sendKey(action.harmonyKey)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Hue command
+    if (action.hasOwnProperty('hueCommand')) {
+      if (!hue || !hue.isReady()) {
+        log.error(LOG_PREFIX, 'Hue unavailable.', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      // Get the receipe/light state
+      let receipe;
+      if (action.hueCommand.lightState) {
+        receipe = action.hueCommand.lightState;
+      } else if (action.hueCommand.receipeName) {
+        receipe = _getLightReceipeByName(action.hueCommand.receipeName);
+      }
+      if (!receipe) {
+        log.error(LOG_PREFIX, `Unable to retreive receipe.`, action.hueCommand);
+        return _genResult(action, false, 'receipe_not_found');
+      }
+
+      // Set the lights
+      return hue.setLights(action.hueCommand.lights, receipe)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hueCommand failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Hue request
+    if (action.hasOwnProperty('hueRequest')) {
+      if (!hue || !hue.isReady()) {
+        log.error(LOG_PREFIX, 'Hue unavailable.', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      const path = action.hueRequest.path;
+      const method = action.hueRequest.method;
+      const body = action.hueRequest.body;
+      return hue.sendRequest(path, method, body)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hueRequest failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Hue scene
+    if (action.hasOwnProperty('hueScene')) {
+      if (!hue || !hue.isReady()) {
+        log.error(LOG_PREFIX, 'Hue unavailable.', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      return hue.setScene(action.hueScene)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: hueScene failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Log
+    if (action.hasOwnProperty('log')) {
+      const level = action.log.level || 'LOG';
+      const sender = action.log.sender || source;
+      const message = action.log.message;
+      const extra = action.log.extra;
+      if (level === 'LOG') {
+        return log.log(sender, message, extra);
+      }
+      if (level === 'ERROR') {
+        return log.error(sender, message, extra);
+      }
+      if (level === 'EXCEPTION') {
+        return log.exception(sender, message, extra);
+      }
+      return log.debug(sender, message, extra);
+    }
+
+    // NanoLeaf
+    if (action.hasOwnProperty('nanoLeaf')) {
+      if (!nanoLeaf) {
+        log.error(LOG_PREFIX, 'nanoLeaf unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+
+      return nanoLeaf.executeCommand(action.nanoLeaf)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: nanoLeaf failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('nestCam')) {
+      if (!nest) {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+
+      return nest.enableCamera(action.nestCam)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: nestCam failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('nestFan')) {
+      if (!nest) {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+
+      const roomId = action.nestFan.roomId;
+      const minutes = action.nestFan.minutes || 60;
+      return nest.runFan(roomId, minutes)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: nestFan failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('nestState')) {
+      if (!nest) {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+
+      if (action.nestState === 'HOME') {
+        return nest.setHome()
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
+            return _genResult(action, false, err);
+          });
+      }
+
+      if (action.nestState === 'AWAY') {
+        return nest.setAway()
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
+            return _genResult(action, false, err);
+          });
+      }
+      log.warn(LOG_PREFIX, `Invalid nestState: ${action.nestState}`);
+      return _genResult(action, false, 'invalid_state');
+    }
+
+    if (action.hasOwnProperty('nestThermostat')) {
+      if (!nest) {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+
+      const roomId = action.nestThermostat.roomId;
+
+      if (action.nestThermostat.temperature) {
+        const temperature = action.nestThermostat.temperature;
+        return nest.setTemperature(roomId, temperature)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
+            return _genResult(action, false, err);
+          });
+      }
+
+      if (action.nestThermostat.adjust) {
+        const direction = action.nestThermostat.adjust;
+        return nest.adjustTemperature(roomId, direction)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
+            return _genResult(action, false, err);
+          });
+      }
+
+      log.warn(LOG_PREFIX, `Invalid nestThermostat command.`, action);
+      return _genResult(action, false, 'invalid_command');
+    }
+
+    if (action.hasOwnProperty('nestThermostatAuto')) {
+      if (!nest) {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+
+      const autoMode = action.nestThermostatAuto;
+      if (!autoMode) {
+        log.warn(LOG_PREFIX, `Nest auto mode '${autoMode}' not found.`);
+        return _genResult(action, false, 'auto_mode_not_found');
+      }
+
+      const rooms = _config.nest.hvacAuto[autoMode];
+      if (typeof rooms !== 'object') {
+        log.warn(LOG_PREFIX, `No rooms provided for nestAutoMode`, action);
+        return _genResult(action, false, 'no_rooms_provided');
+      }
+
+      const results = [];
+      Object.keys(rooms).forEach((roomId) => {
+        const temperature = rooms[roomId];
+        const result = nest.setTemperature(roomId, temperature)
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestThermostatAuto failed.`, err);
+            return _genResult(action, false, err);
+          });
+        results.push(result);
+      });
+      return Promise.all(results)
+        .then((result) => {
+          return _genResult(action, true, result);
+        });
+    }
+
+    if (action.hasOwnProperty('sayThis')) {
+      const utterance = action.sayThis.utterance;
+      const opts = action.sayThis.opts || {};
+      return _sayThis(utterance, opts)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: sayThis failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('sendNotification')) {
+      if (!gcmPush) {
+        log.warn(LOG_PREFIX, 'gcmPush unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      return gcmPush.sendMessage(action.sendNotification)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: sendNotification failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('sonos')) {
+      if (!sonos) {
+        log.warn(LOG_PREFIX, 'Sonos unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      return sonos.executeCommand(action.sonos, _config.sonosPresetOptions)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: sonos failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('sound')) {
+      const soundFile = action.sound.soundFile;
+      const opts = action.sound.opts || {};
+      return _playSound(soundFile, opts)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: sound failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('state')) {
+      return _setState(action.state)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: state failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('tivo')) {
+      if (!tivo) {
+        log.warn(LOG_PREFIX, 'TiVo unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      return tivo.send(action.tivo)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: TiVo failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    if (action.hasOwnProperty('wemo')) {
+      if (!wemo) {
+        log.warn(LOG_PREFIX, 'Wemo unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      return wemo.setState(action.wemo.id, action.wemo.on)
+        .then((result) => {
+          return _genResult(action, true, result);
+        })
+        .catch((err) => {
+          log.verbose(LOG_PREFIX, `Whoops: Wemo failed.`, err);
+          return _genResult(action, false, err);
+        });
+    }
+
+    // Unknown action received
+    log.warn(LOG_PREFIX, `Unknown action received from ${source}.`, action);
+    return _genResult(action, false, 'unknown_action');
+  }
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
  * Init
  *
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
-   * Initialize the HOME Api
+   * Initialize the HOME API
    */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
@@ -474,6 +646,10 @@ function Home(initialConfig, fbRef) {
         started_: log.formatTime(now),
         lastUpdated: now,
         lastUpdated_: log.formatTime(now),
+      },
+      presence: {
+        people: {},
+        state: 'NONE',
       },
       gitHead: version.head,
     };
@@ -517,8 +693,8 @@ function Home(initialConfig, fbRef) {
   /**
    * Update System State from fbSet
    *
-   * @param {String} path The path to set
-   * @param {Object} value The value to set
+   * @param {String} path The path to set.
+   * @param {Object} value The value to set.
    */
   function _updateLocalState(path, value) {
     let currentObj = _self.state;
@@ -536,8 +712,8 @@ function Home(initialConfig, fbRef) {
   /**
    * Push value to Firebase
    *
-   * @param {String} path Path to push object to
-   * @param {Object} value The value to push
+   * @param {String} path Path to push object to.
+   * @param {Object} value The value to push.
    */
   function _fbPush(path, value) {
     let fbObj = _fb;
@@ -552,7 +728,7 @@ function Home(initialConfig, fbRef) {
       });
       fbSetLastUpdated();
     } catch (ex) {
-      const msg = 'Unable to PUSH data to Firebase. (TC)'
+      const msg = 'Unable to PUSH data to Firebase. (TC)';
       log.exception(LOG_PREFIX, `${msg}: ex`, ex);
       log.error(LOG_PREFIX, `${msg}: data`, {path: path, value: value});
     }
@@ -589,7 +765,7 @@ function Home(initialConfig, fbRef) {
   }
 
   /**
-   * Set state last updated
+   * Set state last updated.
    */
   function fbSetLastUpdated() {
     const now = Date.now();
@@ -606,21 +782,73 @@ function Home(initialConfig, fbRef) {
  ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
+   *
+   * @param {Object} action The action that was executed.
+   * @param {boolean} success If the action was successful.
+   * @param {Object} data The result of the action called.
+   * @return {Object} action object.
+   */
+  function _genResult(action, success, data) {
+    const result = {
+      success: success === true,
+      action: action,
+      result: data,
+    };
+    if (!action || typeof action !== 'object') {
+      result.actionName = '_action_';
+    } else {
+      const keys = Object.keys(action);
+      if (keys.length === 1) {
+        result.actionName = keys[0];
+      } else {
+        result.actionName = '_action_';
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Take an object and turns it into an array
+   *
+   * @param {Object} val - Object to arrayify.
+   * @return {Array} arrayified object.
+   */
+  function _arrayify(val) {
+    if (Array.isArray(val)) {
+      return val;
+    }
+    return [val];
+  }
+
+  /**
    * Handles a door open/close event
    *
    * @param {String} doorName Name of the door, ie front
    * @param {String} doorState Door state (OPEN/CLOSED)
+   * @return {Object} doorLogObj
    */
   function _handleDoorEvent(doorName, doorState) {
-    try {
-      if (_self.state.doors[doorName] === doorState) {
-        log.info(LOG_PREFIX, 'Door debouncer, door already ' + doorState);
-        return;
-      }
-    } catch (ex) {
-      // NoOp - if the door wasn't set before, it will be now.
+    if (!doorName) {
+      log.error(LOG_PREFIX, `_handleDoorEvent failed, no door name supplied.`);
+      return Promise.reject(new Error('invalid_param'));
     }
+    if (!['OPEN', 'CLOSED'].includes(doorState)) {
+      const msg = `_handleDoorEvent(${doorName}) failed, invalid door state:`;
+      log.error(LOG_PREFIX, `${msg} ${doorState}`);
+      return Promise.reject(new Error('invalid_param'));
+    }
+    if (_self.state.doors && _self.state.doors[doorName] === doorState) {
+      log.info(LOG_PREFIX, `Door debouncer, door already ${doorState}`);
+      return Promise.resolve('debounced');
+    }
+    // Mark the door as opened
     _fbSet(`state/doors/${doorName}`, doorState);
+    // If the system is away, change it to home
+    if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
+      _setState('HOME');
+      _announceDoorOpened(doorName);
+    }
+    // Log the door open/close event.
     const now = Date.now();
     const nowPretty = log.formatTime(now);
     const msg = `${doorName} door ${doorState}`;
@@ -634,10 +862,7 @@ function Home(initialConfig, fbRef) {
     };
     _fbPush('logs/doors', doorLogObj);
     log.debug(LOG_PREFIX, msg);
-    if (_self.state.systemState === 'AWAY' && doorState === 'OPEN') {
-      _setState('HOME');
-      _announceDoorOpened(doorName);
-    }
+    return Promise.resolve(doorLogObj);
   }
 
   /**
@@ -664,8 +889,7 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, `${doorName} opened, but no one was present.`);
         const cmdName = _config.presenceAlarm.cmdName;
         if (cmdName) {
-          const cmd = _config.commands[cmdName];
-          _self.executeCommand(cmd, 'doorAlarm');
+          _self.executeCommandByName(cmdName, 'doorAlarm');
         }
       }
     }, presenceAlarmTimeout);
@@ -680,14 +904,18 @@ function Home(initialConfig, fbRef) {
    */
   function _playSound(file, opts) {
     opts = opts || {};
+    if (!file) {
+      log.error(LOG_PREFIX, `playSound failed, no file specified.`);
+      return Promise.reject(new Error('no_file'));
+    }
     const now = Date.now();
     if (now - _lastSoundPlayedAt < (20 * 1000) && opts.force !== true) {
-      log.debug(LOG_PREFIX, 'playSound skipped, too soon.');
-      return;
+      log.verbose(LOG_PREFIX, 'playSound skipped, too soon.');
+      return Promise.reject(new Error('too_soon'));
     }
     if (_self.state.doNotDisturb === true && opts.force !== true) {
-      log.debug(LOG_PREFIX, 'playSound skipped, do not disturb.');
-      return;
+      log.verbose(LOG_PREFIX, 'playSound skipped, do not disturb.');
+      return Promise.reject(new Error('do_not_disturb'));
     }
     _lastSoundPlayedAt = now;
     log.debug(LOG_PREFIX, `playSound('${file}', ...)`, opts);
@@ -707,13 +935,13 @@ function Home(initialConfig, fbRef) {
     return new Promise(function(resolve, reject) {
       log.verbose(LOG_PREFIX, `playSoundLocal('${file}')`);
       const cmd = `mplayer ${file}`;
-      exec(cmd, function(error, stdout, stderr) {
+      exec(cmd, function(error, stdOut, stdErr) {
         if (error) {
-          log.exception(LOG_PREFIX, 'PlaySound Error', error);
-          resolve({playSound: false, reason: error});
+          log.exception(LOG_PREFIX, '_playSoundLocal failed', error);
+          reject(error);
           return;
         }
-        resolve({playSound: true});
+        resolve(stdOut);
       });
     });
   }
@@ -730,7 +958,7 @@ function Home(initialConfig, fbRef) {
       log.error(LOG_PREFIX, 'Unable to play sound, Google Home not available.');
       return _playSoundLocal(url);
     }
-    log.verbose(LOG_PREFIX, `playSoundGoogleHome('${url}')`);
+    log.verbose(LOG_PREFIX, `_playSoundGoogleHome('${url}')`);
     return googleHome.play(url, contentType);
   }
 
@@ -743,44 +971,50 @@ function Home(initialConfig, fbRef) {
    */
   function _sayThis(utterance, opts) {
     const force = !!opts.force;
+    if (!utterance) {
+      log.error(LOG_PREFIX, 'sayThis failed, no utterance provided.');
+      return Promise.reject(new Error('no_utterance'));
+    }
     if (!googleHome) {
       log.error(LOG_PREFIX, 'Unable to speak, Google Home not available.');
-      return Promise.resolve({sayThis: false, reason: 'gh_not_available'});
+      return Promise.reject(new Error('gh_not_available'));
     }
     log.debug(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
     if (_self.state.doNotDisturb === false || force === true) {
       return googleHome.say(utterance);
     }
-    return Promise.resolve({sayThis: false, reason: 'do_not_disturb'});
+    return Promise.reject(new Error('do_not_disturb'));
   }
 
   /**
    * Sets the Do Not Disturb property
    *
-   * @param {String} val Turn do not disturb on/off
+   * @param {boolean} val Turn do not disturb on/off
    * @return {Promise} A promise that resolves to the result of the request
    */
   function _setDoNotDisturb(val) {
-    log.debug(LOG_PREFIX, `setDoNotDisturb('${val}')`);
-    const doNotDisturb = val === 'ON' ? true : false;
-    _fbSet('state/doNotDisturb', doNotDisturb);
-    return Promise.resolve({doNotDisturb: doNotDisturb});
+    val = !!val;
+    log.debug(LOG_PREFIX, `setDoNotDisturb(${val})`);
+    _fbSet('state/doNotDisturb', val);
+    return Promise.resolve({doNotDisturb: val});
   }
 
   /**
    * Ring the doorbell
    *
    * @param {String} source Where doorbell was rung/sender
+   * @return {Object}
    */
   function _ringDoorbell(source) {
     log.verbose(LOG_PREFIX, `Doorbell from ${source}`);
-    _self.executeCommandByName('RUN_ON_DOORBELL', null, source);
+    _self.executeCommandByName('RUN_ON_DOORBELL', source);
     const now = Date.now();
     const details = {
       date: now,
       date_: log.formatTime(now),
     };
     _fbSet('state/lastDoorbell', details);
+    return Promise.resolve({doorbell: source});
   }
 
   /**
@@ -790,10 +1024,16 @@ function Home(initialConfig, fbRef) {
    * @return {Promise} A promise that resolves to the result of the request
    */
   function _setState(newState) {
+    const msg = `setState('${newState}')`;
     if (_self.state.systemState === newState) {
-      log.warn(LOG_PREFIX, 'State already set to ' + newState);
+      log.warn(LOG_PREFIX, `${msg} aborted, already '${newState}'`);
       return Promise.resolve({state: newState});
     }
+    if (!['HOME', 'ARMED', 'AWAY'].includes(newState)) {
+      log.error(LOG_PREFIX, `${msg} failed, invalid state: ${newState}`);
+      return Promise.reject(new Error('invalid_state'));
+    }
+
     log.log(LOG_PREFIX, `setState('${newState}')`);
     // Is there an arming timer running?
     if (_armingTimer) {
@@ -809,14 +1049,6 @@ function Home(initialConfig, fbRef) {
     }
     // Set the new state
     _fbSet('state/systemState', newState);
-    // Update the Nest state
-    if (nest) {
-      if (newState === 'AWAY' || newState === 'ARMED') {
-        nest.setAway();
-      } else {
-        nest.setHome();
-      }
-    }
     const now = Date.now();
     const stateLog = {
       level: 'INFO',
@@ -826,8 +1058,72 @@ function Home(initialConfig, fbRef) {
       date_: log.formatTime(now),
     };
     _fbPush('logs/systemState', stateLog);
-    _self.executeCommandByName('RUN_ON_' + newState, null, 'SET_STATE');
-    return Promise.resolve({state: newState});
+    _self.executeCommandByName(`RUN_ON_${newState}`, 'SET_STATE');
+    return Promise.resolve(newState);
+  }
+
+/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+ *
+ * Conditions checks for actions
+ *
+ ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Checks if the conditions are met
+   *
+   * @param {Object} conditions - Conditions to check, all conditions
+   *                              must be met in order for the rule to pass.
+   * @return {boolean} True if all conditions are met.
+   */
+  function _checkConditions(conditions) {
+    if (typeof conditions !== 'object') {
+      const msg = `checkConditions failed, invalid conditions.`;
+      log.error(LOG_PREFIX, msg, conditions);
+      return false;
+    }
+
+    if (conditions.skip === true) {
+      return false;
+    }
+
+    // Check if the time range conditions are met.
+    if (conditions.timeRange) {
+      const inRange = _inRange(conditions.timeRange);
+      if (inRange === false) {
+        return false;
+      }
+    }
+
+    // Check if the system state is as expected.
+    if (conditions.systemState) {
+      if (!_self.state.systemState) {
+        const msg = `checkConditions failed, unable to check systemState.`;
+        log.exception(LOG_PREFIX, msg);
+        return false;
+      }
+      const currentState = _self.state.systemState;
+      const states = _arrayify(conditions.systemState);
+      if (!states.includes(currentState)) {
+        return false;
+      }
+    }
+
+    // Check if the number of people present is as expected.
+    if (conditions.presence) {
+      if (!_self.state.presence || !_self.state.presence.state) {
+        const msg = `checkConditions failed, unable to check presenceState.`;
+        log.exception(LOG_PREFIX, msg);
+        return false;
+      }
+      const currentPresence = _self.state.presence.state;
+      const presence = _arrayify(conditions.presence);
+      if (!presence.includes(currentPresence)) {
+        return false;
+      }
+    }
+
+    // No conditions failed, return true.
+    return true;
   }
 
   /**
@@ -929,7 +1225,7 @@ function Home(initialConfig, fbRef) {
     alarmClock.on('alarm', (key, details) => {
       log.debug(LOG_PREFIX, `Alarm fired: ${key}`, details);
       if (details.hasOwnProperty('cmdName')) {
-        _self.executeCommandByName(details.cmdName, null, `alarm-${key}`);
+        _self.executeCommandByName(details.cmdName, `alarm-${key}`);
       } else {
         log.error(LOG_PREFIX, 'Unknown alarm command', details);
       }
@@ -1055,9 +1351,8 @@ function Home(initialConfig, fbRef) {
     harmony.on('activity_changed', (activity) => {
       _fbSet('state/harmony/activity', activity);
       const honCmdName = `HARMONY_${activity.label.toUpperCase()}`;
-      const honCmd = _config.commands[honCmdName];
-      if (honCmd) {
-        _self.executeCommand(honCmd, 'Harmony');
+      if (_config.commands[honCmdName]) {
+        _self.executeCommandByName(honCmdName, 'Harmony');
       }
     });
     harmony.on('config_changed', (config) => {
@@ -1141,8 +1436,7 @@ function Home(initialConfig, fbRef) {
     if (receipe && receipe.hue) {
       return receipe.hue;
     }
-    log.error(LOG_PREFIX, `Unable to retreive receipe: ${receipeName}`);
-    return {bri: 254, ct: 369, on: true};
+    return null;
   }
 
 
@@ -1221,7 +1515,6 @@ function Home(initialConfig, fbRef) {
     nest = new Nest.Nest(apiKey, _config.nest.thermostats);
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
-      _self.state.nest = data;
     });
   }
 
@@ -1238,9 +1531,7 @@ function Home(initialConfig, fbRef) {
   function _initNotifications() {
     _fb.child('state/hasNotification').on('value', function(snapshot) {
       if (snapshot.val() === true) {
-        if (_self.state.systemState === 'HOME') {
-          _self.executeCommandByName('NEW_NOTIFICATION', null, 'HOME');
-        }
+        _self.executeCommandByName('NEW_NOTIFICATION', 'HOME');
         log.log(LOG_PREFIX, 'New notification received.');
         snapshot.ref().set(false);
       }
@@ -1258,7 +1549,7 @@ function Home(initialConfig, fbRef) {
    * Init Presence
    */
   function _initPresence() {
-    _fbSet('state/presence', false);
+    _fbSet('state/presence/state', 'NONE');
 
     presence = new Presence(bluetooth);
     // Set up the presence detection
@@ -1295,18 +1586,12 @@ function Home(initialConfig, fbRef) {
     };
     _fbPush('logs/presence', presenceLog);
     _fbSet('state/presence/people', who);
-    // _self.state.presence.people = who;
     let presenceState = 'SOME';
     if (numPresent === 0) {
       presenceState = 'NONE';
-    } else {
-      // TODO: Replace this with a command & condition
-      // if (_self.state.systemState === 'AWAY') {
-      //   _setState('HOME');
-      // }
     }
     _fbSet('state/presence/state', presenceState);
-    _self.executeCommandByName(`PRESENCE_${presenceState}`, null, 'PRESENCE');
+    _self.executeCommandByName(`PRESENCE_${presenceState}`, 'PRESENCE');
   }
 
 
@@ -1339,16 +1624,13 @@ function Home(initialConfig, fbRef) {
       log.warn(LOG_PREFIX, `No notification types defined.`, msg);
       return;
     }
-    if (_self.state.systemState !== 'HOME') {
-      return;
-    }
     const msgAppName = msg.application_name;
     if (!msgAppName) {
       return;
     }
     const cmdName = _config.pushBullet.notificationTypes[msgAppName];
     if (cmdName) {
-      _self.executeCommandByName(cmdName, null, 'PushBullet');
+      _self.executeCommandByName(cmdName, 'PushBullet');
     }
   }
 
@@ -1399,7 +1681,7 @@ function Home(initialConfig, fbRef) {
   function _initTivo() {
     const tivoIP = _config.tivo.ip;
     if (!tivoIP) {
-      log.warn(LOG_PREFIX, `Tivo unavailable, no IP address specified.`);
+      log.warn(LOG_PREFIX, `TiVo unavailable, no IP address specified.`);
       return;
     }
     tivo = new Tivo(tivoIP);
@@ -1461,7 +1743,7 @@ function Home(initialConfig, fbRef) {
       _fbSet(`state/wemo/${id}`, data);
     });
     wemo.on('error', (err) => {
-      log.debug(LOG_PREFIX, `Ignored Wemo error`, err);
+      log.error(LOG_PREFIX, `Ignored Wemo error`, err);
     });
     const fbWemoConfigPath = 'config/HomeOnNode/wemoDevices';
     _fb.child(fbWemoConfigPath).on('child_added', (snapshot) => {

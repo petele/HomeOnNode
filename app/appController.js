@@ -87,27 +87,6 @@ function init() {
     return;
   }
 
-  if (_config.cmdPorts.http) {
-    _httpServer = new HTTPServer(_config.cmdPorts.http);
-    _httpServer.on('executeCommandByName', (name, modifier, sender) => {
-      _home.executeCommandByName(name, modifier, sender);
-    });
-    _httpServer.on('executeCommand', (cmd, sender) => {
-      _home.executeCommand(cmd, sender);
-    });
-  }
-
-  if (_config.cmdPorts.wss) {
-    _wss = new WSServer('CMD', _config.cmdPorts.wss);
-    _wss.on('message', (cmd, source) => {
-      if (cmd.hasOwnProperty('cmdName')) {
-        _home.executeCommandByName(cmd.cmdName, cmd.modifier, source);
-      } else {
-        _home.executeCommand(cmd, source);
-      }
-    });
-  }
-
   _fb.child('config/HomeOnNode').on('value', function(snapshot) {
     _config = snapshot.val();
     _home.updateConfig(_config);
@@ -120,18 +99,37 @@ function init() {
     });
   });
 
+  if (_config.cmdPorts.http) {
+    _httpServer = new HTTPServer(_config.cmdPorts.http);
+    _httpServer.on('executeCommandByName', (name, sender) => {
+      _home.executeCommandByName(name, sender);
+    });
+    _httpServer.on('executeActions', (actions, sender) => {
+      _home.executeActions(actions, sender);
+    });
+  }
+
+  if (_config.cmdPorts.wss) {
+    _wss = new WSServer('CMD', _config.cmdPorts.wss);
+    _wss.on('message', (cmd, sender) => {
+      if (cmd.hasOwnProperty('cmdName')) {
+        return _home.executeCommandByName(cmd.cmdName, sender);
+      } else if (cmd.hasOwnProperty('actions')) {
+        return _home.executeActions(cmd.actions, sender);
+      }
+      return _home.executeActions(cmd, sender);
+    });
+  }
+
   _fb.child('commands').on('child_added', function(snapshot) {
     const cmd = snapshot.val();
-    try {
-      if (cmd.hasOwnProperty('cmdName')) {
-        _home.executeCommandByName(cmd.cmdName, cmd.modifier, 'FB');
-      } else {
-        _home.executeCommand(cmd, 'FB');
-      }
-    } catch (ex) {
-      let msg = 'Unable to execute Firebase Command: ';
-      msg += JSON.stringify(cmd);
-      log.exception(APP_NAME, msg, ex);
+    if (cmd.hasOwnProperty('cmdName')) {
+      _home.executeCommandByName(cmd.cmdName, 'FB');
+    } else if (cmd.hasOwnProperty('actions')) {
+      _home.executeActions(cmd.actions, 'FB');
+    } else {
+      log.warn(APP_NAME, `Potential invalid command.`, cmd);
+      _home.executeActions(cmd, 'FB');
     }
     snapshot.ref().remove();
   });
@@ -159,6 +157,11 @@ function init() {
     log.cleanLogs(FB_LOG_PATH, 7);
     _loadAndRunJS('cronDaily.js');
   }, cron24h);
+
+  // Run the daily cronjob shorty after app startup.
+  setTimeout(() => {
+    _loadAndRunJS('cronDaily.js');
+  }, 4 * 60 * 1000);
 }
 
 
@@ -183,13 +186,14 @@ function _handleKeyPress(key, modifier, exitApp) {
   }
   const cmd = _config.keypad.keys[key];
   if (cmd && cmd.hasOwnProperty('cmdName')) {
-    _home.executeCommandByName(cmd.cmdName, modifier, 'KEYPAD');
+    _home.executeCommandByName(cmd.cmdName, 'KEYPAD');
     return;
   }
-  if (cmd) {
-    _home.executeCommand(cmd, modifier, 'KEYPAD');
+  if (cmd && cmd.hasOwnProperty('actions')) {
+    _home.executeActions(cmd.actions, 'KEYPAD');
     return;
   }
+  log.error(APP_NAME, `Unknown keypress type`, cmd);
 }
 
 /**
@@ -219,23 +223,24 @@ function _getCronIntervalValue(minutes, delaySeconds) {
  * @param {Function} [callback] Callback to run once completed.
 */
 function _loadAndRunJS(file, callback) {
-  let msg = `loadAndRunJS('${file}')`;
+  const msg = `loadAndRunJS('${file}')`;
   log.debug(APP_NAME, msg);
   fs.readFile(file, function(err, data) {
     if (err) {
-      log.exception(APP_NAME, msg + ' Unable to load file.', err);
+      log.exception(APP_NAME, `${msg} - Unable to read file.`, err);
       if (callback) {
         callback(err, file);
       }
-    } else {
-      try {
-        eval(data.toString());
-      } catch (ex) {
-        log.exception(APP_NAME, msg + ' Exception on eval.', ex);
-        if (callback) {
-          callback(ex, file);
-        }
+      return;
+    }
+    try {
+      eval(data.toString());
+    } catch (ex) {
+      log.exception(APP_NAME, `${msg} - Exception on eval.`, ex);
+      if (callback) {
+        callback(ex, file);
       }
+      return;
     }
     if (callback) {
       callback(null, file);

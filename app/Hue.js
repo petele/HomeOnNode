@@ -15,9 +15,6 @@ const LOG_PREFIX = 'HUE';
  * @fires Hue#config_changed
  * @fires Hue#groups_changed
  * @fires Hue#lights_changed
- * @property {Object} lights - List of all lights and their current state
- * @property {Object} groups - List of all groups and their current state
- * @property {Object} capabilities - Current Hub capabilities
  * @property {Object} dataStore - Entire Hub data store
  * @param {String} key Hue authentication key.
  * @param {String} [explicitIPAddress] IP Address of the Hub
@@ -37,10 +34,48 @@ function Hue(key, explicitIPAddress) {
   const _requestQueue = {};
   let _requestId = 0;
 
-  this.lights = {};
-  this.groups = {};
-  this.capabilities = {};
   this.dataStore = {};
+  let _capabilities = {};
+
+  /**
+   * Is API ready?
+   *
+   * @return {Boolean} true if ready, false if not
+  */
+  this.isReady = function() {
+    return _ready === true;
+  };
+
+  /**
+   * Create a throttled version of a function.
+   *
+   * @param {Function} func function to throttle.
+   * @param {Number} limit Time limit to run at.
+   * @return {Function} a throttled version of the function.
+   */
+  const _throttle = (func, limit) => {
+    let lastFunc;
+    let lastRan;
+    return function(...args) {
+      // eslint-disable-next-line no-invalid-this
+      const context = this;
+      if (!lastRan) {
+        lastRan = Date.now();
+        return func.apply(context, args);
+      }
+      clearTimeout(lastFunc);
+      lastFunc = setTimeout(() => {
+        if ((Date.now() - lastRan) >= limit) {
+          lastRan = Date.now();
+          func.apply(context, args);
+        }
+      }, limit - (Date.now() - lastRan));
+    };
+  };
+  
+  const _updateGroupsThrottled = _throttle(_updateGroups, 1000);
+  const _updateLightsThrottled = _throttle(_updateLights, 1000);
+
 
   /**
    * Turn the lights (or groups) on and off, modify the hue and effects.
@@ -50,12 +85,13 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves to the response body.
   */
   this.setLights = function(lights, cmd) {
-    let msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
-    log.debug(LOG_PREFIX, msg);
-    if (_isReady() !== true) {
+    const msg = `setLights(${JSON.stringify(lights)}, ${JSON.stringify(cmd)})`;
+    if (!_self.isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
-    if (Array.isArray(lights) === false) {
+    log.debug(LOG_PREFIX, msg);
+    if (!Array.isArray(lights)) {
       lights = [lights];
     }
     if (cmd.on === false) {
@@ -70,12 +106,13 @@ function Hue(key, explicitIPAddress) {
       }
       return _makeHueRequest(requestPath, 'PUT', cmd, true)
         .then((resp) => {
-          _updateLights();
-          _updateGroups();
+          _updateLightsThrottled();
+          _updateGroupsThrottled();
           return resp;
         })
         .catch((err) => {
-          log.error(LOG_PREFIX, 'setLights() failed.', err);
+          err.requestPath = requestPath;
+          log.error(LOG_PREFIX, `${msg} failed.`, err);
           return err;
         });
       }));
@@ -88,20 +125,22 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves to the response body.
   */
   this.setScene = function(sceneId) {
-    log.debug(LOG_PREFIX, `setScene('${sceneId}')`);
-    if (_isReady() !== true) {
+    const msg = `setScene('${sceneId}')`;
+    if (!_self.isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
+    log.debug(LOG_PREFIX, msg);
     const requestPath = '/groups/0/action';
     const cmd = {scene: sceneId};
     return _makeHueRequest(requestPath, 'PUT', cmd, true)
       .then((resp) => {
-        _updateLights();
-        _updateGroups();
+        _updateLightsThrottled();
+        _updateGroupsThrottled();
         return resp;
       })
       .catch((err) => {
-        log.error(LOG_PREFIX, `setScene('${sceneId}')`, err);
+        log.error(LOG_PREFIX, `${msg} failed.`, err);
         return err;
       });
   };
@@ -115,14 +154,42 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves with the response
   */
   this.sendRequest = function(requestPath, method, body) {
-    log.debug(LOG_PREFIX, `sendRequest('${requestPath}', '${method}')`, body);
-    if (_isReady() !== true) {
+    const msg = `sendRequest('${requestPath}', '${method}')`;
+    if (!_self.isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`, body);
       return Promise.reject(new Error('not_ready'));
     }
+    log.debug(LOG_PREFIX, msg, body);
     if (!requestPath || !method) {
-      return Promise.reject(new Error('missing_parameter'));
+      return Promise.reject(new TypeError('missing_parameter'));
     }
-    return _makeHueRequest(requestPath, method, body);
+    return _makeHueRequest(requestPath, method, body)
+      .catch((err) => {
+        log.error(LOG_PREFIX, `${msg} failed.`, err);
+        return err;
+      });
+  };
+
+  /**
+   * Update all data from the hub.
+   * @return {Promise}
+   */
+  this.updateHub = function() {
+    const msg = `updateHub()`;
+    if (!_self.isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
+    log.debug(LOG_PREFIX, msg);
+    return _updateConfig()
+      .then(() => {
+        log.verbose(LOG_PREFIX, `${msg} completed.`);
+        return;
+      })
+      .catch((err) => {
+        log.warn(LOG_PREFIX, `${msg} failed.`, err);
+        return;
+      });
   };
 
   /**
@@ -131,34 +198,96 @@ function Hue(key, explicitIPAddress) {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     _findHub()
-    .then((bridgeIP) => {
-      _bridgeIP = bridgeIP;
-      _updateConfig()
-        .then(() => {
-          _checkBatteries();
-        });
-      _updateLights();
-      _updateGroups();
-      _ready = true;
-      log.debug(LOG_PREFIX, 'Ready.');
-      setInterval(_updateConfig, CONFIG_REFRESH_INTERVAL);
-      setInterval(_updateGroups, GROUPS_REFRESH_INTERVAL);
-      setInterval(_updateLights, LIGHTS_REFRESH_INTERVAL);
-      setInterval(_checkBatteries, BATTERY_CHECK_INTERVAL);
+      .then((bridgeIP) => {
+        _bridgeIP = bridgeIP;
+        return _updateConfig();
+      }).then(() => {
+        _ready = true;
+        log.debug(LOG_PREFIX, 'Ready.');
+        log.verbose(LOG_PREFIX, 'Starting interval timers...');
+        setTimeout(() => {
+          _updateConfigTick();
+        }, CONFIG_REFRESH_INTERVAL);
+        setTimeout(() => {
+          _updateGroupsTick();
+        }, GROUPS_REFRESH_INTERVAL);
+        setTimeout(() => {
+          _updateLightsTick();
+        }, LIGHTS_REFRESH_INTERVAL);
+        setTimeout(() => {
+          _checkBatteriesTick();
+        }, BATTERY_CHECK_INTERVAL);
+      });
+  }
+
+  /**
+   * A function that sleeps for the specified length of time.
+   *
+   * @param {number} timeout Length of time to sleep (ms).
+   * @return {Promise} An empty promise once the time is up.
+   */
+  function _promisedSleep(timeout) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, timeout || 30000);
     });
   }
 
   /**
-   * Is API ready?
-   *
-   * @return {Boolean} true if ready, false if not
-  */
-  function _isReady() {
-    if (_ready) {
-      return true;
-    }
-    log.error(LOG_PREFIX, 'Hue not ready.');
-    return false;
+   * Timer tick for updating config information.
+   * @return {Promise}
+   */
+  function _updateConfigTick() {
+    return _updateConfig()
+      .then(() => {
+        return _promisedSleep(CONFIG_REFRESH_INTERVAL);
+      })
+      .then(() => {
+        _updateConfigTick();
+      });
+  }
+
+  /**
+   * Timer tick for updating group information.
+   * @return {Promise}
+   */
+  function _updateGroupsTick() {
+    return _updateGroups()
+      .then(() => {
+        return _promisedSleep(GROUPS_REFRESH_INTERVAL);
+      })
+      .then(() => {
+        _updateGroupsTick();
+      });
+  }
+
+  /**
+   * Timer tick for updating lights information.
+   * @return {Promise}
+   */
+  function _updateLightsTick() {
+    return _updateLights()
+      .then(() => {
+        return _promisedSleep(LIGHTS_REFRESH_INTERVAL);
+      })
+      .then(() => {
+        _updateLightsTick();
+      });
+  }
+
+  /**
+   * Timer tick for checking the batteries.
+   * @return {Promise}
+   */
+  function _checkBatteriesTick() {
+    return _checkBatteries()
+      .then(() => {
+        return _promisedSleep(BATTERY_CHECK_INTERVAL);
+      })
+      .then(() => {
+        _checkBatteriesTick();
+      });
   }
 
   /**
@@ -189,14 +318,13 @@ function Hue(key, explicitIPAddress) {
   */
   function _makeHueRequest(requestPath, method, body, retry) {
     const msg = `makeHueRequest('${method}', '${requestPath}', body, ${retry})`;
-    log.verbose(LOG_PREFIX, msg, body);
-
     const requestId = _requestId++;
     _requestQueue[requestId] = {
       requestId: requestId,
       path: `${method}://${requestPath}`,
       startedAt: Date.now(),
     };
+    log.verbose(LOG_PREFIX, `${msg} [${requestId}]`, body);
 
     const requestsInProgress = Object.keys(_requestQueue).length;
     if (requestsInProgress >= 5) {
@@ -265,22 +393,38 @@ function Hue(key, explicitIPAddress) {
   function _updateGroups() {
     const requestPath = '/groups';
     return _makeHueRequest(requestPath, 'GET', null, false)
-    .then((groups) => {
-      if (diff(_self.groups, groups)) {
-        _self.groups = groups;
-        /**
-         * see {@link https://developers.meethue.com/documentation/groups-api#21_get_all_groups}
-         * @event Hue#groups_changed
-         */
-        _self.emit('groups_changed', groups);
-      }
-      return true;
-    })
-    .catch((error) => {
-      log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
-      return false;
-    });
+      .then(_checkGroups)
+      .catch((error) => {
+        log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
+        return false;
+      });
   }
+
+  /**
+   * Checks if the new group data matches the current group data.
+   *
+   * @fires Hue#groups_changed.
+   * @param {Object} groups new group data.
+   * @return {boolean} True if it's changed, false for invalid or same.
+   */
+  function _checkGroups(groups) {
+    if (typeof groups !== 'object') {
+      return false;
+    }
+    if (Object.keys(groups) === 0) {
+      return false;
+    }
+    if (!_self.dataStore.groups) {
+      _self.dataStore.groups = {};
+    }
+    if (diff(_self.dataStore.groups, groups)) {
+      _self.dataStore.groups = groups;
+      _self.emit('groups_changed', groups);
+      return true;
+    }
+    return false;
+  }
+
 
   /**
    * Updates this.lights to the latest state from the hub.
@@ -291,21 +435,36 @@ function Hue(key, explicitIPAddress) {
   function _updateLights() {
     const requestPath = '/lights';
     return _makeHueRequest(requestPath, 'GET', null, false)
-    .then((lights) => {
-      if (diff(_self.lights, lights)) {
-        _self.lights = lights;
-        /**
-         * see {@link https://developers.meethue.com/documentation/lights-api#11_get_all_lights}
-         * @event Hue#lights_changed
-         */
-        _self.emit('lights_changed', lights);
-      }
-      return true;
-    })
-    .catch((error) => {
-      log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
+      .then(_checkLights)
+      .catch((error) => {
+        log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
+        return false;
+      });
+  }
+
+  /**
+   * Checks if the new light data matches the current light data.
+   *
+   * @fires Hue#lights_changed.
+   * @param {Object} lights new light data.
+   * @return {boolean} True if it's changed, false for invalid or same.
+   */
+  function _checkLights(lights) {
+    if (typeof lights !== 'object') {
       return false;
-    });
+    }
+    if (Object.keys(lights) === 0) {
+      return false;
+    }
+    if (!_self.dataStore.lights) {
+      _self.dataStore.lights = {};
+    }
+    if (diff(_self.dataStore.lights, lights)) {
+      _self.dataStore.lights = lights;
+      _self.emit('lights_changed', lights);
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -315,25 +474,38 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateConfig() {
     const pDataStore = _makeHueRequest('', 'GET', null, false);
-    const pCapabilities = _delayedHueRequest('/capabilities', null, false, 800);
+    const pCapPath = '/capabilities';
+    const pCapabilities = _delayedHueRequest(pCapPath, 'GET', null, false, 500);
     return Promise.all([pDataStore, pCapabilities])
       .then((results) => {
-        let hasChanged = false;
+        const newDataStore = results[0];
+        const newCapabilities = results[1];
+        let capabilitiesChanged = false;
+        let configChanged = false;
+
+        // Verify we have a dataStore to work with.
+        if (!_self.dataStore) {
+          _self.dataStore = {};
+        }
 
         // Has the dataStore changed?
-        if (diff(_self.dataStore, results[0])) {
-          _self.dataStore = results[0];
-          hasChanged = true;
+        if (diff(_self.dataStore, newDataStore)) {
+          _checkLights(newDataStore.lights);
+          _checkGroups(newDataStore.groups);
+          _self.dataStore = newDataStore;
+          configChanged = true;
         }
+
         // Have the capabilities changed?
-        if (diff(_self.capabilities, results[1])) {
-          _self.capabilities = results[1];
-          hasChanged = true;
+        if (diff(_capabilities, newCapabilities)) {
+          _capabilities = newCapabilities;
+          capabilitiesChanged = true;
         }
+
         // Has something changed?
-        if (hasChanged) {
-          const config = Object.assign({}, _self.dataStore);
-          config.capabilities = _self.capabilities;
+        if (capabilitiesChanged || configChanged) {
+          const config = Object.assign({}, newDataStore);
+          config.capabilities = Object.assign({}, _capabilities);
           _self.emit('config_changed', config);
         }
         return true;
@@ -353,9 +525,7 @@ function Hue(key, explicitIPAddress) {
     return new Promise(function(resolve, reject) {
       if (explicitIPAddress) {
         log.debug(LOG_PREFIX, `Using provided IP: ${explicitIPAddress}`);
-        let ip = explicitIPAddress;
-        explicitIPAddress = null;
-        resolve(ip);
+        resolve(explicitIPAddress);
         return;
       }
       log.debug(LOG_PREFIX, 'Searching for Hue Hub...');
@@ -397,7 +567,7 @@ function Hue(key, explicitIPAddress) {
       log.warn(LOG_PREFIX, 'checkBatteries() failed, no sensors available.');
       return;
     }
-    log.debug(LOG_PREFIX, 'Checking batteries...');
+    log.verbose(LOG_PREFIX, 'Checking batteries...');
     const keys = Object.keys(_self.dataStore.sensors);
     keys.forEach((key) => {
       const sensor = _self.dataStore.sensors[key];

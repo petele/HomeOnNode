@@ -43,18 +43,19 @@ function Wemo() {
    */
   this.setState = function(id, state) {
     const msg = `setState('${id}', ${state})`;
+    if (!_isReady()) {
+      log.warn(LOG_PREFIX, `${msg} failed, Wemo not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
+
+    const client = _clients[id];
+    if (!client) {
+      log.error(LOG_PREFIX, `${msg} failed: Device not found.`);
+      return Promise.reject(new Error('device_not_found'));
+    }
+
     log.debug(LOG_PREFIX, msg);
     return new Promise((resolve, reject) => {
-      if (!_isReady()) {
-        reject(new Error('not_ready'));
-        return;
-      }
-      const client = _clients[id];
-      if (!client) {
-        log.error(LOG_PREFIX, `${msg} failed: Device not found.`);
-        reject(new Error('device_not_found'));
-        return;
-      }
       const val = state ? 1 : 0;
       client.setBinaryState(val, (err, resp) => {
         if (err) {
@@ -76,18 +77,19 @@ function Wemo() {
    */
   this.getState = function(id) {
     const msg = `getState('${id}')`;
+    if (!_isReady()) {
+      log.warn(LOG_PREFIX, `${msg} failed, Wemo not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
+
+    const client = _clients[id];
+    if (!client) {
+      log.error(LOG_PREFIX, `${msg} failed: Device not found.`);
+      return Promise.reject(new Error('device_not_found'));
+    }
+
     log.debug(LOG_PREFIX, msg);
     return new Promise((resolve, reject) => {
-      if (!_isReady()) {
-        reject(new Error('not_ready'));
-        return;
-      }
-      const client = _clients[id];
-      if (!client) {
-        log.error(LOG_PREFIX, `${msg} failed: Device not found.`);
-        reject(new Error('device_not_found'));
-        return;
-      }
       client.getBinaryState((err, val) => {
         if (err) {
           log.error(LOG_PREFIX, `${msg} failed.`, err);
@@ -95,7 +97,7 @@ function Wemo() {
           return;
         }
         log.debug(LOG_PREFIX, `${msg} success: ${val}`);
-        resolve(val == true);
+        resolve(val === true);
       });
     });
   };
@@ -108,10 +110,12 @@ function Wemo() {
    * @return {boolean} True if the setup will be completed.
    */
   this.addDevice = function(setupURL) {
-    log.debug(LOG_PREFIX, `addDevice('${setupURL}')`);
-    if (_isReady() === false) {
+    const msg = `addDevice('${setupURL}')`;
+    if (!_isReady()) {
+      log.warn(LOG_PREFIX, `${msg} failed, Wemo not ready.`);
       return false;
     }
+    log.debug(LOG_PREFIX, msg);
     wemo.load(setupURL, _onWemoDeviceFound);
     return true;
   };
@@ -122,11 +126,7 @@ function Wemo() {
    * @return {boolean} True if the ready.
    */
   function _isReady() {
-    if (wemo) {
-      return true;
-    }
-    log.error(LOG_PREFIX, 'Wemo not ready.');
-    return false;
+    return wemo ? true : false;
   }
 
   /**
@@ -136,7 +136,7 @@ function Wemo() {
    */
   function _searchForDevices() {
     log.verbose(LOG_PREFIX, '_searchForDevices()');
-    if (_isReady() === false) {
+    if (!_isReady()) {
       return false;
     }
     wemo.discover(_onWemoDeviceFound);
@@ -176,7 +176,7 @@ function Wemo() {
     client.on('binaryState', (value) => {
       deviceInfo.value = value;
       _self.emit('change', dMac, deviceInfo);
-      log.debug(LOG_PREFIX, `binaryState for ${dName} changed to ${value}`);
+      log.verbose(LOG_PREFIX, `binaryState for ${dName} changed to ${value}`);
     });
   }
 

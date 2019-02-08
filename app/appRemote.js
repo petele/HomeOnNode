@@ -147,9 +147,6 @@ function _handleKeyPress(key, modifier, exitApp) {
     log.warn(APP_NAME, `Unknown key pressed.`, details);
     return;
   }
-  if (modifier) {
-    cmd.modifier = modifier;
-  }
   _sendCommand(cmd);
 }
 

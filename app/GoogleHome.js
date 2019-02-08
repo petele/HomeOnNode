@@ -44,11 +44,7 @@ function GoogleHome(ipAddress) {
    * @return {boolean} True if ready, false if not.
    */
   function _isReady() {
-    if (_ready) {
-      return true;
-    }
-    log.warn(LOG_PREFIX, `Google Home API not ready.`);
-    return false;
+    return _ready === true;
   }
 
   /**
@@ -59,10 +55,11 @@ function GoogleHome(ipAddress) {
    */
   this.say = function(utterance) {
     const msg = `say('${utterance}')`;
-    log.debug(LOG_PREFIX, msg);
     if (!_isReady()) {
-      return;
+      log.error(LOG_PREFIX, `${msg} failed, not ready.`);
+      return Promise.reject(new Error('not_ready'));
     }
+    log.debug(LOG_PREFIX, msg);
     // const opts = {
     //   metadata: {
     //     metadataType: 0,
@@ -112,23 +109,29 @@ function GoogleHome(ipAddress) {
    */
   this.setVolume = function(level) {
     const msg = `setVolume(${level})`;
-    log.debug(LOG_PREFIX, msg);
     if (!_isReady()) {
-      return;
+      log.error(LOG_PREFIX, `${msg} failed, not ready.`);
+      return Promise.reject(new Error('not_ready'));
     }
+    log.debug(LOG_PREFIX, msg);
     if (level > 100 || level < 1) {
       log.error(LOG_PREFIX, `${msg} failed, level out of bounds.`);
-      return;
+      return Promise.reject(new Error('level_out_of_bounds'));
     }
-    return _getCastClient().then((client) => {
-      client.setVolume({level: level / 100}, (err, resp) => {
-        client.close();
-        if (err) {
-          log.error(LOG_PREFIX, 'Unable to set volume', err);
-          return level;
-        }
+    return _getCastClient()
+      .then((client) => {
+        return new Promise((resolve, reject) => {
+          client.setVolume({level: level / 100}, (err, resp) => {
+            client.close();
+            if (err) {
+              log.error(LOG_PREFIX, 'Unable to set volume', err);
+              reject(err);
+              return;
+            }
+            resolve(resp);
+          });
+        });
       });
-    });
   };
 
 
@@ -142,10 +145,11 @@ function GoogleHome(ipAddress) {
   this.play = function(url, options) {
     options = options || {};
     const msg = `play('${url}', {...})`;
-    log.debug(LOG_PREFIX, msg, options);
     if (!_isReady()) {
-      return;
+      log.error(LOG_PREFIX, `${msg} failed, not ready.`, options);
+      return Promise.reject(new Error('not_ready'));
     }
+    log.debug(LOG_PREFIX, msg, options);
     return new Promise((resolve, reject) => {
       _getCastClient().then((client) => {
         client.launch(castv2.DefaultMediaReceiver, (err, player) => {
@@ -268,8 +272,11 @@ function GoogleHome(ipAddress) {
    */
   this.getDeviceInfo = function() {
     const msg = `getDeviceInfo()`;
+    if (!_isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed, not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
     log.verbose(LOG_PREFIX, msg);
-
     return _getDeviceInfo();
   };
 
@@ -281,8 +288,11 @@ function GoogleHome(ipAddress) {
    */
   this.setNightMode = function(isNight) {
     const msg = `setNightMode(${isNight})`;
+    if (!_isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed, not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
     log.verbose(LOG_PREFIX, msg);
-
     const url = '/setup/assistant/set_night_mode_params';
     const body = {
       enabled: isNight,
@@ -299,8 +309,11 @@ function GoogleHome(ipAddress) {
    */
   this.setDoNotDisturb = function(doNotDisturb) {
     const msg = `setDoNotDisturb(${doNotDisturb})`;
+    if (!_isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed, not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
     log.verbose(LOG_PREFIX, msg);
-
     const url = '/setup/assistant/notifications';
     const body = {
       notifications_enabled: !doNotDisturb,
@@ -315,8 +328,11 @@ function GoogleHome(ipAddress) {
    */
   this.getDoNotDisturb = function() {
     const msg = `getDoNotDisturb()`;
+    if (!_isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed, not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
     log.verbose(LOG_PREFIX, msg);
-
     const url = '/setup/assistant/notifications';
     return _makeRequest('POST', url);
   };

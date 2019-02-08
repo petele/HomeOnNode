@@ -58,7 +58,7 @@ function HarmonyWS(ipAddress) {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
     _getHubInfo().then((hubInfo) => {
-      log.debug(LOG_PREFIX, 'Hub info received', hubInfo);
+      log.verbose(LOG_PREFIX, 'Hub info received', hubInfo);
       _hubId = hubInfo.remoteId;
       _self.emit('hub_info', hubInfo);
       _connect();
@@ -77,7 +77,7 @@ function HarmonyWS(ipAddress) {
     const msg = `setActivityById('${activityId}')`;
     if (!activityId) {
       log.error(LOG_PREFIX, `${msg} failed, missing 'activityId'`);
-      return false;
+      return Promise.reject(new Error('activity_id_missing'));
     }
     const params = {
       async: true,
@@ -101,12 +101,12 @@ function HarmonyWS(ipAddress) {
     const msg = `setActivityByName('${activityName}')`;
     if (!activityName) {
       log.error(LOG_PREFIX, `${msg} failed, missing 'activityName'`);
-      return false;
+      return Promise.reject(new Error('activity_name_missing'));
     }
     const activityId = _activitiesByName[activityName];
     if (!activityId) {
       log.error(LOG_PREFIX, `${msg} failed, activity not found.`);
-      return false;
+      return Promise.reject(new Error('activity_not_found'));
     }
     return _self.setActivityById(activityId);
   };
@@ -121,7 +121,7 @@ function HarmonyWS(ipAddress) {
     const msg = `sendKey({...})`;
     if (!cmd || typeof cmd !== 'string') {
       log.error(LOG_PREFIX, `${msg} failed, invalid command.`);
-      return false;
+      return Promise.reject(new TypeError('invalid_command'));
     }
     const params = {
       status: 'press',
@@ -269,7 +269,7 @@ function HarmonyWS(ipAddress) {
   function _sendCommand(command, params) {
     if (!_wsClient || _wsClient.connected === false) {
       log.error(LOG_PREFIX, 'Unable to send command, no WebSocket connection.');
-      return false;
+      return Promise.reject(new Error('not_ready'));
     }
     const defaultParams = {
       verb: 'get',
@@ -285,11 +285,11 @@ function HarmonyWS(ipAddress) {
       },
     };
     log.verbose(LOG_PREFIX, '_sendCommand({...})', payload);
-    _wsClient.send(JSON.stringify(payload))
+    return _wsClient.send(JSON.stringify(payload))
       .catch((err) => {
         log.exception(LOG_PREFIX, '_sendCommand({...}) failed.', err);
+        throw err;
       });
-    return true;
   }
 
 
@@ -340,7 +340,7 @@ function HarmonyWS(ipAddress) {
      * @event Harmony#config_changed
      * @type {Object}
      */
-    log.debug(LOG_PREFIX, 'Config changed.', config);
+    log.verbose(LOG_PREFIX, 'Config changed.', config);
     _self.emit('config_changed', config);
   }
 
