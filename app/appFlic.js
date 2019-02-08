@@ -11,8 +11,9 @@ const DeviceMonitor = require('./DeviceMonitor');
 
 const FlicLib = require('./FlicLib/FlicLibNodeJS');
 const FlicClient = FlicLib.FlicClient;
-const FlicConnectionChannel = FlicLib.FlicConnectionChannel;
 const FlicScanWizard = FlicLib.FlicScanWizard;
+const FlicConnectionChannel = FlicLib.FlicConnectionChannel;
+const FlicBatteryStatusListener = FlicLib.FlicBatteryStatusListener;
 
 const MODE = process.argv[2] === 'scan' ? 'SCAN' : 'LISTEN';
 const APP_NAME = 'FlicController';
@@ -206,24 +207,39 @@ function _listenToButton(bdAddr) {
   cc.on('removed', (reason) => {
     log.warn(APP_NAME, `Button ${bdAddr} was removed because ${reason}`);
   });
-  // cc.on('buttonUpOrDown', (clickType, wasQueued, timeDiff) => {
-  //   log.debug(APP_NAME, 'buttonUpOrDown');
-  //   _sendButtonPress(bdAddr, clickType, wasQueued, timeDiff);
-  // });
-  // cc.on('buttonClickOrHold', (clickType, wasQueued, timeDiff) => {
-  //   log.debug(APP_NAME, 'buttonClickOrHold');
-  //   _sendButtonPress(bdAddr, clickType, wasQueued, timeDiff);
-  // });
-  // cc.on('buttonSingleOrDoubleClick', (clickType, wasQueued, timeDiff) => {
-  //   log.debug(APP_NAME, 'buttonSingleOrDoubleClick');
-  //   _sendButtonPress(bdAddr, clickType, wasQueued, timeDiff);
-  // });
   cc.on('buttonSingleOrDoubleClickOrHold', (clickType, wasQueued, timeDiff) => {
     const obj = {bdAddr, clickType, wasQueued, timeDiff};
     log.debug(APP_NAME, `Button '${bdAddr}' was ${clickType}`, obj);
     _sendButtonPress(bdAddr, clickType, wasQueued, timeDiff);
   });
   _flicClient.addConnectionChannel(cc);
+  const batteryStatus = new FlicBatteryStatusListener(bdAddr);
+  batteryStatus.on('batteryStatus', (data) => {
+    const msg = `Battery for ${bdAddr}: ${data.batteryPercentage}`;
+    log.log(APP_NAME, msg, data);
+    if (!_wsClient) {
+      log.error(APP_NAME, 'WebSocket client not available.');
+      return;
+    }
+    const level = 'LOG';
+    const command = {
+      actions: [{log: {
+          level: level,
+          sender: APP_NAME,
+          message: msg,
+          extra: data,
+        },
+      }],
+    };
+    _wsClient.send(JSON.stringify(command))
+      .then(() => {
+        log.debug(APP_NAME, `Command sent`, command);
+      })
+      .catch((err) => {
+        log.error(APP_NAME, `Unable to send command`, err);
+      });
+  });
+  _flicClient.addBatteryStatusListener(batteryStatus);
 }
 
 /**
@@ -255,10 +271,13 @@ function _sendButtonPress(address, clickType, wasQueued, timeDiff) {
   }
   command.flic = {address, clickType, wasQueued, timeDiff};
   log.log(APP_NAME, `Sending command`, command);
-  _wsClient.send(JSON.stringify(command)).catch((err) => {
-    log.error(APP_NAME, `Unable to send command`, err);
-    log.debug(APP_NAME, `Command sent`, command);
-  });
+  _wsClient.send(JSON.stringify(command))
+    .then(() => {
+      log.debug(APP_NAME, `Command sent`, command);
+    })
+    .catch((err) => {
+      log.error(APP_NAME, `Unable to send command`, err);
+    });
 }
 
 /**
