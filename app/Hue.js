@@ -8,9 +8,6 @@ const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'HUE';
 
-// TODO: Add throttling to API calls, see
-// https://codeburst.io/throttling-and-debouncing-in-javascript-b01cad5c8edf
-
 /**
  * Philips Hue API.
  * @constructor
@@ -30,6 +27,9 @@ function Hue(key, explicitIPAddress) {
   const LIGHTS_REFRESH_INTERVAL = 40 * 1000;
   const _self = this;
   const _key = key;
+
+  const _updateGroupsThrottled = _throttle(_updateGroups, 1000);
+  const _updateLightsThrottled = _throttle(_updateLights, 1000);
 
   let _bridgeIP;
   let _ready = false;
@@ -79,8 +79,8 @@ function Hue(key, explicitIPAddress) {
       }
       return _makeHueRequest(requestPath, 'PUT', cmd, true)
         .then((resp) => {
-          _updateLights();
-          _updateGroups();
+          _updateLightsThrottled();
+          _updateGroupsThrottled();
           return resp;
         })
         .catch((err) => {
@@ -108,8 +108,8 @@ function Hue(key, explicitIPAddress) {
     const cmd = {scene: sceneId};
     return _makeHueRequest(requestPath, 'PUT', cmd, true)
       .then((resp) => {
-        _updateLights();
-        _updateGroups();
+        _updateLightsThrottled();
+        _updateGroupsThrottled();
         return resp;
       })
       .catch((err) => {
@@ -192,6 +192,33 @@ function Hue(key, explicitIPAddress) {
         }, BATTERY_CHECK_INTERVAL);
       });
   }
+
+    /**
+     * Create a throttled version of a function.
+     *
+     * @param {Function} func function to throttle.
+     * @param {Number} limit Time limit to run at.
+     * @return {Function} a throttled version of the function.
+     */
+    const _throttle = (func, limit) => {
+      let lastFunc;
+      let lastRan;
+      return function(...args) {
+        // eslint-disable-next-line no-invalid-this
+        const context = this;
+        if (!lastRan) {
+          lastRan = Date.now();
+          return func.apply(context, args);
+        }
+        clearTimeout(lastFunc);
+        lastFunc = setTimeout(() => {
+          if ((Date.now() - lastRan) >= limit) {
+            lastRan = Date.now();
+            func.apply(context, args);
+          }
+        }, limit - (Date.now() - lastRan));
+      };
+    };
 
   /**
    * A function that sleeps for the specified length of time.
