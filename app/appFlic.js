@@ -18,6 +18,10 @@ const FlicBatteryStatusListener = FlicLib.FlicBatteryStatusListener;
 const MODE = process.argv[2] === 'scan' ? 'SCAN' : 'LISTEN';
 const APP_NAME = 'FlicController';
 const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
+const FLIC_CNX_OPTS = {
+  autoDisconnectTime: 15,
+  latencyMode: 'LowLatency',
+};
 
 let _fb;
 let _config;
@@ -199,7 +203,7 @@ function _startScanWizard() {
  */
 function _listenToButton(bdAddr) {
   log.log(APP_NAME, `Listening for button: ${bdAddr}`);
-  const cc = new FlicConnectionChannel(bdAddr);
+  const cc = new FlicConnectionChannel(bdAddr, FLIC_CNX_OPTS);
   cc.on('connectionStatusChanged', (status, disconnectReason) => {
     const msg = `connectionStatusChanged for ${bdAddr} to ${status}`;
     log.log(APP_NAME, msg, disconnectReason);
