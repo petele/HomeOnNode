@@ -8,6 +8,9 @@ const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'HUE';
 
+// TODO: Add throttling to API calls, see
+// https://codeburst.io/throttling-and-debouncing-in-javascript-b01cad5c8edf
+
 /**
  * Philips Hue API.
  * @constructor
