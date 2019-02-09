@@ -73,8 +73,8 @@ function Hue(key, explicitIPAddress) {
     };
   };
   
-  const _updateGroupsThrottled = _throttle(_updateGroups, 1000);
-  const _updateLightsThrottled = _throttle(_updateLights, 1000);
+  const _updateGroupsThrottled = _throttle(_updateGroups, 2500);
+  const _updateLightsThrottled = _throttle(_updateLights, 2500);
 
 
   /**
