@@ -161,7 +161,7 @@ function init() {
   // Run the daily cronjob shorty after app startup.
   setTimeout(() => {
     _loadAndRunJS('cronDaily.js');
-  }, 4 * 60 * 1000);
+  }, 2 * 60 * 1000);
 }
 
 
