@@ -34,14 +34,13 @@ const __backupConfig = function() {
   return new Promise((resolve, reject) => {
     _fb.child(`config`).once('value', (snapshot) => {
       const filename = `config-${moment().format('YYYY-MM-DD')}.json`;
-      if (!false.existsSync(CONFIG_BACKUP_PATH)) {
+      if (!fs.existsSync(CONFIG_BACKUP_PATH)) {
         fs.mkdirSync(CONFIG_BACKUP_PATH);
       }
       const file = path.join(CONFIG_BACKUP_PATH, filename);
       const config = JSON.stringify(snapshot.val(), null, 2);
       fs.writeFile(file, config, (err) => {
         if (err) {
-          log.exception(LOG_PREFIX, `Error while backing up config.`, err);
           reject(err);
           return;
         }
@@ -50,8 +49,7 @@ const __backupConfig = function() {
       });
     });
   }).catch((err) => {
-    // NoOp - error has already been logged, we don't care.
-    log.verbose(LOG_PREFIX, `An error occured during backup.`, err);
+    log.exception(LOG_PREFIX, `Error while backing up config.`, err);
     return false;
   });
 };
