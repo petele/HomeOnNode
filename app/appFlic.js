@@ -219,35 +219,62 @@ function _listenToButton(bdAddr) {
   _flicClient.addConnectionChannel(cc);
   const batteryStatus = new FlicBatteryStatusListener(bdAddr);
   batteryStatus.on('batteryStatus', (data) => {
-    if (data === -1) {
-      log.verbose(APP_NAME, 'Battery level unknown.');
-      return;
-    }
-    const msg = `Battery for ${bdAddr}: ${data}`;
-    log.log(APP_NAME, msg, data);
-    if (!_wsClient) {
-      log.error(APP_NAME, 'WebSocket client not available.');
-      return;
-    }
-    const level = 'LOG';
-    const command = {
-      actions: [{log: {
-          level: level,
-          sender: 'FLIC',
-          message: msg,
-          extra: data,
-        },
-      }],
-    };
-    _wsClient.send(JSON.stringify(command))
-      .then(() => {
-        log.debug(APP_NAME, `Command sent`, command);
-      })
-      .catch((err) => {
-        log.error(APP_NAME, `Unable to send command`, err);
-      });
+    _sendBatteryUpdate(bdAddr, data);
   });
   _flicClient.addBatteryStatusListener(batteryStatus);
+}
+
+/**
+ * Sends a battery update to the server.
+ *
+ * @param {String} bdAddr The bluetooth address.
+ * @param {Number} value The battery percentage.
+ */
+function _sendBatteryUpdate(bdAddr, value) {
+  if (value === -1) {
+    log.verbose(APP_NAME, 'Battery level unknown.');
+    return;
+  }
+  const msg = `Battery for ${bdAddr}: ${value}`;
+  if (value > 75) {
+    log.verbose(APP_NAME, msg, value);
+    return;
+  }
+  if (value > 50) {
+    log.debug(APP_NAME, msg, value);
+    return;
+  }
+  let level;
+  if (value > 25) {
+    level = 'LOG';
+    log.log(APP_NAME, msg, value);
+  } else if (level > 10) {
+    level = 'WARN';
+    log.warn(APP_NAME, msg, value);
+  } else {
+    level = 'ERROR';
+    log.error(APP_NAME, msg, value);
+  }
+  if (!_wsClient) {
+    log.error(APP_NAME, 'WebSocket client not available.');
+    return;
+  }
+  const command = {
+    actions: [{log: {
+        level: level,
+        sender: 'FLIC',
+        message: msg,
+        extra: value,
+      },
+    }],
+  };
+  _wsClient.send(JSON.stringify(command))
+    .then(() => {
+      log.verbose(APP_NAME, `Command sent`, command);
+    })
+    .catch((err) => {
+      log.error(APP_NAME, `Unable to send command`, err);
+    });
 }
 
 /**
