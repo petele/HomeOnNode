@@ -45,11 +45,13 @@ const __backupConfig = function() {
           reject(err);
           return;
         }
+        log.debug(LOG_PREFIX, `Config backed up to: ${file}`);
         resolve(true);
       });
     });
   }).catch((err) => {
     // NoOp - error has already been logged, we don't care.
+    log.verbose(LOG_PREFIX, `An error occured during backup.`, err);
     return false;
   });
 };
