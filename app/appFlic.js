@@ -219,7 +219,11 @@ function _listenToButton(bdAddr) {
   _flicClient.addConnectionChannel(cc);
   const batteryStatus = new FlicBatteryStatusListener(bdAddr);
   batteryStatus.on('batteryStatus', (data) => {
-    const msg = `Battery for ${bdAddr}: ${data.batteryPercentage}`;
+    if (data === -1) {
+      log.verbose(APP_NAME, 'Battery level unknown.');
+      return;
+    }
+    const msg = `Battery for ${bdAddr}: ${data}`;
     log.log(APP_NAME, msg, data);
     if (!_wsClient) {
       log.error(APP_NAME, 'WebSocket client not available.');
@@ -229,7 +233,7 @@ function _listenToButton(bdAddr) {
     const command = {
       actions: [{log: {
           level: level,
-          sender: APP_NAME,
+          sender: 'FLIC',
           message: msg,
           extra: data,
         },
