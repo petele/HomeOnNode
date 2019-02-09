@@ -32,7 +32,7 @@ const __cleanLogs = function() {
 const __backupConfig = function() {
   log.debug(LOG_PREFIX, 'Backing up config...');
   return new Promise((resolve, reject) => {
-    _fb.child(`config`).on('once', (snapshot) => {
+    _fb.child(`config`).once('value', (snapshot) => {
       const filename = `config-${moment().format('YYYY-MM-DD')}.json`;
       if (!false.existsSync(CONFIG_BACKUP_PATH)) {
         fs.mkdirSync(CONFIG_BACKUP_PATH);
