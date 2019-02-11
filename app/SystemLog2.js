@@ -136,6 +136,78 @@ function _stringify(obj) {
 }
 
 /**
+ * Checks an object for circular references, if the exist, replaces them
+ * with '[Circular]' strings.
+ *
+ * @param {Object} obj Object to check and de-reference if necessary.
+ * @return {Object} An object with circular references removed.
+ */
+function _removeCircularRefs(obj) {
+  try {
+    JSON.stringify(obj);
+    return obj;
+  } catch (ex) {
+    // Has a circular reference.
+    _verbose(LOG_PREFIX, `removeCircularRefs() has circular.`, ex);
+  }
+  try {
+    const stringified = JSON.stringify(obj, _circularSerializer());
+    return JSON.parse(stringified);
+  } catch (ex) {
+    _error(LOG_PREFIX, `_removeCircularRefs() failed.`, ex);
+    // eslint-disable-next-line no-console
+    console.log(obj);
+    return {message: 'Unable to stringify object', error: ex};
+  }
+}
+
+/**
+ * Helper method for _checkForCircularRefs to check for circular references
+ * and replace them with '[Circular]' strings.
+ *
+ * @param {*} replacer
+ * @param {Function} cycleReplacer
+ * @return {*}
+ */
+function _circularSerializer(replacer, cycleReplacer) {
+  const stack = [];
+  const keys = [];
+
+  if (!cycleReplacer) {
+    cycleReplacer = function(key, value) {
+      if (stack[0] === value) {
+        return `[Circular ~]`;
+      }
+      return `[Circular ~.${keys.slice(0, stack.indexOf(value)).join('.')}]`;
+    };
+  }
+
+  return function(key, value) {
+    // eslint-disable-next-line no-invalid-this
+    const self = this;
+    if (stack.length > 0) {
+      const index = stack.indexOf(self);
+      if (index === -1) {
+        stack.push(self);
+        keys.push(key);
+      } else {
+        stack.splice(index + 1);
+        keys.splice(index, Infinity, key);
+      }
+      if (stack.includes(value)) {
+        value = cycleReplacer.call(self, key, value);
+      }
+    } else {
+      stack.push(value);
+    }
+    if (replacer) {
+      return replacer.call(self, key, value);
+    }
+    return value;
+  };
+}
+
+/**
  * Generate a log object
  *
  * @param {String} level The level of the log message
@@ -177,14 +249,15 @@ function _generateLog(level, prefix, message, extra) {
     } else if (typeof extra === 'string') {
       result.extra = extra;
     } else {
-      try {
-        result.extra = JSON.parse(JSON.stringify(extra));
-      } catch (ex) {
-        result.extra = {circular: true};
-        _exception(LOG_PREFIX, 'generateLog() circular exception', ex);
-        // eslint-disable-next-line no-console
-        console.log(extra);
-      }
+      result.extra = _removeCircularRefs(extra);
+      // try {
+      //   result.extra = JSON.parse(JSON.stringify(extra));
+      // } catch (ex) {
+      //   result.extra = {circular: true};
+      //   _exception(LOG_PREFIX, 'generateLog() circular exception', ex);
+      //   // eslint-disable-next-line no-console
+      //   console.log(extra);
+      // }
     }
   }
   return result;
