@@ -72,7 +72,7 @@ function Hue(key, explicitIPAddress) {
       }, limit - (Date.now() - lastRan));
     };
   };
-  
+
   const _updateGroupsThrottled = _throttle(_updateGroups, 2500);
   const _updateLightsThrottled = _throttle(_updateLights, 2500);
 
@@ -281,10 +281,8 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise}
    */
   function _checkBatteriesTick() {
-    return _checkBatteries()
-      .then(() => {
-        return _promisedSleep(BATTERY_CHECK_INTERVAL);
-      })
+    _checkBatteries();
+    return _promisedSleep(BATTERY_CHECK_INTERVAL)
       .then(() => {
         _checkBatteriesTick();
       });
