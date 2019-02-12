@@ -22,7 +22,7 @@ function Presence(bt) {
   const AWAY_REFRESH_INTERVAL = 15 * 1000;
   const _bluetooth = bt;
   const _self = this;
-  let _people = {};
+  const _people = {};
   let _numPresent = 0;
 
   /**

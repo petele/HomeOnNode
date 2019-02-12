@@ -139,7 +139,7 @@ function _setConnectionProperty(pid, prop, value) {
 /* eslint-disable max-len */
 const RE_START = /pppd\[(\d+)\]: pppd \d+?\.\d+?\.\d+? started by .+?, uid \d+?/;
 const RE_USER = /pppd\[(\d+)\]: rcvd \[CHAP Response id=0x\w{2} <\w+?>, name = "(\w+?)"\]/;
-const RE_SUCCESS = /pppd\[(\d+)\]: sent \[CHAP Success id=0x\w{2} "Access granted\"]/;
+const RE_SUCCESS = /pppd\[(\d+)\]: sent \[CHAP Success id=0x\w{2} "Access granted"]/;
 const RE_TIME = /pppd\[(\d+)\]: Connect time (.*?) (.*?)\./;
 const RE_STATS = /pppd\[(\d+)\]: Sent (\d+) bytes, received (\d+) bytes/;
 const RE_DISCONNECT = /pppd\[(\d+)\]: Exit\./;

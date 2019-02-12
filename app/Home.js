@@ -36,7 +36,7 @@ function Home(initialConfig, fbRef) {
   _self.state = {};
 
   let _config = initialConfig;
-  let _fb = fbRef;
+  const _fb = fbRef;
 
   let alarmClock;
   let bluetooth;
@@ -699,14 +699,14 @@ function Home(initialConfig, fbRef) {
   function _updateLocalState(path, value) {
     let currentObj = _self.state;
     const keys = path.split('/');
-    let l = Math.max(1, keys.length -1);
+    const len = Math.max(1, keys.length -1);
 
-    for (let i = 1; i < l; ++i) {
-      let key = keys[i];
+    for (let i = 1; i < len; ++i) {
+      const key = keys[i];
       currentObj[key] = currentObj[key] || {};
       currentObj = currentObj[key];
     }
-    currentObj[keys[l]] = value;
+    currentObj[keys[len]] = value;
   }
 
   /**
@@ -1432,7 +1432,7 @@ function Home(initialConfig, fbRef) {
    * @return {Object} The command to send to Hue
    */
   function _getLightReceipeByName(receipeName) {
-    let receipe = _config.lightScenes[receipeName];
+    const receipe = _config.lightScenes[receipeName];
     if (receipe && receipe.hue) {
       return receipe.hue;
     }

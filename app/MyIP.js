@@ -100,7 +100,7 @@ function MyIP(dnsAccount) {
     const host = `${user}:${password}@domains.google.com`;
     const path = `nic/update?hostname=${hostname}`;
 
-    let requestOptions = {
+    const requestOptions = {
       uri: `https://${host}/${path}`,
       method: 'POST',
       agent: false,

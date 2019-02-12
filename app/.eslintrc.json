@@ -13,7 +13,8 @@
     "no-var": "warn",
     "no-console": ["error"],
     "valid-jsdoc": "warn",
-    "strict": ["error", "global"]
+    "strict": ["error", "global"],
+    "indent": "warn"
   },
   "globals": {
   }

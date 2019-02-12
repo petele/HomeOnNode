@@ -162,7 +162,7 @@ function Nest(authToken, roomIdMap) {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...', _roomIdMap);
     if (!authToken) {
-      let msg = 'No Nest authToken provided.';
+      const msg = 'No Nest authToken provided.';
       log.error(LOG_PREFIX, msg);
       _setState(STATES.error, msg);
     }
@@ -188,7 +188,7 @@ function Nest(authToken, roomIdMap) {
       }
       log.debug(LOG_PREFIX, 'Authenticated.');
       _fbNest.once('value', function(snapshot) {
-        let data = snapshot.val();
+        const data = snapshot.val();
         _nestData = data;
         _structureId = Object.keys(data.structures)[0];
         _setState(STATES.ready, _nestData);
@@ -221,10 +221,10 @@ function Nest(authToken, roomIdMap) {
     _fbNest.on('value', function(snapshot) {
       const newData = snapshot.val();
       let changes = 0;
-      let diff = deepDiff(_nestData, newData);
+      const diff = deepDiff(_nestData, newData);
       if (diff) {
         diff.forEach(function(d) {
-          let path = d.path.join('/');
+          const path = d.path.join('/');
           if (path.indexOf('_url') > 0) {
             return;
           }
@@ -336,7 +336,7 @@ function Nest(authToken, roomIdMap) {
       return null;
     }
     try {
-      let thermostat = _nestData.devices.thermostats[thermostatId];
+      const thermostat = _nestData.devices.thermostats[thermostatId];
       return thermostat;
     } catch (ex) {
       msg += ', an exception occured.';
@@ -353,7 +353,7 @@ function Nest(authToken, roomIdMap) {
    */
   function _setHomeAway(state) {
     return new Promise(function(resolve, reject) {
-      let msg = `setHomeAway('${state}')`;
+      const msg = `setHomeAway('${state}')`;
       if (_deviceState !== STATES.ready) {
         log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
         reject(new Error('not_ready'));
@@ -380,12 +380,12 @@ function Nest(authToken, roomIdMap) {
    * @return {Promise} A promise that resolves to true/false based on result
    */
   function _setCamerasStreaming(state) {
-    let msg = `setCameraStreamingState(${state})`;
+    const msg = `setCameraStreamingState(${state})`;
     if (_deviceState !== STATES.ready) {
       log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
       return Promise.reject(new Error('not_ready'));
     }
-    let cameras = _nestData.structures[_structureId].cameras;
+    const cameras = _nestData.structures[_structureId].cameras;
     return Promise.all(cameras.map((cameraId) => {
       const path = `devices/cameras/${cameraId}/is_streaming`;
       log.debug(LOG_PREFIX, msg);
@@ -419,12 +419,12 @@ function Nest(authToken, roomIdMap) {
         reject(new Error('not_ready'));
         return;
       }
-      let thermostat = _getThermostat(thermostatId);
+      const thermostat = _getThermostat(thermostatId);
       if (!thermostat) {
         reject(new Error('thermostat_not_found'));
         return;
       }
-      let hvacMode = thermostat['hvac_mode'];
+      const hvacMode = thermostat['hvac_mode'];
       if (hvacMode === 'eco' || hvacMode === 'off') {
         msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
         if (isRetry !== true) {
@@ -480,7 +480,7 @@ function Nest(authToken, roomIdMap) {
         reject(new Error('invalid_fan_time'));
         return;
       }
-      let hvacMode = thermostat['hvac_mode'];
+      const hvacMode = thermostat['hvac_mode'];
       if (hvacMode === 'eco' || hvacMode === 'off') {
         msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
         if (isRetry !== true) {
@@ -496,7 +496,7 @@ function Nest(authToken, roomIdMap) {
         return;
       }
       log.debug(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
-      let opts = {
+      const opts = {
         fan_timer_active: false,
       };
       if (minutes !== 0) {

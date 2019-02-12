@@ -17,7 +17,7 @@ function WSServer(name, port) {
   const PING_INTERVAL = 30 * 1000;
   const _self = this;
   this.running = false;
-  let _logPrefix = `WSS_${name.toUpperCase()}`;
+  const _logPrefix = `WSS_${name.toUpperCase()}`;
   let _wss;
   let _pingInterval;
 

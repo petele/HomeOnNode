@@ -20,7 +20,7 @@ function Bluetooth() {
   this.ready = false;
   this.scanning = false;
   let _noble;
-  let _connectedDevices = {};
+  const _connectedDevices = {};
   let _connectedDeviceCount = 0;
   let _scanTimeout;
 

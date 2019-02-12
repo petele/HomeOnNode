@@ -37,8 +37,8 @@ function Tivo(ipAddress) {
   const KEYPRESS_TIMEOUT = 350;
   let _tivo;
   let _ready = false;
-  let _host = ipAddress;
-  let _commandQueue = [];
+  const _host = ipAddress;
+  const _commandQueue = [];
   let _reconnecting = false;
 
   /**

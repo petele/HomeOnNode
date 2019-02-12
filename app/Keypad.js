@@ -47,7 +47,7 @@ function listen(modifiers, callback) {
     }
     try {
       ch = ch.toString();
-      let m = modifiers[ch];
+      const m = modifiers[ch];
       if (m) {
         modifier = m;
         setTimeout(function() {

@@ -100,7 +100,7 @@ function NanoLeaf(key, ip, port) {
   function _makeLeafRequest(requestPath, method, body) {
     return new Promise(function(resolve, reject) {
       const msg = `makeLeafRequest('${method}', '${requestPath}')`;
-      let requestOptions = {
+      const requestOptions = {
         uri: _hubAddress + requestPath,
         method: method,
         agent: false,
@@ -176,7 +176,7 @@ function NanoLeaf(key, ip, port) {
           // Bail, we've already logged the error above.
           return;
         }
-        let state = resp.body;
+        const state = resp.body;
         // Has the state changed since last time?
         if (diff(_state, state)) {
           _state = state;

@@ -33,7 +33,7 @@ function printLogs(path) {
   let logItemsShown = 0;
   fb.child(path).orderByChild('date').limitToLast(commander.number)
     .on('child_added', function(snapshot) {
-      let msg = log.stringifyLog(snapshot.val());
+      const msg = log.stringifyLog(snapshot.val());
       // eslint-disable-next-line no-console
       console.log(msg);
       if ((++logItemsShown >= commander.number) && (commander.quit === true)) {

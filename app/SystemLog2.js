@@ -39,7 +39,7 @@ const LOG_PREFIX = 'LOGGER';
 
 let _appName = null;
 let _fbRef = null;
-let _fbLogCache = [];
+const _fbLogCache = [];
 let _fbErrorCount = 0;
 let _fbLastError = 0;
 let _opts = DEFAULT_OPTIONS;
@@ -91,7 +91,7 @@ function _setOptions(options) {
   if (!options) {
     return;
   }
-  let newOpts = {};
+  const newOpts = {};
   const keys = Object.keys(DEFAULT_OPTIONS);
   keys.forEach(function(key) {
     newOpts[key] = options[key] || DEFAULT_OPTIONS[key];
@@ -225,7 +225,7 @@ function _generateLog(level, prefix, message, extra) {
     msg += '[' + prefix.toUpperCase() + '] ';
   }
   msg += _stringify(message);
-  let result = {
+  const result = {
     appName: _appName,
     hostname: HOSTNAME,
     date: now,
@@ -328,8 +328,8 @@ function _stringifyLog(logObj) {
   const levelColor = _getLogColorByName(logObj.level);
   const level = levelColor(('     ' + logObj.level).slice(-5));
   let result = `${dt} | ${level} | ${logObj.message}`;
-  let extra = [];
-  let prefix = `                        | ${level} | `;
+  const extra = [];
+  const prefix = `                        | ${level} | `;
   if (logObj.exception) {
     if (logObj.exception.stack) {
       logObj.exception.stack.split('\n').forEach((l) => {
@@ -653,9 +653,9 @@ function _cleanFile(logFile) {
         if (exceedsAge || exceedsSize) {
           try {
             _debug(LOG_PREFIX, msg + ' - compressing and removing file...');
-            let gzip = zlib.createGzip();
-            let inp = fs.createReadStream(logFile);
-            let out = fs.createWriteStream(logFile + '.gz');
+            const gzip = zlib.createGzip();
+            const inp = fs.createReadStream(logFile);
+            const out = fs.createWriteStream(logFile + '.gz');
             inp.pipe(gzip).pipe(out);
             fs.unlinkSync(logFile);
             resolve(true);
@@ -686,7 +686,7 @@ function _cleanFile(logFile) {
  */
 function _cleanLogs(path, maxAgeDays) {
   maxAgeDays = maxAgeDays || 365;
-  let msg = `cleanLogs('${path}', ${maxAgeDays})`;
+  const msg = `cleanLogs('${path}', ${maxAgeDays})`;
   _debug(LOG_PREFIX, msg);
   if (!_fbRef) {
     _error(LOG_PREFIX, 'Cannot clean logs, Firebase reference not set.');
@@ -706,7 +706,7 @@ function _cleanLogs(path, maxAgeDays) {
       _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
     }
     _debug(LOG_PREFIX, `${msg} - found ${numChildren} items`);
-    let promises = [];
+    const promises = [];
     snapshot.forEach((item) => {
       promises.push(item.ref().remove());
     });

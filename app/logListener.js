@@ -6,7 +6,6 @@ const log = require('./SystemLog2');
 const WSClient = require('./WSClient');
 const commander = require('commander');
 
-let _ws;
 let _host = 'rpi-server:8881';
 
 commander
@@ -35,5 +34,5 @@ function printLog(logObj) {
   }
 }
 
-_ws = new WSClient(_host, commander.retry, 'server');
+const _ws = new WSClient(_host, commander.retry, 'server');
 _ws.on('message', printLog);

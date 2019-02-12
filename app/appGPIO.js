@@ -25,7 +25,7 @@ const EDGES = ['none', 'rising', 'falling', 'both'];
 try {
   // eslint-disable-next-line no-console
   console.log(`Reading 'config.json'...`);
-  let config = fs.readFileSync('config.json', {encoding: 'utf8'});
+  const config = fs.readFileSync('config.json', {encoding: 'utf8'});
   // eslint-disable-next-line no-console
   console.log(`Parsing 'config.json'...`);
   _config = JSON.parse(config);
