@@ -269,7 +269,7 @@ function DeviceMonitor(fb, deviceName) {
    * @return {Array} An array of IP address of the device.
    */
   function _getIPAddress() {
-    let addresses = [];
+    const addresses = [];
     try {
       const interfaces = os.networkInterfaces();
       // eslint-disable-next-line guard-for-in

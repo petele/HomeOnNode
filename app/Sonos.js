@@ -40,7 +40,7 @@ function Sonos() {
       return Promise.reject(new Error('not_ready'));
     }
     if (command.name === 'PRESET') {
-      let preset = presetOptions[command.options];
+      const preset = presetOptions[command.options];
       preset.uri = command.uri;
       return _applyPreset(preset);
     }

@@ -17,7 +17,6 @@ const LOG_PREFIX = 'HTTP_SERVER';
  * @param {Number} [port] The port to listen on, defaults to 3000.
 */
 function HTTPServer(port) {
-  let server;
   const _port = port || 3000;
   const _self = this;
 
@@ -120,7 +119,7 @@ function HTTPServer(port) {
     log.exception(LOG_PREFIX, msg, err);
   });
 
-  server = exp.listen(exp.get('port'), function() {
+  const server = exp.listen(exp.get('port'), function() {
     log.debug(LOG_PREFIX, 'Express server started on port ' + exp.get('port'));
   });
 }

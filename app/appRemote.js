@@ -19,7 +19,7 @@ let _deviceMonitor;
 try {
   // eslint-disable-next-line no-console
   console.log(`Reading 'config.json'...`);
-  let config = fs.readFileSync('config.json', {encoding: 'utf8'});
+  const config = fs.readFileSync('config.json', {encoding: 'utf8'});
   // eslint-disable-next-line no-console
   console.log(`Parsing 'config.json'...`);
   _config = JSON.parse(config);
@@ -126,7 +126,7 @@ function _sendCommand(command) {
  * @param {Boolean} exitApp If the app should exit.
  */
 function _handleKeyPress(key, modifier, exitApp) {
-  let cmd = _config.keypad.keys[key];
+  const cmd = _config.keypad.keys[key];
   const details = {
     key: key,
     modifier: modifier,

@@ -541,7 +541,7 @@ function Hue(key, explicitIPAddress) {
           resolve(ip);
           return;
         }
-        let errMsg = 'NUPNP search failed:';
+        const errMsg = 'NUPNP search failed:';
         if (error) {
           log.exception(LOG_PREFIX, `${errMsg} request error.`, error);
         } else if (Array.isArray(respBody) && respBody.length === 0) {
