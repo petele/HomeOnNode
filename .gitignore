@@ -9,6 +9,7 @@ bower_components
 
 */**/package-lock.json
 */**/keys.js
+*/**/Keys.js
 */**/*.log
 */logs/*
 /Web/scripts/fbKey.js
