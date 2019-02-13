@@ -1,0 +1,37 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Lint: 'app'",
+      "type": "npm",
+      "script": "lint",
+      "path": "app/",
+      "problemMatcher": [
+        "$eslint-stylish"
+      ]
+    },
+    {
+      "label": "Logs (local)",
+      "type": "npm",
+      "script": "log-listen",
+      "path": "app/",
+      "problemMatcher": []
+    },
+    {
+      "label": "Logs (firebase)",
+      "type": "npm",
+      "script": "log-viewer",
+      "path": "app/",
+      "problemMatcher": []
+    },
+    {
+      "label": "Get App Config",
+      "type": "npm",
+      "script": "get-config",
+      "path": "app/",
+      "problemMatcher": []
+    }
+  ]
+}
