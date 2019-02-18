@@ -188,7 +188,7 @@ function HarmonyWS(ipAddress) {
         }
         if (!respBody || respBody.code !== '200' || !respBody.code) {
           log.error(LOG_PREFIX, `_getHubInfo() response error`, respBody);
-          reject(new Error('get_hubo_info'));
+          reject(new Error('get_hub_info'));
           return;
         }
         resolve(respBody.data);
@@ -286,10 +286,10 @@ function HarmonyWS(ipAddress) {
     };
     log.verbose(LOG_PREFIX, '_sendCommand({...})', payload);
     return _wsClient.send(JSON.stringify(payload))
-      .catch((err) => {
-        log.exception(LOG_PREFIX, '_sendCommand({...}) failed.', err);
-        throw err;
-      });
+        .catch((err) => {
+          log.exception(LOG_PREFIX, '_sendCommand({...}) failed.', err);
+          throw err;
+        });
   }
 
 
@@ -321,6 +321,12 @@ function HarmonyWS(ipAddress) {
    * @param {Object} config
   */
   function _configChanged(config) {
+    if (!config.activity) {
+      // Config doesn't have activities, it's prob not a config obj
+      const msg = `configChanged failed, config object missing 'activity'.`;
+      log.error(LOG_PREFIX, msg, config);
+      return;
+    }
     if (!diff(_config, config)) {
       // Config hasn't changed, we can skip.
       return;
