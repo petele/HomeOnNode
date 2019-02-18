@@ -54,7 +54,7 @@ function init() {
 
   setInterval(function() {
     log.cleanFile();
-    log.cleanLogs(logOpts.firebasePath, 2);
+    log.cleanLogs(logOpts.firebasePath, 7);
   }, 60 * 60 * 24 * 1000);
 }
 
