@@ -172,7 +172,7 @@ function HarmonyWS(ipAddress) {
         json: true,
         agent: false,
         headers: {
-          Origin: 'http://localhost.nebula.myharmony.com',
+          origin: 'http://localhost.nebula.myharmony.com',
         },
         body: {
           id: 1,
