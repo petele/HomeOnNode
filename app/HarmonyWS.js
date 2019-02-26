@@ -188,6 +188,10 @@ function HarmonyWS(ipAddress) {
         }
         if (!respBody || respBody.code !== '200' || !respBody.code) {
           log.error(LOG_PREFIX, `_getHubInfo() response error`, respBody);
+          if (response.headers) {
+            const headers = response.headers;
+            log.error(LOG_PREFIX, `_getHubInfo() response headers`, headers);
+          }
           reject(new Error('get_hub_info'));
           return;
         }
