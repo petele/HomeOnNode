@@ -15,6 +15,7 @@ const LOG_PREFIX = 'HARMONY_WS';
  * @constructor
  *
  * @see https://github.com/home-assistant/pyharmony/blob/websockets/pyharmony/client.py
+ * @see https://github.com/digitaldan/harmony-client/tree/master/src/main/java/com/digitaldan/harmony
  *
  * @fires Harmony#hub_info
  * @fires Harmony#activity_changed
@@ -27,6 +28,7 @@ function HarmonyWS(ipAddress) {
   const _self = this;
   const HUB_PORT = 8088;
   const CONFIG_REFRESH_INTERVAL = 18 * 60 * 1000;
+  const PING_INTERVAL = 25 * 1000;
   const COMMAND_PREFIX = 'vnd.logitech.harmony/';
   const COMMAND_STRINGS = {
     BUTTON_PRESS: 'control.button?pressType',
@@ -42,9 +44,11 @@ function HarmonyWS(ipAddress) {
     START_ACTIVITY_FINISHED: 'harmony.engine?startActivityFinished',
     STATE_DIGEST_NOTIFY: 'connect.stateDigest?notify',
     SYNC: 'setup.sync',
+    PING: 'vnd.logitech.connect/vnd.logitech.ping',
   };
   const _ipAddress = ipAddress;
   let _wsClient;
+  let _pingInterval;
   let _hubId;
   let _msgId = 1;
   let _config = {};
@@ -59,7 +63,7 @@ function HarmonyWS(ipAddress) {
     log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
     _getHubInfo().then((hubInfo) => {
       log.verbose(LOG_PREFIX, 'Hub info received', hubInfo);
-      _hubId = hubInfo.remoteId;
+      _hubId = hubInfo.activeRemoteId;
       _self.emit('hub_info', hubInfo);
       _connect();
     }).catch((err) => {
@@ -172,11 +176,11 @@ function HarmonyWS(ipAddress) {
         json: true,
         agent: false,
         headers: {
-          origin: 'http://localhost.nebula.myharmony.com',
+          'Origin': 'http://sl.dhg.myharmony.com',
         },
         body: {
           id: 1,
-          cmd: 'connect.discoveryinfo?get',
+          cmd: 'setup.account?getProvisionInfo',
           params: {},
         },
       };
@@ -214,8 +218,24 @@ function HarmonyWS(ipAddress) {
       log.debug(LOG_PREFIX, `Connected to Harmony Hub.`);
       _getConfig();
       _getActivity();
+      _startPing();
     });
     setInterval(_getConfig, CONFIG_REFRESH_INTERVAL);
+  }
+
+  /**
+   * Starts the system ping.
+   */
+  function _startPing() {
+    if (_pingInterval) {
+      log.warn(LOG_PREFIX, 'Ping interval already started.');
+      return;
+    }
+    _pingInterval = setInterval(() => {
+      return _sendCommand(COMMAND_STRINGS.PING).catch((err) => {
+        // Ignore this error, it's already been reported elsewhere.
+      });
+    }, PING_INTERVAL);
   }
 
   /**
@@ -224,6 +244,9 @@ function HarmonyWS(ipAddress) {
    * @param {Object} msgJSON Incoming message
    */
   function _wsMessageReceived(msgJSON) {
+    if (msgJSON.cmd === COMMAND_STRINGS.PING) {
+      return;
+    }
     if (msgJSON.cmd === COMMAND_STRINGS.CONFIG) {
       _configChanged(msgJSON.data);
       return;
