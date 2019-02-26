@@ -5,6 +5,7 @@ const util = require('util');
 const log = require('./SystemLog2');
 const version = require('./version');
 const Firebase = require('firebase');
+const diff = require('deep-diff').diff;
 const exec = require('child_process').exec;
 const EventEmitter = require('events').EventEmitter;
 
@@ -27,11 +28,11 @@ function DeviceMonitor(fb, deviceName) {
   const _self = this;
   let _heartbeatInterval;
   let _ipAddressInterval;
-  let _memUsageInterval;
   let _lastWrite = Date.now();
   let _hasExceededTimeout = false;
   let _firstConnect = true;
   let _firstAuth = true;
+  let _ipAddresses = [];
 
   /**
    * Init the DeviceMonitor
@@ -72,10 +73,15 @@ function DeviceMonitor(fb, deviceName) {
         ipAddress: _getIPAddress(),
       },
       memory: _getMemoryUsage(),
+      cpuUsage: process.cpuUsage(),
       restart: null,
       shutdown: null,
       exitDetails: null,
+      argv: process.argv.join(' '),
+      processTitle: process.title,
+      uptime: 0,
     };
+    _ipAddresses = deviceData.host.ipAddress;
     log.log(_deviceName, 'Device Settings', deviceData);
     _lastWrite = now;
     _fb.child(_deviceName).set(deviceData);
@@ -83,11 +89,11 @@ function DeviceMonitor(fb, deviceName) {
     _fb.child(`${_deviceName}/restart`).on('value', _restartRequest);
     _fb.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
     _fb.root().onAuth(_authChanged);
-    _heartbeatInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
-    _ipAddressInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
-    _memUsageInterval = setInterval(_tickMemUsage, 5 * 60 * 1000);
+    _heartbeatInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
+    _ipAddressInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
     _initUncaught();
     _initUnRejected();
+    _initWarning();
   }
 
   /**
@@ -112,17 +118,24 @@ function DeviceMonitor(fb, deviceName) {
   }
 
   /**
-   * Refreshes the stored IP address
+   * Setup the Warning Handler
    */
-  function _tickIPAddress() {
-    fb.child(`${_deviceName}/host/ipAddress`).set(_getIPAddress());
+  function _initWarning() {
+    process.on('warning', (warning) => {
+      log.warn(_deviceName, 'Node warning', warning);
+    });
   }
 
   /**
-   * Refreshes the memory usage
+   * Refreshes the stored IP address
    */
-  function _tickMemUsage() {
-    fb.child(`${_deviceName}/memory`).set(_getMemoryUsage());
+  function _tickIPAddress() {
+    const ipAddresses = _getIPAddress();
+    if (diff(ipAddresses, _ipAddresses)) {
+      _ipAddresses = ipAddresses;
+      log.verbose(_deviceName, `IP addresses changed`, _ipAddresses);
+      fb.child(`${_deviceName}/host/ipAddress`).set(_ipAddresses);
+    }
   }
 
   /**
@@ -137,6 +150,9 @@ function DeviceMonitor(fb, deviceName) {
       online: true,
       shutdownAt: null,
       exitDetails: null,
+      memory: _getMemoryUsage(),
+      cpuUsage: process.cpuUsage(),
+      uptime: process.uptime(),
     };
     _fb.child(`${_deviceName}`).update(details, (err) => {
       if (err) {
@@ -209,10 +225,14 @@ function DeviceMonitor(fb, deviceName) {
       shutdownAt: null,
       exitDetails: null,
     };
-    _fb.child(`${_deviceName}`).update(details);
-    _fb.child(`${_deviceName}/online`).onDisconnect().set(false);
-    _fb.child(`${_deviceName}/shutdownAt`).onDisconnect()
-      .set(Firebase.ServerValue.TIMESTAMP);
+    _fb.child(`${_deviceName}`)
+        .update(details);
+    _fb.child(`${_deviceName}/online`)
+        .onDisconnect()
+        .set(false);
+    _fb.child(`${_deviceName}/shutdownAt`)
+        .onDisconnect()
+        .set(Firebase.ServerValue.TIMESTAMP);
   }
 
   /**
@@ -306,10 +326,6 @@ function DeviceMonitor(fb, deviceName) {
       clearInterval(_ipAddressInterval);
       _ipAddressInterval = null;
     }
-    if (_memUsageInterval) {
-      clearInterval(_memUsageInterval);
-      _memUsageInterval = null;
-    }
     const now = Date.now();
     const details = {
       online: false,
@@ -333,8 +349,7 @@ function DeviceMonitor(fb, deviceName) {
       reason: reason,
       exitCode: exitCode,
     };
-    _beforeExit(exitDetails)
-    .then(() => {
+    _beforeExit(exitDetails).then(() => {
       process.exit(exitCode);
     });
   };
@@ -353,8 +368,7 @@ function DeviceMonitor(fb, deviceName) {
       reason: reason,
       immediate: immediate,
     };
-    _beforeExit(exitDetails)
-    .then(() => {
+    _beforeExit(exitDetails).then(() => {
       let timeout = 0;
       if (immediate !== true) {
         timeout = RESTART_TIMEOUT;
