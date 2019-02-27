@@ -8,7 +8,7 @@ const moment = require('moment');
 const LOG_PREFIX = 'CRON_DAILY';
 const CONFIG_BACKUP_PATH = `./config-backup`;
 
-const __cleanLogs = function() {
+const _cleanLogs = function() {
   log.debug(LOG_PREFIX, 'Starting cleanLogs...');
   const promises = [];
   promises.push(log.cleanLogs('logs/cron', 90));
@@ -21,15 +21,21 @@ const __cleanLogs = function() {
   promises.push(log.cleanLogs('logs/pushBullet', 1));
 
   return Promise.all(promises)
-    .then(() => {
-      return log.cleanFile();
-    })
-    .catch((ex) => {
-      log.exception(LOG_PREFIX, 'Error occured while cleaning logs.', ex);
-    });
+      .catch((err) => {
+        log.warn(LOG_PREFIX, 'Unable to clean Firebase logs', err);
+      })
+      .then(() => {
+        return log.cleanFile()
+            .catch(() => {
+              // Ignore, we've already logged the error elsewhere.
+            });
+      })
+      .catch((ex) => {
+        log.exception(LOG_PREFIX, 'Unknown error while cleaning logs.', ex);
+      });
 };
 
-const __backupConfig = function() {
+const _backupConfig = function() {
   log.debug(LOG_PREFIX, 'Backing up config...');
   return new Promise((resolve, reject) => {
     _fb.child(`config`).once('value', (snapshot) => {
@@ -55,16 +61,14 @@ const __backupConfig = function() {
 };
 
 const cronJob = function() {
-  return __cleanLogs()
-    .then(() => {
-      return __backupConfig();
-    })
-    .then(() => {
-      log.log(LOG_PREFIX, 'Completed.');
-    })
-    .catch((err) => {
-      log.exception(LOG_PREFIX, 'Cron job failed.', err);
-    });
+  return _cleanLogs()
+      .then(() => {
+        return _backupConfig();
+      }).then(() => {
+        log.log(LOG_PREFIX, 'Completed.');
+      }).catch((err) => {
+        log.exception(LOG_PREFIX, 'Cron job failed.', err);
+      });
 };
 
 cronJob();
