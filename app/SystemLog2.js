@@ -700,21 +700,21 @@ function _cleanLogs(path, maxAgeDays) {
   const niceDate = _formatTime(endAt);
   _debug(LOG_PREFIX, `Removing items older than ${niceDate} from ${path}`);
   return _fbRef.child(path).orderByChild('date').endAt(endAt).once('value')
-  .then((snapshot) => {
-    const numChildren = snapshot.numChildren();
-    if (numChildren >= 50000) {
-      _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
-    }
-    _debug(LOG_PREFIX, `${msg} - found ${numChildren} items`);
-    const promises = [];
-    snapshot.forEach((item) => {
-      promises.push(item.ref().remove());
-    });
-    return Promise.all(promises);
-  })
-  .then((values) => {
-    return {path: path, count: values.length};
-  });
+      .then((snapshot) => {
+        const numChildren = snapshot.numChildren();
+        if (numChildren >= 50000) {
+          _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
+        }
+        _debug(LOG_PREFIX, `${msg} - found ${numChildren} items`);
+        const promises = [];
+        snapshot.forEach((item) => {
+          promises.push(item.ref().remove());
+        });
+        return Promise.all(promises);
+      })
+      .then((values) => {
+        return {path: path, count: values.length};
+      });
 }
 
 exports.setAppName = _setAppName;

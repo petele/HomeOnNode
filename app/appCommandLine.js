@@ -57,16 +57,16 @@ function prompt() {
     },
   };
   inquirer.prompt([qCommands, qManualInput])
-    .then((answer) => {
-      const cmdName = answer.cmdName;
-      if (cmdName === '--EXIT--') {
-        process.exit(0);
-      }
-      return fb.child('commands').push({cmdName: cmdName});
-    })
-    .then((snapshot) => {
-      prompt();
-    });
+      .then((answer) => {
+        const cmdName = answer.cmdName;
+        if (cmdName === '--EXIT--') {
+          process.exit(0);
+        }
+        return fb.child('commands').push({cmdName: cmdName});
+      })
+      .then((snapshot) => {
+        prompt();
+      });
 }
 
 const fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);

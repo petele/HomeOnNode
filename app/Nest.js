@@ -247,7 +247,7 @@ function Nest(authToken, roomIdMap) {
       }
       _setState(STATES.offline, 'Lost connection to Nest service.');
       _disconnectedTimer = setTimeout(
-        _onDisconnectTimeoutExceeded, MAX_DISCONNECT);
+          _onDisconnectTimeoutExceeded, MAX_DISCONNECT);
     });
   }
 
