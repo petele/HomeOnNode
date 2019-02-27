@@ -28,7 +28,7 @@ function HarmonyWS(ipAddress) {
   const _self = this;
   const HUB_PORT = 8088;
   const CONFIG_REFRESH_INTERVAL = 18 * 60 * 1000;
-  const PING_INTERVAL = 25 * 1000;
+  const PING_INTERVAL = 29 * 1000;
   const COMMAND_PREFIX = 'vnd.logitech.harmony/';
   const COMMAND_STRINGS = {
     BUTTON_PRESS: 'control.button?pressType',
@@ -153,6 +153,10 @@ function HarmonyWS(ipAddress) {
    */
   this.close = function() {
     log.log(LOG_PREFIX, 'close()');
+    if (_pingInterval) {
+      clearInterval(_pingInterval);
+      _pingInterval = null;
+    }
     if (_wsClient) {
       try {
         _wsClient.shutdown();
@@ -245,6 +249,9 @@ function HarmonyWS(ipAddress) {
    */
   function _wsMessageReceived(msgJSON) {
     if (msgJSON.cmd === COMMAND_STRINGS.PING) {
+      if (msgJSON.code !== 200) {
+        log.error(LOG_PREFIX, 'Invalid ping response', msgJSON);
+      }
       return;
     }
     if (msgJSON.cmd === COMMAND_STRINGS.CONFIG) {
