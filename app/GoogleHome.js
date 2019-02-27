@@ -119,19 +119,19 @@ function GoogleHome(ipAddress) {
       return Promise.reject(new Error('level_out_of_bounds'));
     }
     return _getCastClient()
-      .then((client) => {
-        return new Promise((resolve, reject) => {
-          client.setVolume({level: level / 100}, (err, resp) => {
-            client.close();
-            if (err) {
-              log.error(LOG_PREFIX, 'Unable to set volume', err);
-              reject(err);
-              return;
-            }
-            resolve(resp);
+        .then((client) => {
+          return new Promise((resolve, reject) => {
+            client.setVolume({level: level / 100}, (err, resp) => {
+              client.close();
+              if (err) {
+                log.error(LOG_PREFIX, 'Unable to set volume', err);
+                reject(err);
+                return;
+              }
+              resolve(resp);
+            });
           });
         });
-      });
   };
 
 
@@ -251,18 +251,18 @@ function GoogleHome(ipAddress) {
     const details = `options=detail`;
     const url = `/setup/eureka_info?params=${params.join(',')}&${details}`;
     return _makeRequest('GET', url)
-      .catch((err) => {})
-      .then((data) => {
-        if (!data) {
-          return null;
-        }
-        if (diff(_self.deviceInfo, data)) {
-          _self.deviceInfo = data;
-          _self.emit('device_info_changed', data);
-          _ready = true;
-        }
-        return data;
-      });
+        .catch((err) => {})
+        .then((data) => {
+          if (!data) {
+            return null;
+          }
+          if (diff(_self.deviceInfo, data)) {
+            _self.deviceInfo = data;
+            _self.emit('device_info_changed', data);
+            _ready = true;
+          }
+          return data;
+        });
   }
 
   /**

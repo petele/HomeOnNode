@@ -119,19 +119,19 @@ function GCMPush(fb) {
       const subscriber = _subscribers[key].subscriptionInfo;
       const fbPath = `config/GCMPush/subscribers/${key}`;
       const promise = webpush.sendNotification(subscriber, payload, _options)
-        .then((resp) => {
-          log.debug(LOG_PREFIX, `Message sent to ${shortKey}`);
-          log.debug(LOG_PREFIX, '', resp);
-          return _fb.child(`${fbPath}/lastResult`).set(resp);
-        })
-        .catch((err) => {
-          if (err.statusCode === 410) {
-            log.error(LOG_PREFIX, `Removed subscriber: ${shortKey}`, err.body);
-            return _fb.child(fbPath).remove();
-          }
-          log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
-          return _fb.child(`${fbPath}/lastResult`).set(err);
-        });
+          .then((resp) => {
+            log.debug(LOG_PREFIX, `Message sent to ${shortKey}`);
+            log.debug(LOG_PREFIX, '', resp);
+            return _fb.child(`${fbPath}/lastResult`).set(resp);
+          })
+          .catch((err) => {
+            if (err.statusCode === 410) {
+              log.error(LOG_PREFIX, `Removed: ${shortKey}`, err.body);
+              return _fb.child(fbPath).remove();
+            }
+            log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
+            return _fb.child(`${fbPath}/lastResult`).set(err);
+          });
       promises.push(promise);
     });
     return Promise.all(promises);
