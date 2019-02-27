@@ -93,7 +93,7 @@ function Tivo(ipAddress) {
       _ready = true;
       log.verbose(LOG_PREFIX, `Connected`);
     });
-     _tivo.on('ready', () => {
+    _tivo.on('ready', () => {
       _ready = true;
       log.debug(LOG_PREFIX, `Ready`);
     });

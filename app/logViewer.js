@@ -11,16 +11,16 @@ const LOG_PREFIX = 'LOG_VIEWER';
 let _path = 'logs/server';
 
 commander
-  .version('0.2.0')
-  .option('-n, --number <value>', 'Number of log items to show (100)', 100)
-  .option('-q, --quit', 'Quit after completion')
-  .option('--clean', 'Clean logs older than 7 days')
-  .option('--days <value>', 'Specifies the number of days to clean.', 7)
-  .arguments('<path>')
-  .action((path) => {
-    _path = `logs/${path}`;
-  })
-  .parse(process.argv);
+    .version('0.2.0')
+    .option('-n, --number <value>', 'Number of log items to show (100)', 100)
+    .option('-q, --quit', 'Quit after completion')
+    .option('--clean', 'Clean logs older than 7 days')
+    .option('--days <value>', 'Specifies the number of days to clean.', 7)
+    .arguments('<path>')
+    .action((path) => {
+      _path = `logs/${path}`;
+    })
+    .parse(process.argv);
 
 commander.number = parseInt(commander.number, 10);
 
@@ -32,15 +32,15 @@ commander.number = parseInt(commander.number, 10);
 function printLogs(path) {
   let logItemsShown = 0;
   fb.child(path).orderByChild('date').limitToLast(commander.number)
-    .on('child_added', function(snapshot) {
-      const msg = log.stringifyLog(snapshot.val());
-      // eslint-disable-next-line no-console
-      console.log(msg);
-      if ((++logItemsShown >= commander.number) && (commander.quit === true)) {
-        process.exit(0);
-      }
-    }
-  );
+      .on('child_added', function(snapshot) {
+        const msg = log.stringifyLog(snapshot.val());
+        // eslint-disable-next-line no-console
+        console.log(msg);
+        logItemsShown++;
+        if ((logItemsShown >= commander.number) && (commander.quit === true)) {
+          process.exit(0);
+        }
+      });
 }
 
 /**

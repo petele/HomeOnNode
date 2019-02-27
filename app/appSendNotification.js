@@ -40,13 +40,13 @@ function _sendMessage() {
       const gcmPush = new GCMPush(fb);
       gcmPush.on('ready', function() {
         gcmPush.sendMessage(DEFAULT_MESSAGE)
-        .catch((ex) => {
-          log.exception(LOG_PREFIX, 'Unable to send message', ex);
-        })
-        .then(() => {
-          log.custom('STOP', LOG_PREFIX, 'Sent messages...');
-          process.exit(0);
-        });
+            .catch((ex) => {
+              log.exception(LOG_PREFIX, 'Unable to send message', ex);
+            })
+            .then(() => {
+              log.custom('STOP', LOG_PREFIX, 'Sent messages...');
+              process.exit(0);
+            });
       });
     }
   });

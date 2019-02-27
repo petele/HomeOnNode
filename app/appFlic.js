@@ -256,21 +256,24 @@ function _sendBatteryUpdate(bdAddr, value) {
     return;
   }
   const command = {
-    actions: [{log: {
-        level: level,
-        sender: 'FLIC',
-        message: msg,
-        extra: value,
+    actions: [
+      {
+        log: {
+          level: level,
+          sender: 'FLIC',
+          message: msg,
+          extra: value,
+        },
       },
-    }],
+    ],
   };
   _wsClient.send(JSON.stringify(command))
-    .then(() => {
-      log.verbose(APP_NAME, `Command sent`, command);
-    })
-    .catch((err) => {
-      log.error(APP_NAME, `Unable to send command`, err);
-    });
+      .then(() => {
+        log.verbose(APP_NAME, `Command sent`, command);
+      })
+      .catch((err) => {
+        log.error(APP_NAME, `Unable to send command`, err);
+      });
 }
 
 /**
@@ -303,12 +306,12 @@ function _sendButtonPress(address, clickType, wasQueued, timeDiff) {
   command.flic = {address, clickType, wasQueued, timeDiff};
   log.log(APP_NAME, `Sending command`, command);
   _wsClient.send(JSON.stringify(command))
-    .then(() => {
-      log.debug(APP_NAME, `Command sent`, command);
-    })
-    .catch((err) => {
-      log.error(APP_NAME, `Unable to send command`, err);
-    });
+      .then(() => {
+        log.debug(APP_NAME, `Command sent`, command);
+      })
+      .catch((err) => {
+        log.error(APP_NAME, `Unable to send command`, err);
+      });
 }
 
 /**
