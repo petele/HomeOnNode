@@ -80,6 +80,7 @@ function DeviceMonitor(fb, deviceName) {
       argv: process.argv.join(' '),
       processTitle: process.title,
       uptime: 0,
+      uptime_: `starting...`,
     };
     _ipAddresses = deviceData.host.ipAddress;
     log.log(_deviceName, 'Device Settings', deviceData);
@@ -144,6 +145,8 @@ function DeviceMonitor(fb, deviceName) {
   function _tickHeartbeat() {
     const now = Date.now();
     const now_ = log.formatTime(now);
+    const uptime = process.uptime();
+    const uptime_ = log.humanizeDuration(uptime);
     const details = {
       heartbeat: now,
       heartbeat_: now_,
@@ -152,7 +155,8 @@ function DeviceMonitor(fb, deviceName) {
       exitDetails: null,
       memory: _getMemoryUsage(),
       cpuUsage: process.cpuUsage(),
-      uptime: process.uptime(),
+      uptime: uptime,
+      uptime_: uptime_,
     };
     _fb.child(`${_deviceName}`).update(details, (err) => {
       if (err) {

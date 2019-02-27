@@ -446,6 +446,48 @@ function _formatTime(now, short) {
 }
 
 /**
+ * Formats a duration to a human readable time.
+ *
+ * @function humanizeDuration
+ * @static
+ *
+ * @param {Number} seconds Number of seconds to humanize.
+ * @return {String} Amount of time passed.
+ */
+function _humanizeDuration(seconds) {
+  const d = moment.duration(seconds, 'seconds');
+  const result = [];
+  const years = Math.floor(d.asYears());
+  if (years) {
+    result.push(`${years} years`);
+    d.subtract(years, 'years');
+  }
+  const months = Math.floor(d.asMonths());
+  if (months) {
+    result.push(`${months} months`);
+    d.subtract(months, 'months');
+  }
+  const days = Math.floor(d.asDays());
+  if (days) {
+    result.push(`${days} days`);
+    d.subtract(days, 'days');
+  }
+  const hours = Math.floor(d.asHours());
+  if (hours) {
+    result.push(`${hours} hours`);
+    d.subtract(hours, 'hours');
+  }
+  const minutes = Math.round(d.asMinutes());
+  if (minutes) {
+    result.push(`${minutes} minutes`);
+  }
+  if (result.length > 0) {
+    return result.join(', ');
+  }
+  return `${Math.round(seconds)} seconds`;
+}
+
+/**
  * Logs a app start message.
  *
  * @function appStart
@@ -723,6 +765,7 @@ exports.startWSS = _startWSS;
 exports.setFirebaseRef = _setFirebaseRef;
 
 exports.formatTime = _formatTime;
+exports.humanizeDuration = _humanizeDuration;
 exports.stringifyLog = _stringifyLog;
 
 exports.appStart = _appStart;
