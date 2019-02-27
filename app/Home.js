@@ -57,11 +57,11 @@ function Home(initialConfig, fbRef) {
   let _armingTimer;
   let _lastSoundPlayedAt = 0;
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Public APIs
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Public APIs
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Updates the system config.
@@ -142,10 +142,10 @@ function Home(initialConfig, fbRef) {
 
       // Check if the required conditions are met
       if (action.conditions) {
-         if (!_checkConditions(action.conditions)) {
+        if (!_checkConditions(action.conditions)) {
           return;
-         }
-         delete action.conditions;
+        }
+        delete action.conditions;
       }
 
       // If it's a cmdName, load the command and run that.
@@ -158,10 +158,10 @@ function Home(initialConfig, fbRef) {
       results.push(_executeAction(action, source));
     });
     return Promise.all(results)
-      .then((r) => {
-        log.verbose(LOG_PREFIX, 'executeActions(...) complete.', r);
-        return r;
-      });
+        .then((r) => {
+          log.verbose(LOG_PREFIX, 'executeActions(...) complete.', r);
+          return r;
+        });
   };
 
   /**
@@ -187,11 +187,11 @@ function Home(initialConfig, fbRef) {
     _shutdownTivo();
   };
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Execute Action - handles the actual execution of an action.
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Execute Action - handles the actual execution of an action.
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Executes a single of action.
@@ -224,34 +224,34 @@ function Home(initialConfig, fbRef) {
     // Do not disturb
     if (action.hasOwnProperty('doNotDisturb')) {
       return _setDoNotDisturb(action.doNotDisturb)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            return _genResult(action, false, err);
+          });
     }
 
     // Door open/closed
     if (action.hasOwnProperty('door')) {
       return _handleDoorEvent(action.door.name, action.door.state)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            return _genResult(action, false, err);
+          });
     }
 
     // Doorbell
     if (action.hasOwnProperty('doorbell')) {
       return _ringDoorbell(source)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            return _genResult(action, false, err);
+          });
     }
 
     // Harmony activity
@@ -262,12 +262,12 @@ function Home(initialConfig, fbRef) {
       }
 
       return harmony.setActivityByName(action.harmonyActivity)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            return _genResult(action, false, err);
+          });
     }
 
     // Harmony key
@@ -278,12 +278,12 @@ function Home(initialConfig, fbRef) {
       }
 
       return harmony.sendKey(action.harmonyKey)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            return _genResult(action, false, err);
+          });
     }
 
     // Hue command
@@ -307,13 +307,13 @@ function Home(initialConfig, fbRef) {
 
       // Set the lights
       return hue.setLights(action.hueCommand.lights, receipe)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: hueCommand failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: hueCommand failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     // Hue request
@@ -327,13 +327,13 @@ function Home(initialConfig, fbRef) {
       const method = action.hueRequest.method;
       const body = action.hueRequest.body;
       return hue.sendRequest(path, method, body)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: hueRequest failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: hueRequest failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     // Hue scene
@@ -344,13 +344,13 @@ function Home(initialConfig, fbRef) {
       }
 
       return hue.setScene(action.hueScene)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: hueScene failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: hueScene failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     // Log
@@ -379,13 +379,13 @@ function Home(initialConfig, fbRef) {
       }
 
       return nanoLeaf.executeCommand(action.nanoLeaf)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: nanoLeaf failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nanoLeaf failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('nestCam')) {
@@ -395,13 +395,13 @@ function Home(initialConfig, fbRef) {
       }
 
       return nest.enableCamera(action.nestCam)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: nestCam failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestCam failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('nestFan')) {
@@ -413,13 +413,13 @@ function Home(initialConfig, fbRef) {
       const roomId = action.nestFan.roomId;
       const minutes = action.nestFan.minutes || 60;
       return nest.runFan(roomId, minutes)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: nestFan failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestFan failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('nestState')) {
@@ -430,24 +430,24 @@ function Home(initialConfig, fbRef) {
 
       if (action.nestState === 'HOME') {
         return nest.setHome()
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
-            return _genResult(action, false, err);
-          });
+            .then((result) => {
+              return _genResult(action, true, result);
+            })
+            .catch((err) => {
+              log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
+              return _genResult(action, false, err);
+            });
       }
 
       if (action.nestState === 'AWAY') {
         return nest.setAway()
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
-            return _genResult(action, false, err);
-          });
+            .then((result) => {
+              return _genResult(action, true, result);
+            })
+            .catch((err) => {
+              log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
+              return _genResult(action, false, err);
+            });
       }
       log.warn(LOG_PREFIX, `Invalid nestState: ${action.nestState}`);
       return _genResult(action, false, 'invalid_state');
@@ -464,25 +464,25 @@ function Home(initialConfig, fbRef) {
       if (action.nestThermostat.temperature) {
         const temperature = action.nestThermostat.temperature;
         return nest.setTemperature(roomId, temperature)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
-            return _genResult(action, false, err);
-          });
+            .then((result) => {
+              return _genResult(action, true, result);
+            })
+            .catch((err) => {
+              log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
+              return _genResult(action, false, err);
+            });
       }
 
       if (action.nestThermostat.adjust) {
         const direction = action.nestThermostat.adjust;
         return nest.adjustTemperature(roomId, direction)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
-            return _genResult(action, false, err);
-          });
+            .then((result) => {
+              return _genResult(action, true, result);
+            })
+            .catch((err) => {
+              log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
+              return _genResult(action, false, err);
+            });
       }
 
       log.warn(LOG_PREFIX, `Invalid nestThermostat command.`, action);
@@ -511,29 +511,29 @@ function Home(initialConfig, fbRef) {
       Object.keys(rooms).forEach((roomId) => {
         const temperature = rooms[roomId];
         const result = nest.setTemperature(roomId, temperature)
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: nestThermostatAuto failed.`, err);
-            return _genResult(action, false, err);
-          });
+            .catch((err) => {
+              log.verbose(LOG_PREFIX, `Oops: nestThermostatAuto failed.`, err);
+              return _genResult(action, false, err);
+            });
         results.push(result);
       });
       return Promise.all(results)
-        .then((result) => {
-          return _genResult(action, true, result);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          });
     }
 
     if (action.hasOwnProperty('sayThis')) {
       const utterance = action.sayThis.utterance;
       const opts = action.sayThis.opts || {};
       return _sayThis(utterance, opts)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: sayThis failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: sayThis failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('sendNotification')) {
@@ -542,13 +542,13 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
       return gcmPush.sendMessage(action.sendNotification)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: sendNotification failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: sendNotification failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('sonos')) {
@@ -557,37 +557,37 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
       return sonos.executeCommand(action.sonos, _config.sonosPresetOptions)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: sonos failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: sonos failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('sound')) {
       const soundFile = action.sound.soundFile;
       const opts = action.sound.opts || {};
       return _playSound(soundFile, opts)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: sound failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: sound failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('state')) {
       return _setState(action.state)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: state failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: state failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('tivo')) {
@@ -596,13 +596,13 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
       return tivo.send(action.tivo)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: TiVo failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: TiVo failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     if (action.hasOwnProperty('wemo')) {
@@ -611,13 +611,13 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
       return wemo.setState(action.wemo.id, action.wemo.on)
-        .then((result) => {
-          return _genResult(action, true, result);
-        })
-        .catch((err) => {
-          log.verbose(LOG_PREFIX, `Whoops: Wemo failed.`, err);
-          return _genResult(action, false, err);
-        });
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: Wemo failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     // Unknown action received
@@ -625,11 +625,11 @@ function Home(initialConfig, fbRef) {
     return _genResult(action, false, 'unknown_action');
   }
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Init
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Init
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Initialize the HOME API
@@ -684,11 +684,11 @@ function Home(initialConfig, fbRef) {
     }, 750);
   }
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * System State & Firebase Logging
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * System State & Firebase Logging
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Update System State from fbSet
@@ -775,11 +775,11 @@ function Home(initialConfig, fbRef) {
     });
   }
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Internal Helper Functions
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Internal Helper Functions
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    *
@@ -1062,11 +1062,11 @@ function Home(initialConfig, fbRef) {
     return Promise.resolve(newState);
   }
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Conditions checks for actions
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Conditions checks for actions
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Checks if the conditions are met
@@ -1170,11 +1170,11 @@ function Home(initialConfig, fbRef) {
     return false;
   }
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Alarm Clock API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Alarm Clock API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init the Alarm Clock API
@@ -1233,11 +1233,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Bluetooth API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Bluetooth API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init the Bluetooth API
@@ -1262,11 +1262,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Cron Job
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Cron Job
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Cron API
@@ -1328,11 +1328,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Harmony API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Harmony API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Harmony API
@@ -1378,11 +1378,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Philips Hue API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Philips Hue API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Hue
@@ -1440,11 +1440,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Google Home API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Google Home API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init the Google Home API
@@ -1465,11 +1465,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * NanoLeaf API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * NanoLeaf API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init NanoLeaf
@@ -1495,11 +1495,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Nest API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Nest API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Nest
@@ -1519,11 +1519,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Notification System API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Notification System API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Initialize the Notification System
@@ -1539,11 +1539,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Presence API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Presence API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Presence
@@ -1595,11 +1595,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * PushBullet API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * PushBullet API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Push Bullet
@@ -1645,11 +1645,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Sonos API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Sonos API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Sonos
@@ -1669,11 +1669,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * TiVo API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * TiVo API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init TiVo
@@ -1699,11 +1699,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Weather API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Weather API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Weather
@@ -1723,11 +1723,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Wemo API
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Wemo API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
    * Init Wemo
@@ -1752,11 +1752,11 @@ function Home(initialConfig, fbRef) {
   }
 
 
-/** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
- *
- * Initialize the whole thing
- *
- ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Initialize the whole thing
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   _init();
 }

@@ -105,17 +105,17 @@ function Hue(key, explicitIPAddress) {
         requestPath = `/groups/${Math.abs(light)}/action`;
       }
       return _makeHueRequest(requestPath, 'PUT', cmd, true)
-        .then((resp) => {
-          _updateLightsThrottled();
-          _updateGroupsThrottled();
-          return resp;
-        })
-        .catch((err) => {
-          err.requestPath = requestPath;
-          log.error(LOG_PREFIX, `${msg} failed.`, err);
-          return err;
-        });
-      }));
+          .then((resp) => {
+            _updateLightsThrottled();
+            _updateGroupsThrottled();
+            return resp;
+          })
+          .catch((err) => {
+            err.requestPath = requestPath;
+            log.error(LOG_PREFIX, `${msg} failed.`, err);
+            return err;
+          });
+    }));
   };
 
   /**
@@ -134,15 +134,15 @@ function Hue(key, explicitIPAddress) {
     const requestPath = '/groups/0/action';
     const cmd = {scene: sceneId};
     return _makeHueRequest(requestPath, 'PUT', cmd, true)
-      .then((resp) => {
-        _updateLightsThrottled();
-        _updateGroupsThrottled();
-        return resp;
-      })
-      .catch((err) => {
-        log.error(LOG_PREFIX, `${msg} failed.`, err);
-        return err;
-      });
+        .then((resp) => {
+          _updateLightsThrottled();
+          _updateGroupsThrottled();
+          return resp;
+        })
+        .catch((err) => {
+          log.error(LOG_PREFIX, `${msg} failed.`, err);
+          return err;
+        });
   };
 
   /**
@@ -164,10 +164,10 @@ function Hue(key, explicitIPAddress) {
       return Promise.reject(new TypeError('missing_parameter'));
     }
     return _makeHueRequest(requestPath, method, body)
-      .catch((err) => {
-        log.error(LOG_PREFIX, `${msg} failed.`, err);
-        return err;
-      });
+        .catch((err) => {
+          log.error(LOG_PREFIX, `${msg} failed.`, err);
+          return err;
+        });
   };
 
   /**
@@ -182,14 +182,14 @@ function Hue(key, explicitIPAddress) {
     }
     log.debug(LOG_PREFIX, msg);
     return _updateConfig()
-      .then(() => {
-        log.verbose(LOG_PREFIX, `${msg} completed.`);
-        return;
-      })
-      .catch((err) => {
-        log.warn(LOG_PREFIX, `${msg} failed.`, err);
-        return;
-      });
+        .then(() => {
+          log.verbose(LOG_PREFIX, `${msg} completed.`);
+          return;
+        })
+        .catch((err) => {
+          log.warn(LOG_PREFIX, `${msg} failed.`, err);
+          return;
+        });
   };
 
   /**
@@ -198,26 +198,27 @@ function Hue(key, explicitIPAddress) {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     _findHub()
-      .then((bridgeIP) => {
-        _bridgeIP = bridgeIP;
-        return _updateConfig();
-      }).then(() => {
-        _ready = true;
-        log.debug(LOG_PREFIX, 'Ready.');
-        log.verbose(LOG_PREFIX, 'Starting interval timers...');
-        setTimeout(() => {
-          _updateConfigTick();
-        }, CONFIG_REFRESH_INTERVAL);
-        setTimeout(() => {
-          _updateGroupsTick();
-        }, GROUPS_REFRESH_INTERVAL);
-        setTimeout(() => {
-          _updateLightsTick();
-        }, LIGHTS_REFRESH_INTERVAL);
-        setTimeout(() => {
-          _checkBatteriesTick();
-        }, BATTERY_CHECK_INTERVAL);
-      });
+        .then((bridgeIP) => {
+          _bridgeIP = bridgeIP;
+          return _updateConfig();
+        })
+        .then(() => {
+          _ready = true;
+          log.debug(LOG_PREFIX, 'Ready.');
+          log.verbose(LOG_PREFIX, 'Starting interval timers...');
+          setTimeout(() => {
+            _updateConfigTick();
+          }, CONFIG_REFRESH_INTERVAL);
+          setTimeout(() => {
+            _updateGroupsTick();
+          }, GROUPS_REFRESH_INTERVAL);
+          setTimeout(() => {
+            _updateLightsTick();
+          }, LIGHTS_REFRESH_INTERVAL);
+          setTimeout(() => {
+            _checkBatteriesTick();
+          }, BATTERY_CHECK_INTERVAL);
+        });
   }
 
   /**
@@ -240,12 +241,12 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateConfigTick() {
     return _updateConfig()
-      .then(() => {
-        return _promisedSleep(CONFIG_REFRESH_INTERVAL);
-      })
-      .then(() => {
-        _updateConfigTick();
-      });
+        .then(() => {
+          return _promisedSleep(CONFIG_REFRESH_INTERVAL);
+        })
+        .then(() => {
+          _updateConfigTick();
+        });
   }
 
   /**
@@ -254,12 +255,12 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateGroupsTick() {
     return _updateGroups()
-      .then(() => {
-        return _promisedSleep(GROUPS_REFRESH_INTERVAL);
-      })
-      .then(() => {
-        _updateGroupsTick();
-      });
+        .then(() => {
+          return _promisedSleep(GROUPS_REFRESH_INTERVAL);
+        })
+        .then(() => {
+          _updateGroupsTick();
+        });
   }
 
   /**
@@ -268,12 +269,12 @@ function Hue(key, explicitIPAddress) {
    */
   function _updateLightsTick() {
     return _updateLights()
-      .then(() => {
-        return _promisedSleep(LIGHTS_REFRESH_INTERVAL);
-      })
-      .then(() => {
-        _updateLightsTick();
-      });
+        .then(() => {
+          return _promisedSleep(LIGHTS_REFRESH_INTERVAL);
+        })
+        .then(() => {
+          _updateLightsTick();
+        });
   }
 
   /**
@@ -283,9 +284,9 @@ function Hue(key, explicitIPAddress) {
   function _checkBatteriesTick() {
     _checkBatteries();
     return _promisedSleep(BATTERY_CHECK_INTERVAL)
-      .then(() => {
-        _checkBatteriesTick();
-      });
+        .then(() => {
+          _checkBatteriesTick();
+        });
   }
 
   /**
@@ -391,11 +392,11 @@ function Hue(key, explicitIPAddress) {
   function _updateGroups() {
     const requestPath = '/groups';
     return _makeHueRequest(requestPath, 'GET', null, false)
-      .then(_checkGroups)
-      .catch((error) => {
-        log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
-        return false;
-      });
+        .then(_checkGroups)
+        .catch((error) => {
+          log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
+          return false;
+        });
   }
 
   /**
@@ -433,11 +434,11 @@ function Hue(key, explicitIPAddress) {
   function _updateLights() {
     const requestPath = '/lights';
     return _makeHueRequest(requestPath, 'GET', null, false)
-      .then(_checkLights)
-      .catch((error) => {
-        log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
-        return false;
-      });
+        .then(_checkLights)
+        .catch((error) => {
+          log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
+          return false;
+        });
   }
 
   /**
@@ -475,43 +476,43 @@ function Hue(key, explicitIPAddress) {
     const pCapPath = '/capabilities';
     const pCapabilities = _delayedHueRequest(pCapPath, 'GET', null, false, 500);
     return Promise.all([pDataStore, pCapabilities])
-      .then((results) => {
-        const newDataStore = results[0];
-        const newCapabilities = results[1];
-        let capabilitiesChanged = false;
-        let configChanged = false;
+        .then((results) => {
+          const newDataStore = results[0];
+          const newCapabilities = results[1];
+          let capabilitiesChanged = false;
+          let configChanged = false;
 
-        // Verify we have a dataStore to work with.
-        if (!_self.dataStore) {
-          _self.dataStore = {};
-        }
+          // Verify we have a dataStore to work with.
+          if (!_self.dataStore) {
+            _self.dataStore = {};
+          }
 
-        // Has the dataStore changed?
-        if (diff(_self.dataStore, newDataStore)) {
-          _checkLights(newDataStore.lights);
-          _checkGroups(newDataStore.groups);
-          _self.dataStore = newDataStore;
-          configChanged = true;
-        }
+          // Has the dataStore changed?
+          if (diff(_self.dataStore, newDataStore)) {
+            _checkLights(newDataStore.lights);
+            _checkGroups(newDataStore.groups);
+            _self.dataStore = newDataStore;
+            configChanged = true;
+          }
 
-        // Have the capabilities changed?
-        if (diff(_capabilities, newCapabilities)) {
-          _capabilities = newCapabilities;
-          capabilitiesChanged = true;
-        }
+          // Have the capabilities changed?
+          if (diff(_capabilities, newCapabilities)) {
+            _capabilities = newCapabilities;
+            capabilitiesChanged = true;
+          }
 
-        // Has something changed?
-        if (capabilitiesChanged || configChanged) {
-          const config = Object.assign({}, newDataStore);
-          config.capabilities = Object.assign({}, _capabilities);
-          _self.emit('config_changed', config);
-        }
-        return true;
-      })
-      .catch((error) => {
-        log.exception(LOG_PREFIX, 'Unable to get config/capabilities', error);
-        return false;
-      });
+          // Has something changed?
+          if (capabilitiesChanged || configChanged) {
+            const config = Object.assign({}, newDataStore);
+            config.capabilities = Object.assign({}, _capabilities);
+            _self.emit('config_changed', config);
+          }
+          return true;
+        })
+        .catch((error) => {
+          log.exception(LOG_PREFIX, 'Unable to get config/capabilities', error);
+          return false;
+        });
   }
 
   /**

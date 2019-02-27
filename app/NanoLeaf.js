@@ -41,10 +41,10 @@ function NanoLeaf(key, ip, port) {
 
     if (command.hasOwnProperty('authorize')) {
       return _makeLeafRequest('new', 'POST')
-        .then((resp) => {
-          log.log(LOG_PREFIX, resp);
-          return resp;
-        });
+          .then((resp) => {
+            log.log(LOG_PREFIX, resp);
+            return resp;
+          });
     }
 
     if (command.hasOwnProperty('cycleEffect')) {
@@ -122,10 +122,10 @@ function NanoLeaf(key, ip, port) {
         log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
         if (response &&
             response.statusCode !== 200 && response.statusCode !== 204) {
-              const m = `Invalid status code: ${response.statusCode}`;
-              log.error(LOG_PREFIX, m, respBody);
-              reject(new Error(`status_${response.statusCode}`));
-              return;
+          const m = `Invalid status code: ${response.statusCode}`;
+          log.error(LOG_PREFIX, m, respBody);
+          reject(new Error(`status_${response.statusCode}`));
+          return;
         }
         if (respBody && respBody.error) {
           log.error(LOG_PREFIX, `Response error`, respBody);
@@ -167,32 +167,32 @@ function NanoLeaf(key, ip, port) {
   */
   function _getState() {
     return _makeLeafRequest('', 'GET', null)
-      .catch(function(err) {
-        log.error(LOG_PREFIX, err.message);
-        return {error: err};
-      })
-      .then((resp) => {
-        if (resp.error) {
-          // Bail, we've already logged the error above.
-          return;
-        }
-        const state = resp.body;
-        // Has the state changed since last time?
-        if (diff(_state, state)) {
-          _state = state;
-          // If we weren't ready before, change to ready & fire ready event
-          if (_ready === false) {
-            log.debug(LOG_PREFIX, 'Ready.');
-            _ready = true;
+        .catch(function(err) {
+          log.error(LOG_PREFIX, err.message);
+          return {error: err};
+        })
+        .then((resp) => {
+          if (resp.error) {
+            // Bail, we've already logged the error above.
+            return;
           }
-          /**
-           * State has changed
-           * @event NanoLeaf#state_changed
-           */
-          _self.emit('state_changed', state);
-        }
-        return resp;
-      });
+          const state = resp.body;
+          // Has the state changed since last time?
+          if (diff(_state, state)) {
+            _state = state;
+            // If we weren't ready before, change to ready & fire ready event
+            if (_ready === false) {
+              log.debug(LOG_PREFIX, 'Ready.');
+              _ready = true;
+            }
+            /**
+             * State has changed
+             * @event NanoLeaf#state_changed
+             */
+            _self.emit('state_changed', state);
+          }
+          return resp;
+        });
   }
 
   /**

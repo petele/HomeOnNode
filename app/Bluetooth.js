@@ -92,21 +92,20 @@ function Bluetooth() {
       const msg = `getSvcAndChar('${uuid}', '${svcUUID}', '${charUUID}')`;
       log.verbose(LOG_PREFIX, msg);
       peripheral.discoverSomeServicesAndCharacteristics([svcUUID], [charUUID],
-        (err, s, c) => {
-          if (err) {
-            log.error(LOG_PREFIX, `${msg} failed`, err);
-            reject(err);
-            return;
-          }
-          if (!s || s.length !== 1 || !c || c.length !== 1) {
-            const result = {svc: s, char: c};
-            log.error(LOG_PREFIX, `${msg} failed: bad return.`, result);
-            reject(new Error('service_or_char_not_found'));
-            return;
-          }
-          resolve({service: s[0], characteristic: c[0]});
-        }
-      );
+          (err, s, c) => {
+            if (err) {
+              log.error(LOG_PREFIX, `${msg} failed`, err);
+              reject(err);
+              return;
+            }
+            if (!s || s.length !== 1 || !c || c.length !== 1) {
+              const result = {svc: s, char: c};
+              log.error(LOG_PREFIX, `${msg} failed: bad return.`, result);
+              reject(new Error('service_or_char_not_found'));
+              return;
+            }
+            resolve({service: s[0], characteristic: c[0]});
+          });
     });
   }
 
@@ -297,21 +296,21 @@ function Bluetooth() {
    */
   this.getValue = function(peripheral, svcUUID, charUUID, atomic) {
     return _self.connect(peripheral)
-      .then(() => {
-        return _getServiceAndCharacteristic(peripheral, svcUUID, charUUID);
-      })
-      .then((svcAndChar) => {
-        return _readCharacteristic(svcAndChar.characteristic);
-      })
-      .catch(() => {
-        // Do nothing, the error has already been reported.
-      })
-      .then((val) => {
-        if (atomic === true) {
-          _self.disconnect(peripheral);
-        }
-        return val;
-      });
+        .then(() => {
+          return _getServiceAndCharacteristic(peripheral, svcUUID, charUUID);
+        })
+        .then((svcAndChar) => {
+          return _readCharacteristic(svcAndChar.characteristic);
+        })
+        .catch(() => {
+          // Do nothing, the error has already been reported.
+        })
+        .then((val) => {
+          if (atomic === true) {
+            _self.disconnect(peripheral);
+          }
+          return val;
+        });
   };
 
   /**
@@ -326,22 +325,22 @@ function Bluetooth() {
    */
   this.setValue = function(peripheral, svcUUID, charUUID, value, atomic) {
     return _self.connect(peripheral)
-      .then(() => {
-        return _getServiceAndCharacteristic(peripheral, svcUUID, charUUID);
-      })
-      .then((svcAndChar) => {
-        const characteristic = svcAndChar.characteristic;
-        return _writeCharacteristic(characteristic, value);
-      })
-      .catch(() => {
-        // Do nothing, the error has already been reported.
-      })
-      .then((val) => {
-        if (atomic === true) {
-          _self.disconnect(peripheral);
-        }
-        return val;
-      });
+        .then(() => {
+          return _getServiceAndCharacteristic(peripheral, svcUUID, charUUID);
+        })
+        .then((svcAndChar) => {
+          const characteristic = svcAndChar.characteristic;
+          return _writeCharacteristic(characteristic, value);
+        })
+        .catch(() => {
+          // Do nothing, the error has already been reported.
+        })
+        .then((val) => {
+          if (atomic === true) {
+            _self.disconnect(peripheral);
+          }
+          return val;
+        });
   };
 
   _init();

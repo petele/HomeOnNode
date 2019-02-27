@@ -163,10 +163,10 @@ function Sonos() {
     }
     log.debug(LOG_PREFIX, msg);
     return speaker.setVolume(vol)
-      .catch((err) => {
-        log.exception(LOG_PREFIX, `${msg} failed, with exception.`, err);
-        return {success: false};
-      });
+        .catch((err) => {
+          log.exception(LOG_PREFIX, `${msg} failed, with exception.`, err);
+          return {success: false};
+        });
   }
 
   /**
@@ -177,18 +177,17 @@ function Sonos() {
   */
   function _adjustVolume(vol) {
     return Promise.all(
-      _sonosSystem.zones.map((zone) => {
-        const player = _sonosSystem.getPlayerByUUID(zone.uuid);
-        if (!player) {
-          return Promise.resolve({success: false});
-        }
-        return player.coordinator.setGroupVolume(vol)
-          .catch((err) => {
-            log.exception(LOG_PREFIX, `_adjustVolume(${vol}) failed.`, err);
-            return {success: false};
-          });
-      })
-    );
+        _sonosSystem.zones.map((zone) => {
+          const player = _sonosSystem.getPlayerByUUID(zone.uuid);
+          if (!player) {
+            return Promise.resolve({success: false});
+          }
+          return player.coordinator.setGroupVolume(vol)
+              .catch((err) => {
+                log.exception(LOG_PREFIX, `_adjustVolume(${vol}) failed.`, err);
+                return {success: false};
+              });
+        }));
   }
 
   /**
@@ -244,18 +243,18 @@ function Sonos() {
     // todo move after is ready
     log.debug(LOG_PREFIX, 'pause()');
     return Promise.all(
-      _sonosSystem.zones.filter((zone) => {
-        return zone.coordinator.state.playbackState === 'PLAYING';
-      })
-      .map((zone) => {
-        const player = _sonosSystem.getPlayerByUUID(zone.uuid);
-        return player.pause()
-          .catch((err) => {
-            log.exception(LOG_PREFIX, `Error pausing ${zone.uuid}`, err);
-            return {success: false};
-          });
-      })
-    );
+        _sonosSystem.zones.filter((zone) => {
+          return zone.coordinator.state.playbackState === 'PLAYING';
+        })
+            .map((zone) => {
+              const player = _sonosSystem.getPlayerByUUID(zone.uuid);
+              return player.pause()
+                  .catch((err) => {
+                    const uuid = zone.uuid;
+                    log.exception(LOG_PREFIX, `Error pausing ${uuid}`, err);
+                    return {success: false};
+                  });
+            }));
   }
 
   /**
