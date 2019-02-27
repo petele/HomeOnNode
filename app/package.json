@@ -41,7 +41,6 @@
     "lint": "eslint --ignore-pattern '/tests/' .",
     "get-config": "node getConfig.js",
     "log-listen": "node logListener.js -r",
-    "log-viewer": "node logViewer.js",
-    "postinstall": "mkdir app/logs"
+    "log-viewer": "node logViewer.js"
   }
 }
