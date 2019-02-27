@@ -115,6 +115,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <span>[[formatDate(item.startedAt)]]</span>
             </div>
           </template>
+          <template is="dom-if" if="[[item.uptime_]]">
+            <div>
+              <span class="label">Up Time</span>
+              <span>[[item.uptime_]]</span>
+            </div>
+          </template>
           <template is="dom-if" if="[[item.shutdownAt]]">
             <div>
               <span class="label">Shutdown</span>
