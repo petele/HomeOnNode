@@ -1,7 +1,0 @@
-{
-  "uid": "appVPNMonitor",
-  "append": true,
-  "sourceDir": "/home/pi/HomeOnNode/app/",
-  "workingDir": "/home/pi/HomeOnNode/app/",
-  "script": "appVPN.js"
-}
