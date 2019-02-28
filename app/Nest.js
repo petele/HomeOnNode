@@ -25,15 +25,13 @@ const STATES = {
  * @fires Nest#state
  * @property {Object} nestData
  * @param {string} authToken Auth Token to use
- * @param {Object} [roomIdMap] Hash table that maps roomId to thermostatId
  */
-function Nest(authToken, roomIdMap) {
+function Nest(authToken) {
   const RETRY_DELAY = 18 * 1000;
   const MAX_DISCONNECT = 5 * 60 * 1000;
   const RECONNECT_TIMEOUT = 1 * 60 * 1000;
   const FAN_TIMES = [0, 15, 30, 45, 60, 120, 240, 480, 960];
   const _self = this;
-  const _roomIdMap = roomIdMap || {};
   const _authToken = authToken;
   let _fbNest;
   let _disconnectedTimer;
@@ -46,14 +44,13 @@ function Nest(authToken, roomIdMap) {
   /**
    * Starts the Nest Fan and runs it for the default time period
    *
-   * @param {string} roomId Room ID (LR/BR) to adjust
+   * @param {string} thermostatId thermostatId to adjust
    * @param {Number} minutes Not yet used
    * @return {Promise} Resolves to a boolean, with the result of the request
    */
-  this.runFan = function(roomId, minutes) {
-    const thermostatId = _findThermostatId(roomId);
+  this.runFan = function(thermostatId, minutes) {
     if (!thermostatId) {
-      return Promise.reject(new Error('room_id_not_found'));
+      return Promise.reject(new Error('missing_thermostat_id'));
     }
     return _runHVACFan(thermostatId, minutes);
   };
@@ -89,19 +86,18 @@ function Nest(authToken, roomIdMap) {
   /**
    * Adjust the temperature in a room by 1 degree
    *
-   * @param {string} roomId Room ID (LR/BR) to adjust
+   * @param {string} thermostatId Thermostat ID to adjust
    * @param {string} direction Direction to adjust the temp (UP/DOWN)
    * @return {Promise} Resolves to a boolean, with the result of the request
    */
-  this.adjustTemperature = function(roomId, direction) {
-    let msg = `adjustTemperature('${roomId}', '${direction}')`;
+  this.adjustTemperature = function(thermostatId, direction) {
+    let msg = `adjustTemperature('${thermostatId}', '${direction}')`;
     if (_deviceState !== STATES.ready) {
       log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
       return Promise.reject(new Error('not_ready'));
     }
-    const thermostatId = _findThermostatId(roomId);
     if (!thermostatId) {
-      return Promise.reject(new Error('room_id_not_found'));
+      return Promise.reject(new Error('missing_thermostat_id'));
     }
     const thermostat = _getThermostat(thermostatId);
     if (!thermostat) {
@@ -134,14 +130,13 @@ function Nest(authToken, roomIdMap) {
   /**
    * Set the temperature in a room to a specific temperature
    *
-   * @param {string} roomId Room ID (LR/BR) to adjust
+   * @param {string} thermostatId Thermostat ID to adjust
    * @param {Number} temperature Temperature to set the room to
    * @return {Promise} Resolves to a boolean, with the result of the request
    */
-  this.setTemperature = function(roomId, temperature) {
-    const thermostatId = _findThermostatId(roomId);
+  this.setTemperature = function(thermostatId, temperature) {
     if (!thermostatId) {
-      return Promise.reject(new Error('room_id_not_found'));
+      return Promise.reject(new Error('missing_thermostat_id'));
     }
     try {
       temperature = parseInt(temperature, 10);
@@ -160,7 +155,7 @@ function Nest(authToken, roomIdMap) {
    * Initialize the API
    */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...', _roomIdMap);
+    log.init(LOG_PREFIX, 'Starting...');
     if (!authToken) {
       const msg = 'No Nest authToken provided.';
       log.error(LOG_PREFIX, msg);
@@ -294,33 +289,33 @@ function Nest(authToken, roomIdMap) {
     return true;
   }
 
-  /**
-   * Get the Nest ThermostatId for the specified roomId
-   *
-   * @param {string} roomId Room ID to look up.
-   * @return {string} thermostatId
-   */
-  function _findThermostatId(roomId) {
-    let msg = 'Unable to find thermostatId';
-    if (!roomId) {
-      msg += ', roomId not provided.';
-      log.error(LOG_PREFIX, msg);
-      return null;
-    }
-    let thermostatId;
-    try {
-      thermostatId = _roomIdMap[roomId];
-    } catch (ex) {
-      log.exception(LOG_PREFIX, msg, ex);
-      return null;
-    }
-    if (thermostatId) {
-      return thermostatId;
-    }
-    msg += ' for roomId: ' + roomId;
-    log.error(LOG_PREFIX, msg);
-    return null;
-  }
+  // /**
+  //  * Get the Nest ThermostatId for the specified roomId
+  //  *
+  //  * @param {string} roomId Room ID to look up.
+  //  * @return {string} thermostatId
+  //  */
+  // function _findThermostatId(roomId) {
+  //   let msg = 'Unable to find thermostatId';
+  //   if (!roomId) {
+  //     msg += ', roomId not provided.';
+  //     log.error(LOG_PREFIX, msg);
+  //     return null;
+  //   }
+  //   let thermostatId;
+  //   try {
+  //     thermostatId = _roomIdMap[roomId];
+  //   } catch (ex) {
+  //     log.exception(LOG_PREFIX, msg, ex);
+  //     return null;
+  //   }
+  //   if (thermostatId) {
+  //     return thermostatId;
+  //   }
+  //   msg += ' for roomId: ' + roomId;
+  //   log.error(LOG_PREFIX, msg);
+  //   return null;
+  // }
 
   /**
    * Finds the Nest Thermostat for the specified thermostatId
@@ -463,7 +458,7 @@ function Nest(authToken, roomIdMap) {
    */
   function _runHVACFan(thermostatId, minutes, isRetry) {
     return new Promise(function(resolve, reject) {
-      let msg = `runHVACFan('${thermostatId}', ${minutes}, ${isRetry})`;
+      const msg = `runHVACFan('${thermostatId}', ${minutes}, ${isRetry})`;
       if (_deviceState !== STATES.ready) {
         log.error(LOG_PREFIX, msg + ' failed, Nest not ready.');
         reject(new Error('not_ready'));
@@ -480,21 +475,21 @@ function Nest(authToken, roomIdMap) {
         reject(new Error('invalid_fan_time'));
         return;
       }
-      const hvacMode = thermostat['hvac_mode'];
-      if (hvacMode === 'eco' || hvacMode === 'off') {
-        msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
-        if (isRetry !== true) {
-          msg += '. Will retry.';
-          log.warn(LOG_PREFIX, msg);
-          setTimeout(() => {
-            resolve(_runHVACFan(thermostatId, minutes, true));
-          }, RETRY_DELAY);
-          return;
-        }
-        log.warn(LOG_PREFIX, msg);
-        reject(new Error('incompatible_hvac_mode'));
-        return;
-      }
+      // const hvacMode = thermostat['hvac_mode'];
+      // if (hvacMode === 'eco' || hvacMode === 'off') {
+      //   msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
+      //   if (isRetry !== true) {
+      //     msg += '. Will retry.';
+      //     log.warn(LOG_PREFIX, msg);
+      //     setTimeout(() => {
+      //       resolve(_runHVACFan(thermostatId, minutes, true));
+      //     }, RETRY_DELAY);
+      //     return;
+      //   }
+      //   log.warn(LOG_PREFIX, msg);
+      //   reject(new Error('incompatible_hvac_mode'));
+      //   return;
+      // }
       log.debug(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
       const opts = {
         fan_timer_active: false,
