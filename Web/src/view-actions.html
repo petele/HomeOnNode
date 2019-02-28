@@ -23,23 +23,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
-      .currentTemp, .targetTemp {
-        font-size: smaller;
-      }
       .targetTemp {
         color: var(--secondary-text-color);
       }
-      .nest-off {
-        color: var(--paper-grey-500);
+      .small-text {
+        font-size: smaller;
       }
       .nest-heating {
         color: var(--paper-red-500);
       }
       .nest-cooling {
         color: var(--paper-blue-500);
-      }
-      .small-icon {
-        width: 16px;
       }
     </style>
 
@@ -59,17 +53,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           items="[[thermostats]]"
           sort="sortNest">
             <span>
-              [[item.where_name]]
-
+              [[item.name]]
               <br>
-              <span class="currentTemp">
-                [[item.ambient_temperature_f]][[item.temperature_scale]]
+              <span class="small-text">
+                <span class$="[[nestStateIconClass(item.hvac_state)]]">
+                  [[item.ambient_temperature_f]][[item.temperature_scale]]
+                </span>
+                <template is="dom-if" if="[[nestActive(item.hvac_mode)]]">
+                  <span class="targetTemp">
+                    ([[item.target_temperature_f]][[item.temperature_scale]])
+                  </span>
+                </template>
+                [[item.humidity]]%
               </span>
-              <template is="dom-if" if="[[nestActive(item.hvac_mode)]]">
-                <span class="targetTemp">([[item.target_temperature_f]][[item.temperature_scale]])</span>
-              </template>
-              <iron-icon class$="small-icon [[nestStateIconClass(item.hvac_state)]]" icon="hon-icons:[[nestStateIcon(item.hvac_mode)]]">
-              </iron-icon>
             </span>
             <paper-button class="button" on-tap="tapNestUp" disabled="[[!nestActive(item.hvac_mode)]]">
               Up
