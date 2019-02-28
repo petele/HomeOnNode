@@ -410,9 +410,13 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
 
-      const roomId = action.nestFan.roomId;
-      const minutes = action.nestFan.minutes || 60;
-      return nest.runFan(roomId, minutes)
+      const thermostatId = _getThermostatId(action.nestFan);
+      if (!thermostatId) {
+        log.warn(LOG_PREFIX, 'Thermostat or Room ID not found.', action);
+        return _genResult(action, false, 'no_id_provided');
+      }
+      const minutes = action.nestFan.minutes;
+      return nest.runFan(thermostatId, minutes)
           .then((result) => {
             return _genResult(action, true, result);
           })
@@ -458,12 +462,15 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
         return _genResult(action, false, 'not_available');
       }
-
-      const roomId = action.nestThermostat.roomId;
+      const thermostatId = _getThermostatId(action.nestThermostat);
+      if (!thermostatId) {
+        log.warn(LOG_PREFIX, 'Thermostat or Room ID not found.', action);
+        return _genResult(action, false, 'no_id_provided');
+      }
 
       if (action.nestThermostat.temperature) {
         const temperature = action.nestThermostat.temperature;
-        return nest.setTemperature(roomId, temperature)
+        return nest.setTemperature(thermostatId, temperature)
             .then((result) => {
               return _genResult(action, true, result);
             })
@@ -475,7 +482,7 @@ function Home(initialConfig, fbRef) {
 
       if (action.nestThermostat.adjust) {
         const direction = action.nestThermostat.adjust;
-        return nest.adjustTemperature(roomId, direction)
+        return nest.adjustTemperature(thermostatId, direction)
             .then((result) => {
               return _genResult(action, true, result);
             })
@@ -509,8 +516,14 @@ function Home(initialConfig, fbRef) {
 
       const results = [];
       Object.keys(rooms).forEach((roomId) => {
+        const thermostatId = _getThermostatId({roomId: roomId});
+        if (!thermostatId) {
+          log.warn(LOG_PREFIX, 'Thermostat or Room ID not found.', action);
+          result.push(_genResult(action, false, 'no_id_provided'));
+          return;
+        }
         const temperature = rooms[roomId];
-        const result = nest.setTemperature(roomId, temperature)
+        const result = nest.setTemperature(thermostatId, temperature)
             .catch((err) => {
               log.verbose(LOG_PREFIX, `Oops: nestThermostatAuto failed.`, err);
               return _genResult(action, false, err);
@@ -1518,6 +1531,21 @@ function Home(initialConfig, fbRef) {
     });
   }
 
+  /**
+   * Parses a Nest Action Object and gets the thermostat ID.
+   *
+   * @param {Object} nestAction
+   * @return {!String}
+   */
+  function _getThermostatId(nestAction) {
+    if (nestAction.thermostatId) {
+      return nestAction.thermostatId;
+    }
+    if (nestAction.roomId) {
+      return _config.nest.thermostats[nestAction.roomId];
+    }
+    return null;
+  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
