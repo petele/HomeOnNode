@@ -492,11 +492,11 @@ function Nest(authToken) {
       // }
       log.debug(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
       const opts = {
-        fan_timer_active: false,
+        fan_timer_active: true,
+        fan_timer_duration: minutes,
       };
-      if (minutes !== 0) {
-        opts.fan_timer_active = true;
-        opts.fan_timer_duration = minutes;
+      if (minutes === 0) {
+        opts.fan_timer_active = false;
       }
       const path = `devices/thermostats/${thermostatId}/`;
       _fbNest.child(path).update(opts, (err) => {
