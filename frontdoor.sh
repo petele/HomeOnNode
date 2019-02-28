@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
-cd app
+cd ~/HomeOnNode/app
 
 echo "Getting config..."
 node getConfig.js FrontDoor
