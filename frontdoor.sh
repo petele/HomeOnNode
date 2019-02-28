@@ -2,10 +2,10 @@
 
 cd app
 
-echo ""
+echo "Getting config..."
 node getConfig.js FrontDoor
 echo ""
-node appGPIO.js
+echo ""
 
-node appOnError.js >> ./logs/system.log
-node appSendNotification.js >> ./logs/system.log
+echo "Starting app..."
+node appGPIO.js
