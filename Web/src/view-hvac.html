@@ -10,6 +10,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
 <link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
 <link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
@@ -24,33 +25,31 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="view-hvac">
   <template>
-    <style include="shared-styles app-grid-style">
+    <style include="shared-styles app-grid-style iron-flex">
       :host {
         display: block;
         --app-grid-item-height: reset;
       }
-      .nest-off {
-        color: var(--paper-grey-500);
-      }
-      .nest-heating {
-        color: var(--paper-red-500);
-      }
-      .nest-cooling {
-        color: var(--paper-blue-500);
-      }
-      .nest {
-        margin-top: -4px;
-      }
-      .nest-fan {
-        display: none;
-      }
-      .nest-fan-visible {
-        display: inline-flex !important;
-      }
       .nest-details { text-align: right; }
-
       .secondary {
         color: var(--secondary-text-color);
+      }
+      summary {
+        list-style: none;
+        cursor: pointer;
+        display: inline-block;
+        float: right;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      details {
+        min-height: 2em;
+      }
+      details > summary {
+        width: 100%;
+        height: 2em;
+        outline: none;
       }
     </style>
 
@@ -68,44 +67,74 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       data="{{nestState}}">
     </fb-document>
 
-    <fb-document path="config/HomeOnNode/nest" data="{{nestConfig}}">
-    </fb-document>
+    <fb-query path="config/HomeOnNode/nest/hvacAuto" data="{{nestHVACAuto}}">
+    </fb-query>
 
     <div class="card">
-      <div class="app-grid">
+      <div class="app-grid grid-two">
         <paper-toggle-button id="ptAway" checked="{{nestAway}}" on-change="awayChanged">
           Nest Away
         </paper-toggle-button>
+        <paper-dropdown-menu disabled no-label-float label="Mode">
+          <paper-listbox
+            on-selected-changed="hvacModeChanged"
+            slot="dropdown-content"
+            class="dropdown-content"
+            attr-for-selected="value"
+            selected="{{hvacMode}}">
+            <paper-item value="heat">Heat</paper-item>
+            <paper-item value="cool">Cool</paper-item>
+            <paper-item value="off">Off</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
       </div>
+    </div>
+
+    <div class="card">
+      <details on-toggle="userInteraction">
+        <summary>
+          <div class="layout horizontal">
+            <div class="flex">
+              HVAC Auto Temperatures
+            </div>
+            <div>expand</div>
+          </div>
+        </summary>
+        <div>
+          <template is="dom-repeat" items="{{nestHVACAuto}}">
+            <div class="app-grid grid-three">
+              <div>[[item.$key]]</div>
+              <paper-input
+                label="Living Room"
+                type="number"
+                required
+                min="60" max="80"
+                value="[[item.LR]]"
+                on-value-changed="lrTempChanged">
+              </paper-input>
+              <paper-input
+                label="Bedroom"
+                type="number"
+                required
+                min="60" max="80"
+                value="[[item.BR]]"
+                on-value-changed="brTempChanged">
+              </paper-input>
+            </div>
+          </template>
+        </div>
+      </details>
     </div>
 
     <div class="card">
       <div class="app-grid grid-two">
         <span>
           Living Room
-          <iron-icon class$="nest [[lr.hvacIconClass]]" icon="hon-icons:[[lr.hvacIcon]]">
-          </iron-icon>
-          <iron-icon class$="nest nest-fan [[lr.hvacFanClass]]" icon="hon-icons:hvac-fan">
-          </iron-icon>
         </span>
         <span class="nest-details">
-          [[lr.temperature]]
-          <span class="secondary">[[lr.humidity]]</span>
-        </span>
-      </div>
-      <div class="app-grid grid-two">
-        <paper-input
-          label="Day"
-          type="number"
-          min="60" max="80"
-          value="{{nestConfig.hvacAuto.DAY.LR}}">
-        </paper-input>
-        <paper-input
-          label="Night"
-          type="number"
-          min="60" max="80"
-          value="{{nestConfig.hvacAuto.SLEEP.LR}}">
-        </paper-input>
+            [[lr.temperature]]
+            <span class="secondary">[[br.humidity]]</span>
+          </span>
       </div>
       <div id="lrChart"></div>
     </div>
@@ -114,28 +143,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <div class="app-grid grid-two">
         <span>
           Bedroom
-          <iron-icon class$="nest [[br.hvacIconClass]]" icon="hon-icons:[[br.hvacIcon]]">
-          </iron-icon>
-          <iron-icon class$="nest nest-fan [[br.hvacFanClass]]" icon="hon-icons:hvac-fan">
-          </iron-icon>
         </span>
         <span class="nest-details">
           [[br.temperature]]
           <span class="secondary">[[br.humidity]]</span>
         </span>
-      </div>
-      <div class="app-grid grid-two">
-        <paper-input
-          label="Day"
-          type="number"
-          min="60" max="80"
-          value="{{nestConfig.hvacAuto.DAY.BR}}">
-        </paper-input>
-        <paper-input
-          label="Night"
-          type="number"
-          min="60" max="80"
-          value="{{nestConfig.hvacAuto.SLEEP.BR}}">
       </div>
       <div id="brChart"></div>
     </div>
@@ -177,6 +189,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: Boolean,
             value: false,
           },
+          hvacMode: {
+            type: String,
+            value: 'heat',
+          },
         };
       }
 
@@ -194,6 +210,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (qs.indexOf('humidity') > 0) {
           this.showHumidity = true;
         }
+      }
+
+      hvacModeChanged(evt, newVal) {
+        // TODO: Not yet implemented.
+        console.warn('NYI: Changing HVAC mode to...', newVal.value);
+      }
+
+      lrTempChanged(evt, newVal) {
+        window.lastUserInput = Date.now();
+        if (!evt.srcElement.validate()) {
+          return;
+        }
+        const index = evt.model.index;
+        this.set(`nestHVACAuto.${index}.LR`, newVal.value);
+
+      }
+
+      brTempChanged(evt, newVal) {
+        window.lastUserInput = Date.now();
+        if (!evt.srcElement.validate()) {
+          return;
+        }
+        const index = evt.model.index;
+        this.set(`nestHVACAuto.${index}.BR`, newVal.value);
+      }
+
+      userInteraction() {
+        window.lastUserInput = Date.now();
       }
 
       chartsLoaded() {
@@ -323,21 +367,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           const val = {
             temperature: `${t['ambient_temperature_f']}F`,
             humidity: `${t['humidity']}%`,
-            funActive: t['fan_timer_active'],
-            hvacMode: t['hvac_mode'],
-            hvacState: t['hvac_state'],
-            hvacIconClass: `nest-${t['hvac_state']}`,
+
           };
-          if (t['fan_timer_active']) {
-            val.hvacFanClass = 'nest-fan-visible';
-          }
-          if (val.hvacMode === 'cool') {
-            val.hvacIcon = 'hvac-cool';
-          } else if (val.hvacMode === 'heat') {
-            val.hvacIcon = 'hvac-heat';
-          } else {
-            val.hvacIcon = 'hvac-leaf';
-          }
           if (k === this.lrThermostatId) {
             this.lr = val;
           } else if (k === this.brThermostatId) {
