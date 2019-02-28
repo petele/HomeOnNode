@@ -30,7 +30,6 @@ function Nest(authToken) {
   const RETRY_DELAY = 18 * 1000;
   const MAX_DISCONNECT = 5 * 60 * 1000;
   const RECONNECT_TIMEOUT = 1 * 60 * 1000;
-  const FAN_TIMES = [0, 15, 30, 45, 60, 120, 240, 480, 960];
   const _self = this;
   const _authToken = authToken;
   let _fbNest;
@@ -470,6 +469,7 @@ function Nest(authToken) {
         reject(new Error('thermostat_not_found'));
         return;
       }
+      const FAN_TIMES = [0, 15, 30, 45, 60, 120, 240, 480, 720];
       if (FAN_TIMES.indexOf(minutes) === -1) {
         log.error(LOG_PREFIX, msg + ' failed, invalid fan timer length.');
         reject(new Error('invalid_fan_time'));
@@ -493,10 +493,11 @@ function Nest(authToken) {
       log.debug(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
       const opts = {
         fan_timer_active: true,
-        fan_timer_duration: minutes,
       };
       if (minutes === 0) {
         opts.fan_timer_active = false;
+      } else {
+        opts.fan_timer_duration = minutes;
       }
       const path = `devices/thermostats/${thermostatId}/`;
       _fbNest.child(path).update(opts, (err) => {
