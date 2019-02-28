@@ -45,7 +45,7 @@ function init() {
   });
   _deviceMonitor.on('shutdown_request', () => {
     _close();
-    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
+    _deviceMonitor.shutdown('FB', 'shutdown_request', false);
   });
 
   _fb.child(`config/HomeOnNode/logs`).on('value', (snapshot) => {
