@@ -1,14 +1,13 @@
 #!/bin/bash
 
-cd app
+cd ~/HomeOnNode/app
 
-echo ""
+echo "Getting config..."
 node getConfig.js HomeOnNode
 echo ""
-. ~/.nvm/nvm.sh
-nvm use 6
+echo ""
 
+echo "Starting app..."
 node appController.js
 
-node appOnError.js
-node appSendNotification.js
+node appOnError.js >> ./logs/system.log

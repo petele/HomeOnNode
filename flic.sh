@@ -1,11 +1,11 @@
-#!/bin/sh
+#!/bin/bash
 
-cd app
+cd ~/HomeOnNode/app
 
-echo ""
+echo "Getting config..."
 node getConfig.js FlicController
 echo ""
-node appFlic.js
+echo ""
 
-node appOnError.js >> ./logs/system.log
-node appSendNotification.js >> ./logs/system.log
+echo "Starting app..."
+node appFlic.js

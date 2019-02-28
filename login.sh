@@ -3,11 +3,18 @@
 echo "Starting APP_NAME in 5 seconds"
 sleep 5
 
+echo "Updating code..."
 cd HomeOnNode
 ./pull.sh
+echo ""
+echo ""
 
-cd app
-node appMonitor.js &
+echo "Starting monitor..."
+forever start monitor.json
+echo ""
+echo ""
 
-cd ..
-./controller.sh
+echo "Starting app..."
+# ./remote.sh Bedside
+
+node appSendNotification.js >> ./logs/system.log
