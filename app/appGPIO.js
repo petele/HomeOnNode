@@ -70,7 +70,7 @@ function init() {
     _close();
     _deviceMonitor.restart('FB', 'restart_request', false);
   });
-  _deviceMonitor.on('shutdown', () => {
+  _deviceMonitor.on('shutdown_request', () => {
     _close();
     _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
   });

@@ -14,7 +14,7 @@ forever start monitor.json
 echo ""
 echo ""
 
-echo "Starting app..."
 # ./remote.sh Bedside
 
+cd app
 node appSendNotification.js >> ./logs/system.log
