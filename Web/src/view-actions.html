@@ -58,11 +58,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <span class="small-text">
                 <span class$="[[nestStateIconClass(item.hvac_state)]]">
                   [[item.ambient_temperature_f]][[item.temperature_scale]]
-                </span>
+                </span>&nbsp;
                 <template is="dom-if" if="[[nestActive(item.hvac_mode)]]">
                   <span class="targetTemp">
                     ([[item.target_temperature_f]][[item.temperature_scale]])
-                  </span>
+                  </span>&nbsp;
                 </template>
                 [[item.humidity]]%
               </span>
