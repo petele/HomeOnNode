@@ -16,7 +16,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="shared-styles.html">
+<link rel="import" href="my-version.html">
 <link rel="import" href="fb-query.html">
+<link rel="import" href="say-this.html">
+<link rel="import" href="push-subscription.html">
+<link rel="import" href="app-install-banner.html">
 
 <dom-module id="view-settings">
   <template>
@@ -24,46 +28,52 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
+      .app-grid > * {
+        height: inherit;
+      }
     </style>
-
-    <div class="card">
-      <div>Cache</div>
-      <div class="app-grid grid-two">
-        <paper-button class="button" on-tap="tapReset">
-          Reset
-        </paper-button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div>Firebase</div>
-      <div class="app-grid grid-two">
-        <paper-button class="button" on-tap="tapSignIn">
-          Sign In
-        </paper-button>
-        <paper-button class="button" on-tap="tapSignOut">
-          Sign Out
-        </paper-button>
-      </div>
-    </div>
 
     <fb-query path="config/WebUI" data="{{views}}">
     </fb-query>
     <div class="card">
-      <div>View</div>
-      <paper-dropdown-menu no-label-float="true" label="view">
-        <paper-listbox
-          on-selected-changed="viewChanged"
-          slot="dropdown-content"
-          class="dropdown-content"
-          attr-for-selected="value"
-          selected="{{view}}">
-          <template is="dom-repeat" items="[[views]]">
-            <paper-item value$="[[item.$key]]">[[item.$key]]</paper-item>
-          </template>
-        </paper-listbox>
-      </paper-dropdown-menu>
+      <div>Settings</div>
+      <div class="app-grid">
+        <paper-dropdown-menu label="View">
+          <paper-listbox
+            on-selected-changed="viewChanged"
+            slot="dropdown-content"
+            class="dropdown-content"
+            attr-for-selected="value"
+            selected="{{view}}">
+            <template is="dom-repeat" items="[[views]]">
+              <paper-item value$="[[item.$key]]">[[item.$key]]</paper-item>
+            </template>
+          </paper-listbox>
+        </paper-dropdown-menu>
+        <push-subscription></push-subscription>
+        <say-this></say-this>
+        <app-install-banner></app-install-banner>
+      </div>
+    </div>
 
+    <div class="card">
+      <div>Reset</div>
+      <div class="app-grid grid-three">
+        <paper-button class="button" on-tap="tapSignIn">
+          FB Sign In
+        </paper-button>
+        <paper-button class="button" on-tap="tapSignOut">
+          FB Sign Out
+        </paper-button>
+        <paper-button class="button" on-tap="tapReset">
+          Clear all storage
+        </paper-button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div>Version</div>
+      <my-version></my-version>
     </div>
 
   </template>

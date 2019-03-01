@@ -15,12 +15,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles app-grid-style">
       :host {
-        display: none;
+        display: block;
+      }
+      paper-button {
+        margin: 0;
       }
     </style>
 
-    <paper-button on-tap="prompt">
-      Add to Home Screen
+    <paper-button class="button" id="butInstall" on-tap="prompt">
+      Install
     </paper-button>
 
   </template>
@@ -37,6 +40,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
+        this.$.butInstall.setAttribute('disabled', true);
         window.addEventListener('beforeinstallprompt',
             this._beforeInstallPrompt.bind(this));
         window.addEventListener('appinstalled', this._appInstalled.bind(this));
@@ -46,9 +50,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         // console.log('savePromptEvent', evt);
         this.promptEvent = evt;
         if (evt) {
-          this.updateStyles({'display': 'block'});
+          this.$.butInstall.removeAttribute('disabled');
+          // this.updateStyles({'display': 'block'});
         } else {
-          this.updateStyles({'display': 'none'});
+          this.$.butInstall.setAttribute('disabled', true);
+          // this.updateStyles({'display': 'none'});
         }
       }
 
