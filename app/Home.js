@@ -378,6 +378,11 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
 
+      if (action.nanoLeaf.effect === '-DEFAULT-') {
+        const defaultEffect = _config.nanoLeaf.defaultEffect;
+        action.nanoLeaf.effect = defaultEffect;
+      }
+
       return nanoLeaf.executeCommand(action.nanoLeaf)
           .then((result) => {
             return _genResult(action, true, result);
