@@ -15,16 +15,18 @@ const LOG_PREFIX = 'HUE';
  * @fires Hue#config_changed
  * @fires Hue#groups_changed
  * @fires Hue#lights_changed
+ * @fires Hue#sensors_changed
  * @property {Object} dataStore - Entire Hub data store
  * @param {String} key Hue authentication key.
  * @param {String} [explicitIPAddress] IP Address of the Hub
  */
 function Hue(key, explicitIPAddress) {
   const REQUEST_TIMEOUT = 15 * 1000;
-  const BATTERY_CHECK_INTERVAL = 24 * 60 * 60 * 1000;
+  const BATTERY_REFRESH_INTERVAL = 24 * 60 * 60 * 1000;
   const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
   const GROUPS_REFRESH_INTERVAL = 100 * 1000;
   const LIGHTS_REFRESH_INTERVAL = 40 * 1000;
+  const SENSORS_REFRESH_INTERVAL = 60 * 1000;
   const _self = this;
   const _key = key;
 
@@ -75,7 +77,6 @@ function Hue(key, explicitIPAddress) {
 
   const _updateGroupsThrottled = _throttle(_updateGroups, 2500);
   const _updateLightsThrottled = _throttle(_updateLights, 2500);
-
 
   /**
    * Turn the lights (or groups) on and off, modify the hue and effects.
@@ -216,8 +217,11 @@ function Hue(key, explicitIPAddress) {
             _updateLightsTick();
           }, LIGHTS_REFRESH_INTERVAL);
           setTimeout(() => {
+            _updateSensorsTick();
+          }, SENSORS_REFRESH_INTERVAL);
+          setTimeout(() => {
             _checkBatteriesTick();
-          }, BATTERY_CHECK_INTERVAL);
+          }, BATTERY_REFRESH_INTERVAL);
         });
   }
 
@@ -278,12 +282,26 @@ function Hue(key, explicitIPAddress) {
   }
 
   /**
+   * Timer tick for updating lights information.
+   * @return {Promise}
+   */
+  function _updateSensorsTick() {
+    return _updateSensors()
+        .then(() => {
+          return _promisedSleep(SENSORS_REFRESH_INTERVAL);
+        })
+        .then(() => {
+          _updateSensorsTick();
+        });
+  }
+
+  /**
    * Timer tick for checking the batteries.
    * @return {Promise}
    */
   function _checkBatteriesTick() {
     _checkBatteries();
-    return _promisedSleep(BATTERY_CHECK_INTERVAL)
+    return _promisedSleep(BATTERY_REFRESH_INTERVAL)
         .then(() => {
           _checkBatteriesTick();
         });
@@ -385,6 +403,23 @@ function Hue(key, explicitIPAddress) {
   }
 
   /**
+   * Updates this.sensors to the latest state from the hub.
+   *
+   * @return {Promise} True if updated, false if failed.
+   */
+  function _updateSensors() {
+    const requestPath = '/sensors';
+    return _makeHueRequest(requestPath, 'GET', null, false)
+        .then((sensors) => {
+          _hasValueChanged('sensors', sensors);
+        })
+        .catch((error) => {
+          log.exception(LOG_PREFIX, `Unable to retreive sensors`, error);
+          return false;
+        });
+  }
+
+  /**
    * Updates this.groups to the latest state from the hub.
    *
    * @return {Promise} True if updated, false if failed.
@@ -392,38 +427,14 @@ function Hue(key, explicitIPAddress) {
   function _updateGroups() {
     const requestPath = '/groups';
     return _makeHueRequest(requestPath, 'GET', null, false)
-        .then(_checkGroups)
+        .then((groups) => {
+          _hasValueChanged('groups', groups);
+        })
         .catch((error) => {
           log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
           return false;
         });
   }
-
-  /**
-   * Checks if the new group data matches the current group data.
-   *
-   * @fires Hue#groups_changed.
-   * @param {Object} groups new group data.
-   * @return {boolean} True if it's changed, false for invalid or same.
-   */
-  function _checkGroups(groups) {
-    if (typeof groups !== 'object') {
-      return false;
-    }
-    if (Object.keys(groups) === 0) {
-      return false;
-    }
-    if (!_self.dataStore.groups) {
-      _self.dataStore.groups = {};
-    }
-    if (diff(_self.dataStore.groups, groups)) {
-      _self.dataStore.groups = groups;
-      _self.emit('groups_changed', groups);
-      return true;
-    }
-    return false;
-  }
-
 
   /**
    * Updates this.lights to the latest state from the hub.
@@ -434,7 +445,9 @@ function Hue(key, explicitIPAddress) {
   function _updateLights() {
     const requestPath = '/lights';
     return _makeHueRequest(requestPath, 'GET', null, false)
-        .then(_checkLights)
+        .then((lights) => {
+          _hasValueChanged('lights', lights);
+        })
         .catch((error) => {
           log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
           return false;
@@ -442,25 +455,30 @@ function Hue(key, explicitIPAddress) {
   }
 
   /**
-   * Checks if the new light data matches the current light data.
+   * Checks if the new sensor data matches the current sensor data.
    *
-   * @fires Hue#lights_changed.
-   * @param {Object} lights new light data.
+   * @fires Hue#`${key}_changed`.
+   * @param {String} key dataStore 'key' to check against.
+   * @param {Object} newVal new value.
    * @return {boolean} True if it's changed, false for invalid or same.
    */
-  function _checkLights(lights) {
-    if (typeof lights !== 'object') {
+  function _hasValueChanged(key, newVal) {
+    if (!_self.dataStore || typeof _self.dataStore !== 'object') {
+      const ds = _self.dataStore;
+      log.error(LOG_PREFIX, 'hasValueChanged: invalid dataStore', ds);
       return false;
     }
-    if (Object.keys(lights) === 0) {
+    if (typeof newVal !== 'object') {
+      log.error(LOG_PREFIX, 'hasValueChanged: newVal not an object', newVal);
       return false;
     }
-    if (!_self.dataStore.lights) {
-      _self.dataStore.lights = {};
+    if (Object.keys(newVal).length === 0) {
+      log.error(LOG_PREFIX, 'hasValueChanged: empty newVal', newVal);
+      return false;
     }
-    if (diff(_self.dataStore.lights, lights)) {
-      _self.dataStore.lights = lights;
-      _self.emit('lights_changed', lights);
+    if (diff(_self.dataStore[key], newVal)) {
+      _self.dataStore[key] = newVal;
+      _self.emit(`${key}_changed`, newVal);
       return true;
     }
     return false;
@@ -489,8 +507,6 @@ function Hue(key, explicitIPAddress) {
 
           // Has the dataStore changed?
           if (diff(_self.dataStore, newDataStore)) {
-            _checkLights(newDataStore.lights);
-            _checkGroups(newDataStore.groups);
             _self.dataStore = newDataStore;
             configChanged = true;
           }
