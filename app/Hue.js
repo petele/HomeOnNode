@@ -194,6 +194,48 @@ function Hue(key, explicitIPAddress) {
   };
 
   /**
+   * Updates the motion sensor scene
+   *
+   * @param {Array} rules An array of rules to update.
+   * @param {String} sceneId The scene to set when motion is detected.
+   * @return {Promise}
+   */
+  this.setMotionScene = function(rules, sceneId) {
+    const msg = `setMotionScene([${rules}], '${sceneId}')`;
+    if (!_self.isReady()) {
+      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
+      return Promise.reject(new Error('not_ready'));
+    }
+    log.debug(LOG_PREFIX, msg);
+    // const results = [];
+    return Promise.all(rules.map((ruleId) => {
+      const requestPath = `/rules/${ruleId}`;
+      return _makeHueRequest(requestPath, 'GET')
+          .then((rule) => {
+            log.log(LOG_PREFIX, `${msg}: before`, rule);
+            // Make a copy of the rule to work with.
+            const updatedRule = {
+              actions: Object.assign({}, rule.actions),
+              conditions: Object.assign({}, rule.conditions),
+            };
+            // Iterate through the actions and update any scenes.
+            updatedRule.actions.forEach((action) => {
+              if (action.body && action.body.scene) {
+                action.body.scene = sceneId;
+              }
+            });
+            // Push the updated rule to the server.
+            log.log(LOG_PREFIX, `${msg}: after`, updatedRule);
+            // return _makeHueRequest(requestPath, 'PUT', updatedRule);
+          })
+          .catch((ex) => {
+            log.error(LOG_PREFIX, `${msg} failed to update ${requestPath}`, ex);
+            return;
+          });
+    }));
+  };
+
+  /**
    * Init the API
   */
   function _init() {
