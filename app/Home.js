@@ -1413,7 +1413,8 @@ function Home(initialConfig, fbRef) {
       log.error(LOG_PREFIX, `Hue unavailable, no API key available.`);
       return;
     }
-    hue = new Hue(apiKey);
+    const hueIP = _config.philipsHue.ipAddress;
+    hue = new Hue(apiKey, hueIP);
     hue.on('config_changed', (config) => {
       _fbSet('state/hue', config);
     });
@@ -1422,6 +1423,9 @@ function Home(initialConfig, fbRef) {
     });
     hue.on('groups_changed', (groups) => {
       _fbSet('state/hue/groups', groups);
+    });
+    hue.on('sensors_changed', (sensors) => {
+      _fbSet('state/hue/sensors', sensors);
     });
     hue.on('sensor_unreachable', (sensor) => {
       const msg = {
