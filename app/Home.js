@@ -353,6 +353,30 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Hue Motion Sensor Scene
+    if (action.hasOwnProperty('hueMotionScene')) {
+      if (!hue || !hue.isReady()) {
+        log.error(LOG_PREFIX, 'Hue unavailable.', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      const rules = action.hueMotionScene.rules;
+      const sceneId = action.hueMotionScene.sceneId;
+      if (!rules || !sceneId) {
+        log.error(LOG_PREFIX, 'hueMotionScene, invalid params.', action);
+        return _genResult(action, false, 'invalid_params');
+      }
+
+      return hue.setMotionScene(rules, sceneId)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: hueMotionScene failed.`, err);
+            return _genResult(action, false, err);
+          });
+    }
+
     // Log
     if (action.hasOwnProperty('log')) {
       const level = action.log.level || 'LOG';
@@ -393,6 +417,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Nest Cam
     if (action.hasOwnProperty('nestCam')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
@@ -409,6 +434,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Nest Fan
     if (action.hasOwnProperty('nestFan')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
@@ -431,6 +457,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Nest State
     if (action.hasOwnProperty('nestState')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
@@ -462,6 +489,7 @@ function Home(initialConfig, fbRef) {
       return _genResult(action, false, 'invalid_state');
     }
 
+    // Nest Thermostat
     if (action.hasOwnProperty('nestThermostat')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
@@ -501,6 +529,7 @@ function Home(initialConfig, fbRef) {
       return _genResult(action, false, 'invalid_command');
     }
 
+    // Nest Auto Thermostat
     if (action.hasOwnProperty('nestThermostatAuto')) {
       if (!nest) {
         log.warn(LOG_PREFIX, 'Nest unavailable.');
@@ -541,6 +570,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Say This
     if (action.hasOwnProperty('sayThis')) {
       const utterance = action.sayThis.utterance;
       const opts = action.sayThis.opts || {};
@@ -554,6 +584,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Send Notifications
     if (action.hasOwnProperty('sendNotification')) {
       if (!gcmPush) {
         log.warn(LOG_PREFIX, 'gcmPush unavailable.');
@@ -569,6 +600,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Sonos
     if (action.hasOwnProperty('sonos')) {
       if (!sonos) {
         log.warn(LOG_PREFIX, 'Sonos unavailable.');
@@ -584,6 +616,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Sound
     if (action.hasOwnProperty('sound')) {
       const soundFile = action.sound.soundFile;
       const opts = action.sound.opts || {};
@@ -597,6 +630,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // State
     if (action.hasOwnProperty('state')) {
       return _setState(action.state)
           .then((result) => {
@@ -608,6 +642,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Tivo
     if (action.hasOwnProperty('tivo')) {
       if (!tivo) {
         log.warn(LOG_PREFIX, 'TiVo unavailable.');
@@ -623,6 +658,7 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Wemo
     if (action.hasOwnProperty('wemo')) {
       if (!wemo) {
         log.warn(LOG_PREFIX, 'Wemo unavailable.');
@@ -1426,6 +1462,9 @@ function Home(initialConfig, fbRef) {
     });
     hue.on('sensors_changed', (sensors) => {
       _fbSet('state/hue/sensors', sensors);
+    });
+    hue.on('rules_changed', (rules) => {
+      _fbSet('state/hue/rules', rules);
     });
     hue.on('sensor_unreachable', (sensor) => {
       const msg = {
