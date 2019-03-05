@@ -207,16 +207,17 @@ function Hue(key, explicitIPAddress) {
       return Promise.reject(new Error('not_ready'));
     }
     log.debug(LOG_PREFIX, msg);
-    // const results = [];
     return Promise.all(rules.map((ruleId) => {
+      if (!ruleId) {
+        return;
+      }
       const requestPath = `/rules/${ruleId}`;
       return _makeHueRequest(requestPath, 'GET')
           .then((rule) => {
-            log.log(LOG_PREFIX, `${msg}: before`, rule);
             // Make a copy of the rule to work with.
             const updatedRule = {
-              actions: Object.assign({}, rule.actions),
-              conditions: Object.assign({}, rule.conditions),
+              actions: rule.actions.slice(0),
+              conditions: rule.conditions.slice(0),
             };
             // Iterate through the actions and update any scenes.
             updatedRule.actions.forEach((action) => {
@@ -225,14 +226,16 @@ function Hue(key, explicitIPAddress) {
               }
             });
             // Push the updated rule to the server.
-            log.log(LOG_PREFIX, `${msg}: after`, updatedRule);
-            // return _makeHueRequest(requestPath, 'PUT', updatedRule);
+            return _makeHueRequest(requestPath, 'PUT', updatedRule);
           })
           .catch((ex) => {
             log.error(LOG_PREFIX, `${msg} failed to update ${requestPath}`, ex);
             return;
           });
-    }));
+    })).then((results) => {
+      _updateRules();
+      return results;
+    });
   };
 
   /**
@@ -445,6 +448,23 @@ function Hue(key, explicitIPAddress) {
   }
 
   /**
+   * Updates this.rules to the latest state from the hub.
+   *
+   * @return {Promise} True if updated, false if failed.
+   */
+  function _updateRules() {
+    const requestPath = '/rules';
+    return _makeHueRequest(requestPath, 'GET', null, false)
+        .then((rules) => {
+          return _hasValueChanged('rules', rules);
+        })
+        .catch((error) => {
+          log.exception(LOG_PREFIX, `Unable to retreive rules`, error);
+          return false;
+        });
+  }
+
+  /**
    * Updates this.sensors to the latest state from the hub.
    *
    * @return {Promise} True if updated, false if failed.
@@ -453,7 +473,7 @@ function Hue(key, explicitIPAddress) {
     const requestPath = '/sensors';
     return _makeHueRequest(requestPath, 'GET', null, false)
         .then((sensors) => {
-          _hasValueChanged('sensors', sensors);
+          return _hasValueChanged('sensors', sensors);
         })
         .catch((error) => {
           log.exception(LOG_PREFIX, `Unable to retreive sensors`, error);
@@ -470,7 +490,7 @@ function Hue(key, explicitIPAddress) {
     const requestPath = '/groups';
     return _makeHueRequest(requestPath, 'GET', null, false)
         .then((groups) => {
-          _hasValueChanged('groups', groups);
+          return _hasValueChanged('groups', groups);
         })
         .catch((error) => {
           log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
@@ -488,7 +508,7 @@ function Hue(key, explicitIPAddress) {
     const requestPath = '/lights';
     return _makeHueRequest(requestPath, 'GET', null, false)
         .then((lights) => {
-          _hasValueChanged('lights', lights);
+          return _hasValueChanged('lights', lights);
         })
         .catch((error) => {
           log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
