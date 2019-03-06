@@ -4,7 +4,6 @@
   "roomId": 0,
   "transitionTime": 10,
   "scenes": [
-    "dimmers/ba-evening.json",
     "dimmers/fh-evening.json",
     "dimmers/ki-evening.json",
     "dimmers/ks-off.json",
