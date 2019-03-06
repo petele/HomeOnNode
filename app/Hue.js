@@ -233,7 +233,10 @@ function Hue(key, explicitIPAddress) {
             return;
           });
     })).then((results) => {
-      _updateRules();
+      _promisedSleep(1500)
+          .then(() => {
+            _updateRules();
+          });
       return results;
     });
   };
@@ -419,6 +422,9 @@ function Hue(key, explicitIPAddress) {
         }
         if (response && response.statusCode) {
           log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
+          if (response.statusCode !== 200) {
+            errors.push(`${msg} - Bad status code: ${response.statusCode}`);
+          }
         }
         if (respBody) {
           if (respBody.error) {
