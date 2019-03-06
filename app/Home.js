@@ -343,15 +343,7 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
 
-      let sceneId = action.hueScene;
-      let transitionTime;
-      if (typeof action.hueScene === 'object') {
-        sceneId = action.hueScene.sceneId;
-        if (typeof action.hueScene.transitionTimeSeconds === 'number') {
-          transitionTime = action.hueScene.transitionTimeSeconds * 10;
-        }
-      }
-      return hue.setScene(sceneId, transitionTime)
+      return hue.setScene(action.hueScene)
           .then((result) => {
             return _genResult(action, true, result);
           })
