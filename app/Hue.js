@@ -123,9 +123,11 @@ function Hue(key, explicitIPAddress) {
    * Applies a scene
    *
    * @param {String} sceneId The scene ID to set.
+   * @param {Number} [transitionTime] The duration of the transition from the
+   *                                  light’s current state to the new state.
    * @return {Promise} A promise that resolves to the response body.
   */
-  this.setScene = function(sceneId) {
+  this.setScene = function(sceneId, transitionTime) {
     const msg = `setScene('${sceneId}')`;
     if (!_self.isReady()) {
       log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
@@ -134,6 +136,10 @@ function Hue(key, explicitIPAddress) {
     log.debug(LOG_PREFIX, msg);
     const requestPath = '/groups/0/action';
     const cmd = {scene: sceneId};
+    transitionTime = parseInt(transitionTime, 10);
+    if (transitionTime >= 0) {
+      cmd.transitiontime = transitionTime;
+    }
     return _makeHueRequest(requestPath, 'PUT', cmd, true)
         .then((resp) => {
           _updateLightsThrottled();
@@ -194,25 +200,31 @@ function Hue(key, explicitIPAddress) {
   };
 
   /**
-   * Updates the motion sensor scene
+   * Updates sceneId for the specified rules
    *
-   * @param {Array} rules An array of rules to update.
+   * @param {Array} rulesToUpdate An array of ruleIds to update.
    * @param {String} sceneId The scene to set when motion is detected.
    * @return {Promise}
    */
-  this.setMotionScene = function(rules, sceneId) {
-    const msg = `setMotionScene([${rules}], '${sceneId}')`;
+  this.setSceneForRules = function(rulesToUpdate, sceneId) {
+    const msg = `setSceneForRules([${rulesToUpdate}], '${sceneId}')`;
     if (!_self.isReady()) {
       log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
     log.debug(LOG_PREFIX, msg);
-    return _updateRules()
-        .then(() => {
-          return Promise.all(rules.map((ruleId) => {
+    return _makeHueRequest('/rules', 'GET', null, true)
+        .then((rules) => {
+          if (!rules || typeof rules !== 'object') {
+            log.error(LOG_PREFIX, `${msg} failed. No valid rules.`, rules);
+            return Promise.reject(new TypeError('rules_not_valid'));
+          }
+          return Promise.all(rulesToUpdate.map((ruleId) => {
             // Get the specified rule
-            const rule = _self.dataStore.rules[ruleId];
+            const rule = rules[ruleId];
             if (!rule) {
+              const m = `Could not find rule for id: '${ruleId}'.`;
+              log.warn(LOG_PREFIX, `${msg} failed. ${m}`);
               return;
             }
             // Make a copy of the rule to work with.
@@ -227,14 +239,16 @@ function Hue(key, explicitIPAddress) {
               }
             });
             // Push the updated rule to the server.
-            const reqPath = `/rules/${ruleId}`;
-            return _makeHueRequest(reqPath, 'PUT', updatedRule)
+            const requestPath = `/rules/${ruleId}`;
+            return _makeHueRequest(requestPath, 'PUT', updatedRule, true)
                 .catch((ex) => {
-                  log.error(LOG_PREFIX, `${msg} update failed ${reqPath}`, ex);
+                  const m = `Unable to update rule at '${requestPath}'.`;
+                  log.warn(LOG_PREFIX, `${msg} warning. ${m}`, ex);
                 });
           }));
-        }).then((results) => {
-          _promisedSleep(1500)
+        })
+        .then((results) => {
+          _promisedSleep(500)
               .then(() => {
                 _updateRules();
               });
