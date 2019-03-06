@@ -22,11 +22,10 @@ const LOG_PREFIX = 'HUE';
  */
 function Hue(key, explicitIPAddress) {
   const REQUEST_TIMEOUT = 15 * 1000;
-  const BATTERY_REFRESH_INTERVAL = 24 * 60 * 60 * 1000;
-  const CONFIG_REFRESH_INTERVAL = 10 * 60 * 1000;
-  const GROUPS_REFRESH_INTERVAL = 100 * 1000;
-  const LIGHTS_REFRESH_INTERVAL = 40 * 1000;
-  const SENSORS_REFRESH_INTERVAL = 60 * 1000;
+  const BATTERY_REFRESH_INTERVAL = (24 * 60 * 60 * 1000) + 31;
+  const CONFIG_REFRESH_INTERVAL = (10 * 60 * 1000) + 23;
+  const LIGHTS_REFRESH_INTERVAL = 29 * 1000;
+  const SENSORS_REFRESH_INTERVAL = 97 * 1000;
   const _self = this;
   const _key = key;
 
@@ -75,8 +74,7 @@ function Hue(key, explicitIPAddress) {
     };
   };
 
-  const _updateGroupsThrottled = _throttle(_updateGroups, 2500);
-  const _updateLightsThrottled = _throttle(_updateLights, 2500);
+  const _updateThrottled = _throttle(_updateLightsAndGroups, 2500);
 
   /**
    * Turn the lights (or groups) on and off, modify the hue and effects.
@@ -107,8 +105,7 @@ function Hue(key, explicitIPAddress) {
       }
       return _makeHueRequest(requestPath, 'PUT', cmd, true)
           .then((resp) => {
-            _updateLightsThrottled();
-            _updateGroupsThrottled();
+            _updateThrottled();
             return resp;
           })
           .catch((err) => {
@@ -142,8 +139,7 @@ function Hue(key, explicitIPAddress) {
     }
     return _makeHueRequest(requestPath, 'PUT', cmd, true)
         .then((resp) => {
-          _updateLightsThrottled();
-          _updateGroupsThrottled();
+          _updateThrottled();
           return resp;
         })
         .catch((err) => {
@@ -274,10 +270,7 @@ function Hue(key, explicitIPAddress) {
             _updateConfigTick();
           }, CONFIG_REFRESH_INTERVAL);
           setTimeout(() => {
-            _updateGroupsTick();
-          }, GROUPS_REFRESH_INTERVAL);
-          setTimeout(() => {
-            _updateLightsTick();
+            _updateLightsAndGroupsTick();
           }, LIGHTS_REFRESH_INTERVAL);
           setTimeout(() => {
             _updateSensorsTick();
@@ -317,30 +310,16 @@ function Hue(key, explicitIPAddress) {
   }
 
   /**
-   * Timer tick for updating group information.
-   * @return {Promise}
-   */
-  function _updateGroupsTick() {
-    return _updateGroups()
-        .then(() => {
-          return _promisedSleep(GROUPS_REFRESH_INTERVAL);
-        })
-        .then(() => {
-          _updateGroupsTick();
-        });
-  }
-
-  /**
    * Timer tick for updating lights information.
    * @return {Promise}
    */
-  function _updateLightsTick() {
-    return _updateLights()
+  function _updateLightsAndGroupsTick() {
+    return _updateLightsAndGroups()
         .then(() => {
           return _promisedSleep(LIGHTS_REFRESH_INTERVAL);
         })
         .then(() => {
-          _updateLightsTick();
+          _updateLightsAndGroupsTick();
         });
   }
 
@@ -503,36 +482,28 @@ function Hue(key, explicitIPAddress) {
   }
 
   /**
-   * Updates this.groups to the latest state from the hub.
+   * Checks if lights or groups have changed and if so, report the result
    *
-   * @return {Promise} True if updated, false if failed.
+   * @return {Promise}
    */
-  function _updateGroups() {
-    const requestPath = '/groups';
-    return _makeHueRequest(requestPath, 'GET', null, false)
-        .then((groups) => {
-          return _hasValueChanged('groups', groups);
-        })
-        .catch((error) => {
-          log.exception(LOG_PREFIX, `Unable to retreive groups`, error);
-          return false;
-        });
-  }
-
-  /**
-   * Updates this.lights to the latest state from the hub.
-   *
-   * @fires Hue#lights_changed.
-   * @return {Promise} True if updated, false if failed.
-  */
-  function _updateLights() {
-    const requestPath = '/lights';
-    return _makeHueRequest(requestPath, 'GET', null, false)
+  function _updateLightsAndGroups() {
+    return _makeHueRequest('/lights', 'GET', null, true)
         .then((lights) => {
-          return _hasValueChanged('lights', lights);
+          const result = {
+            lights: _hasValueChanged('lights', lights),
+            groups: false,
+          };
+          if (result.lights) {
+            return _makeHueRequest('/groups', 'GET', null, true)
+                .then((groups) => {
+                  result.groups = _hasValueChanged('groups', groups);
+                  return result;
+                });
+          }
+          return result;
         })
         .catch((error) => {
-          log.exception(LOG_PREFIX, `Unable to retreive lights`, error);
+          log.exception(LOG_PREFIX, `Unable to update lights/groups`, error);
           return false;
         });
   }
