@@ -120,11 +120,9 @@ function Hue(key, explicitIPAddress) {
    * Applies a scene
    *
    * @param {String} sceneId The scene ID to set.
-   * @param {Number} [transitionTime] The duration of the transition from the
-   *                                  light’s current state to the new state.
    * @return {Promise} A promise that resolves to the response body.
   */
-  this.setScene = function(sceneId, transitionTime) {
+  this.setScene = function(sceneId) {
     const msg = `setScene('${sceneId}')`;
     if (!_self.isReady()) {
       log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
@@ -133,10 +131,6 @@ function Hue(key, explicitIPAddress) {
     log.debug(LOG_PREFIX, msg);
     const requestPath = '/groups/0/action';
     const cmd = {scene: sceneId};
-    transitionTime = parseInt(transitionTime, 10);
-    if (transitionTime >= 0) {
-      cmd.transitiontime = transitionTime;
-    }
     return _makeHueRequest(requestPath, 'PUT', cmd, true)
         .then((resp) => {
           _updateThrottled();
