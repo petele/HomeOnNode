@@ -207,13 +207,14 @@ function Hue(key, explicitIPAddress) {
       return Promise.reject(new Error('not_ready'));
     }
     log.debug(LOG_PREFIX, msg);
-    return Promise.all(rules.map((ruleId) => {
-      if (!ruleId) {
-        return;
-      }
-      const requestPath = `/rules/${ruleId}`;
-      return _makeHueRequest(requestPath, 'GET')
-          .then((rule) => {
+    return _updateRules()
+        .then(() => {
+          return Promise.all(rules.map((ruleId) => {
+            // Get the specified rule
+            const rule = _self.dataStore.rules[ruleId];
+            if (!rule) {
+              return;
+            }
             // Make a copy of the rule to work with.
             const updatedRule = {
               actions: rule.actions.slice(0),
@@ -226,19 +227,19 @@ function Hue(key, explicitIPAddress) {
               }
             });
             // Push the updated rule to the server.
-            return _makeHueRequest(requestPath, 'PUT', updatedRule);
-          })
-          .catch((ex) => {
-            log.error(LOG_PREFIX, `${msg} failed to update ${requestPath}`, ex);
-            return;
-          });
-    })).then((results) => {
-      _promisedSleep(1500)
-          .then(() => {
-            _updateRules();
-          });
-      return results;
-    });
+            const reqPath = `/rules/${ruleId}`;
+            return _makeHueRequest(reqPath, 'PUT', updatedRule)
+                .catch((ex) => {
+                  log.error(LOG_PREFIX, `${msg} update failed ${reqPath}`, ex);
+                });
+          }));
+        }).then((results) => {
+          _promisedSleep(1500)
+              .then(() => {
+                _updateRules();
+              });
+          return results;
+        });
   };
 
   /**
