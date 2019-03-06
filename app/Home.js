@@ -343,7 +343,15 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
 
-      return hue.setScene(action.hueScene)
+      let sceneId = action.hueScene;
+      let transitionTime;
+      if (typeof action.hueScene === 'object') {
+        sceneId = action.hueScene.sceneId;
+        if (typeof action.hueScene.transitionTimeSeconds === 'number') {
+          transitionTime = action.hueScene.transitionTimeSeconds * 10;
+        }
+      }
+      return hue.setScene(sceneId, transitionTime)
           .then((result) => {
             return _genResult(action, true, result);
           })
@@ -354,25 +362,25 @@ function Home(initialConfig, fbRef) {
     }
 
     // Hue Motion Sensor Scene
-    if (action.hasOwnProperty('hueMotionScene')) {
+    if (action.hasOwnProperty('hueSceneForRules')) {
       if (!hue || !hue.isReady()) {
         log.error(LOG_PREFIX, 'Hue unavailable.', action);
         return _genResult(action, false, 'not_available');
       }
 
-      const rules = action.hueMotionScene.rules;
-      const sceneId = action.hueMotionScene.sceneId;
+      const rules = action.hueSceneForRules.rules;
+      const sceneId = action.hueSceneForRules.sceneId;
       if (!rules || !sceneId) {
-        log.error(LOG_PREFIX, 'hueMotionScene, invalid params.', action);
+        log.error(LOG_PREFIX, 'hueSceneForRules, invalid params.', action);
         return _genResult(action, false, 'invalid_params');
       }
 
-      return hue.setMotionScene(rules, sceneId)
+      return hue.setSceneForRules(rules, sceneId)
           .then((result) => {
             return _genResult(action, true, result);
           })
           .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: hueMotionScene failed.`, err);
+            log.verbose(LOG_PREFIX, `Whoops: hueSceneForRules failed.`, err);
             return _genResult(action, false, err);
           });
     }
