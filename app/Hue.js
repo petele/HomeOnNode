@@ -380,7 +380,7 @@ function Hue(key, explicitIPAddress) {
     log.verbose(LOG_PREFIX, `${msg} [${requestId}]`, body);
 
     const requestsInProgress = Object.keys(_requestQueue).length;
-    if (requestsInProgress >= 5) {
+    if (requestsInProgress >= 8) {
       const xrpMsg = `Excessive requests in progress (${requestsInProgress})`;
       log.warn(LOG_PREFIX, xrpMsg, _requestQueue);
     }
