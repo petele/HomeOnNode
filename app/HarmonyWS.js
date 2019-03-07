@@ -28,7 +28,7 @@ function HarmonyWS(ipAddress) {
   const _self = this;
   const HUB_PORT = 8088;
   const CONFIG_REFRESH_INTERVAL = 18 * 60 * 1000;
-  const PING_INTERVAL = 29 * 1000;
+  // const PING_INTERVAL = 29 * 1000;
   const COMMAND_PREFIX = 'vnd.logitech.harmony/';
   const COMMAND_STRINGS = {
     BUTTON_PRESS: 'control.button?pressType',
@@ -222,14 +222,14 @@ function HarmonyWS(ipAddress) {
       log.debug(LOG_PREFIX, `Connected to Harmony Hub.`);
       _getConfig();
       _getActivity();
-      _startPing();
+      // _startPing();
     });
     setInterval(_getConfig, CONFIG_REFRESH_INTERVAL);
   }
 
   /**
    * Starts the system ping.
-   */
+
   function _startPing() {
     if (_pingInterval) {
       log.warn(LOG_PREFIX, 'Ping interval already started.');
@@ -241,6 +241,7 @@ function HarmonyWS(ipAddress) {
       });
     }, PING_INTERVAL);
   }
+  */
 
   /**
    * Handle incoming web socket message
@@ -248,9 +249,10 @@ function HarmonyWS(ipAddress) {
    * @param {Object} msgJSON Incoming message
    */
   function _wsMessageReceived(msgJSON) {
+    const msg = `wsMessageReceived:`;
     if (msgJSON.cmd === COMMAND_STRINGS.PING) {
       if (msgJSON.code !== 200) {
-        log.error(LOG_PREFIX, 'Invalid ping response', msgJSON);
+        log.error(LOG_PREFIX, `${msg} Invalid ping response.`, msgJSON);
       }
       return;
     }
@@ -259,34 +261,43 @@ function HarmonyWS(ipAddress) {
       return;
     }
     if (msgJSON.cmd === COMMAND_STRINGS.RUN_ACTIVITY) {
+      log.verbose(LOG_PREFIX, `${msg} RUN_ACTIVITY`, msgJSON);
       if (msgJSON.code !== 200) {
-        log.error(LOG_PREFIX, 'Error starting activity', msgJSON);
+        log.error(LOG_PREFIX, `${msg} RUN_ACTIVITY failed.`, msgJSON);
       }
       return;
     }
     if (msgJSON.cmd === COMMAND_STRINGS.GET_ACTIVITY) {
+      log.verbose(LOG_PREFIX, `${msg} GET_ACTIVITY`, msgJSON);
       _activityChanged(msgJSON.data.result);
       return;
     }
     if (msgJSON.type === COMMAND_STRINGS.START_ACTIVITY_FINISHED) {
+      log.verbose(LOG_PREFIX, `${msg} START_ACTIVITY_FINISHED`, msgJSON);
       _activityChanged(msgJSON.data.activityId);
       return;
     }
     if (msgJSON.type === COMMAND_STRINGS.STATE_DIGEST_NOTIFY) {
-      log.verbose(LOG_PREFIX, `State Digest Notify`, msgJSON.data);
+      log.verbose(LOG_PREFIX, `${msg} STATE_DIGEST_NOTIFY`, msgJSON);
       _self.emit('state_notify', msgJSON.data);
       return;
     }
     if (msgJSON.type === COMMAND_STRINGS.METADATA) {
-      log.verbose(LOG_PREFIX, `Metadata Notify`, msgJSON.data);
+      log.verbose(LOG_PREFIX, `${msg} METADATA`, msgJSON);
       _self.emit('metadata_notify', msgJSON.data);
+      return;
+    }
+    if (msgJSON.type === COMMAND_STRINGS.START_ACTIVITY_1) {
+      log.verbose(LOG_PREFIX, `${msg} START_ACTIVITY_1`, msgJSON);
+      return;
+    }
+    if (msgJSON.type === COMMAND_STRINGS.START_ACTIVITY_2) {
+      log.verbose(LOG_PREFIX, `${msg} START_ACTIVITY_2`, msgJSON);
       return;
     }
     // Message types we don't care about
     if (msgJSON.type === COMMAND_STRINGS.BUTTON_PRESS ||
-        msgJSON.cmd === COMMAND_STRINGS.HELP_DISCRETES ||
-        msgJSON.cmd === COMMAND_STRINGS.START_ACTIVITY_1 ||
-        msgJSON.cmd === COMMAND_STRINGS.START_ACTIVITY_2) {
+        msgJSON.cmd === COMMAND_STRINGS.HELP_DISCRETES) {
       return;
     }
     log.log(LOG_PREFIX, 'Unknown message received.', msgJSON);
@@ -318,7 +329,8 @@ function HarmonyWS(ipAddress) {
         params: params || defaultParams,
       },
     };
-    log.verbose(LOG_PREFIX, '_sendCommand({...})', payload);
+    // log.verbose(LOG_PREFIX, '_sendCommand({...})', payload);
+    log.verbose(LOG_PREFIX, `_sendCommand({cmd: ${command}, ...})`);
     return _wsClient.send(JSON.stringify(payload))
         .catch((err) => {
           log.exception(LOG_PREFIX, '_sendCommand({...}) failed.', err);
@@ -334,10 +346,12 @@ function HarmonyWS(ipAddress) {
    * @param {Number} activityId The Activity ID
   */
   function _activityChanged(activityId) {
-    const activity = {
-      id: activityId,
-      label: _activitiesById[activityId],
-    };
+    const activity = _activitiesById[activityId];
+    if (!activity) {
+      const msg = `_activityChanged, activity '${activityId}' not found.`;
+      log.error(LOG_PREFIX, msg);
+      return;
+    }
     /**
      * Fired when the activity has changed
      * @event Harmony#activity_changed

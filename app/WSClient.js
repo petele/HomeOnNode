@@ -16,7 +16,7 @@ const EventEmitter = require('events').EventEmitter;
  * @param {String} serverName Name of the server we're connecting to.
 */
 function WSClient(host, retry, serverName) {
-  const PING_INTERVAL = 30 * 1000;
+  const PING_INTERVAL = 29 * 1000;
   const _self = this;
   const _logPrefix = `WS_${serverName.toUpperCase()}`;
   this.connected = false;
@@ -148,7 +148,7 @@ function WSClient(host, retry, serverName) {
           reject(err);
           return;
         }
-        log.verbose(_logPrefix, 'Message sent.', JSON.parse(msg));
+        // log.verbose(_logPrefix, 'Message sent.', JSON.parse(msg));
         resolve();
       });
     });
