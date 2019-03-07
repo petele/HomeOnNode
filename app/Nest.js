@@ -357,7 +357,7 @@ function Nest(authToken) {
       const path = `structures/${_structureId}/away`;
       _fbNest.child(path).set(state, (err) => {
         if (err) {
-          log.exception(LOG_PREFIX, `${err.message} at ${path}`, err);
+          log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
           reject(err);
           return;
         }
@@ -386,7 +386,7 @@ function Nest(authToken) {
       return new Promise(function(resolve, reject) {
         _fbNest.child(path).set(state, (err) => {
           if (err) {
-            log.exception(LOG_PREFIX, `${err.message} at ${path}`, err);
+            log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
             reject(err);
             return;
           }
@@ -437,8 +437,15 @@ function Nest(authToken) {
       const path = `devices/thermostats/${thermostatId}/target_temperature_f`;
       _fbNest.child(path).set(temperature, (err) => {
         if (err) {
-          log.exception(LOG_PREFIX, `${err.message} at ${path}`, err);
-          reject(err);
+          if (isRetry) {
+            log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
+            reject(err);
+            return;
+          }
+          log.warn(LOG_PREFIX, `${msg} FB write failed, will retry.`, err);
+          setTimeout(() => {
+            resolve(_setThermostat(thermostatId, temperature, true));
+          }, RETRY_DELAY);
           return;
         }
         log.debug(LOG_PREFIX, `${path}: ${temperature}`);
@@ -502,7 +509,7 @@ function Nest(authToken) {
       const path = `devices/thermostats/${thermostatId}/`;
       _fbNest.child(path).update(opts, (err) => {
         if (err) {
-          log.exception(LOG_PREFIX, `${err.message} at ${path}`, err);
+          log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
           reject(err);
           return;
         }

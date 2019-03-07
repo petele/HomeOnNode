@@ -53,7 +53,7 @@ function HarmonyWS(ipAddress) {
   let _msgId = 1;
   let _config = {};
   let _activitiesById = {};
-  let _activitiesByName = {};
+  let _activityIdByName = {};
 
 
   /**
@@ -107,7 +107,7 @@ function HarmonyWS(ipAddress) {
       log.error(LOG_PREFIX, `${msg} failed, missing 'activityName'`);
       return Promise.reject(new Error('activity_name_missing'));
     }
-    const activityId = _activitiesByName[activityName];
+    const activityId = _activityIdByName[activityName];
     if (!activityId) {
       log.error(LOG_PREFIX, `${msg} failed, activity not found.`);
       return Promise.reject(new Error('activity_not_found'));
@@ -382,13 +382,13 @@ function HarmonyWS(ipAddress) {
     _config = config;
     const activities = config.activity;
     const activitiesById = {};
-    const activitiesByName = {};
+    const activityIdByName = {};
     activities.forEach((activity) => {
-      activitiesById[activity.id] = activity.label;
-      activitiesByName[activity.label] = activity.id;
+      activitiesById[activity.id] = activity;
+      activityIdByName[activity.label] = activity.id;
     });
     _activitiesById = activitiesById;
-    _activitiesByName = activitiesByName;
+    _activityIdByName = activityIdByName;
     /**
      * Fired when the config has changed
      * @event Harmony#config_changed

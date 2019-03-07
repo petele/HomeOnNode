@@ -1403,6 +1403,10 @@ function Home(initialConfig, fbRef) {
       _fbSet('state/harmony/info', data);
     });
     harmony.on('activity_changed', (activity) => {
+      if (!activity || !activity.label) {
+        log.warn(LOG_PREFIX, 'Invalid Harmony activity.', activity);
+        return;
+      }
       _fbSet('state/harmony/activity', activity);
       const honCmdName = `HARMONY_${activity.label.toUpperCase()}`;
       if (_config.commands[honCmdName]) {
