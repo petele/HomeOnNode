@@ -411,7 +411,11 @@ function Hue(key, explicitIPAddress) {
         if (response && response.statusCode) {
           log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
           if (response.statusCode !== 200) {
-            errors.push(`${msg} - Bad status code: ${response.statusCode}`);
+            const statusCodeError = {
+              statusCode: response.statusCode,
+              body: respBody,
+            };
+            errors.push(statusCodeError);
           }
         }
         if (respBody) {
@@ -432,7 +436,7 @@ function Hue(key, explicitIPAddress) {
           return;
         }
         if (retry === true) {
-          log.warn(LOG_PREFIX, `${msg} - will retry.`);
+          log.warn(LOG_PREFIX, `${msg} - will retry.`, errors);
           resolve(_makeHueRequest(requestPath, method, body, false));
           return;
         }
