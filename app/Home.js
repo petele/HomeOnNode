@@ -625,7 +625,7 @@ function Home(initialConfig, fbRef) {
             return _genResult(action, true, result);
           })
           .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: sound failed.`, err);
+            // Don't log - we probably don't care
             return _genResult(action, false, err);
           });
     }
