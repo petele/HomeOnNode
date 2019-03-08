@@ -492,7 +492,10 @@ function Hue(key, explicitIPAddress) {
             groups: false,
           };
           if (result.lights) {
-            return _makeHueRequest('/groups', 'GET', null, true)
+            return _promisedSleep(400)
+                .then(() => {
+                  return _makeHueRequest('/groups', 'GET', null, true);
+                })
                 .then((groups) => {
                   result.groups = _hasValueChanged('groups', groups);
                   return result;
