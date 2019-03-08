@@ -1575,7 +1575,7 @@ function Home(initialConfig, fbRef) {
       log.error(LOG_PREFIX, `Nest unavailable, no API key available.`);
       return;
     }
-    nest = new Nest.Nest(apiKey, _config.nest.thermostats);
+    nest = new Nest.Nest(apiKey);
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
     });
@@ -1736,13 +1736,29 @@ function Home(initialConfig, fbRef) {
     _fbSet('state/sonos', false);
 
     sonos = new Sonos();
-    sonos.on('player-state', (transportState) => {
-      transportState = JSON.parse(JSON.stringify(transportState));
-      _fbSet('state/sonos/state', transportState);
+    sonos.on('player-state', (playerState) => {
+      playerState = JSON.parse(JSON.stringify(playerState));
+      _fbSet('state/sonos/state', playerState);
     });
     sonos.on('favorites-changed', (favorites) => {
       favorites = JSON.parse(JSON.stringify(favorites));
       _fbSet('state/sonos/favorites', favorites);
+    });
+    // sonos.on('transport-state', (state) => {
+    //   try {
+    //     state = JSON.parse(JSON.stringify(state));
+    //     _fbSet('state/sonos/transportState', state);
+    //   } catch (ex) {
+    //     log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
+    //   }
+    // });
+    sonos.on('topology-changed', (topology) => {
+      try {
+        topology = JSON.parse(JSON.stringify(topology));
+        _fbSet('state/sonos/topology', topology);
+      } catch (ex) {
+        log.debug(LOG_PREFIX, 'Unable to save Sonos topology', ex);
+      }
     });
   }
 
@@ -1757,12 +1773,17 @@ function Home(initialConfig, fbRef) {
    * Init TiVo
    */
   function _initTivo() {
+    _fbSet('state/tivo', false);
+
     const tivoIP = _config.tivo.ip;
     if (!tivoIP) {
       log.warn(LOG_PREFIX, `TiVo unavailable, no IP address specified.`);
       return;
     }
     tivo = new Tivo(tivoIP);
+    tivo.on('data', (data) => {
+      _fbSet('state/tivo/data', data);
+    });
   }
 
   /**
