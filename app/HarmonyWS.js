@@ -287,7 +287,7 @@ function HarmonyWS(ipAddress) {
       _self.emit('metadata_notify', msgJSON.data);
       return;
     }
-    if (msgJSON.type === COMMAND_STRINGS.START_ACTIVITY_1) {
+    if (msgJSON.cmd === COMMAND_STRINGS.START_ACTIVITY_1) {
       log.verbose(LOG_PREFIX, `${msg} START_ACTIVITY_1`, msgJSON);
       return;
     }
@@ -300,7 +300,7 @@ function HarmonyWS(ipAddress) {
         msgJSON.cmd === COMMAND_STRINGS.HELP_DISCRETES) {
       return;
     }
-    log.log(LOG_PREFIX, 'Unknown message received.', msgJSON);
+    log.warn(LOG_PREFIX, 'Unknown message received.', msgJSON);
   }
 
 
