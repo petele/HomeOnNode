@@ -3,6 +3,7 @@
   "sceneId": "uR9E4wuZ8dCZYCj",
   "roomId": 0,
   "scenes": [
+    "dimmers/ba-off.json",
     "dimmers/br-day.json",
     "dimmers/fh-morning.json",
     "dimmers/ki-morning.json",
