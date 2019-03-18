@@ -14,7 +14,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <dom-module id="push-subscription">
   <template>
-
+    <style include="shared-styles">
+      .key {
+        color: var(--secondary-text-color);
+      }
+    </style>
     <firebase-document id="fbPush" path="config/GCMPush/subscribers">
     </firebase-document>
 
@@ -22,6 +26,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       checked="{{isSubscribed}}"
       on-change="changeSubscription">
         Notifications
+        <template is="dom-if" if="[[key]]">
+          <span class="key">([[key]])</span>
+        </template>
     </paper-checkbox>
 
   </template>
@@ -33,6 +40,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get properties() {
         return {
           isSubscribed: Boolean,
+          key: String,
         };
       }
 
@@ -84,6 +92,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             this._sendSubscription(sub);
           }
         });
+        this._setKey(subKey);
       }
 
       _getSubscriptionKey(endpoint) {
@@ -98,12 +107,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         };
         const subKey = this._getSubscriptionKey(sub.endpoint);
         this.$.fbPush.ref.child(subKey).set(subObj).catch(this._logError);
+        this._setKey(subKey);
       }
 
       _removeSubscription(sub) {
         const subKey = this._getSubscriptionKey(sub.endpoint);
         this.$.fbPush.ref.child(subKey).remove().catch(this._logError);
         sub.unsubscribe().catch(this._logError);
+        this._setKey(null);
       }
 
       _subscribe() {
@@ -119,6 +130,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             return this._removeSubscription(sub);
           }
         }).catch(this._logError);
+      }
+
+      _setKey(key) {
+        if (key) {
+          try {
+            this.key = key.substr(0, key.indexOf(':'));
+          } catch (ex) {
+            this.key = 'unknown';
+          }
+          return;
+        }
+        this.key = null;
       }
 
     }

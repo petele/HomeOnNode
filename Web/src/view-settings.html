@@ -46,7 +46,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="value"
             selected="{{view}}">
             <template is="dom-repeat" items="[[views]]">
-              <paper-item value$="[[item.$key]]">[[item.$key]]</paper-item>
+              <paper-item value$="[[item.$key]]">[[item.label]]</paper-item>
             </template>
           </paper-listbox>
         </paper-dropdown-menu>
