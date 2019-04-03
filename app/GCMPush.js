@@ -28,7 +28,11 @@ function GCMPush(fb) {
     log.init(LOG_PREFIX, 'Starting...');
     _fb.child('config/GCMPush').once('value', (snapshot) => {
       const config = snapshot.val();
-      _options.gcmAPIKey = config.key;
+      _options.vapidDetails = {
+        subject: 'mailto:petele@gmail.com',
+        privateKey: config.vapidKeys.private,
+        publicKey: config.vapidKeys.public,
+      };
       _options.TTL = config.ttl || 3600;
       Object.keys(config.subscribers).forEach((key) => {
         _addSubscriber(key, config.subscribers[key]);
@@ -120,8 +124,7 @@ function GCMPush(fb) {
       const fbPath = `config/GCMPush/subscribers/${key}`;
       const promise = webpush.sendNotification(subscriber, payload, _options)
           .then((resp) => {
-            log.debug(LOG_PREFIX, `Message sent to ${shortKey}`);
-            log.debug(LOG_PREFIX, '', resp);
+            log.debug(LOG_PREFIX, `Message sent to ${shortKey}`, resp);
             return _fb.child(`${fbPath}/lastResult`).set(resp);
           })
           .catch((err) => {

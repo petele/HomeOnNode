@@ -56,6 +56,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         });
       }
 
+      _urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+          .replace(/-/g, '+')
+          .replace(/_/g, '/');
+
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+      }
+
       changeSubscription(event) {
         if (event.target.checked === true) {
           this._subscribe();
@@ -96,7 +111,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _getSubscriptionKey(endpoint) {
-        return endpoint.replace('https://android.googleapis.com/gcm/send/', '');
+        return endpoint
+            .replace('https://android.googleapis.com/gcm/send/', '')
+            .replace('https://fcm.googleapis.com/fcm/send/', '');
       }
 
       _sendSubscription(sub) {
@@ -118,10 +135,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _subscribe() {
-        this.swRegistration.pushManager.subscribe({userVisibleOnly: true})
-        .then((sub) => {
-          return this._sendSubscription(sub);
-        }).catch(this._logError);
+        const vapidPublicKey = 'BMT-OdVgIKk4ZbyAz-L6M0S14VoMAwe3j1zhx2sa6rAIjzGUMczkJ3wECuBQS7z7H7dX0asml1U-suzmK-8QgUk';
+        const opts = {
+          applicationServerKey: this._urlBase64ToUint8Array(vapidPublicKey),
+          userVisibleOnly: true,
+        };
+        this.swRegistration.pushManager.subscribe(opts)
+            .then((sub) => {
+              return this._sendSubscription(sub);
+            })
+            .catch(this._logError);
       }
 
       _unsubscribe() {
