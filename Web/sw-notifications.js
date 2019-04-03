@@ -34,7 +34,7 @@ self.addEventListener('push', function(event) {
     opts.badge = data.badge;
   }
 
-  self.registration.showNotification(title, opts)
+  const promiseChain = self.registration.showNotification(title, opts)
       .then(() => {
         opts._title = title;
         // eslint-disable-next-line no-console
@@ -42,4 +42,5 @@ self.addEventListener('push', function(event) {
       }).catch((err) => {
         console.error('[PUSH] Unable to show notification.', err);
       });
+  event.waitUntil(promiseChain);
 });
