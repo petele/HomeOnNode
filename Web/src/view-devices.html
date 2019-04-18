@@ -14,6 +14,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-dialog/paper-dialog.html">
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="fb-query.html">
 <link rel="import" href="hon-icons.html">
 <link rel="import" href="shared-styles.html">
@@ -66,8 +67,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       summary::-webkit-details-marker {
         display: none;
       }
+
+      #ptFBPath {
+        margin-left: 10px;
+        --paper-toggle-button-unchecked-bar-color: var(--primary-color);
+        --paper-toggle-button-unchecked-button-color: var(--primary-color);
+        --paper-toggle-button-unchecked-ink-color: var(--primary-color);
+      }
+      .bold {
+        font-weight: bold;
+      }
     </style>
-    <fb-query path="devices" data="{{devices}}"></fb-query>
+    <fb-query path="{{fbPath}}" data="{{devices}}"></fb-query>
 
     <paper-dialog id="confirmRebootDialog" modal on-iron-overlay-closed="confirmRebootClosed">
       <h2>Confirm</h2>
@@ -79,6 +90,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-button dialog-confirm>Reboot</paper-button>
       </div>
     </paper-dialog>
+
+    <div class="card">
+      <div class="layout horizontal">
+        <div id="lblDevices">Devices</div>
+        <paper-toggle-button id="ptFBPath" on-change="ptSwitchFBPath">
+        </paper-toggle-button>
+        <div id="lblMonitor">Monitor</div>
+      </div>
+    </div>
 
     <template is="dom-repeat" items="[[devices]]">
       <div class="card card-narrow">
@@ -144,13 +164,40 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get properties() {
         return {
+          fbPath: {
+            type: String,
+            value: 'devices',
+          },
           selectedDevice: Object,
         };
+      }
+
+      static get observers() {
+        return [
+          'fbPathChanged(fbPath)',
+        ];
       }
 
       ready() {
         super.ready();
         document.querySelector('body').appendChild(this.$.confirmRebootDialog);
+      }
+
+      ptSwitchFBPath(event) {
+        const newVal = this.fbPath === 'devices' ? 'monitor' : 'devices';
+        this.fbPath = newVal;
+        window.lastUserInput = Date.now();
+      }
+
+      fbPathChanged(newVal, b, c) {
+        let devicesBold = true;
+        let monitorBold = false;
+        if (newVal === 'monitor') {
+          devicesBold = false;
+          monitorBold = true;
+        }
+        this.$.lblDevices.classList.toggle('bold', devicesBold);
+        this.$.lblMonitor.classList.toggle('bold', monitorBold);
       }
 
       rebootDevice(event) {
