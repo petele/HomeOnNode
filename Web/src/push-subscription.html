@@ -63,6 +63,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           .replace(/_/g, '/');
 
         const rawData = window.atob(base64);
+        // eslint-disable-next-line no-undef
         const outputArray = new Uint8Array(rawData.length);
 
         for (let i = 0; i < rawData.length; ++i) {
@@ -135,6 +136,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _subscribe() {
+        // eslint-disable-next-line max-len
         const vapidPublicKey = 'BMT-OdVgIKk4ZbyAz-L6M0S14VoMAwe3j1zhx2sa6rAIjzGUMczkJ3wECuBQS7z7H7dX0asml1U-suzmK-8QgUk';
         const opts = {
           applicationServerKey: this._urlBase64ToUint8Array(vapidPublicKey),

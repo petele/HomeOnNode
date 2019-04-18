@@ -75,6 +75,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           window.speechSynthesis.speak(utterance);
           return utterance;
         } catch (ex) {
+          // eslint-disable-next-line no-console
           console.log('speechSynthesis failed', ex);
           this.$.toast.text = 'Speech synthesis unavailable.';
           this.$.toast.show();

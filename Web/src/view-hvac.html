@@ -214,6 +214,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       hvacModeChanged(evt, newVal) {
         // TODO: Not yet implemented.
+        // eslint-disable-next-line no-console
         console.warn('NYI: Changing HVAC mode to...', newVal.value);
       }
 
@@ -224,7 +225,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         const index = evt.model.index;
         this.set(`nestHVACAuto.${index}.LR`, newVal.value);
-
       }
 
       brTempChanged(evt, newVal) {

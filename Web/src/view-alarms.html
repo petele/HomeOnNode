@@ -138,20 +138,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get properties() {
         return {
+          alarmConfig: Object,
         };
       }
-
-      // static get observers() {
-      //   return [
-      //     'alarmsChanged(alarmState.*)',
-      //   ];
-      // }
-
-      // alarmsChanged(items) {
-      //   items.base.forEach((item) => {
-      //     console.log(item)
-      //   });
-      // }
 
       formatError(val) {
         if (val === 'OK') {
@@ -207,7 +196,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           }
         });
         const path = `${item.$key}/repeatDays`;
-        console.log('r', path, result.join(''));
         this.$.fbAlarmConfig.ref.child(path).set(result.join(''));
         this.userInteraction();
       }
