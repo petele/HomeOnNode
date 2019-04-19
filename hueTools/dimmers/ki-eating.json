@@ -2,6 +2,9 @@
   "sceneName": "Eating [Kitchen]",
   "sceneId": "99NgrL4Cc9kJCp7",
   "roomId": 2,
+  "scenes": [
+    "dimmers/ks-off.json"
+  ],
   "lights": [
     {"lightId": 4, "recipeName": "REBECCA_PURPLE", "command": {"bri": 180}},
     {"lightId": 5, "recipeName": "REBECCA_PURPLE", "command": {"bri": 180}},

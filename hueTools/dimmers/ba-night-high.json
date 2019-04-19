@@ -5,6 +5,6 @@
   "lights": [
     {"lightId": 24, "recipeName": "RED", "command": {"bri": 100}},
     {"lightId": 25, "recipeName": "RED", "command": {"bri": 30}},
-    {"lightId": 26, "recipeName": "RED", "command": {"bri": 5}}
+    {"lightId": 26, "recipeName": "OFF"}
   ]
 }

@@ -2,6 +2,9 @@
   "sceneName": "Cooking [Kitchen]",
   "sceneId": "kN2zrxA0ysuotVr",
   "roomId": 2,
+  "scenes": [
+    "dimmers/ks-cooking.json"
+  ],
   "lights": [
     {"lightId": 4, "recipeName": "DEFAULT", "command": {"bri": 254}},
     {"lightId": 5, "recipeName": "DEFAULT", "command": {"bri": 254}},

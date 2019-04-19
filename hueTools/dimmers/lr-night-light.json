@@ -6,7 +6,6 @@
     "dimmers/lr-off.json"
   ],
   "lights": [
-    {"lightId": 14, "recipeName": "RED", "command": {"bri": 5}},
     {"lightId": 22, "recipeName": "RED", "command": {"bri": 50}}
   ]
 }
