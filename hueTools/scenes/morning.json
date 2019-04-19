@@ -2,6 +2,7 @@
   "sceneName": "Morning",
   "sceneId": "uR9E4wuZ8dCZYCj",
   "roomId": 0,
+  "transitionTime": 100,
   "scenes": [
     "dimmers/ba-off.json",
     "dimmers/br-day.json",
