@@ -1348,9 +1348,43 @@ function Home(initialConfig, fbRef) {
       date: now,
       date_: nowPretty,
     };
+
+    // Store system state.
     if (_self.state.systemState) {
       msg.systemState = _self.state.systemState;
     }
+
+    // Store outside weather (temperature & humidity)
+    try {
+      if (_self.state.weather && _self.state.weather.now) {
+        msg.weather = {};
+        const weatherNow = _self.state.weather.now;
+        if (weatherNow.hasOwnProperty('humidity')) {
+          const humidity = Math.round(weatherNow.humidity * 100);
+          msg.weather.humidity = humidity;
+        }
+        if (weatherNow.hasOwnProperty('temperature')) {
+          const temperature = Math.round(weatherNow.temperature);
+          msg.weather.temperature = temperature;
+        }
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'CRON: Unable to store weather info', ex);
+    }
+
+    // Store Harmony activity info
+    try {
+      if (_self.state.harmony && _self.state.harmony.activity) {
+        msg.harmonyActivity = {
+          id: _self.state.harmony.activity.id,
+          label: _self.state.harmony.activity.label,
+        };
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'CRON: Unable to store TiVo info', ex);
+    }
+
+    // Store Nest temperature & humidity
     try {
       if (_self.state.nest) {
         const keys = Object.keys(_self.state.nest.devices.thermostats);
@@ -1367,6 +1401,8 @@ function Home(initialConfig, fbRef) {
     } catch (ex) {
       log.exception(LOG_PREFIX, 'CRON: Unable to store Thermostat info', ex);
     }
+
+    // Store presence data
     try {
       if (_self.state.presence && _self.state.presence.people) {
         const keys = Object.keys(_self.state.presence.people);
@@ -1378,6 +1414,8 @@ function Home(initialConfig, fbRef) {
     } catch (ex) {
       log.exception(LOG_PREFIX, 'CRON: Unable to store presence info', ex);
     }
+
+    // Push to server
     _fbPush('logs/cron', msg);
   }
 
