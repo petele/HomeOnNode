@@ -1,0 +1,17 @@
+{
+  "sceneName": "Off",
+  "dontSave": true,
+  "roomId": 4,
+  "lights": [
+    {"lightId": 11, "recipeName": "OFF"},
+    {"lightId": 12, "recipeName": "OFF"},
+    {"lightId": 13, "recipeName": "OFF"},
+    {"lightId": 14, "recipeName": "OFF"},
+    {"lightId": 18, "recipeName": "OFF"},
+    {"lightId": 22, "recipeName": "OFF"},
+    {"lightId": 27, "recipeName": "OFF"},
+    {"lightId": 35, "recipeName": "OFF"},
+    {"lightId": 36, "recipeName": "OFF"},
+    {"lightId": 37, "recipeName": "OFF"}
+  ]
+}

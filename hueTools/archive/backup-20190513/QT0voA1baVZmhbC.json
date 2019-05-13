@@ -1,0 +1,45 @@
+{
+  "sceneName": "Arctic aurora",
+  "sceneId": "QT0voA1baVZmhbC",
+  "sceneData": {
+    "version": 1,
+    "data": "mRunE_r08"
+  },
+  "sceneVersion": 2,
+  "roomId": 8,
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1767,
+          0.395
+        ]
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1814,
+          0.2439
+        ]
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.254,
+          0.381
+        ]
+      }
+    }
+  ]
+}

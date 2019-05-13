@@ -1,0 +1,24 @@
+{
+  "sceneName": "Night Light",
+  "roomId": 2,
+  "scenes": [
+    "dimmers/ki-off.json"
+  ],
+  "lights": [
+    {
+      "lightId": 17,
+      "recipeName": "RED",
+      "command": {
+        "bri": 10
+      }
+    },
+    {
+      "lightId": 29,
+      "recipeName": "RED",
+      "command": {
+        "bri": 10
+      }
+    }
+  ],
+  "sceneId": "DuNf0jZEWsBNdkS"
+}

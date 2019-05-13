@@ -1,16 +1,16 @@
 {
   "sceneName": "Sleep",
-  "sceneId": "AMUp6lH557C2t3p",
   "roomId": 0,
-  "transitionTime": 100,
+  "transitionTime": 50,
   "scenes": [
-    "dimmers/ba-night-low.json",
+    "dimmers/ba-off.json",
     "dimmers/br-off.json",
     "dimmers/bs-reading.json",
     "dimmers/fh-night-light.json",
-    "dimmers/ki-night-light.json",
     "dimmers/ki-off.json",
+    "dimmers/ki-night-light.json",
     "dimmers/ks-off.json",
     "dimmers/lr-night-light.json"
-  ]
+  ],
+  "sceneId": "ktwBYTA7R3kJVB1"
 }

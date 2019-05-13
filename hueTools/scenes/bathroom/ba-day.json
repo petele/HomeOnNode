@@ -1,0 +1,28 @@
+{
+  "sceneName": "Day",
+  "roomId": 8,
+  "lights": [
+    {
+      "lightId": 24,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 25,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 26,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 254
+      }
+    }
+  ],
+  "sceneId": "iEEiOVvpH6mXicZ"
+}

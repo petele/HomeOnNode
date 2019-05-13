@@ -1,0 +1,10 @@
+{
+  "sceneName": "Off",
+  "dontSave": true,
+  "roomId": 1,
+  "lights": [
+    {"lightId": 1, "recipeName": "OFF"},
+    {"lightId": 2, "recipeName": "OFF"},
+    {"lightId": 3, "recipeName": "OFF"}
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "sceneName": "Warm",
+  "sceneId": "HDdC9Ysytnjm1Ev",
+  "sceneData": {
+    "version": 1,
+    "data": "xfh4X_r03_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 3,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "ct": 385
+      }
+    }
+  ]
+}

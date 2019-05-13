@@ -1,0 +1,45 @@
+{
+  "sceneName": "Recover room 8",
+  "sceneId": "grmMYP3INPNR3dm",
+  "sceneData": {
+    "version": 1,
+    "data": "A4WiM_r08_h01"
+  },
+  "sceneVersion": 2,
+  "roomId": 8,
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.4283,
+          0.4013
+        ]
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.4283,
+          0.4013
+        ]
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2702,
+          0.1396
+        ]
+      }
+    }
+  ]
+}

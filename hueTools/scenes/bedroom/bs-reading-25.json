@@ -1,0 +1,21 @@
+{
+  "sceneName": "Reading - 25",
+  "roomId": 10,
+  "lights": [
+    {
+      "lightId": 16,
+      "recipeName": "READING",
+      "command": {
+        "bri": 64
+      }
+    },
+    {
+      "lightId": 28,
+      "recipeName": "READING",
+      "command": {
+        "bri": 64
+      }
+    }
+  ],
+  "sceneId": "2xOMvItE-j8T2IQ"
+}

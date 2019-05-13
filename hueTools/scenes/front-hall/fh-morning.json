@@ -1,0 +1,28 @@
+{
+  "sceneName": "Morning",
+  "roomId": 1,
+  "lights": [
+    {
+      "lightId": 1,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 2,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 3,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    }
+  ],
+  "sceneId": "B78Z8Qn4sPuXqF3"
+}

@@ -1,0 +1,45 @@
+{
+  "sceneName": "TV & Movies",
+  "roomId": 4,
+  "scenes": [
+    "dimmers/lr-off.json"
+  ],
+  "lights": [
+    {
+      "lightId": 11,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 40
+      }
+    },
+    {
+      "lightId": 12,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 64
+      }
+    },
+    {
+      "lightId": 13,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 64
+      }
+    },
+    {
+      "lightId": 18,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 64
+      }
+    },
+    {
+      "lightId": 22,
+      "recipeName": "BLUE",
+      "command": {
+        "bri": 40
+      }
+    }
+  ],
+  "sceneId": "rknAFAZdNo6lFye"
+}

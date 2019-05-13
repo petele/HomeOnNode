@@ -1,0 +1,70 @@
+{
+  "sceneName": "Evening",
+  "roomId": 6,
+  "lights": [
+    {
+      "lightId": 15,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 19,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 20,
+      "recipeName": "ROSE",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 21,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 30,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 31,
+      "recipeName": "ROSE",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 32,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 33,
+      "recipeName": "ROSE",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 34,
+      "recipeName": "ROSE",
+      "command": {
+        "bri": 254
+      }
+    }
+  ],
+  "sceneId": "bNmQ5kuvCXwwiK0"
+}

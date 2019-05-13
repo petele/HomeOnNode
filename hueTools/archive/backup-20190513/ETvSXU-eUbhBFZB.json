@@ -1,0 +1,35 @@
+{
+  "sceneName": "Reading - 50",
+  "sceneId": "ETvSXU-eUbhBFZB",
+  "sceneData": {
+    "version": 1,
+    "data": "xpfDX_r10_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 10,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 16,
+      "command": {
+        "on": true,
+        "bri": 128,
+        "xy": [
+          0.6126,
+          0.3667
+        ]
+      }
+    },
+    {
+      "lightId": 28,
+      "command": {
+        "on": true,
+        "bri": 128,
+        "xy": [
+          0.6126,
+          0.3667
+        ]
+      }
+    }
+  ]
+}

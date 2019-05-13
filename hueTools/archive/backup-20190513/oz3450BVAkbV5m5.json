@@ -1,0 +1,111 @@
+{
+  "sceneName": "Fairfax",
+  "sceneId": "oz3450BVAkbV5m5",
+  "sceneData": {
+    "version": 1,
+    "data": "mBRPd_r06"
+  },
+  "sceneVersion": 2,
+  "roomId": 6,
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2531,
+          0.209
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.5008,
+          0.3022
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.5008,
+          0.3022
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "sceneName": "Evening",
+  "roomId": 2,
+  "lights": [
+    {
+      "lightId": 4,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 180
+      }
+    },
+    {
+      "lightId": 5,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 180
+      }
+    },
+    {
+      "lightId": 6,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 250
+      }
+    },
+    {
+      "lightId": 7,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 250
+      }
+    },
+    {
+      "lightId": 17,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 29,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    }
+  ],
+  "sceneId": "120p44tlgE-V6E8"
+}

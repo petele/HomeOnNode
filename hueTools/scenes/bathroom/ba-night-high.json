@@ -1,0 +1,25 @@
+{
+  "sceneName": "Night Light",
+  "roomId": 8,
+  "lights": [
+    {
+      "lightId": 24,
+      "recipeName": "RED",
+      "command": {
+        "bri": 100
+      }
+    },
+    {
+      "lightId": 25,
+      "recipeName": "RED",
+      "command": {
+        "bri": 30
+      }
+    },
+    {
+      "lightId": 26,
+      "recipeName": "OFF"
+    }
+  ],
+  "sceneId": "LqszDr59kAhPElc"
+}

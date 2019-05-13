@@ -1,0 +1,45 @@
+{
+  "sceneName": "Night Light",
+  "sceneId": "LqszDr59kAhPElc",
+  "sceneData": {
+    "version": 1,
+    "data": "xLj1X_r08_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 8,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 100,
+        "xy": [
+          0.674,
+          0.322
+        ]
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true,
+        "bri": 30,
+        "xy": [
+          0.674,
+          0.322
+        ]
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": false,
+        "bri": 200,
+        "effect": "none",
+        "hue": 46784,
+        "sat": 254
+      }
+    }
+  ]
+}

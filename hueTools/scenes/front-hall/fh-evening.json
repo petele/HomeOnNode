@@ -1,0 +1,28 @@
+{
+  "sceneName": "Evening",
+  "roomId": 1,
+  "lights": [
+    {
+      "lightId": 1,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 200
+      }
+    },
+    {
+      "lightId": 2,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 200
+      }
+    },
+    {
+      "lightId": 3,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 200
+      }
+    }
+  ],
+  "sceneId": "PjCwhZS0Bfqs2Hv"
+}

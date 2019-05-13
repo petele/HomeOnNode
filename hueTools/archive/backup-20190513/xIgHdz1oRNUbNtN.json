@@ -1,0 +1,76 @@
+{
+  "sceneName": "Cooking",
+  "sceneId": "xIgHdz1oRNUbNtN",
+  "sceneData": {
+    "version": 1,
+    "data": "xxhkX_r11_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 11,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 4,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3691,
+          0.3719
+        ]
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": true,
+        "bri": 250,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "sceneName": "Guest Read",
+  "roomId": 4,
+  "scenes": [
+    "dimmers/lr-off.json"
+  ],
+  "lights": [
+    {
+      "lightId": 12,
+      "recipeName": "READING",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 13,
+      "recipeName": "READING",
+      "command": {
+        "bri": 128
+      }
+    },
+    {
+      "lightId": 22,
+      "recipeName": "READING",
+      "command": {
+        "bri": 128
+      }
+    }
+  ],
+  "sceneId": "26CvDCfzwjCEecc"
+}
