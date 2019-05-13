@@ -1,0 +1,39 @@
+{
+  "sceneName": "Morning",
+  "sceneId": "B78Z8Qn4sPuXqF3",
+  "sceneData": {
+    "version": 1,
+    "data": "xsaqX_r01_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 1,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    }
+  ]
+}

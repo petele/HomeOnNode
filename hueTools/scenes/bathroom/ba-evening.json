@@ -1,0 +1,28 @@
+{
+  "sceneName": "Evening",
+  "roomId": 8,
+  "lights": [
+    {
+      "lightId": 24,
+      "recipeName": "ROSE",
+      "command": {
+        "bri": 225
+      }
+    },
+    {
+      "lightId": 25,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 200
+      }
+    },
+    {
+      "lightId": 26,
+      "recipeName": "BLUE",
+      "command": {
+        "bri": 200
+      }
+    }
+  ],
+  "sceneId": "lZoCbNgEO7oHR0f"
+}

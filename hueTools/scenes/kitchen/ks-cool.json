@@ -1,0 +1,13 @@
+{
+  "sceneName": "Cool",
+  "roomId": 3,
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "ct": 270
+      }
+    }
+  ],
+  "sceneId": "IRr6rAG2x0Hdbzi"
+}

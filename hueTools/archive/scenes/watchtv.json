@@ -1,0 +1,20 @@
+{
+  "sceneName": "Watching TV",
+  "roomId": 0,
+  "sceneId": "T4eTTKpo0sibks4",
+  "transitionTime": 50,
+  "scenes": [
+  	"dimmers/ba-night-high.json",
+    "dimmers/br-off.json",
+    "dimmers/bs-off.json",
+    "dimmers/fh-night-light.json",
+    "dimmers/ki-night-light.json",
+    "dimmers/ki-off.json",
+    "dimmers/lr-tv-movies.json"
+  ],
+   "lights": [
+    {"lightId": 30, "recipeName": "ROSE_DEEP", "command": {"bri": 128}},
+    {"lightId": 33, "recipeName": "ROSE_DEEP", "command": {"bri": 64}},
+    {"lightId": 34, "recipeName": "ROSE_DEEP", "command": {"bri": 64}}
+  ]
+}

@@ -1,0 +1,112 @@
+{
+  "sceneName": "Evening",
+  "sceneId": "bNmQ5kuvCXwwiK0",
+  "sceneData": {
+    "version": 1,
+    "data": "xv8fX_r06_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 6,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2703,
+          0.1398
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3612,
+          0.1607
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.2703,
+          0.1398
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3612,
+          0.1607
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3612,
+          0.1607
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    }
+  ]
+}

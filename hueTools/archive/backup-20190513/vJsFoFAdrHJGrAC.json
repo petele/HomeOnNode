@@ -1,0 +1,23 @@
+{
+  "sceneName": "Day",
+  "sceneId": "vJsFoFAdrHJGrAC",
+  "sceneData": {
+    "version": 1,
+    "data": "xzSSX_r03_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 3,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 80,
+        "effect": "none",
+        "hue": 8191,
+        "sat": 213
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "sceneName": "Evening (slow)",
+  "sceneId": "MS8ZDjSNoFmcchE",
+  "roomId": 0,
+  "transitionTime": 6000,
+  "scenes": [
+    "scenes/evening.json"
+  ]
+}

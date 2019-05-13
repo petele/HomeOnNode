@@ -1,6 +1,5 @@
 {
   "sceneName": "Day",
-  "sceneId": "Ef97fWzbVeW6mjQ",
   "roomId": 0,
   "scenes": [
     "dimmers/ba-off.json",
@@ -8,5 +7,6 @@
     "dimmers/ki-morning.json",
     "dimmers/ks-morning.json",
     "dimmers/lr-morning.json"
-  ]
+  ],
+  "sceneId": "UtGU7mKHPIHkzuA"
 }

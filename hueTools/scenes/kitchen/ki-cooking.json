@@ -1,0 +1,52 @@
+{
+  "sceneName": "Cooking",
+  "roomId": 11,
+  "scenes": [
+    "scenes/kitchen/ks-cooking.json"
+  ],
+  "lights": [
+    {
+      "lightId": 4,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 250
+      }
+    },
+    {
+      "lightId": 5,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 250
+      }
+    },
+    {
+      "lightId": 6,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 7,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 17,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 250
+      }
+    },
+    {
+      "lightId": 29,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 250
+      }
+    }
+  ],
+  "sceneId": "xIgHdz1oRNUbNtN"
+}

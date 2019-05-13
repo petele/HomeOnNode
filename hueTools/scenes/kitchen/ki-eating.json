@@ -1,0 +1,56 @@
+{
+  "sceneName": "Eating",
+  "roomId": 11,
+  "lights": [
+    {
+      "lightId": 4,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 150
+      }
+    },
+    {
+      "lightId": 5,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 150
+      }
+    },
+    {
+      "lightId": 6,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 7,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 17,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 150
+      }
+    },
+    {
+      "lightId": 29,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 150
+      }
+    },
+    {
+      "lightId": 23,
+      "recipeName": "ROSE",
+      "command": {
+        "bri": 50
+      }
+    }
+  ],
+  "sceneId": "57gXoVtts7lMJyx"
+}

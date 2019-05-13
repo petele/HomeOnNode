@@ -1,0 +1,43 @@
+{
+  "sceneName": "Sunrise (2)",
+  "sceneId": "Z9QgmaEeBoyTfWV",
+  "sceneData": {
+    "version": 1,
+    "data": "xy8GX_r08_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 8,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320,
+        "transitiontime": 8000
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320,
+        "transitiontime": 8000
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3143,
+          0.3301
+        ],
+        "transitiontime": 8000
+      }
+    }
+  ]
+}

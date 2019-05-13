@@ -1,0 +1,37 @@
+{
+  "sceneName": "Day",
+  "sceneId": "bCuSjS7jZGUOK7g",
+  "sceneData": {
+    "version": 1,
+    "data": "xSEMX_r01_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 1,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "ct": 320
+      }
+    }
+  ]
+}

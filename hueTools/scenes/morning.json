@@ -1,8 +1,7 @@
 {
   "sceneName": "Morning",
-  "sceneId": "uR9E4wuZ8dCZYCj",
   "roomId": 0,
-  "transitionTime": 100,
+  "transitionTime": 20,
   "scenes": [
     "dimmers/ba-off.json",
     "dimmers/br-day.json",
@@ -10,5 +9,6 @@
     "dimmers/ki-morning.json",
     "dimmers/ks-morning.json",
     "dimmers/lr-morning.json"
-  ]
+  ],
+  "sceneId": "03ctDkNtuu5ryjY"
 }

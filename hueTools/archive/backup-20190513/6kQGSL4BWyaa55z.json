@@ -1,0 +1,24 @@
+{
+  "sceneName": "Morning",
+  "sceneId": "6kQGSL4BWyaa55z",
+  "sceneData": {
+    "version": 1,
+    "data": "xSjeX_r03_d99"
+  },
+  "sceneVersion": 2,
+  "roomId": 3,
+  "sceneType": 99,
+  "lights": [
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 180,
+        "xy": [
+          0.3336,
+          0.2649
+        ]
+      }
+    }
+  ]
+}

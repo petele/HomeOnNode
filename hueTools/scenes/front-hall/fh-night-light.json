@@ -1,0 +1,17 @@
+{
+  "sceneName": "Night Light",
+  "roomId": 1,
+  "scenes": [
+    "dimmers/fh-off.json"
+  ],
+  "lights": [
+    {
+      "lightId": 2,
+      "recipeName": "RED",
+      "command": {
+        "bri": 10
+      }
+    }
+  ],
+  "sceneId": "XhwvDEPcwyhczwD"
+}

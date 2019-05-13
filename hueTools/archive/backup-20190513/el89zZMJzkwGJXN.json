@@ -1,0 +1,408 @@
+{
+  "sceneName": "Palm Beach",
+  "sceneId": "el89zZMJzkwGJXN",
+  "sceneData": {
+    "version": 1,
+    "data": "dhTVk_r09"
+  },
+  "sceneVersion": 2,
+  "roomId": 9,
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6525,
+          0.3101
+        ]
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.2531,
+          0.209
+        ]
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6525,
+          0.3101
+        ]
+      }
+    },
+    {
+      "lightId": 4,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6525,
+          0.3101
+        ]
+      }
+    },
+    {
+      "lightId": 5,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6525,
+          0.3101
+        ]
+      }
+    },
+    {
+      "lightId": 6,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6525,
+          0.3101
+        ]
+      }
+    },
+    {
+      "lightId": 7,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6525,
+          0.3101
+        ]
+      }
+    },
+    {
+      "lightId": 11,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    },
+    {
+      "lightId": 12,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6525,
+          0.3101
+        ]
+      }
+    },
+    {
+      "lightId": 13,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6525,
+          0.3101
+        ]
+      }
+    },
+    {
+      "lightId": 14,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.6643,
+          0.2891
+        ]
+      }
+    },
+    {
+      "lightId": 15,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 16,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.2531,
+          0.209
+        ]
+      }
+    },
+    {
+      "lightId": 17,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 18,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.5008,
+          0.3022
+        ]
+      }
+    },
+    {
+      "lightId": 19,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.4117,
+          0.3282
+        ]
+      }
+    },
+    {
+      "lightId": 20,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    },
+    {
+      "lightId": 21,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.4117,
+          0.3282
+        ]
+      }
+    },
+    {
+      "lightId": 22,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.2531,
+          0.209
+        ]
+      }
+    },
+    {
+      "lightId": 23,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.5008,
+          0.3022
+        ]
+      }
+    },
+    {
+      "lightId": 24,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.4117,
+          0.3282
+        ]
+      }
+    },
+    {
+      "lightId": 25,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.5008,
+          0.3022
+        ]
+      }
+    },
+    {
+      "lightId": 26,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    },
+    {
+      "lightId": 27,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 28,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 29,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    },
+    {
+      "lightId": 31,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.5008,
+          0.3022
+        ]
+      }
+    },
+    {
+      "lightId": 32,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 33,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 34,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.4117,
+          0.3282
+        ]
+      }
+    },
+    {
+      "lightId": 35,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 36,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.4117,
+          0.3282
+        ]
+      }
+    },
+    {
+      "lightId": 37,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.1603,
+          0.2583
+        ]
+      }
+    },
+    {
+      "lightId": 38,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.154,
+          0.2598
+        ]
+      }
+    },
+    {
+      "lightId": 39,
+      "command": {
+        "on": true,
+        "bri": 171,
+        "xy": [
+          0.597,
+          0.2924
+        ]
+      }
+    }
+  ]
+}

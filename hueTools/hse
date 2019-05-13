@@ -260,13 +260,14 @@ async function makeScenes(files, save, startOff) {
     const filename = files[i];
     console.log('Reading: ', chalk.cyan(filename));
     const sceneObj = hseLib.readJSONFile(filename);
+    const saveFile = !sceneObj.dontSave;
     if (startOff) {
       await allOffAndWait();
       await hseLib.wait(DELAY_BETWEEN_ACTIONS);
     }
     const lightList = await setScene(sceneObj);
     const lights = Object.keys(lightList);
-    if (save) {
+    if (save && saveFile) {
       await hseLib.wait(DELAY_BETWEEN_ACTIONS / 2);
       if (sceneObj.sceneId) {
         const results = await hseLib.updateScene(sceneObj, lights);

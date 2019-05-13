@@ -1,0 +1,70 @@
+{
+  "sceneName": "Day",
+  "roomId": 6,
+  "lights": [
+    {
+      "lightId": 15,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 19,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 20,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 21,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 30,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 31,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 32,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 33,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 34,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    }
+  ],
+  "sceneId": "TUhZlBf5lMrU6tJ"
+}

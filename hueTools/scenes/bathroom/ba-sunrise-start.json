@@ -1,0 +1,28 @@
+{
+  "sceneName": "Sunrise (1)",
+  "roomId": 8,
+  "lights": [
+    {
+      "lightId": 24,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 200
+      }
+    },
+    {
+      "lightId": 25,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 200
+      }
+    },
+    {
+      "lightId": 26,
+      "recipeName": "REBECCA_PURPLE",
+      "command": {
+        "bri": 175
+      }
+    }
+  ],
+  "sceneId": "1YRrdueX9ECXXti"
+}

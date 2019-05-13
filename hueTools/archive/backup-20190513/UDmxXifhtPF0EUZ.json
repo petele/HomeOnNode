@@ -1,0 +1,45 @@
+{
+  "sceneName": "Spring blossom",
+  "sceneId": "UDmxXifhtPF0EUZ",
+  "sceneData": {
+    "version": 1,
+    "data": "GTsIF_r01"
+  },
+  "sceneVersion": 2,
+  "roomId": 1,
+  "lights": [
+    {
+      "lightId": 1,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.4133,
+          0.2554
+        ]
+      }
+    },
+    {
+      "lightId": 2,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3632,
+          0.2844
+        ]
+      }
+    },
+    {
+      "lightId": 3,
+      "command": {
+        "on": true,
+        "bri": 254,
+        "xy": [
+          0.3632,
+          0.2844
+        ]
+      }
+    }
+  ]
+}
