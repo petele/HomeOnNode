@@ -73,7 +73,11 @@ function init() {
     _fb.child(`config/${APP_NAME}/googleDNS/externalIP`).set(ip);
   });
 
-  _initWatcher(_config.fileToWatch);
+  if (_config.watchFile && _config.fileToWatch) {
+    _initWatcher(_config.fileToWatch);
+  } else {
+    log.log(APP_NAME, 'Log Watcher disabled.');
+  }
 
   setInterval(function() {
     log.cleanFile();
@@ -90,9 +94,6 @@ const RE_XL2TPD_PID = /xl2tpd\[(\d+?)\]: /;
  * @param {String} filename Filename to watch.
  */
 function _initWatcher(filename) {
-  if (!filename) {
-    return;
-  }
   log.debug(LOG_PREFIX, `Setting up log watcher for: ${filename}`);
   try {
     fs.accessSync(filename, fs.R_OK);
