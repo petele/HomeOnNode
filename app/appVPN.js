@@ -94,7 +94,7 @@ const RE_XL2TPD_PID = /xl2tpd\[(\d+?)\]: /;
  * @param {String} filename Filename to watch.
  */
 function _initWatcher(filename) {
-  log.debug(LOG_PREFIX, `Setting up log watcher for: ${filename}`);
+  log.log(LOG_PREFIX, `Setting up log watcher for: ${filename}`);
   try {
     fs.accessSync(filename, fs.R_OK);
   } catch (ex) {
