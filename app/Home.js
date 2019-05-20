@@ -1338,6 +1338,34 @@ function Home(initialConfig, fbRef) {
   }
 
   /**
+   * Gets the sensor data from the Hue Motion Sensor
+   * @param {number} tempId
+   * @param {number} motionId
+   * @param {number} lightId
+   * @return {Object}
+   */
+  function getHueSensorData(tempId, motionId, lightId) {
+    if (!_self.state.hue || !_self.state.hue.sensors) {
+      return null;
+    }
+    const result = {};
+    const sensors = _self.state.hue.sensors;
+    if (sensors[tempId]) {
+      result.temperature = sensors[tempId].state.temperature / 100;
+      result.lastUpdated = sensors[tempId].state.lastupdated;
+    }
+    if (sensors[motionId]) {
+      result.presence = sensors[motionId].state.presence;
+    }
+    if (sensors[lightId]) {
+      result.daylight = sensors[lightId].state.daylight;
+      result.dark = sensors[lightId].state.dark;
+      result.lightLevel = sensors[lightId].state.lightlevel;
+    }
+    return result;
+  }
+
+  /**
    * Cron Tick
    */
   function _onCronTick() {
@@ -1414,6 +1442,19 @@ function Home(initialConfig, fbRef) {
     } catch (ex) {
       log.exception(LOG_PREFIX, 'CRON: Unable to store presence info', ex);
     }
+
+    // Store hue sensor data
+    try {
+      msg.hueData = {
+        BA: getHueSensorData(10, 11, 12),
+        BR: getHueSensorData(31, 29, 30),
+        LR: getHueSensorData(27, 25, 26),
+      };
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'CRON: Unable to store hue info', ex);
+    }
+
+    log.debug(LOG_PREFIX, 'CRON Data saved', msg);
 
     // Push to server
     _fbPush('logs/cron', msg);
