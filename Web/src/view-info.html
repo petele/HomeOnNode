@@ -1,0 +1,163 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="shared-styles.html">
+
+
+<dom-module id="view-info">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+        --app-grid-item-height: reset;
+      }
+      .app-grid { padding: 0; }
+      .secondary {
+        color: var(--secondary-text-color);
+      }
+      summary {
+        list-style: none;
+        cursor: pointer;
+        display: inline-block;
+        float: right;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      details {
+        min-height: 2em;
+      }
+      details > summary {
+        width: 100%;
+        height: 2em;
+        outline: none;
+      }
+    </style>
+
+    <firebase-query
+      id="query"
+      data="{{fbData}}"
+      path="logs/cron"
+      limit-to-last="1">
+    </firebase-query>
+
+    <div class="card">
+      <div class="app-grid grid-two">
+        <div>
+          <span class="secondary">System State:</span>
+          [[data.systemState]]
+        </div>
+        <div>
+          <span class="secondary">Data from:</span>
+          [[data.date_]]
+        </div>
+      </div>
+      <div>
+        <span class="secondary">Harmony Activity:</span>
+        [[data.harmonyActivity.label]]
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Bathroom</h3>
+      <div>
+        <span class="secondary">Light level</span>
+        [[data.hueData.BA.lightLevel]]
+        (<span class="secondary">[[convertToLux(data.hueData.BA.lightLevel)]]lux</span>)
+      </div>
+      <div>
+        <span class="secondary">Temperature (Hue):</span>
+        [[convertCtoF(data.hueData.BA.temperature)]]F
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Bedroom</h3>
+      <div>
+        <span class="secondary">Light level</span>
+        [[data.hueData.BR.lightLevel]]
+        (<span class="secondary">[[convertToLux(data.hueData.BR.lightLevel)]]lux</span>)
+      </div>
+      <div>
+        <span class="secondary">Temperature (Hue):</span>
+        [[convertCtoF(data.hueData.BR.temperature)]]F
+      </div>
+      <div>
+        <span class="secondary">Temperature (Nest):</span>
+        [[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.temperature]]F
+      </div>
+      <div>
+        <span class="secondary">Humidity (Nest):</span>
+        [[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.humidity]]%
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Living Room</h3>
+      <div>
+        <span class="secondary">Light level</span>
+        [[data.hueData.LR.lightLevel]]
+        (<span class="secondary">[[convertToLux(data.hueData.LR.lightLevel)]]lux</span>)
+      </div>
+      <div>
+        <span class="secondary">Temperature (Hue):</span>
+        [[convertCtoF(data.hueData.LR.temperature)]]F
+      </div>
+      <div>
+        <span class="secondary">Temperature (Nest):</span>
+        [[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.temperature]]F
+      </div>
+      <div>
+        <span class="secondary">Humidity (Nest):</span>
+        [[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.humidity]]%
+      </div>
+    </div>
+  </template>
+
+  <script>
+    class InfoView extends Polymer.Element {
+      static get is() { return 'view-info'; }
+
+      static get properties() {
+        return {
+          fbData: Array,
+          data: Object,
+        };
+      }
+
+      static get observers() {
+        return [
+          'fbDataChanged(fbData.length)',
+        ];
+      }
+
+      fbDataChanged(len) {
+        if (len === 1) {
+          this.data = this.fbData[0];
+        }
+      }
+
+      convertCtoF(val) {
+        return Math.round((val * 9 / 5) + 32);
+      }
+
+      convertToLux(lightlevel) {
+        return Math.round(Math.pow(10, ((lightlevel - 1) / 10000)));
+      }
+    }
+
+    window.customElements.define(InfoView.is, InfoView);
+  </script>
+</dom-module>
