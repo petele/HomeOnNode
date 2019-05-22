@@ -25,7 +25,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <paper-checkbox
       checked="{{isSubscribed}}"
       on-change="changeSubscription">
-        Notifications
+        <span>Notifications</span>
         <template is="dom-if" if="[[key]]">
           <span class="key">([[key]])</span>
         </template>
