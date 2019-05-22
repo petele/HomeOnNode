@@ -49,6 +49,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="view-vpn-logs.html">
 <link rel="lazy-import" href="view-alarms.html">
 <link rel="lazy-import" href="view-info.html">
+<link rel="lazy-import" href="view-remote.html">
 
 
 <dom-module id="my-app">
@@ -108,8 +109,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <a name="home" href="/">Home</a>
           <a name="alarms" href="/alarms">Alarms</a>
           <a name="hvac" href="/hvac">Heat &amp; Air</a>
-          <a href="https://home.nest.com/#structures/ec1dea10-787f-11e3-82cb-123139253bf1">Nest</a>
-          <a href="sonos://">Sonos</a>
+          <a name="remote" href="/remote">Remote</a>
+          <a name="info" href="/info">Info</a>
           <a name="devices" href="/devices">Devices</a>
           <a name="settings" href="/settings">Settings</a>
           <a name="weather" href="/weather">Weather</a>
@@ -165,6 +166,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <view-vpn-logs name="vpn-logs"></view-vpn-logs>
           <view-alarms name="alarms"></view-alarms>
           <view-info name="info"></view-info>
+          <view-remote name="remote"></view-remote>
           <view-404 name="404"></view-404>
         </iron-pages>
         <paper-toast id="toast" text="Hello world!"></paper-toast>

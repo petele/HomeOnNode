@@ -1395,6 +1395,9 @@ function Home(initialConfig, fbRef) {
           const temperature = Math.round(weatherNow.temperature);
           msg.weather.temperature = temperature;
         }
+        if (weatherNow.hasOwnProperty('summary')) {
+          msg.weather.summary = weatherNow.summary;
+        }
       }
     } catch (ex) {
       log.exception(LOG_PREFIX, 'CRON: Unable to store weather info', ex);
@@ -1423,11 +1426,36 @@ function Home(initialConfig, fbRef) {
             name: t['name'],
             temperature: t['ambient_temperature_f'],
             humidity: t['humidity'],
+            mode: t['hvac_mode'],
           };
         });
       }
     } catch (ex) {
       log.exception(LOG_PREFIX, 'CRON: Unable to store Thermostat info', ex);
+    }
+
+    // Store Nest protect data
+    try {
+      if (_self.state.nest) {
+        const keys = Object.keys(_self.state.nest.devices.smoke_co_alarms);
+        msg.nestProtect = {};
+        keys.forEach((k) => {
+          const t = _self.state.nest.devices.smoke_co_alarms[k];
+          msg.nestProtect[k] = {
+            name: t['name'],
+            battery: t['battery_health'],
+            alarms: {
+              co: t['co_alarm_state'],
+              smoke: t['smoke_alarm_state'],
+            },
+            isOnline: t['is_online'],
+            lastUpdated: t['last_connection'],
+            uiColor: t['ui_color_state'],
+          };
+        });
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'CRON: Unable to store Thermostat Protect', ex);
     }
 
     // Store presence data

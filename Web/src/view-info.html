@@ -24,8 +24,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         --app-grid-item-height: reset;
       }
       .app-grid { padding: 0; }
+      .app-grid div { margin: 0; }
       .secondary {
         color: var(--secondary-text-color);
+      }
+      .text-right { text-align: right; }
+      .card h3 {
+        margin-bottom: .25em;
+        margin-top: .25em;
+      }
+      .is-true {
+        /* font-weight: bold; */
+      }
+      .is-false {
+        display: none;
+        /* font-weight: 100;
+        color: var(--secondary-text-color); */
       }
       summary {
         list-style: none;
@@ -57,71 +71,105 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <div class="app-grid grid-two">
         <div>
           <span class="secondary">System State:</span>
-          [[data.systemState]]
+          <span>[[data.systemState]]</span>
         </div>
-        <div>
-          <span class="secondary">Data from:</span>
-          [[data.date_]]
+        <div class="text-right">
+          <span class="secondary">Last Updated:</span>
+          <span>[[formatDate(data.date)]]</span>
         </div>
       </div>
       <div>
         <span class="secondary">Harmony Activity:</span>
-        [[data.harmonyActivity.label]]
+        <span>[[data.harmonyActivity.label]]</span>
+      </div>
+      <div>
+        <span class="secondary">Weather:</span>
+        <span>[[data.weather.summary]]</span>
+        <span>[[data.weather.temperature]]°F</span>
+        <span class="secondary">([[data.weather.humidity]]%)</span>
       </div>
     </div>
 
     <div class="card">
       <h3>Bathroom</h3>
       <div>
-        <span class="secondary">Light level</span>
-        [[data.hueData.BA.lightLevel]]
-        (<span class="secondary">[[convertToLux(data.hueData.BA.lightLevel)]]lux</span>)
+        <span class="secondary">Light level:</span>
+        <span>[[data.hueData.BA.lightLevel]]</span>
+        <span class="secondary">([[convertToLux(data.hueData.BA.lightLevel)]]lux)</span>
       </div>
       <div>
-        <span class="secondary">Temperature (Hue):</span>
-        [[convertCtoF(data.hueData.BA.temperature)]]F
+        <span class="secondary">Light state:</span>
+        <span class$="[[isTrue(data.hueData.BA.daylight)]]">Daylight</span>
+        <span class$="[[isTrue(data.hueData.BA.dark)]]">Dark</span>
+      </div>
+      <div>
+        <span class="secondary">Temperature:</span>
+        <span>[[convertCtoF(data.hueData.BA.temperature)]]°F</span>
+        <span class="secondary">(Hue)</span>
       </div>
     </div>
 
     <div class="card">
       <h3>Bedroom</h3>
       <div>
-        <span class="secondary">Light level</span>
-        [[data.hueData.BR.lightLevel]]
-        (<span class="secondary">[[convertToLux(data.hueData.BR.lightLevel)]]lux</span>)
+        <span class="secondary">Light level:</span>
+        <span>[[data.hueData.BR.lightLevel]]</span>
+        <span class="secondary">([[convertToLux(data.hueData.BR.lightLevel)]]lux)</span>
       </div>
       <div>
-        <span class="secondary">Temperature (Hue):</span>
-        [[convertCtoF(data.hueData.BR.temperature)]]F
+        <span class="secondary">Light state:</span>
+        <span class$="[[isTrue(data.hueData.BR.daylight)]]">Daylight</span>
+        <span class$="[[isTrue(data.hueData.BR.dark)]]">Dark</span>
+      </div>
+      <template is="dom-if" if="[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.mode]]">
+        <div>
+          <span class="secondary">HVAC Mode:</span>
+          <span>[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.mode]]</span>
+        </div>
+      </template>
+      <div>
+        <span class="secondary">Temperature:</span>
+        <span>[[convertCtoF(data.hueData.BR.temperature)]]°F</span>
+        <span class="secondary">(Hue)</span>
+        <span>||</span>
+        <span>[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.temperature]]°F</span>
+        <span class="secondary">(Nest)</span>
       </div>
       <div>
-        <span class="secondary">Temperature (Nest):</span>
-        [[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.temperature]]F
-      </div>
-      <div>
-        <span class="secondary">Humidity (Nest):</span>
-        [[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.humidity]]%
+        <span class="secondary">Humidity:</span>
+        <span>[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.humidity]]%</span>
       </div>
     </div>
 
     <div class="card">
       <h3>Living Room</h3>
       <div>
-        <span class="secondary">Light level</span>
-        [[data.hueData.LR.lightLevel]]
-        (<span class="secondary">[[convertToLux(data.hueData.LR.lightLevel)]]lux</span>)
+        <span class="secondary">Light level:</span>
+        <span>[[data.hueData.LR.lightLevel]]</span>
+        <span class="secondary">([[convertToLux(data.hueData.LR.lightLevel)]]lux)</span>
       </div>
       <div>
-        <span class="secondary">Temperature (Hue):</span>
-        [[convertCtoF(data.hueData.LR.temperature)]]F
+        <span class="secondary">Light state:</span>
+        <span class$="[[isTrue(data.hueData.LR.daylight)]]">Daylight</span>
+        <span class$="[[isTrue(data.hueData.LR.dark)]]">Dark</span>
+      </div>
+      <template is="dom-if" if="[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.mode]]">
+        <div>
+          <span class="secondary">HVAC Mode:</span>
+          <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.mode]]</span>
+        </div>
+      </template>
+      <div>
+        <span class="secondary">Temperature:</span>
+        <span>[[convertCtoF(data.hueData.LR.temperature)]]°F</span>
+        <span class="secondary">(Hue)</span>
+        <span>||</span>
+        <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.temperature]]°F</span>
+        <span class="secondary">(Nest)</span>
       </div>
       <div>
-        <span class="secondary">Temperature (Nest):</span>
-        [[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.temperature]]F
-      </div>
-      <div>
-        <span class="secondary">Humidity (Nest):</span>
-        [[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.humidity]]%
+        <span class="secondary">Humidity:</span>
+        <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.humidity]]%</span>
       </div>
     </div>
   </template>
@@ -149,12 +197,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
+      formatDate(val) {
+        return moment(val).format('M/D/YY, h:mm a');
+      }
+
       convertCtoF(val) {
         return Math.round((val * 9 / 5) + 32);
       }
 
       convertToLux(lightlevel) {
         return Math.round(Math.pow(10, ((lightlevel - 1) / 10000)));
+      }
+
+      isTrue(val) {
+        if (val === true) {
+          return 'is-true';
+        }
+        return 'is-false';
       }
     }
 
