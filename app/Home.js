@@ -11,6 +11,7 @@ const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
 const moment = require('moment');
 const log = require('./SystemLog2');
+const Logging = require('./Logging');
 const GCMPush = require('./GCMPush');
 const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
@@ -44,6 +45,7 @@ function Home(initialConfig, fbRef) {
   let harmony;
   let hue;
   let googleHome;
+  let logging;
   let nanoLeaf;
   let nest;
   let presence;
@@ -1327,165 +1329,15 @@ function Home(initialConfig, fbRef) {
    */
   function _initCron() {
     try {
+      logging = new Logging(_fb.child('logs/cron'));
       const CronJob = require('cron').CronJob;
       const cronSchedule = '0 0,5,10,15,20,25,30,35,40,45,50,55 * * * *';
       new CronJob(cronSchedule, () => {
-        _onCronTick();
+        logging.saveData(_self.state);
       }, null, true, 'America/New_York');
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize Cron', ex);
     }
-  }
-
-  /**
-   * Gets the sensor data from the Hue Motion Sensor
-   * @param {number} tempId
-   * @param {number} motionId
-   * @param {number} lightId
-   * @return {Object}
-   */
-  function getHueSensorData(tempId, motionId, lightId) {
-    if (!_self.state.hue || !_self.state.hue.sensors) {
-      return null;
-    }
-    const result = {};
-    const sensors = _self.state.hue.sensors;
-    if (sensors[tempId]) {
-      result.temperature = sensors[tempId].state.temperature / 100;
-      result.lastUpdated = sensors[tempId].state.lastupdated;
-    }
-    if (sensors[motionId]) {
-      result.presence = sensors[motionId].state.presence;
-    }
-    if (sensors[lightId]) {
-      result.daylight = sensors[lightId].state.daylight;
-      result.dark = sensors[lightId].state.dark;
-      result.lightLevel = sensors[lightId].state.lightlevel;
-    }
-    return result;
-  }
-
-  /**
-   * Cron Tick
-   */
-  function _onCronTick() {
-    log.verbose(LOG_PREFIX, 'CRON: tick');
-    const now = Date.now();
-    const nowPretty = log.formatTime(now);
-    const msg = {
-      date: now,
-      date_: nowPretty,
-    };
-
-    // Store system state.
-    if (_self.state.systemState) {
-      msg.systemState = _self.state.systemState;
-    }
-
-    // Store outside weather (temperature & humidity)
-    try {
-      if (_self.state.weather && _self.state.weather.now) {
-        msg.weather = {};
-        const weatherNow = _self.state.weather.now;
-        if (weatherNow.hasOwnProperty('humidity')) {
-          const humidity = Math.round(weatherNow.humidity * 100);
-          msg.weather.humidity = humidity;
-        }
-        if (weatherNow.hasOwnProperty('temperature')) {
-          const temperature = Math.round(weatherNow.temperature);
-          msg.weather.temperature = temperature;
-        }
-        if (weatherNow.hasOwnProperty('summary')) {
-          msg.weather.summary = weatherNow.summary;
-        }
-      }
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'CRON: Unable to store weather info', ex);
-    }
-
-    // Store Harmony activity info
-    try {
-      if (_self.state.harmony && _self.state.harmony.activity) {
-        msg.harmonyActivity = {
-          id: _self.state.harmony.activity.id,
-          label: _self.state.harmony.activity.label,
-        };
-      }
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'CRON: Unable to store TiVo info', ex);
-    }
-
-    // Store Nest temperature & humidity
-    try {
-      if (_self.state.nest) {
-        const keys = Object.keys(_self.state.nest.devices.thermostats);
-        msg.thermostats = {};
-        keys.forEach((k) => {
-          const t = _self.state.nest.devices.thermostats[k];
-          msg.thermostats[k] = {
-            name: t['name'],
-            temperature: t['ambient_temperature_f'],
-            humidity: t['humidity'],
-            mode: t['hvac_mode'],
-          };
-        });
-      }
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'CRON: Unable to store Thermostat info', ex);
-    }
-
-    // Store Nest protect data
-    try {
-      if (_self.state.nest) {
-        const keys = Object.keys(_self.state.nest.devices.smoke_co_alarms);
-        msg.nestProtect = {};
-        keys.forEach((k) => {
-          const t = _self.state.nest.devices.smoke_co_alarms[k];
-          msg.nestProtect[k] = {
-            name: t['name'],
-            battery: t['battery_health'],
-            alarms: {
-              co: t['co_alarm_state'],
-              smoke: t['smoke_alarm_state'],
-            },
-            isOnline: t['is_online'],
-            lastUpdated: t['last_connection'],
-            uiColor: t['ui_color_state'],
-          };
-        });
-      }
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'CRON: Unable to store Thermostat Protect', ex);
-    }
-
-    // Store presence data
-    try {
-      if (_self.state.presence && _self.state.presence.people) {
-        const keys = Object.keys(_self.state.presence.people);
-        msg.presence = {};
-        keys.forEach((k) => {
-          msg.presence[k] = _self.state.presence.people[k].state;
-        });
-      }
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'CRON: Unable to store presence info', ex);
-    }
-
-    // Store hue sensor data
-    try {
-      msg.hueData = {
-        BA: getHueSensorData(10, 11, 12),
-        BR: getHueSensorData(31, 29, 30),
-        LR: getHueSensorData(27, 25, 26),
-      };
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'CRON: Unable to store hue info', ex);
-    }
-
-    log.debug(LOG_PREFIX, 'CRON Data saved', msg);
-
-    // Push to server
-    _fbPush('logs/cron', msg);
   }
 
 
