@@ -6,9 +6,9 @@ const log = require('./SystemLog2');
  * Logging API.
  * @constructor
  *
- * @param {Object} fbRoot Firebase root to save log to.
+ * @param {Object} fbRef Firebase root to save log to.
 */
-function Logging(fbRoot) {
+function Logging(fbRef) {
   const LOG_PREFIX = 'LOGGING';
 
   /**
@@ -18,7 +18,7 @@ function Logging(fbRoot) {
    */
   this.saveData = function(state) {
     log.verbose(LOG_PREFIX, 'saveData');
-    if (!fbRoot) {
+    if (!fbRef) {
       log.error(LOG_PREFIX, 'Firebase root not set.');
       return;
     }
@@ -68,15 +68,24 @@ function Logging(fbRoot) {
 
     // Store Hue sensor data.
     if (state.hue && state.hue.sensors) {
-      value.hueData = {
-        BA: _getHueSensorData(state.hue.sensors, 10, 11, 12),
-        BR: _getHueSensorData(state.hue.sensors, 31, 29, 30),
-        LR: _getHueSensorData(state.hue.sensors, 27, 25, 26),
-      };
+      const result = {};
+      const sensors = state.hue.sensors;
+      if (sensors[10] && sensors[11] && sensors[12]) {
+        result.BA = _getHueSensorData(state.hue.sensors, 10, 11, 12);
+      }
+      if (sensors[29] && sensors[30] && sensors[31]) {
+        result.BR = _getHueSensorData(state.hue.sensors, 31, 29, 30);
+      }
+      if (sensors[27] && sensors[25] && sensors[26]) {
+        result.LR = _getHueSensorData(state.hue.sensors, 27, 25, 26);
+      }
+      if (Object.keys(result).length > 0) {
+        value.hueData = result;
+      }
     }
 
     try {
-      fbRoot.push(value, (err) => {
+      fbRef.push(value, (err) => {
         if (err) {
           log.exception(LOG_PREFIX, 'Error saving to Firebase [1]', err);
           return;
@@ -184,14 +193,17 @@ function Logging(fbRoot) {
    */
   function _getHueSensorData(sensors, tempId, motionId, lightId) {
     const result = {};
-    if (sensors[tempId]) {
-      result.temperature = sensors[tempId].state.temperature / 100;
-      result.lastUpdated = sensors[tempId].state.lastupdated;
+    const sTemp = sensors[tempId];
+    if (sTemp && sTemp.state && sTemp.state.hasOwnProperty('temperature')) {
+      result.temperature = sTemp.state.temperature / 100;
+      result.lastUpdated = sTemp.state.lastupdated;
     }
-    if (sensors[motionId]) {
-      result.presence = sensors[motionId].state.presence;
+    const sMotion = sensors[motionId];
+    if (sMotion && sMotion.state && sMotion.state.hasOwnProperty('presence')) {
+      result.presence = sMotion.state.presence;
     }
-    if (sensors[lightId]) {
+    const sLight = sensors[lightId];
+    if (sLight && sLight.state && sLight.state.hasOwnProperty('lightlevel')) {
       result.daylight = sensors[lightId].state.daylight;
       result.dark = sensors[lightId].state.dark;
       result.lightLevel = sensors[lightId].state.lightlevel;
