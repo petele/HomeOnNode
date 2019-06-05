@@ -112,22 +112,30 @@ function GCMPush(fb) {
     if (!message.tag) {
       message.tag = 'HoN-generic';
     }
+    if (message.uniqueTag) {
+      message.tag += `-${now}`;
+      delete message.uniqueTag;
+    }
     if (!message.id) {
-      message.id = 'HoN-' + now.toString();
+      message.id = `HoN-${now}`;
     }
     if (message.appendTime) {
       message.body += ' ' + moment().format('h:mm a (ddd MMM Mo)');
+      delete message.appendTime;
     }
-    const payload = JSON.stringify(message);
 
     // Set the options for the message
     const options = Object.assign({}, _options);
-    if (srcMessage.ttl) {
-      options.TTL = srcMessage.ttl;
+    if (message.ttl) {
+      options.TTL = message.ttl;
+      delete message.ttl;
     }
-    if (srcMessage.urgent) {
+    if (message.urgent) {
       options.headers['Urgency'] = 'high';
+      delete message.urgent;
     }
+
+    const payload = JSON.stringify(message);
 
     // Send the message
     log.debug(LOG_PREFIX, 'Sending notifications...', {message, options});
