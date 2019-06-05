@@ -51,5 +51,6 @@ self.addEventListener('push', function(event) {
 
   // eslint-disable-next-line no-console
   console.log('[PUSH] Show notification', {title, opts});
-  return self.registration.showNotification(title, opts);
+  const result = self.registration.showNotification(title, opts);
+  event.waitUntil(result);
 });
