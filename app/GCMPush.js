@@ -17,7 +17,10 @@ const LOG_PREFIX = 'GCMPush';
 function GCMPush(fb) {
   const _fb = fb;
   const _self = this;
-  const _options = {};
+  const _options = {
+    TTL: 3600,
+    headers: {},
+  };
   let _sendReady = false;
   const _subscribers = {};
 
@@ -29,16 +32,13 @@ function GCMPush(fb) {
     _fb.child('config/GCMPush').once('value', (snapshot) => {
       const config = snapshot.val();
       _options.vapidDetails = {
-        subject: 'mailto:petele@gmail.com',
+        subject: config.vapidKeys.subject,
         privateKey: config.vapidKeys.private,
         publicKey: config.vapidKeys.public,
       };
-      _options.TTL = config.ttl || 3600;
-      Object.keys(config.subscribers).forEach((key) => {
-        _addSubscriber(key, config.subscribers[key]);
-      });
-      _sendReady = true;
-      _self.emit('ready');
+      if (config.hasOwnProperty('ttl')) {
+        _options.TTL = config.ttl;
+      }
     }).then(() => {
       const fbPath = 'config/GCMPush/subscribers';
       _fb.child(fbPath).on('child_added', (snapshot) => {
@@ -48,6 +48,11 @@ function GCMPush(fb) {
       _fb.child(fbPath).on('child_removed', (snapshot) => {
         _removeSubscriber(snapshot.key());
       });
+    }).then(() => {
+      setTimeout(() => {
+        _sendReady = true;
+        _self.emit('ready');
+      }, 1000);
     });
   }
 
@@ -99,10 +104,11 @@ function GCMPush(fb) {
       log.error(LOG_PREFIX, 'sendMessage() failed, not ready.');
       return Promise.reject(new Error('not_ready'));
     }
+
+    // Generate the message
     const message = Object.assign({}, srcMessage);
     const now = Date.now();
     message.sentAt = now;
-    log.debug(LOG_PREFIX, 'Sending notifications...', message);
     if (!message.tag) {
       message.tag = 'HoN-generic';
     }
@@ -114,6 +120,17 @@ function GCMPush(fb) {
     }
     const payload = JSON.stringify(message);
 
+    // Set the options for the message
+    const options = Object.assign({}, _options);
+    if (srcMessage.ttl) {
+      options.TTL = srcMessage.ttl;
+    }
+    if (srcMessage.urgent) {
+      options.headers['Urgency'] = 'high';
+    }
+
+    // Send the message
+    log.debug(LOG_PREFIX, 'Sending notifications...', {message, options});
     const promises = [];
     Object.keys(_subscribers).forEach((key) => {
       if (!_subscribers[key]) {
@@ -122,13 +139,14 @@ function GCMPush(fb) {
       const shortKey = _subscribers[key].shortKey;
       const subscriber = _subscribers[key].subscriptionInfo;
       const fbPath = `config/GCMPush/subscribers/${key}`;
-      const promise = webpush.sendNotification(subscriber, payload, _options)
+
+      const promise = webpush.sendNotification(subscriber, payload, options)
           .then((resp) => {
             log.debug(LOG_PREFIX, `Message sent to ${shortKey}`, resp);
             return _fb.child(`${fbPath}/lastResult`).set(resp);
           })
           .catch((err) => {
-            if (err.statusCode === 410) {
+            if (err.statusCode === 410 || err.statusCode === 404) {
               log.error(LOG_PREFIX, `Removed: ${shortKey}`, err.body);
               return _fb.child(fbPath).remove();
             }

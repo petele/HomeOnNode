@@ -23,8 +23,11 @@ if (hostname.indexOf('.') >= 0) {
 const DEFAULT_MESSAGE = {
   title: `${hostname} - Error`,
   body: 'Something unexpected happened at',
-  tag: 'HoN-unexpected',
+  tag: `HoN-error-${Date.now()}`,
   appendTime: true,
+  urgent: true,
+  requireInteraction: true,
+  renotify: true,
 };
 
 /**
