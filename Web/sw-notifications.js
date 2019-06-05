@@ -9,7 +9,7 @@ self.addEventListener('push', function(event) {
     icon: '/images/athome-192.png',
     tag: `HoN-local-${Date.now()}`,
     badge: '/images/ic_home_black_2x_web_48dp.png',
-    vibrate: [200, 80, 200, 80, 200],
+    vibrate: [500, 100, 150],
   };
 
   let data;
@@ -18,9 +18,6 @@ self.addEventListener('push', function(event) {
   } catch (ex) {
     console.error('[PUSH] Unabled to jsonify data:', ex);
   }
-
-  // eslint-disable-next-line no-console
-  console.log('[PUSH] Message', data);
 
   if (data && typeof data === 'object') {
     if (data.title) {
@@ -52,13 +49,7 @@ self.addEventListener('push', function(event) {
     }
   }
 
-  const promiseChain = self.registration.showNotification(title, opts)
-      .then(() => {
-        opts._title = title;
-        // eslint-disable-next-line no-console
-        console.log('[PUSH] Notification shown.', opts);
-      }).catch((err) => {
-        console.error('[PUSH] Unable to show notification.', err);
-      });
-  event.waitUntil(promiseChain);
+  // eslint-disable-next-line no-console
+  console.log('[PUSH] Show notification', {title, opts});
+  return self.registration.showNotification(title, opts);
 });
