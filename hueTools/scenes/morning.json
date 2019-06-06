@@ -3,12 +3,12 @@
   "roomId": 0,
   "transitionTime": 20,
   "scenes": [
-    "dimmers/ba-off.json",
-    "dimmers/br-day.json",
-    "dimmers/fh-morning.json",
-    "dimmers/ki-morning.json",
-    "dimmers/ks-morning.json",
-    "dimmers/lr-morning.json"
+    "scenes/bathroom/ba-off.json",
+    "scenes/bedroom/br-day.json",
+    "scenes/front-hall/fh-morning.json",
+    "scenes/kitchen/ki-morning.json",
+    "scenes/kitchen/ks-morning.json",
+    "scenes/living-room/lr-morning.json"
   ],
   "sceneId": "03ctDkNtuu5ryjY"
 }
