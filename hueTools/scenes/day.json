@@ -2,10 +2,10 @@
   "sceneName": "Day",
   "roomId": 0,
   "scenes": [
-    "dimmers/ba-off.json",
-    "dimmers/fh-morning.json",
-    "dimmers/ki-morning.json",
-    "dimmers/ks-morning.json",
+    "scenes/bathroom/ba-off.json",
+    "scenes/front-hall/fh-morning.json",
+    "scenes/kitchen/ki-morning.json",
+    "scenes/kitchen/ks-morning.json",
     "dimmers/lr-morning.json"
   ],
   "sceneId": "UtGU7mKHPIHkzuA"

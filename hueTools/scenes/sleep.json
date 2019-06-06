@@ -3,14 +3,14 @@
   "roomId": 0,
   "transitionTime": 50,
   "scenes": [
-    "dimmers/ba-off.json",
-    "dimmers/br-off.json",
-    "dimmers/bs-reading.json",
-    "dimmers/fh-night-light.json",
-    "dimmers/ki-off.json",
-    "dimmers/ki-night-light.json",
-    "dimmers/ks-off.json",
-    "dimmers/lr-night-light.json"
+    "scenes/bathroom/ba-off.json",
+    "scenes/bedroom/br-off.json",
+    "scenes/bedroom/bs-reading.json",
+    "scenes/front-hall/fh-night-light.json",
+    "scenes/kitchen/ki-off.json",
+    "scenes/kitchen/ki-night-light.json",
+    "scenes/kitchen/ks-off.json",
+    "scenes/living-room/lr-night-light.json"
   ],
   "sceneId": "ktwBYTA7R3kJVB1"
 }
