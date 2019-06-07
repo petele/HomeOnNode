@@ -1,5 +1,11 @@
 'use strict';
 
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const promiseChain = clients.openWindow(`/`);
+  event.waitUntil(promiseChain);
+});
+
 self.addEventListener('push', function(event) {
   // eslint-disable-next-line no-console
   console.log('[PUSH] Message received', event);
