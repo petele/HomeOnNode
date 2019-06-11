@@ -10,6 +10,7 @@ const Wemo = require('./Wemo');
 const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
 const moment = require('moment');
+const BedJet = require('./BedJet');
 const log = require('./SystemLog2');
 const Logging = require('./Logging');
 const GCMPush = require('./GCMPush');
@@ -40,6 +41,7 @@ function Home(initialConfig, fbRef) {
   const _fb = fbRef;
 
   let alarmClock;
+  let bedJet;
   let bluetooth;
   let gcmPush;
   let harmony;
@@ -221,6 +223,22 @@ function Home(initialConfig, fbRef) {
     // No operation
     if (action.hasOwnProperty('noop')) {
       return _genResult(action, true, 'noop');
+    }
+
+    // BedJet
+    if (action.hasOwnProperty('bedJet')) {
+      if (!bedJet) {
+        log.error(LOG_PREFIX, 'bedJet unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      return bedJet.setState(action.bedJet)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: bedJet failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     // Do not disturb
@@ -734,6 +752,7 @@ function Home(initialConfig, fbRef) {
     _initWemo();
     _initCron();
     _initGoogleHome();
+    _initBedJet();
     setTimeout(function() {
       _self.emit('ready');
       _playSound(_config.readySound);
@@ -1285,6 +1304,35 @@ function Home(initialConfig, fbRef) {
       } else {
         log.error(LOG_PREFIX, 'Unknown alarm command', details);
       }
+    });
+  }
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * BedJet API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the BedJet API
+   */
+  function _initBedJet() {
+    _fbSet('state/bedJet', false);
+
+    const ip = _config.bedJet.ipAddress;
+    if (!ip) {
+      log.error(LOG_PREFIX, `BedJet unavailable, no IP address specified.`);
+      return;
+    }
+    bedJet = new BedJet(ip);
+    bedJet.on('ready', (bjState) => {
+      _fbSet('state/bedJet', bjState);
+    });
+    bedJet.on('change', (bjState) => {
+      _fbSet('state/bedJet', bjState);
+    });
+    bedJet.on('error', (err) => {
+      log.error(LOG_PREFIX, `Unknown BedJet error`, err);
     });
   }
 
