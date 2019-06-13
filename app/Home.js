@@ -9,6 +9,7 @@ const Nest = require('./Nest');
 const Wemo = require('./Wemo');
 const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
+const Awair = require('./Awair');
 const moment = require('moment');
 const BedJet = require('./BedJet');
 const log = require('./SystemLog2');
@@ -41,6 +42,7 @@ function Home(initialConfig, fbRef) {
   const _fb = fbRef;
 
   let alarmClock;
+  let awair;
   let bedJet;
   let bluetooth;
   let gcmPush;
@@ -753,6 +755,7 @@ function Home(initialConfig, fbRef) {
     _initCron();
     _initGoogleHome();
     _initBedJet();
+    _initAwair();
     setTimeout(function() {
       _self.emit('ready');
       _playSound(_config.readySound);
@@ -1306,6 +1309,37 @@ function Home(initialConfig, fbRef) {
       }
     });
   }
+
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Awair API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the Awair API
+   */
+  function _initAwair() {
+    _fbSet('state/awair', false);
+
+    const token = _config.awair.key;
+    if (!token) {
+      log.warn(LOG_PREFIX, 'Awair not available, no token.');
+      return;
+    }
+    awair = new Awair(token);
+    awair.on('device_found', (key, device) => {
+      _fbSet(`state/awair/${key}`, device);
+    });
+    awair.on('settings_changed', (key, settings) => {
+      _fbSet(`state/awair/${key}/settings`, settings);
+    });
+    awair.on('data_changed', (key, data) => {
+      _fbSet(`state/awair/${key}/data`, data);
+    });
+  }
+
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
