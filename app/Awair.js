@@ -12,6 +12,8 @@ const LOG_PREFIX = 'AWAIR';
  * Awair API.
  * @constructor
  *
+ * @see https://docs.developer.getawair.com/?version=latest
+ *
  * @param {String} token Authentication token.
  * @fires Awair#change
  * @fires Awair#error
