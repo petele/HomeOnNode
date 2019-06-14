@@ -227,6 +227,30 @@ function Home(initialConfig, fbRef) {
       return _genResult(action, true, 'noop');
     }
 
+    // Awair
+    if (action.hasOwnProperty('awair')) {
+      if (!awair) {
+        log.error(LOG_PREFIX, 'awair unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      const deviceName = action.awair.deviceName;
+      const deviceKey = awair.getDeviceKeyByName(deviceName);
+      if (!deviceKey) {
+        log.error(LOG_PREFIX, `AWAIR: Could not find ${deviceName}`);
+        return _genResult(action, false, 'device_not_found');
+      }
+      const deviceType = deviceKey.deviceType;
+      const deviceId = deviceKey.deviceId;
+      return awair.updateSettings(deviceType, deviceId, action.awair)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: Awair failed.`, err);
+            return _genResult(action, false, err);
+          });
+    }
+
     // BedJet
     if (action.hasOwnProperty('bedJet')) {
       if (!bedJet) {

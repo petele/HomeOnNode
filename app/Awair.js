@@ -27,6 +27,13 @@ function Awair(token) {
   const REFRESH_INTERVAL_AIR_DATA = 5 * 60 * 1000;
   const REFRESH_INTERVAL_SETTINGS = 10 * 60 * 1000;
 
+  const DISPLAY_MODES = [
+    'score', 'temp', 'humid', 'co2', 'voc', 'pm25', 'clock',
+  ];
+  const LED_MODES = [
+    'auto', 'manual', 'sleep',
+  ];
+
   this.dataStore = {};
 
   /**
@@ -198,6 +205,10 @@ function Awair(token) {
    * @param {String} deviceType
    * @param {String} deviceId
    * @param {Object} settings
+   * @param {String} [settings.display]
+   * @param {Object} [settings.led]
+   * @param {String} settings.led.mode
+   * @param {Number} [settings.led.brightness]
    * @return {Promise} Array with the result of the settings update.
    */
   this.updateSettings = function(deviceType, deviceId, settings) {
@@ -205,27 +216,56 @@ function Awair(token) {
     log.verbose(LOG_PREFIX, msg, settings);
     const promises = [];
     if (settings.hasOwnProperty('display')) {
-      promises.push(_setDisplay(deviceType, deviceId, settings.display));
-    }
-    if (settings.hasOwnProperty('knocking')) {
-      promises.push(_setKnocking(deviceType, deviceId, settings.knocking));
+      const value = settings.display;
+      if (DISPLAY_MODES.includes(value)) {
+        promises.push(_setDisplay(deviceType, deviceId, value));
+      }
     }
     if (settings.hasOwnProperty('led')) {
-      promises.push(_setLED(deviceType, deviceId, settings.led));
+      const ledMode = settings.led.mode;
+      const brightness = settings.led.brightness;
+      if (LED_MODES.includes(ledMode)) {
+        promises.push(_setLED(deviceType, deviceId, ledMode, brightness));
+      }
     }
     return Promise.all(promises);
+  };
+
+  /**
+   * Gets an Awair device by it's name.
+   *
+   * @param {String} deviceName
+   * @return {Object}
+   */
+  this.getDeviceKeyByName = function(deviceName) {
+    let result = null;
+    const keys = Object.keys(_self.dataStore);
+    const len = keys.length;
+    for (let i = 0; i < len; i++) {
+      const key = keys[i];
+      const device = _self.dataStore[key];
+      if (device.name === deviceName) {
+        result = {
+          deviceType: device.deviceType,
+          deviceId: device.deviceId,
+          key: key,
+        };
+        break;
+      }
+    }
+    return result;
   };
 
   /**
    *
    * @param {String} deviceType
    * @param {String} deviceId
-   * @param {Object} mode
+   * @param {String} mode (score, temp, humid, co2, voc, pm25, clock)
    * @return {Promise}
    */
   function _setDisplay(deviceType, deviceId, mode) {
     const key = `${deviceType}/${deviceId}`;
-    const msg = `setDisplay('${deviceType}', '${deviceId}', {...})`;
+    const msg = `setDisplay('${deviceType}', '${deviceId}', '${mode}')`;
     log.debug(LOG_PREFIX, msg, mode);
     const path = `/devices/${deviceType}/${deviceId}/display`;
     return _makeAwairRequest(path, 'PUT', mode)
@@ -250,46 +290,25 @@ function Awair(token) {
    *
    * @param {String} deviceType
    * @param {String} deviceId
-   * @param {String} value
+   * @param {String} mode (auto, manual, sleep)
+   * @param {Number} [brightness]
    * @return {Promise}
    */
-  function _setKnocking(deviceType, deviceId, value) {
+  function _setLED(deviceType, deviceId, mode, brightness) {
     const key = `${deviceType}/${deviceId}`;
-    const msg = `setKnocking('${deviceType}', '${deviceId}', '${value}')`;
-    log.debug(LOG_PREFIX, msg);
-    const body = {mode: value};
-    const path = `/devices/${deviceType}/${deviceId}/knocking`;
-    return _makeAwairRequest(path, 'PUT', body)
-        .then((resp) => {
-          return _makeAwairRequest(path);
-        })
-        .then((newVal) => {
-          if (diff(_self.dataStore[key].settings.knocking, newVal.mode)) {
-            _self.dataStore[key].settings.knocking = newVal.mode;
-            _self.emit('settings_changed', key, _self.dataStore[key].settings);
-          }
-          return {knocking: true};
-        })
-        .catch((err) => {
-          const msg = `Unable to set 'knocking' for ${key}`;
-          log.exception(LOG_PREFIX, msg, err);
-          return {knocking: false};
-        });
-  }
+    const msg = `setLED('${deviceType}', '${deviceId}', `+
+        `'${mode}', ${brightness})`;
 
-  /**
-   *
-   * @param {String} deviceType
-   * @param {String} deviceId
-   * @param {Object} settings
-   * @return {Promise}
-   */
-  function _setLED(deviceType, deviceId, settings) {
-    const key = `${deviceType}/${deviceId}`;
-    const msg = `setLED('${deviceType}', '${deviceId}', {...})`;
-    log.debug(LOG_PREFIX, msg, settings);
+    const body = {
+      mode: mode,
+    };
+    brightness = parseInt(brightness);
+    if (isNaN(brightness) && brightness >= 0 && brightness <= 100) {
+      body.brightness = brightness;
+    }
+    log.debug(LOG_PREFIX, msg, body);
     const path = `/devices/${deviceType}/${deviceId}/led`;
-    return _makeAwairRequest(path, 'PUT', settings)
+    return _makeAwairRequest(path, 'PUT', body)
         .then((resp) => {
           return _makeAwairRequest(path);
         })
