@@ -2,7 +2,7 @@
   "sceneName": "Night Light",
   "roomId": 1,
   "scenes": [
-    "dimmers/fh-off.json"
+    "scenes/front-hall/fh-off.json"
   ],
   "lights": [
     {

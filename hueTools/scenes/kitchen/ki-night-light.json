@@ -2,7 +2,7 @@
   "sceneName": "Night Light",
   "roomId": 2,
   "scenes": [
-    "dimmers/ki-off.json"
+    "scenes/kitchen/ki-off.json"
   ],
   "lights": [
     {
