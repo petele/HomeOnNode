@@ -1349,7 +1349,7 @@ function Home(initialConfig, fbRef) {
 
     const token = _config.awair.key;
     if (!token) {
-      log.warn(LOG_PREFIX, 'Awair not available, no token.');
+      log.error(LOG_PREFIX, 'Awair unavailable, no token specified.');
       return;
     }
     awair = new Awair(token);
