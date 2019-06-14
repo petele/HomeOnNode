@@ -2,7 +2,7 @@
   "sceneName": "TV & Movies",
   "roomId": 4,
   "scenes": [
-    "dimmers/lr-off.json"
+    "scenes/living-room/lr-off.json"
   ],
   "lights": [
     {
