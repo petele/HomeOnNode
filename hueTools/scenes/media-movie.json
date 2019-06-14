@@ -1,0 +1,39 @@
+{
+  "sceneName": "Media - Movie",
+  "roomId": 0,
+  "transitionTime": 50,
+  "scenes": [
+    "scenes/bathroom/ba-night-high.json",
+    "scenes/bedroom/br-off.json",
+    "scenes/bedroom/bs-off.json",
+    "scenes/front-hall/fh-night-light.json",
+    "scenes/kitchen/ki-night-light.json",
+    "scenes/kitchen/ki-off.json",
+    "scenes/kitchen/ks-off.json",
+    "scenes/living-room/lr-tv-movies.json"
+  ],
+  "lights": [
+    {
+      "lightId": 30,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 128
+      }
+    },
+    {
+      "lightId": 33,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 64
+      }
+    },
+    {
+      "lightId": 34,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 64
+      }
+    }
+  ],
+  "sceneId": "mmA7TKAUi3RdAZJ"
+}

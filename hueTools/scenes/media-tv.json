@@ -1,0 +1,52 @@
+{
+  "sceneName": "Media - TV",
+  "roomId": 0,
+  "transitionTime": 60,
+  "scenes": [
+    "scenes/bathroom/ba-off.json",
+    "scenes/bedroom/br-off.json",
+    "scenes/bedroom/bs-off.json",
+    "scenes/front-hall/fh-off.json",
+    "scenes/kitchen/ki-off.json",
+    "scenes/kitchen/ks-off.json",
+    "scenes/living-room/lr-off.json"
+  ],
+  "lights": [
+    {
+      "lightId": 11,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 200
+      }
+    },
+    {
+      "lightId": 12,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 200
+      }
+    },
+    {
+      "lightId": 13,
+      "recipeName": "PURPLE",
+      "command": {
+        "bri": 200
+      }
+    },
+    {
+      "lightId": 18,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 27,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 64
+      }
+    }
+  ],
+  "sceneId": "1rv8F1G9Sm02qWK"
+}
