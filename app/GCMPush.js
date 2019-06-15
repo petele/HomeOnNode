@@ -120,7 +120,7 @@ function GCMPush(fb) {
       message.id = `HoN-${now}`;
     }
     if (message.appendTime) {
-      message.body += ' ' + moment().format('h:mm a (ddd MMM Mo)');
+      message.body += ' ' + moment().format('h:mm a (ddd MMM Do)');
       delete message.appendTime;
     }
 
