@@ -39,6 +39,10 @@ function NanoLeaf(key, ip, port) {
       return Promise.reject(new Error('not_ready'));
     }
 
+    if (command.hasOwnProperty('power')) {
+      return _setPower(command.power);
+    }
+
     if (command.hasOwnProperty('authorize')) {
       return _makeLeafRequest('new', 'POST')
           .then((resp) => {
@@ -114,28 +118,45 @@ function NanoLeaf(key, ip, port) {
       }
       log.verbose(LOG_PREFIX, msg, body);
       request(requestOptions, (error, response, respBody) => {
+        // Error with HTTP request
         if (error) {
           log.error(LOG_PREFIX, 'Request error', error);
           reject(error);
           return;
         }
+        // No response returned, this should "never" happen!
+        if (!response) {
+          log.error(LOG_PREFIX, 'No response available!');
+          reject(new Error('no_response'));
+          return;
+        }
         log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
-        if (response &&
-            response.statusCode !== 200 && response.statusCode !== 204) {
-          const m = `Invalid status code: ${response.statusCode}`;
-          log.error(LOG_PREFIX, m, respBody);
-          reject(new Error(`status_${response.statusCode}`));
+        // Good response received (200 or 204)
+        if (response.statusCode === 200 || response.statusCode === 204) {
+          if (respBody && respBody.error) {
+            log.error(LOG_PREFIX, `NanoLeaf Error`, respBody);
+            reject(new Error('response_error'));
+            return;
+          }
+          if (requestPath !== '') {
+            _getState();
+          }
+          resolve({statusCode: response.statusCode, body: respBody});
           return;
         }
-        if (respBody && respBody.error) {
-          log.error(LOG_PREFIX, `Response error`, respBody);
-          reject(new Error('response_error'));
-          return;
+        // An error occured with our request.
+        const m = `Request failed (${response.statusCode})`;
+        const extra = {
+          msg: msg,
+          requestOpts: requestOptions,
+          statusCode: response.statusCode,
+        };
+        if (respBody) {
+          extra.respBody = respBody;
         }
-        if (requestPath !== '') {
-          _getState();
-        }
-        resolve({statusCode: response.statusCode, body: respBody});
+        log.error(LOG_PREFIX, m, extra);
+        reject(new Error(`status_${response.statusCode}`));
+        return;
       });
     });
   }
@@ -199,13 +220,13 @@ function NanoLeaf(key, ip, port) {
    * Turns the NanoLeaf on/off.
    *   PUT /api/v1/auth_token/state {"on": {"value": true}}
    *
-   * @param {Boolean} turnOn On/Off.
+   * @param {Boolean} val On/Off.
    * @return {Promise} A promise that resolves to the response.
   */
-  function _setPower(turnOn) {
-    const msg = `setPower(${turnOn})`;
+  function _setPower(val) {
+    const msg = `setPower(${val})`;
     log.debug(LOG_PREFIX, msg);
-    const body = {on: turnOn};
+    const body = {on: {value: val}};
     return _makeLeafRequest('state', 'PUT', body);
   }
 
