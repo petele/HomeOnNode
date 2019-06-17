@@ -230,7 +230,7 @@ function Home(initialConfig, fbRef) {
     // Awair
     if (action.hasOwnProperty('awair')) {
       if (!awair) {
-        log.error(LOG_PREFIX, 'awair unavailable.');
+        log.error(LOG_PREFIX, 'Awair unavailable.');
         return _genResult(action, false, 'not_available');
       }
       const deviceName = action.awair.deviceName;
@@ -254,7 +254,7 @@ function Home(initialConfig, fbRef) {
     // BedJet
     if (action.hasOwnProperty('bedJet')) {
       if (!bedJet) {
-        log.error(LOG_PREFIX, 'bedJet unavailable.');
+        log.error(LOG_PREFIX, 'BedJet unavailable.');
         return _genResult(action, false, 'not_available');
       }
       return bedJet.setState(action.bedJet)
