@@ -158,7 +158,23 @@ function Awair(token) {
     const path = `/users/self/devices/`
         + `${deviceType}/${deviceId}/`
         + `air-data/latest${queryString}`;
-    return _makeAwairRequest(path);
+    return _makeAwairRequest(path).then((rawData) => {
+      const data = rawData.data[0];
+      const result = {
+        timeStamp: data.timestamp,
+        score: data.score,
+        sensors: {},
+      };
+      data.sensors.forEach((sensor) => {
+        const key = sensor.comp;
+        result.sensors[key] = {value: sensor.value};
+      });
+      data.indices.forEach((sensor) => {
+        const key = sensor.comp;
+        result.sensors[key].score = sensor.value;
+      });
+      return result;
+    });
   }
 
   /**
