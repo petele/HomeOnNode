@@ -223,7 +223,7 @@ function Awair(token) {
    * @param {Object} settings
    * @param {String} [settings.display]
    * @param {Object} [settings.led]
-   * @param {String} settings.led.mode
+   * @param {String} [settings.led.mode]
    * @param {Number} [settings.led.brightness]
    * @return {Promise} Array with the result of the settings update.
    */
@@ -284,7 +284,8 @@ function Awair(token) {
     const msg = `setDisplay('${deviceType}', '${deviceId}', '${mode}')`;
     log.debug(LOG_PREFIX, msg, mode);
     const path = `/devices/${deviceType}/${deviceId}/display`;
-    return _makeAwairRequest(path, 'PUT', mode)
+    const body = {mode: mode};
+    return _makeAwairRequest(path, 'PUT', body)
         .then((resp) => {
           return _makeAwairRequest(path);
         })
@@ -318,9 +319,11 @@ function Awair(token) {
     const body = {
       mode: mode,
     };
-    brightness = parseInt(brightness);
-    if (isNaN(brightness) && brightness >= 0 && brightness <= 100) {
-      body.brightness = brightness;
+    if (mode === 'manual') {
+      brightness = parseInt(brightness);
+      if (!isNaN(brightness) && brightness >= 0 && brightness <= 100) {
+        body.brightness = brightness;
+      }
     }
     log.debug(LOG_PREFIX, msg, body);
     const path = `/devices/${deviceType}/${deviceId}/led`;
@@ -366,6 +369,9 @@ function Awair(token) {
         bearer: _authToken,
       },
     };
+    if (body) {
+      requestOpts.body = body;
+    }
     return new Promise((resolve, reject) => {
       request(requestOpts, (error, response, respBody) => {
         if (error) {
