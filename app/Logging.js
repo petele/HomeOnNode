@@ -66,6 +66,20 @@ function Logging(fbRef) {
       value.presence = _getPresence(state.presence.people);
     }
 
+    // Store Awair data.
+    if (state.awair) {
+      try {
+        if (state.awair['awair-r2'] && state.awair['awair-r2']['11438']) {
+          const awair = state.awair['awair-r2']['11438'];
+          value.awair = {
+            BR: awair.data,
+          };
+        }
+      } catch (ex) {
+        log.exception(LOG_PREFIX, 'Unable to save Awair data.', ex);
+      }
+    }
+
     // Store Hue sensor data.
     if (state.hue && state.hue.sensors) {
       const result = {};
