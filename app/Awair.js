@@ -172,25 +172,25 @@ function Awair(token) {
   function _getSettings(deviceType, deviceId) {
     log.debug(LOG_PREFIX, `getSettings('${deviceType}', '${deviceId}')`);
     const displayMode = `/devices/${deviceType}/${deviceId}/display`;
-    const knockingMode = `/devices/${deviceType}/${deviceId}/knocking`;
     const ledMode = `/devices/${deviceType}/${deviceId}/led`;
-    const powerStatus = `/devices/${deviceType}/${deviceId}/power-status`;
+    // const knockingMode = `/devices/${deviceType}/${deviceId}/knocking`;
+    // const powerStatus = `/devices/${deviceType}/${deviceId}/power-status`;
     const promises = [];
     promises.push(_makeAwairRequest(displayMode));
-    promises.push(_makeAwairRequest(knockingMode));
     promises.push(_makeAwairRequest(ledMode));
-    promises.push(_makeAwairRequest(powerStatus));
+    // promises.push(_makeAwairRequest(knockingMode));
+    // promises.push(_makeAwairRequest(powerStatus));
     return Promise.all(promises)
         .then((settings) => {
           const results = {};
           if (settings[0] && settings[0].mode) {
             results.display = settings[0].mode;
           }
-          if (settings[1] && settings[1].mode) {
-            results.knocking = settings[1].mode;
+          if (settings[1]) {
+            results.led = settings[1];
           }
-          if (settings[2]) {
-            results.led = settings[2];
+          if (settings[2] && settings[2].mode) {
+            results.knocking = settings[2].mode;
           }
           if (settings[3]) {
             results.powerStatus = settings[3];
