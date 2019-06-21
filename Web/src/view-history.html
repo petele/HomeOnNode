@@ -1,0 +1,552 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="shared-styles.html">
+
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="view-history">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+        --app-grid-item-height: reset;
+      }
+      .app-grid { padding: 0; }
+      .app-grid div { margin: 0; }
+      .secondary {
+        color: var(--secondary-text-color);
+      }
+      .text-right { text-align: right; }
+      .card h3 {
+        margin-bottom: .25em;
+        margin-top: .25em;
+      }
+      .is-true {
+        /* font-weight: bold; */
+      }
+      .is-false {
+        display: none;
+        /* font-weight: 100;
+        color: var(--secondary-text-color); */
+      }
+      summary {
+        list-style: none;
+        cursor: pointer;
+        display: inline-block;
+        float: right;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      details {
+        min-height: 2em;
+      }
+      details > summary {
+        width: 100%;
+        height: 2em;
+        outline: none;
+      }
+      .hidden { display: none !important; }
+    </style>
+
+    <firebase-query
+      id="query"
+      data="{{fbData}}"
+      path="logs/cron"
+      limit-to-last="288">
+    </firebase-query>
+
+    <div class="card">
+      <h3>Home</h3>
+      <canvas id="canvasHome" class="hidden"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Bathroom</h3>
+      <paper-dropdown-menu label="View">
+        <paper-listbox
+          slot="dropdown-content"
+          class="dropdown-content"
+          attr-for-selected="value"
+          selected="{{rooms.bathroom.view}}">
+            <paper-item value="temperature">Temperature</paper-item>
+            <paper-item value="lux">Light level</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu>
+      <canvas id="canvasBA" class="hidden"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Bedroom</h3>
+      <paper-dropdown-menu label="View">
+        <paper-listbox
+          slot="dropdown-content"
+          class="dropdown-content"
+          attr-for-selected="value"
+          selected="{{rooms.bedroom.view}}">
+            <paper-item value="temperature">Temperature</paper-item>
+            <paper-item value="humidity">Humidity</paper-item>
+            <paper-item value="lux">Light level</paper-item>
+            <paper-item value="awairScore">Air quality</paper-item>
+            <paper-item value="co2">CO2 level</paper-item>
+            <paper-item value="pm25">PM2.5 level</paper-item>
+            <paper-item value="voc">VOC level</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu>
+      <canvas id="canvasBR" class="hidden"></canvas>
+    </div>
+
+    <div class="card">
+      <h3>Living Room</h3>
+      <paper-dropdown-menu label="View">
+          <paper-listbox
+            slot="dropdown-content"
+            class="dropdown-content"
+            attr-for-selected="value"
+            selected="{{rooms.livingroom.view}}">
+              <paper-item value="temperature">Temperature</paper-item>
+              <paper-item value="humidity">Humidity</paper-item>
+              <paper-item value="lux">Light level</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+      <canvas id="canvasLR" class="hidden"></canvas>
+    </div>
+
+  </template>
+
+  <script type="text/javascript"
+          src="../bower_components/chart.js/dist/Chart.js">
+  </script>
+
+  <script>
+    class HistoryView extends Polymer.Element {
+      static get is() { return 'view-history'; }
+
+      static get properties() {
+        return {
+          isReady: {
+            type: Boolean,
+            value: false,
+          },
+          fbData: Array,
+          data: Object,
+          rooms: {
+            type: Object,
+            value: {
+              home: {},
+              bathroom: {
+                view: 'temperature',
+              },
+              bedroom: {
+                view: 'temperature',
+              },
+              livingroom: {
+                view: 'temperature',
+              },
+            },
+          },
+        };
+      }
+
+      static get observers() {
+        return [
+          '_fbDataChanged(fbData.splices)',
+          '_homeViewChanged(rooms.home.view)',
+          '_baViewChanged(rooms.bathroom.view)',
+          '_brViewChanged(rooms.bedroom.view)',
+          '_lrViewChanged(rooms.livingroom.view)',
+        ];
+      }
+
+      ready() {
+        super.ready();
+        this.rooms.home.canvas = this.$.canvasHome;
+        this.rooms.bathroom.canvas = this.$.canvasBA;
+        this.rooms.bedroom.canvas = this.$.canvasBR;
+        this.rooms.livingroom.canvas = this.$.canvasLR;
+      }
+
+      _homeViewChanged() {
+        this._drawChart('home');
+      }
+
+      _baViewChanged() {
+        this._drawChart('bathroom');
+      }
+
+      _brViewChanged() {
+        this._drawChart('bedroom');
+      }
+
+      _lrViewChanged() {
+        this._drawChart('livingroom');
+      }
+
+      _fbDataChanged(change) {
+        if (!change && this.fbData.length === 0) {
+          return;
+        }
+        if (!change && this.fbData.length > 0) {
+          this._parseInitialData();
+          this.isReady = true;
+
+          this._drawChart('bathroom');
+          this._drawChart('bedroom');
+          this._drawChart('livingroom');
+
+          return;
+        }
+        if (change.indexSplices[0].addedCount) {
+          const i = this.fbData.length - 1;
+          const newItem = this.fbData[i];
+          this._addDataPoint(newItem);
+          if (this.rooms.home.chart) {
+            this.rooms.home.chart.update();
+          }
+          if (this.rooms.bathroom.chart) {
+            this.rooms.bathroom.chart.update();
+          }
+          if (this.rooms.bedroom.chart) {
+            this.rooms.bedroom.chart.update();
+          }
+          if (this.rooms.livingroom.chart) {
+            this.rooms.livingroom.chart.update();
+          }
+          return;
+        }
+      }
+
+      _getDefaultChartOpts(chartType) {
+        return {
+          type: chartType || 'line',
+          data: {
+            datasets: [{
+              label: '',
+              backgroundColor: '#3f51b5',
+              borderColor: '#3f51b5',
+              fill: false,
+              data: []
+            }],
+          },
+          options: {
+            responsive: true,
+            title: {display: false},
+            legend: {
+              display: true,
+            },
+            elements: {
+              point: {
+                radius: 0,
+                borderWidth: 0,
+                hitRadius: 1,
+                hoverRadius: 1,
+                hoverBorderWidth: 1,
+              },
+              line: {
+                borderWidth: 2,
+              },
+            },
+            scales: {
+              xAxes: [{
+                type: 'time',
+                display: true,
+                scaleLabel: {
+                  display: false,
+                },
+                ticks: {
+                  major: {
+                    fontStyle: 'bold',
+                    fontColor: '#ff0000',
+                  },
+                }
+              }],
+              yAxes: [{
+                display: true,
+                scaleLabel: {
+                  display: true,
+                  labelString: '',
+                },
+              }],
+            },
+          },
+        };
+      }
+
+      _fakePresenceData() {
+        this.fakePresence = [];
+        let state = 'HOME';
+        let now = Date.now();
+        for (let i = 0; i < 50; i++) {
+          if (i > 10 && i < 20) {
+            state = 'AWAY';
+          } else {
+            state = 'HOME';
+          };
+          const item = {
+            date: now,
+            presence: {
+              d9a2349582bd: state,
+            },
+          };
+          this.fakePresence.push(item);
+          now -= 1000 * 60 * 6;
+        }
+        this.fakePresence.reverse();
+      }
+
+      _parseInitialData() {
+        this.data = {
+          weather: {
+            humidity: {
+              data: [],
+              chartOpts: {
+                label: 'Outside Humidity',
+                yAxisLabel: 'Humidity (%)',
+              }
+            },
+            temperature: {
+              data: [],
+              chartOpts: {
+                label: 'Outside Temperature',
+                yAxisLabel: 'Temperature (F)',
+              },
+            },
+          },
+          bathroom: {
+            temperature: {
+              data: [],
+              chartOpts: {
+                label: 'Temperature (Hue)',
+                yAxisLabel: 'Temperature (F)',
+                min: 68,
+                max: 78,
+              },
+            },
+            lux: {
+              data: [],
+              chartOpts: {
+                label: 'Light Level (Hue)',
+                yAxisLabel: 'Lux',
+                min: 0,
+              },
+            },
+          },
+          livingroom: {
+            temperature: {
+              data: [],
+              chartOpts: {
+                label: 'Temperature (Nest)',
+                yAxisLabel: 'Temperature (F)',
+                min: 68,
+                max: 78,
+              },
+            },
+            humidity: {
+              data: [],
+              chartOpts: {
+                label: 'Humidity (Nest)',
+                yAxisLabel: 'Humidity (%)',
+              },
+            },
+            lux: {
+              data: [],
+              chartOpts: {
+                label: 'Light Level (Hue)',
+                yAxisLabel: 'Lux',
+                min: 0,
+              },
+            },
+          },
+          bedroom: {
+            temperature: {
+              data: [],
+              chartOpts: {
+                label: 'Temperature (Nest)',
+                yAxisLabel: 'Temperature (F)',
+                min: 68,
+                max: 78,
+              },
+            },
+            humidity: {
+              data: [],
+              chartOpts: {
+                label: 'Humidity (Awair)',
+                yAxisLabel: 'Humidity (%)',
+              }
+            },
+            awairScore: {
+              data: [],
+              chartOpts: {
+                label: 'Air Quality (Awair)',
+                yAxisLabel: 'Awair Score',
+              },
+            },
+            co2: {
+              data: [],
+              chartOpts: {
+                label: 'CO2 Levels (Awair)',
+                yAxisLabel: 'ppm',
+              },
+            },
+            pm25: {
+              data: [],
+              chartOpts: {
+                label: 'Fine Dust (Awair)',
+                yAxisLabel: 'μg/m3',
+                min: 0,
+              },
+            },
+            voc: {
+              data: [],
+              chartOpts: {
+                label: 'Chemicals (Awair)',
+                yAxisLabel: 'ppb',
+                min: 0,
+              },
+            },
+            lux: {
+              data: [],
+              chartOpts: {
+                label: 'Light Level (Hue)',
+                yAxisLabel: 'Lux',
+                min: 0,
+              },
+            },
+          }
+        };
+        this.fbData.forEach((item) => {
+          this._addDataPoint(item);
+        });
+      }
+
+      _addDataPoint(item) {
+        const time = item.date;
+        let t;
+        let value;
+
+        // Weather
+        //  - Humidity
+        value = item.weather.humidity;
+        this.data.weather.humidity.data.push({x: time, y: value});
+        //  - Temperature
+        value = item.weather.temperature;
+        this.data.weather.temperature.data.push({x: time, y: value});
+
+        // Bathroom
+        //  - Temperature (Hue)
+        t = item.hueData.BA.lastUpdated + 'Z';
+        value = this._convertCtoF(item.hueData.BA.temperature);
+        this.data.bathroom.temperature.data.push({x: t, y: value});
+        //  - Lux (Hue)
+        value = this._convertToLux(item.hueData.BA.lightLevel);
+        this.data.bathroom.lux.data.push({x: t, y: value});
+
+
+        // Bedroom
+        //  - Lux (Hue)
+        t = item.hueData.BA.lastUpdated + 'Z';
+        value = this._convertToLux(item.hueData.BR.lightLevel);
+        this.data.bedroom.lux.data.push({x: t, y: value});
+        //  - Temperature (Nest)
+        value = item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1'].temperature;
+        this.data.bedroom.temperature.data.push({x: time, y: value});
+        //  - Awair Score
+        t = item.awair.BR.timeStamp;
+        value = item.awair.BR.score;
+        this.data.bedroom.awairScore.data.push({x: t, y: value});
+        //  - Humidity (Awair)
+        value = item.awair.BR.sensors.humid.value;
+        this.data.bedroom.humidity.data.push({x: t, y: value});
+        //  - CO2 (Awair)
+        value = item.awair.BR.sensors.co2.value;
+        this.data.bedroom.co2.data.push({x: t, y: value});
+        //  - PM25 (Awair)
+        value = item.awair.BR.sensors.pm25.value;
+        this.data.bedroom.pm25.data.push({x: t, y: value});
+        //  - VOC (Awair)
+        value = item.awair.BR.sensors.voc.value;
+        this.data.bedroom.voc.data.push({x: t, y: value});
+
+
+        // Living Room
+        //  - Lux (Hue)
+        t = item.hueData.LR.lastUpdated + 'Z';
+        value = this._convertToLux(item.hueData.LR.lightLevel);
+        this.data.livingroom.lux.data.push({x: t, y: value});
+        //  - Temperature (Nest)
+        value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].temperature;
+        this.data.livingroom.temperature.data.push({x: time, y: value});
+        //  - Humidity (Nest)
+        value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].humidity;
+        this.data.livingroom.humidity.data.push({x: time, y: value});
+      }
+
+      _drawChart(room) {
+        if (this.isReady === false) {
+          return;
+        }
+        const roomObj = this.rooms[room];
+        if (!roomObj) {
+          console.error('roomObj not found', room);
+          return;
+        }
+        const view = roomObj.view;
+        const values = this.data[room][view].data;
+        const opts = this.data[room][view].chartOpts;
+
+        if (roomObj.chart) {
+          roomObj.chart.destroy();
+        }
+        const ctx = roomObj.canvas.getContext('2d');
+        const chartOpts = this._getDefaultChartOpts();
+        // chartOpts.options.color = function(context) {
+        //   console.log('yes', context);
+        // }
+        const chart = new Chart(ctx, chartOpts);
+        // chart.context.color = function(context) {
+        //   console.log('color', context);
+        // }
+        // console.log('chart', chart);
+        const dataset = chart.data.datasets[0];
+        dataset.label = opts.label || '';
+        dataset.data = values;
+        const yAxis = chart.options.scales.yAxes[0];
+        yAxis.ticks.suggestedMin = opts.min;
+        yAxis.ticks.suggestedMax = opts.max;
+        yAxis.scaleLabel.labelString = opts.yAxisLabel;
+        chart.update({duration: 400, easing: 'easeOutBounce'});
+
+        roomObj.canvas.classList.remove('hidden');
+        roomObj.chart = chart;
+
+      }
+
+      _convertCtoF(val) {
+        return Math.round((val * 9 / 5) + 32);
+      }
+
+      _convertToLux(lightlevel) {
+        return Math.round(Math.pow(10, ((lightlevel - 1) / 10000)));
+      }
+
+    }
+
+    window.customElements.define(HistoryView.is, HistoryView);
+  </script>
+</dom-module>
