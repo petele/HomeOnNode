@@ -49,6 +49,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="view-vpn-logs.html">
 <link rel="lazy-import" href="view-alarms.html">
 <link rel="lazy-import" href="view-info.html">
+<link rel="lazy-import" href="view-history.html">
 <link rel="lazy-import" href="view-remote.html">
 
 
@@ -118,6 +119,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <a name="door-logs" href="/door-logs">Door Logs</a>
           <a name="presence-logs" href="/presence-logs">Presence Logs</a>
           <a name="vpn-logs" href="/vpn-logs">VPN Logs</a>
+          <a name="history" href="/history">History</a>
         </iron-selector>
 
       </app-drawer>
@@ -167,6 +169,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <view-alarms name="alarms"></view-alarms>
           <view-info name="info"></view-info>
           <view-remote name="remote"></view-remote>
+          <view-history name="history"></view-history>
           <view-404 name="404"></view-404>
         </iron-pages>
         <paper-toast id="toast" text="Hello world!"></paper-toast>
@@ -203,6 +206,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         document.querySelector('.spinner-container')
           .classList.remove('spinner-container-visible');
         setInterval(() => {
+          if (window.location.hostname === 'localhost') {
+            return;
+          }
           let timeElapsed = (Date.now() - window.lastUserInput) / 1000;
           if (timeElapsed > 120 && this.page !== 'home') {
             window.history.pushState({}, null, '/');
