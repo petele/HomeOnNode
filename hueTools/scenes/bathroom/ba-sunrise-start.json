@@ -4,23 +4,23 @@
   "lights": [
     {
       "lightId": 24,
-      "recipeName": "REBECCA_PURPLE",
+      "recipeName": "PEACH",
       "command": {
-        "bri": 200
+        "bri": 50
       }
     },
     {
       "lightId": 25,
-      "recipeName": "PEACH",
+      "recipeName": "BLUE",
       "command": {
-        "bri": 200
+        "bri": 225
       }
     },
     {
       "lightId": 26,
       "recipeName": "REBECCA_PURPLE",
       "command": {
-        "bri": 175
+        "bri": 200
       }
     }
   ],
