@@ -241,7 +241,7 @@ function GoogleHome(ipAddress) {
    */
   function _getDeviceInfo() {
     const msg = `deviceInfo()`;
-    log.verbose(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
 
     const params = [
       'audio', 'build_info', 'detail', 'device_info', 'multizone', 'name',
@@ -276,7 +276,7 @@ function GoogleHome(ipAddress) {
       log.error(LOG_PREFIX, `${msg} failed, not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
-    log.verbose(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     return _getDeviceInfo();
   };
 
@@ -292,7 +292,7 @@ function GoogleHome(ipAddress) {
       log.error(LOG_PREFIX, `${msg} failed, not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
-    log.verbose(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     const url = '/setup/assistant/set_night_mode_params';
     const body = {
       enabled: isNight,
@@ -313,7 +313,7 @@ function GoogleHome(ipAddress) {
       log.error(LOG_PREFIX, `${msg} failed, not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
-    log.verbose(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     const url = '/setup/assistant/notifications';
     const body = {
       notifications_enabled: !doNotDisturb,
@@ -332,7 +332,7 @@ function GoogleHome(ipAddress) {
       log.error(LOG_PREFIX, `${msg} failed, not ready.`);
       return Promise.reject(new Error('not_ready'));
     }
-    log.verbose(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg);
     const url = '/setup/assistant/notifications';
     return _makeRequest('POST', url);
   };
