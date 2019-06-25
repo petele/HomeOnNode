@@ -115,6 +115,7 @@
       url: 'ws://rpi-server:8881',
       reconnect: true,
       reconnectTimeout: 3000,
+      maxLevel: 500,
     };
 
     function openSocket(url) {
@@ -198,6 +199,9 @@
     }
 
     function _printLog(logObj) {
+      if (logObj.levelValue > viewerOpts.maxLevel) {
+        return;
+      }
       let runPrettyPrint = false;
 
       const cellDate = document.createElement('td');
