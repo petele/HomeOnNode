@@ -370,7 +370,8 @@ function Hue(key, explicitIPAddress) {
    * @return {Promise} A promise that resolves with the response
   */
   function _makeHueRequest(requestPath, method, body, retry) {
-    const msg = `makeHueRequest('${method}', '${requestPath}', body, ${retry})`;
+    const b = body ? 'body' : 'null';
+    const msg = `makeHueRequest('${method}', '${requestPath}', ${b}, ${retry})`;
     const requestId = _requestId++;
     _requestQueue[requestId] = {
       requestId: requestId,
@@ -409,7 +410,7 @@ function Hue(key, explicitIPAddress) {
           errors.push(error);
         }
         if (response && response.statusCode) {
-          log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
+          // log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
           if (response.statusCode !== 200) {
             const statusCodeError = {
               statusCode: response.statusCode,

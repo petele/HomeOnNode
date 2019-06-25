@@ -112,6 +112,7 @@ function HarmonyWS(ipAddress) {
       log.error(LOG_PREFIX, `${msg} failed, activity not found.`);
       return Promise.reject(new Error('activity_not_found'));
     }
+    log.debug(LOG_PREFIX, msg);
     return _self.setActivityById(activityId);
   };
 

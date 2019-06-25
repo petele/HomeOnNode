@@ -130,7 +130,7 @@ function NanoLeaf(key, ip, port) {
           reject(new Error('no_response'));
           return;
         }
-        log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
+        // log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
         // Good response received (200 or 204)
         if (response.statusCode === 200 || response.statusCode === 204) {
           if (respBody && respBody.error) {

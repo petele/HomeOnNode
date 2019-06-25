@@ -17,7 +17,7 @@ function Logging(fbRef) {
    * @param {Object} state The current systemState
    */
   this.saveData = function(state) {
-    log.verbose(LOG_PREFIX, 'saveData');
+    log.debug(LOG_PREFIX, 'saveData');
     if (!fbRef) {
       log.error(LOG_PREFIX, 'Firebase root not set.');
       return;
@@ -104,7 +104,7 @@ function Logging(fbRef) {
           log.exception(LOG_PREFIX, 'Error saving to Firebase [1]', err);
           return;
         }
-        log.debug(LOG_PREFIX, 'Logging Data saved', value);
+        log.verbose(LOG_PREFIX, 'Logging Data saved', value);
       });
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Error saving to Firebase [2]', ex);

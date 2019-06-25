@@ -181,7 +181,7 @@ function Tivo(ipAddress) {
     const cmd = _commandQueue.shift();
     log.verbose(LOG_PREFIX, `Sending command: ${cmd}`);
     _tivo.write(cmd + '\r', undefined, () => {
-      log.verbose(LOG_PREFIX, `Send complete`);
+      // log.verbose(LOG_PREFIX, `Send complete`);
       setTimeout(() => {
         _sendNextCommand();
       }, KEYPRESS_TIMEOUT);
