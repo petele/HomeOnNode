@@ -7,21 +7,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/google/code-prettify@master/loader/run_prettify.js?skin=sunburst&autorun=false"></script>
   <style>
-    body {
-      background-color: black;
-      color: #ccc;
+    html {
+      --background-color: #111111;
+      --text-primary: #F5F5F5; /* gray 100 */
+      --text-secondary: #BDBDBD; /* gray 400 */
+      --text-primary-alt: #CFD8DC; /* blue gray 100 */
     }
+    body {
+      background-color: var(--background-color);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    }
+
     pre {
-      display: inline-block;
+      font-family: 'Roboto Mono', monospace;
       margin: 0;
     }
-    pre, code {
-      font-family: 'Roboto Mono', monospace;
+    pre.prettyprint {
+      background-color: var(--background-color);
+      margin: inherit;
+      padding: inherit;
+      width: inherit;
     }
+    table {
+      border-spacing: 0;
+    }
+    th {
+      border-bottom: 1px solid var(--text-primary);
+      font-size: larger;
+      text-align: left;
+    }
+    td {
+      font-family: 'Roboto Mono', monospace;
+      vertical-align: top;
+    }
+
+    table th:last-child {
+      width: 100%;
+    }
+
+    th.message {
+      padding-left: 6px;
+    }
+    .date {
+      padding-right: 1em;
+      white-space: nowrap;
+    }
+    .level {
+      border-right-style: solid;
+      border-right-width: 2px;
+      padding-right: 1em;
+    }
+    .message {
+      padding-left: 0.25em;
+    }
+
+    details {
+      color: var(--text-secondary);
+      margin-left: 4px;
+    }
+    summary {}
+    .exception-message {
+      margin-left: 4px;
+      color: var(--text-primary-alt);
+    }
+    .exception-stack {}
+    .extra-string {
+      margin-left: 2px;
+      color: var(--text-primary-alt);
+    }
+
     .start, .init { color: #388e3c; /* green 700 */ }
-    .stop, .excpt, .fatal { color: #b71c1c;  /* red 900 */ }
-    .error { color: #f44336; /* red 500 */ }
+    .stop, .excpt, .fatal, .error { color: #f44336; /* red 500 */ }
     .warn { color: #ff9800; /* orange 500 */ }
     .info { color: #03a9f4; /* light blue 500 */ }
     .todo { color: #9c27b0; /* purple 500 */ }
@@ -31,33 +90,77 @@
 
 </head>
 <body>
-  <header>
-    <h1>Log Listener</h1>
-  </header>
 
-  <div id="log-container">
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th class="date">Date</th>
+        <th class="level">Level</th>
+        <th class="message"><span>Message</span></th>
+      </tr>
+    </thead>
+    <tbody id="table-body">
+    </tbody>
+  </table>
 
   <script>
     let _socket;
-    const logContainer = document.getElementById('log-container');
+
+    const tableBody = document.getElementById('table-body');
+
     const ERRORS = ['STOP', 'EXCPT', 'FATAL', 'ERROR'];
     const WARNINGS = ['WARN'];
 
     function openSocket(url) {
+      const msgStart = {
+        level: 'START',
+        date: Date.now(),
+        message: `[VIEWER] Log viewer started for '${url}'`,
+      };
+      _printLog(msgStart);
+
       _socket = new WebSocket(url);
+
       _socket.addEventListener('open', (e) => {
-        console.log('Connected');
+        const msgConnected = {
+          level: 'START',
+          date: Date.now(),
+          message: `[VIEWER] Connected to '${url}'`,
+        };
+        _printLog(msgConnected);
       });
+
       _socket.addEventListener('message', (e) => {
-        _printLog(e.data);
+        const data = JSON.parse(e.data);
+        _printLog(data);
       });
-      _socket.addEventListener('close', (e) => {
-        console.log('Socket Closed', e);
-        closeSocket();
-      });
+
       _socket.addEventListener('error', (e) => {
-        console.error('Socket Error', e);
+        const msgError = {
+          level: 'ERROR',
+          date: Date.now(),
+          message: `[VIEWER] WebSocket error, logged in console`,
+        }
+        _printLog(msgError);
+        console.error('Socket error', e);
+      });
+
+      _socket.addEventListener('close', (e) => {
+        const msgClose = {
+          level: 'STOP',
+          date: Date.now(),
+          message: `[VIEWER] WebSocket closed`,
+        };
+        if (e.code > 1000) {
+          msgClose.message += ' abnormally';
+          msgClose.extra = {
+            code: e.code,
+            reason: e.reason,
+            wasClean: e.wasClean,
+          };
+        }
+        _printLog(msgClose);
+        closeSocket();
       });
     }
 
@@ -69,60 +172,90 @@
     }
 
     function _printLog(logObj) {
-      const dtContainer = document.createElement('code');
-      const dt = moment(logObj.date).format('YYYY-MM-DDTHH:mm:ss.SSS');
-      dtContainer.textContent = dt;
+      let runPrettyPrint = false;
 
-      const lvlContainer = document.createElement('pre');
-      const level = ('     ' + logObj.level).slice(-5);
-      lvlContainer.textContent = level;
-      lvlContainer.classList.add(logObj.level.toLowerCase());
+      const cellDate = document.createElement('td');
+      cellDate.classList.add('date');
+      const dt = _formatDate(logObj.date);
+      cellDate.innerText = dt;
 
-      const msgContainer = document.createElement('code');
-      msgContainer.textContent = logObj.message;
+      const cellLevel = document.createElement('td');
+      cellLevel.classList.add('level');
+      const level = logObj.level;
+      cellLevel.textContent = level;
+      cellLevel.classList.add(level.toLowerCase());
 
-      const container = document.createElement('div');
-      container.appendChild(dtContainer);
-      container.appendChild(_getSeparator('|'));
-      container.appendChild(lvlContainer);
-      container.appendChild(_getSeparator('|'));
-      container.appendChild(msgContainer);
-
-      if (logObj.extra) {
-        const infoContainer = document.createElement('code');
-        infoContainer.textContent = '(i)';
-        infoContainer.classList.add('info');
-        container.appendChild(_getSeparator(' '));
-        container.appendChild(infoContainer);
-      }
+      const cellMessage = document.createElement('td');
+      cellMessage.classList.add('message');
+      const spanMessage = document.createElement('span');
+      spanMessage.textContent = logObj.message;
+      cellMessage.appendChild(spanMessage);
 
       if (logObj.exception) {
-        const infoContainer = document.createElement('code');
-        infoContainer.textContent = '(!)';
-        infoContainer.classList.add('error');
-        container.appendChild(_getSeparator(' '));
-        container.appendChild(infoContainer);
+        if (logObj.exception.message) {
+          const preMessage = document.createElement('pre');
+          preMessage.classList.add('exception-message');
+          preMessage.textContent = logObj.exception.message;
+          cellMessage.appendChild(preMessage);
+        }
+        if (logObj.exception.stack) {
+          const preStack = document.createElement('pre');
+          preStack.classList.add('exception-stack');
+          preStack.textContent = logObj.exception.stack;
+          const details = _createDetails('Stack Trace', preStack);
+          cellMessage.appendChild(details);
+        }
       }
 
-      logContainer.appendChild(container);
-      // const line = `${dt} | ${level} | ${logObj.message}`;
-      const line = dt;
-      const extra = logObj.exception || logObj.extra;
-      if (ERRORS.includes(logObj.level)) {
-        console.error(line, extra);
-      } else if (WARNINGS.includes(logObj.level)) {
-        console.warn(line, extra);
-      } else {
-        // console.log(line, extra);
+      if (logObj.extra) {
+        if (typeof logObj.extra === 'string') {
+          const preExtra = document.createElement('pre');
+          preExtra.classList.add('extra-string');
+          preExtra.textContent = logObj.extra;
+          cellMessage.appendChild(preExtra);
+        } else {
+          const preExtra = document.createElement('pre');
+          preExtra.classList.add('extra-object');
+          preExtra.classList.add('prettyprint');
+          preExtra.textContent = JSON.stringify(logObj.extra, null, 2);
+          const details = _createDetails('Object', preExtra);
+          cellMessage.appendChild(details);
+          runPrettyPrint = true;
+        }
       }
-      container.scrollIntoView();
+
+      const row = document.createElement('tr');
+      row.appendChild(cellDate);
+      row.appendChild(cellLevel);
+      row.appendChild(cellMessage);
+      tableBody.prepend(row);
+
+      if (runPrettyPrint) {
+        PR.prettyPrint();
+      }
     }
 
-    function _getSeparator(char) {
-      const sep = document.createElement('code');
-      sep.textContent = ` ${char} `;
-      return sep;
+    function _createDetails(heading, contents) {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.innerText = heading;
+      details.appendChild(summary);
+      details.appendChild(contents);
+      return details;
     }
+
+    function _formatDate(dt) {
+      return moment(dt).format('YYYY-MM-DDTHH:mm:ss.SSS');
+    }
+
+    // const temp1 = {
+    //   level: 'ERROR',
+    //   date: Date.now(),
+    //   message: '[WHAT] Hello world',
+    //   exception: {
+    //     message: 'this is the exception message',
+    //   },
+    // };
 
     openSocket('ws://rpi-server:8881');
   </script>
