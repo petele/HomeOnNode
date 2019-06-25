@@ -33,11 +33,15 @@
     }
     table {
       border-spacing: 0;
+      max-width: 100%;
     }
     th {
       border-bottom: 1px solid var(--text-primary);
       font-size: larger;
       text-align: left;
+    }
+    tr {
+      max-width: 100%;
     }
     td {
       font-family: 'Roboto Mono', monospace;
@@ -116,6 +120,7 @@
       reconnect: true,
       reconnectTimeout: 3000,
       maxLevel: 500,
+      maxRows: 500,
     };
 
     function openSocket(url) {
@@ -263,6 +268,7 @@
       if (runPrettyPrint) {
         PR.prettyPrint();
       }
+      _cleanupTable();
     }
 
     function _createDetails(heading, contents) {
@@ -276,6 +282,14 @@
 
     function _formatDate(dt) {
       return moment(dt).format('YYYY-MM-DDTHH:mm:ss.SSS');
+    }
+
+    function _cleanupTable() {
+      const rowCount = tableBody.rows.length;
+      if (rowCount > viewerOpts.maxRows) {
+        tableBody.removeChild(tableBody.lastElementChild);
+        _cleanupTable();
+      }
     }
 
     // const temp1 = {
