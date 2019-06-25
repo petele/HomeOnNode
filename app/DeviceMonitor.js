@@ -72,13 +72,10 @@ function DeviceMonitor(fb, deviceName) {
         hostname: _getHostname(),
         ipAddress: _getIPAddress(),
       },
-      memory: _getMemoryUsage(),
-      cpuUsage: process.cpuUsage(),
       restart: null,
       shutdown: null,
       exitDetails: null,
       argv: process.argv.join(' '),
-      processTitle: process.title,
       uptime: 0,
       uptime_: `starting...`,
     };
@@ -90,6 +87,7 @@ function DeviceMonitor(fb, deviceName) {
     _fb.child(`${_deviceName}/restart`).on('value', _restartRequest);
     _fb.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
     _fb.root().onAuth(_authChanged);
+    _getPiModelInfo();
     _heartbeatInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
     _ipAddressInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
     _initUncaught();
@@ -140,6 +138,46 @@ function DeviceMonitor(fb, deviceName) {
   }
 
   /**
+   *
+   */
+  function _getPiModelInfo() {
+    _readFile('/proc/device-tree/model')
+        .then((contents) => {
+          if (contents) {
+            log.log(_deviceName, 'CPU Model', contents);
+            _fb.child(`${_deviceName}/host/cpuModel`).set(contents);
+          }
+        })
+        .catch((err) => {});
+  }
+
+  /**
+   * Reads a file from the local file system.
+   *
+   * @param {String} filePath
+   * @return {Promise}
+   */
+  function _readFile(filePath) {
+    return new Promise((resolve, reject) => {
+      exec(`cat ${filePath}`, (err, stdOut, stdErr) => {
+        if (err) {
+          log.error(_deviceName, `readFile failed for ${filePath}`, err);
+          reject(err);
+          return;
+        }
+        if (stdErr) {
+          const msg = `readFile failed for ${filePath} (stdErr)`;
+          log.error(_deviceName, msg, stdErr);
+          reject(new Error('std_err'));
+          return;
+        }
+        resolve(stdOut);
+      });
+    });
+  }
+
+
+  /**
    * Heartbeat Tick
    */
   function _tickHeartbeat() {
@@ -153,8 +191,6 @@ function DeviceMonitor(fb, deviceName) {
       online: true,
       shutdownAt: null,
       exitDetails: null,
-      memory: _getMemoryUsage(),
-      cpuUsage: process.cpuUsage(),
       uptime: uptime,
       uptime_: uptime_,
     };
@@ -255,21 +291,6 @@ function DeviceMonitor(fb, deviceName) {
     }
     log.warn(_deviceName, 'Firebase client unauthenticated.');
   }
-
-  /**
-   * Gets the amount of memory used.
-   *
-   * @return {Object}
-   */
-  function _getMemoryUsage() {
-    const result = {};
-    const memUsage = process.memoryUsage();
-    Object.keys(memUsage).forEach((key) => {
-      result[key] = `${Math.round(memUsage[key] / 1024 / 1024 * 100) / 100} MB`;
-    });
-    return result;
-  }
-
 
   /**
    * Get's the hostname from the device.
