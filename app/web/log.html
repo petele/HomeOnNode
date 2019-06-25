@@ -105,17 +105,27 @@
 
   <script>
     let _socket;
+    let _reconnectTimer;
 
+    const WARNINGS = ['WARN'];
+    const ERRORS = ['STOP', 'EXCPT', 'FATAL', 'ERROR'];
     const tableBody = document.getElementById('table-body');
 
-    const ERRORS = ['STOP', 'EXCPT', 'FATAL', 'ERROR'];
-    const WARNINGS = ['WARN'];
+    const viewerOpts = {
+      url: 'ws://rpi-server:8881',
+      reconnect: true,
+      reconnectTimeout: 3000,
+    };
 
     function openSocket(url) {
+      if (_socket) {
+        closeSocket();
+      }
+
       const msgStart = {
         level: 'START',
         date: Date.now(),
-        message: `[VIEWER] Log viewer started for '${url}'`,
+        message: `[VIEWER] Connecting to '${url}'`,
       };
       _printLog(msgStart);
 
@@ -125,7 +135,7 @@
         const msgConnected = {
           level: 'START',
           date: Date.now(),
-          message: `[VIEWER] Connected to '${url}'`,
+          message: `[VIEWER] Connected`,
         };
         _printLog(msgConnected);
       });
@@ -139,7 +149,7 @@
         const msgError = {
           level: 'ERROR',
           date: Date.now(),
-          message: `[VIEWER] WebSocket error, logged in console`,
+          message: `[VIEWER] Error, logged in console`,
         }
         _printLog(msgError);
         console.error('Socket error', e);
@@ -149,7 +159,7 @@
         const msgClose = {
           level: 'STOP',
           date: Date.now(),
-          message: `[VIEWER] WebSocket closed`,
+          message: `[VIEWER] Closed`,
         };
         if (e.code > 1000) {
           msgClose.message += ' abnormally';
@@ -161,14 +171,30 @@
         }
         _printLog(msgClose);
         closeSocket();
+        if (viewerOpts.reconnect) {
+          reconnect();
+        }
       });
     }
 
+    /**
+     * Close the web socket
+     */
     function closeSocket() {
       if (_socket) {
         _socket.close();
         _socket = null;
       }
+    }
+
+    function reconnect() {
+      if (_reconnectTimer) {
+        clearTimeout(_reconnectTimer);
+      }
+      _reconnectTimer = setTimeout(() => {
+        _reconnectTimer = null;
+        openSocket(viewerOpts.url);
+      }, viewerOpts.reconnectTimeout);
     }
 
     function _printLog(logObj) {
@@ -257,7 +283,7 @@
     //   },
     // };
 
-    openSocket('ws://rpi-server:8881');
+    openSocket(viewerOpts.url);
   </script>
 
 </body>
