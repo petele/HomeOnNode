@@ -52,6 +52,10 @@ function HTTPServer(port) {
     res.sendFile(path.join(__dirname, '/web/favicon.ico'));
   });
 
+  exp.get('/logs', (req, res) => {
+    res.sendFile(path.join(__dirname, '/web/log.html'));
+  });
+
   exp.get('/sounds/:fileName', function(req, res) {
     const fileName = req.params.fileName;
     const opts = {

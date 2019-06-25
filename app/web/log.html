@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Logs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link href="https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+  <style>
+    body {
+      background-color: black;
+      color: #ccc;
+    }
+    pre {
+      display: inline-block;
+      margin: 0;
+    }
+    pre, code {
+      font-family: 'Roboto Mono', monospace;
+    }
+    .start, .init { color: #388e3c; /* green 700 */ }
+    .stop, .excpt, .fatal { color: #b71c1c;  /* red 900 */ }
+    .error { color: #f44336; /* red 500 */ }
+    .warn { color: #ff9800; /* orange 500 */ }
+    .info { color: #03a9f4; /* light blue 500 */ }
+    .todo { color: #9c27b0; /* purple 500 */ }
+    .debug { color: #0d47a1; /* blue 800 */ }
+    .extra { color: #546e7a; /* blue grey 600 */ }
+  </style>
+
+</head>
+<body>
+  <header>
+    <h1>Log Listener</h1>
+  </header>
+
+  <div id="log-container">
+  </div>
+
+  <script>
+    let _socket;
+    const logContainer = document.getElementById('log-container');
+    const ERRORS = ['STOP', 'EXCPT', 'FATAL', 'ERROR'];
+    const WARNINGS = ['WARN'];
+
+    function openSocket(url) {
+      _socket = new WebSocket(url);
+      _socket.addEventListener('open', (e) => {
+        console.log('Connected');
+      });
+      _socket.addEventListener('message', (e) => {
+        _printLog(e.data);
+      });
+      _socket.addEventListener('close', (e) => {
+        console.log('Socket Closed', e);
+        closeSocket();
+      });
+      _socket.addEventListener('error', (e) => {
+        console.error('Socket Error', e);
+      });
+    }
+
+    function closeSocket() {
+      if (_socket) {
+        _socket.close();
+        _socket = null;
+      }
+    }
+
+    function _printLog(logObj) {
+      const dtContainer = document.createElement('code');
+      const dt = moment(logObj.date).format('YYYY-MM-DDTHH:mm:ss.SSS');
+      dtContainer.textContent = dt;
+
+      const lvlContainer = document.createElement('pre');
+      const level = ('     ' + logObj.level).slice(-5);
+      lvlContainer.textContent = level;
+      lvlContainer.classList.add(logObj.level.toLowerCase());
+
+      const msgContainer = document.createElement('code');
+      msgContainer.textContent = logObj.message;
+
+      const container = document.createElement('div');
+      container.appendChild(dtContainer);
+      container.appendChild(_getSeparator('|'));
+      container.appendChild(lvlContainer);
+      container.appendChild(_getSeparator('|'));
+      container.appendChild(msgContainer);
+
+      if (logObj.extra) {
+        const infoContainer = document.createElement('code');
+        infoContainer.textContent = '(i)';
+        infoContainer.classList.add('info');
+        container.appendChild(_getSeparator(' '));
+        container.appendChild(infoContainer);
+      }
+
+      if (logObj.exception) {
+        const infoContainer = document.createElement('code');
+        infoContainer.textContent = '(!)';
+        infoContainer.classList.add('error');
+        container.appendChild(_getSeparator(' '));
+        container.appendChild(infoContainer);
+      }
+
+      logContainer.appendChild(container);
+      // const line = `${dt} | ${level} | ${logObj.message}`;
+      const line = dt;
+      const extra = logObj.exception || logObj.extra;
+      if (ERRORS.includes(logObj.level)) {
+        console.error(line, extra);
+      } else if (WARNINGS.includes(logObj.level)) {
+        console.warn(line, extra);
+      } else {
+        // console.log(line, extra);
+      }
+      container.scrollIntoView();
+    }
+
+    function _getSeparator(char) {
+      const sep = document.createElement('code');
+      sep.textContent = ` ${char} `;
+      return sep;
+    }
+
+    openSocket('ws://rpi-server:8881');
+  </script>
+
+</body>
+</html>
