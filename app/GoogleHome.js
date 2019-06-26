@@ -221,7 +221,7 @@ function GoogleHome(ipAddress) {
         requestOptions.body = body;
       }
       const msg = `makeRequest('${method}', '${requestPath}', body)`;
-      log.verbose(LOG_PREFIX, msg, requestOptions);
+      log.verbose(LOG_PREFIX, msg, body);
 
       request(requestOptions, (error, response, respBody) => {
         if (error) {
