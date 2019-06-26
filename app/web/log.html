@@ -14,11 +14,121 @@
       --text-primary: #F5F5F5; /* gray 100 */
       --text-secondary: #BDBDBD; /* gray 400 */
       --text-primary-alt: #CFD8DC; /* blue gray 100 */
+      max-width: 100%;
     }
     body {
       background-color: var(--background-color);
       color: var(--text-primary);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      max-width: 100%;
+    }
+    header h1 {
+      margin-bottom: 0.25em;
+    }
+    header div {
+      margin-bottom: 0.25em;
+    }
+
+    header input[type='number'] {
+      background-clip: padding-box;
+      background-color: var(--text-primary);
+      border: 1px solid var(--text-secondary);
+      border-radius: 0.2rem;
+      color: var(--background-color);
+      font-size: 0.875rem;
+      padding: 0.25rem 0.5rem;
+      width: 60px;
+    }
+
+    header .options {
+      display: flex;
+      flex-direction: row;
+      align-items: baseline;
+    }
+
+    header .options div {
+      margin-right: 1em;
+    }
+
+    header label {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    header button {
+      background-color:  #03a9f4;
+      border: 1px solid transparent;
+      border-radius: 0.2rem;
+      color: white;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      height: 32px;
+
+      min-width: 120px;
+      padding: 0.25rem 0.5rem;
+      text-align: center;
+      user-select: none;
+    }
+
+    header button.red {
+      background-color: #f44336;
+    }
+
+    header button[disabled] {
+      opacity: 0.5;
+    }
+
+    header select {
+      display: block;
+      font-size: 16px;
+      color: #444;
+      line-height: 1.4;
+      padding: 0.25em 2em 0.25em 0.5em;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      margin: 0;
+      border: 1px solid #aaa;
+      box-shadow: 0 1px 0 1px rgba(0,0,0,0.04);
+      border-radius: 0.5em;
+      -webkit-appearance: none;
+      background-color: #fff;
+      background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E'),
+        linear-gradient(to bottom, #ffffff 0%,#e5e5e5 100%);
+        background-repeat: no-repeat, repeat;
+      background-position: right .7em top 50%, 0 0;
+      background-size: .65em auto, 100%;
+    }
+
+    header select[disabled] {
+      opacity: 0.5;
+    }
+
+    table {
+      border-spacing: 0;
+      max-width: 100%;
+    }
+    thead, tbody {
+      max-width: 100%;
+    }
+    thead tr, tbody tr {
+      max-width: 100%;
+    }
+
+    .date {
+      padding-right: 1em;
+      white-space: nowrap;
+    }
+    .level {
+      border-right-style: solid;
+      border-right-width: 2px;
+      padding-right: 1em;
+    }
+    .message {
+      padding-left: 0.25em;
+      overflow-wrap: break-word;
+      word-break: break-word;
     }
 
     pre {
@@ -31,10 +141,7 @@
       padding: inherit;
       width: inherit;
     }
-    table {
-      border-spacing: 0;
-      max-width: 100%;
-    }
+
     th {
       border-bottom: 1px solid var(--text-primary);
       font-size: larger;
@@ -55,18 +162,6 @@
     th.message {
       padding-left: 6px;
     }
-    .date {
-      padding-right: 1em;
-      white-space: nowrap;
-    }
-    .level {
-      border-right-style: solid;
-      border-right-width: 2px;
-      padding-right: 1em;
-    }
-    .message {
-      padding-left: 0.25em;
-    }
 
     details {
       color: var(--text-secondary);
@@ -83,6 +178,8 @@
       color: var(--text-primary-alt);
     }
 
+    .hidden { display: none !important; }
+
     .start, .init { color: #388e3c; /* green 700 */ }
     .stop, .excpt, .fatal, .error { color: #f44336; /* red 500 */ }
     .warn { color: #ff9800; /* orange 500 */ }
@@ -90,10 +187,68 @@
     .todo { color: #9c27b0; /* purple 500 */ }
     .debug { color: #0d47a1; /* blue 800 */ }
     .extra { color: #546e7a; /* blue grey 600 */ }
+
+
   </style>
 
 </head>
 <body>
+
+  <header>
+    <h1>Log Listener</h1>
+    <div style="display:none;">
+      <span id="spanConnectionState">Disconnected...</span>
+      <span id="spanServerName"></span>
+    </div>
+    <div class="options">
+      <div>
+        <button id="butConnect" type="button">Connect</button>
+      </div>
+      <div>
+        <label for="selectServer" class="hidden">
+          Server
+        </label>
+        <select id="selectServer">
+          <option value="ws://rpi-server:8881" selected>HoN Server</option>
+          <option value="ws://rpi-bedside:8881">Bedside</option>
+          <option value="ws://rpi-doorbell:8881">Doorbell</option>
+          <option value="ws://rpi-flic:8881">Flic</option>
+          <option value="ws://rpi-front-door:8881">Front Door</option>
+          <option value="ws://rpi-vpn:8881">VPN</option>
+        </select>
+      </div>
+      <div>
+        <label for="selectMaxLevel" class="hidden">
+          Max Level
+        </label>
+        <select id="selectMaxLevel">
+          <option value="0">Critical</option>
+          <option value="10">Error</option>
+          <option value="40">Warning</option>
+          <option value="50">Info</option>
+          <option value="60">Debug</option>
+          <option value="70">Verbose</option>
+          <option value="100" selected>All</option>
+        </select>
+      </div>
+      <div>
+        <input type="number" id="maxItems" value="2500" />
+        <label for="maxItems">
+          Max items
+        </label>
+      </div>
+      <div>
+        <input type="checkbox" id="cbReconnect" checked />
+        <label for="cbReconnect" style="display: inline-block;">
+          Reconnect
+        </label>
+      </div>
+      <div style="flex-grow: 1;"></div>
+      <div>
+        <button id="butClear" class="red" type="button">Clear</button>
+      </div>
+    </div>
+  </header>
 
   <table>
     <thead>
@@ -111,22 +266,51 @@
     let _socket;
     let _reconnectTimer;
 
+    const RECONNECT_TIMEOUT = 3000;
     const WARNINGS = ['WARN'];
     const ERRORS = ['STOP', 'EXCPT', 'FATAL', 'ERROR'];
+
     const tableBody = document.getElementById('table-body');
+    const elemServerName = document.getElementById('spanServerName');
+    const elemConnectionState = document.getElementById('spanConnectionState');
+    const butConnect = document.getElementById('butConnect');
+    const butClear = document.getElementById('butClear');
+    const optsMaxItems = document.getElementById('maxItems');
+    const optsReconnect = document.getElementById('cbReconnect');
+    const elemSelectedServer = document.getElementById('selectServer');
+    const elemMaxLogLevel = document.getElementById('selectMaxLevel');
 
-    const viewerOpts = {
-      url: 'ws://rpi-server:8881',
-      reconnect: true,
-      reconnectTimeout: 3000,
-      maxLevel: 500,
-      maxRows: 500,
-    };
+    let _maxLogLevel = parseInt(elemMaxLogLevel.selectedOptions[0].value);
+    let _serverAddress = elemSelectedServer.selectedOptions[0].value;
 
-    function openSocket(url) {
+    butConnect.addEventListener('click', (e) => {
+      if (_socket) {
+        closeSocket();
+        return;
+      }
+      openSocket(_serverAddress);
+    });
+    elemMaxLogLevel.addEventListener('change', (e) => {
+      _maxLogLevel = parseInt(elemMaxLogLevel.selectedOptions[0].value);
+      _updateTable();
+    });
+    elemSelectedServer.addEventListener('change', (e) => {
+      _serverAddress = elemSelectedServer.selectedOptions[0].value;
+    });
+    optsReconnect.addEventListener('change', (e) => {
+      _clearReconnectTimer();
+    });
+    butClear.addEventListener('click', (e) => {
+      tableBody.innerHTML = '';
+    });
+
+    function openSocket() {
+      const url = _serverAddress;
       if (_socket) {
         closeSocket();
       }
+      _clearReconnectTimer();
+      _setConnecting();
 
       const msgStart = {
         level: 'START',
@@ -136,7 +320,6 @@
       _printLog(msgStart);
 
       _socket = new WebSocket(url);
-
       _socket.addEventListener('open', (e) => {
         const msgConnected = {
           level: 'START',
@@ -144,13 +327,12 @@
           message: `[VIEWER] Connected`,
         };
         _printLog(msgConnected);
+        _setConnected();
       });
-
       _socket.addEventListener('message', (e) => {
         const data = JSON.parse(e.data);
         _printLog(data);
       });
-
       _socket.addEventListener('error', (e) => {
         const msgError = {
           level: 'ERROR',
@@ -160,7 +342,6 @@
         _printLog(msgError);
         console.error('Socket error', e);
       });
-
       _socket.addEventListener('close', (e) => {
         const msgClose = {
           level: 'STOP',
@@ -177,36 +358,43 @@
         }
         _printLog(msgClose);
         closeSocket();
-        if (viewerOpts.reconnect) {
-          reconnect();
+        if (optsReconnect.checked) {
+          _startReconnectTimer();
         }
       });
     }
 
-    /**
-     * Close the web socket
-     */
     function closeSocket() {
+      _setDisconnected();
       if (_socket) {
         _socket.close();
         _socket = null;
       }
     }
 
-    function reconnect() {
+    function _startReconnectTimer() {
+      if (_reconnectTimer) {
+        _clearReconnectTimer();
+      }
+      _setConnecting();
+      elemConnectionState.textContent = 'Will reconnect shortly...';
+      _reconnectTimer = setTimeout(() => {
+        _reconnectTimer = null;
+        openSocket();
+      }, RECONNECT_TIMEOUT);
+    }
+
+    function _clearReconnectTimer() {
       if (_reconnectTimer) {
         clearTimeout(_reconnectTimer);
       }
-      _reconnectTimer = setTimeout(() => {
-        _reconnectTimer = null;
-        openSocket(viewerOpts.url);
-      }, viewerOpts.reconnectTimeout);
+      _reconnectTimer = null;
+      if (!_socket) {
+        _setDisconnected();
+      }
     }
 
     function _printLog(logObj) {
-      if (logObj.levelValue > viewerOpts.maxLevel) {
-        return;
-      }
       let runPrettyPrint = false;
 
       const cellDate = document.createElement('td');
@@ -263,6 +451,10 @@
       row.appendChild(cellDate);
       row.appendChild(cellLevel);
       row.appendChild(cellMessage);
+      row.dataset.levelValue = logObj.levelValue || 0;
+      if (logObj.levelValue > _maxLogLevel) {
+        row.classList.add('hidden');
+      }
       tableBody.prepend(row);
 
       if (runPrettyPrint) {
@@ -285,23 +477,65 @@
     }
 
     function _cleanupTable() {
+      const maxItems = optsMaxItems.value ? parseInt(optsMaxItems.value) : 500;
       const rowCount = tableBody.rows.length;
-      if (rowCount > viewerOpts.maxRows) {
+      if (rowCount > maxItems) {
         tableBody.removeChild(tableBody.lastElementChild);
         _cleanupTable();
       }
     }
 
-    // const temp1 = {
-    //   level: 'ERROR',
-    //   date: Date.now(),
-    //   message: '[WHAT] Hello world',
-    //   exception: {
-    //     message: 'this is the exception message',
-    //   },
-    // };
+    function _setConnecting() {
+      butConnect.textContent = 'Connecting';
+      butConnect.setAttribute('disabled', true);
+      elemServerName.textContent = _serverAddress;
+      elemConnectionState.textContent = 'Connecting to';
+      elemSelectedServer.setAttribute('disabled', true);
+    }
 
-    openSocket(viewerOpts.url);
+    function _setConnected() {
+      butConnect.textContent = 'Disconnect';
+      butConnect.removeAttribute('disabled');
+      butConnect.classList.toggle('red', true);
+      elemServerName.textContent = _serverAddress;
+      elemConnectionState.textContent = 'Connected to';
+      elemSelectedServer.setAttribute('disabled', true);
+    }
+
+    function _setDisconnected() {
+      butConnect.textContent = 'Connect';
+      butConnect.removeAttribute('disabled');
+      butConnect.classList.toggle('red', false);
+      elemServerName.textContent = '';
+      elemConnectionState.textContent = 'Disconnected';
+      elemSelectedServer.removeAttribute('disabled');
+    }
+
+    function _updateTable() {
+      const elems = tableBody.children;
+      const count = elems.length;
+      for (let i = 0; i < count; i++) {
+        const elem = elems[i];
+        const level = parseInt(elem.dataset.levelValue);
+        const hide = level > _maxLogLevel;
+        elem.classList.toggle('hidden', hide);
+      }
+    }
+
+    const temp1 = {
+      level: 'ERROR',
+      levelValue: 10,
+      date: Date.now(),
+      message: '[WHAT] Hello, world.',
+      exception: {
+        message: 'this is the exception message',
+      },
+    };
+
+    _printLog(temp1);
+    // _printLog(temp1);
+    // openSocket();
+
   </script>
 
 </body>
