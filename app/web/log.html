@@ -285,6 +285,7 @@
 
     butConnect.addEventListener('click', (e) => {
       if (_socket) {
+        optsReconnect.removeAttribute('checked');
         closeSocket();
         return;
       }
@@ -532,9 +533,8 @@
       },
     };
 
-    _printLog(temp1);
     // _printLog(temp1);
-    // openSocket();
+    openSocket();
 
   </script>
 

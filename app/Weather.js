@@ -59,7 +59,7 @@ function Weather(latLon, key) {
          * @event Weather#weather
          */
         _self.emit('weather', forecast);
-        log.verbose(LOG_PREFIX, 'Weather updated.');
+        log.verbose(LOG_PREFIX, 'Weather updated.', forecast);
         return;
       } catch (ex) {
         log.exception(LOG_PREFIX, 'Unable to parse forecast.io response', ex);
