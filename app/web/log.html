@@ -143,9 +143,12 @@
     }
 
     th {
+      background-color: var(--background-color);
       border-bottom: 1px solid var(--text-primary);
       font-size: larger;
+      position: sticky;
       text-align: left;
+      top: 0;
     }
     tr {
       max-width: 100%;
@@ -167,12 +170,10 @@
       color: var(--text-secondary);
       margin-left: 4px;
     }
-    summary {}
     .exception-message {
       margin-left: 4px;
       color: var(--text-primary-alt);
     }
-    .exception-stack {}
     .extra-string {
       margin-left: 2px;
       color: var(--text-primary-alt);
