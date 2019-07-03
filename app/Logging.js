@@ -154,6 +154,7 @@ function Logging(fbRef) {
         temperature: t['ambient_temperature_f'],
         humidity: t['humidity'],
         mode: t['hvac_mode'],
+        state: t['hvac_state'],
       };
     });
     return results;
@@ -211,16 +212,19 @@ function Logging(fbRef) {
     if (sTemp && sTemp.state && sTemp.state.hasOwnProperty('temperature')) {
       result.temperature = sTemp.state.temperature / 100;
       result.lastUpdated = sTemp.state.lastupdated;
+      result.tempUpdated = sTemp.state.lastupdated;
     }
     const sMotion = sensors[motionId];
     if (sMotion && sMotion.state && sMotion.state.hasOwnProperty('presence')) {
       result.presence = sMotion.state.presence;
+      result.presenceUpdated = sMotion.state.lastupdated;
     }
     const sLight = sensors[lightId];
     if (sLight && sLight.state && sLight.state.hasOwnProperty('lightlevel')) {
-      result.daylight = sensors[lightId].state.daylight;
-      result.dark = sensors[lightId].state.dark;
-      result.lightLevel = sensors[lightId].state.lightlevel;
+      result.daylight = sLight.state.daylight;
+      result.dark = sLight.state.dark;
+      result.lightLevel = sLight.state.lightlevel;
+      result.lightUpdated = sLight.state.lastupdated;
     }
     if (Object.keys(result).length > 0) {
       return result;
