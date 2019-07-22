@@ -63,6 +63,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         outline: none;
       }
       .hidden { display: none !important; }
+
+      .top-line {
+        display: flex;
+      }
+      .top-line h3 {
+        flex-grow: 1;
+      }
+
+      paper-item {
+        cursor: pointer;
+      }
+
+      #canvasHome {
+        max-height: 100px;
+      }
     </style>
 
     <firebase-query
@@ -72,49 +87,54 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       limit-to-last="432">
     </firebase-query>
 
-    <div class="card">
+    <div class="card hidden">
       <h3>Home</h3>
       <canvas id="canvasHome" class="hidden"></canvas>
     </div>
 
     <div class="card">
-      <h3>Bathroom</h3>
-      <paper-dropdown-menu label="View">
-        <paper-listbox
-          slot="dropdown-content"
-          class="dropdown-content"
-          attr-for-selected="value"
-          selected="{{rooms.bathroom.view}}">
-            <paper-item value="temperature">Temperature</paper-item>
-            <paper-item value="lux">Light level</paper-item>
-        </paper-listbox>
-      </paper-dropdown-menu>
+      <div class="top-line">
+        <h3>Bathroom</h3>
+        <paper-dropdown-menu label="View" no-label-float>
+          <paper-listbox
+            slot="dropdown-content"
+            class="dropdown-content"
+            attr-for-selected="value"
+            selected="{{rooms.bathroom.view}}">
+              <paper-item value="temperature">Temperature</paper-item>
+              <paper-item value="lux">Light level</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+      </div>
       <canvas id="canvasBA" class="hidden"></canvas>
     </div>
 
     <div class="card">
-      <h3>Bedroom</h3>
-      <paper-dropdown-menu label="View">
-        <paper-listbox
-          slot="dropdown-content"
-          class="dropdown-content"
-          attr-for-selected="value"
-          selected="{{rooms.bedroom.view}}">
-            <paper-item value="temperature">Temperature</paper-item>
-            <paper-item value="humidity">Humidity</paper-item>
-            <paper-item value="lux">Light level</paper-item>
-            <paper-item value="awairScore">Air quality</paper-item>
-            <paper-item value="co2">CO2 level</paper-item>
-            <paper-item value="pm25">PM2.5 level</paper-item>
-            <paper-item value="voc">VOC level</paper-item>
-        </paper-listbox>
-      </paper-dropdown-menu>
+      <div class="top-line">
+        <h3>Bedroom</h3>
+        <paper-dropdown-menu label="View" no-label-float>
+          <paper-listbox
+            slot="dropdown-content"
+            class="dropdown-content"
+            attr-for-selected="value"
+            selected="{{rooms.bedroom.view}}">
+              <paper-item value="temperature">Temperature</paper-item>
+              <paper-item value="humidity">Humidity</paper-item>
+              <paper-item value="lux">Light level</paper-item>
+              <paper-item value="awairScore">Air quality</paper-item>
+              <paper-item value="co2">CO2 level</paper-item>
+              <paper-item value="pm25">PM2.5 level</paper-item>
+              <paper-item value="voc">VOC level</paper-item>
+          </paper-listbox>
+        </paper-dropdown-menu>
+      </div>
       <canvas id="canvasBR" class="hidden"></canvas>
     </div>
 
     <div class="card">
-      <h3>Living Room</h3>
-      <paper-dropdown-menu label="View">
+      <div class="top-line">
+        <h3>Living Room</h3>
+        <paper-dropdown-menu label="View" no-label-float>
           <paper-listbox
             slot="dropdown-content"
             class="dropdown-content"
@@ -125,12 +145,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <paper-item value="lux">Light level</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
+      </div>
       <canvas id="canvasLR" class="hidden"></canvas>
     </div>
 
     <div class="card">
-      <h3>Weather</h3>
-      <paper-dropdown-menu label="View">
+      <div class="top-line">
+        <h3>Weather</h3>
+        <paper-dropdown-menu label="View" no-label-float>
           <paper-listbox
             slot="dropdown-content"
             class="dropdown-content"
@@ -140,6 +162,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <paper-item value="humidity">Humidity</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
+      </div>
       <canvas id="canvasWeather" class="hidden"></canvas>
     </div>
 
@@ -164,7 +187,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           rooms: {
             type: Object,
             value: {
-              home: {},
+              home: {
+                view: 'presence',
+              },
               bathroom: {
                 view: 'temperature',
               },
@@ -234,6 +259,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this._drawChart('bedroom');
           this._drawChart('livingroom');
           this._drawChart('weather');
+          this._drawChart('home');
 
           return;
         }
@@ -310,6 +336,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   display: true,
                   labelString: '',
                 },
+                ticks: {
+                  stepSize: 1,
+                },
               }],
             },
           },
@@ -340,6 +369,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _parseInitialData() {
         this.data = {
+          home: {
+            presence: {
+              data: [],
+              chartOpts: {
+                label: 'Presence',
+                yAxisLabel: 'Presence',
+                stepSize: 1,
+              },
+            },
+          },
           weather: {
             humidity: {
               data: [],
@@ -468,6 +507,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         let t;
         let value;
 
+        // Presence
+        // value = item.presence['d9a2349582bd'] === 'PRESENT' ? 1 : 0;
+        // this.data.home.presence.data.push({x: time, y: value});
+
         // Weather
         //  - Humidity
         value = item.weather.humidity;
@@ -545,6 +588,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         const ctx = roomObj.canvas.getContext('2d');
         const chartOpts = this._getDefaultChartOpts();
+
+
         // chartOpts.options.color = function(context) {
         //   console.log('yes', context);
         // }
@@ -556,6 +601,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         const dataset = chart.data.datasets[0];
         dataset.label = opts.label || '';
         dataset.data = values;
+        // if (room === 'home') {
+        //   dataset.fill = true;
+        //   chart.options.maintainAspectRatio = false;
+        // }
         const yAxis = chart.options.scales.yAxes[0];
         yAxis.ticks.suggestedMin = opts.min;
         yAxis.ticks.suggestedMax = opts.max;
