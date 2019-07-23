@@ -75,8 +75,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         cursor: pointer;
       }
 
-      #canvasHome {
-        max-height: 100px;
+      .card-home {
+        height: 100px;
+      }
+      .card-home canvas {
+        max-height: 80px;
       }
     </style>
 
@@ -87,7 +90,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       limit-to-last="432">
     </firebase-query>
 
-    <div class="card hidden">
+    <div class="card card-home">
       <h3>Home</h3>
       <canvas id="canvasHome" class="hidden"></canvas>
     </div>
@@ -201,7 +204,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               },
               weather: {
                 view: 'temperature',
-              }
+              },
             },
           },
         };
@@ -286,31 +289,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      _getDefaultChartOpts(chartType) {
-        return {
+      _getDefaultChartOpts(chartType, numDataSets) {
+        const dataset = {
+          label: '',
+          backgroundColor: '#3f51b5',
+          borderColor: '#3f51b5',
+          fill: false,
+          data: [],
+        };
+        const result = {
           type: chartType || 'line',
           data: {
-            datasets: [{
-              label: '',
-              backgroundColor: '#3f51b5',
-              borderColor: '#3f51b5',
-              fill: false,
-              data: []
-            }],
+            datasets: [],
           },
           options: {
             responsive: true,
             title: {display: false},
-            legend: {
-              display: true,
-            },
+            legend: {display: true},
             elements: {
               point: {
                 radius: 0,
                 borderWidth: 0,
-                hitRadius: 1,
-                hoverRadius: 1,
-                hoverBorderWidth: 1,
+                hitRadius: 4,
+                hoverRadius: 4,
+                hoverBorderWidth: 4,
               },
               line: {
                 borderWidth: 2,
@@ -326,9 +328,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 ticks: {
                   major: {
                     fontStyle: 'bold',
-                    fontColor: '#ff0000',
+                    fontColor: '#3f51b5',
                   },
-                }
+                },
               }],
               yAxes: [{
                 display: true,
@@ -337,12 +339,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                   labelString: '',
                 },
                 ticks: {
-                  stepSize: 1,
+
                 },
               }],
             },
           },
         };
+        numDataSets = numDataSets || 1;
+        for (let i = 1; i <= numDataSets; i++) {
+          result.data.datasets.push(Object.assign({}, dataset));
+        }
+        return result;
       }
 
       _fakePresenceData() {
@@ -354,7 +361,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             state = 'AWAY';
           } else {
             state = 'HOME';
-          };
+          }
           const item = {
             date: now,
             presence: {
@@ -385,12 +392,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               chartOpts: {
                 label: 'Outside Humidity',
                 yAxisLabel: 'Humidity (%)',
-              }
+              },
             },
             temperature: {
               data: [],
               chartOpts: {
                 label: 'Outside Temperature',
+                yAxisLabel: 'Temperature (F)',
+              },
+            },
+            apparentTemperature: {
+              data: [],
+              chartOpts: {
+                label: 'Apparent Outside Temperature',
                 yAxisLabel: 'Temperature (F)',
               },
             },
@@ -455,7 +469,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               chartOpts: {
                 label: 'Humidity (Awair)',
                 yAxisLabel: 'Humidity (%)',
-              }
+              },
             },
             awairScore: {
               data: [],
@@ -495,7 +509,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 min: 0,
               },
             },
-          }
+          },
         };
         this.fbData.forEach((item) => {
           this._addDataPoint(item);
@@ -508,16 +522,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         let value;
 
         // Presence
-        // value = item.presence['d9a2349582bd'] === 'PRESENT' ? 1 : 0;
-        // this.data.home.presence.data.push({x: time, y: value});
+        value = item.presence['d9a2349582bd'] === 'PRESENT' ? 1 : 0;
+        this.data.home.presence.data.push({x: time, y: value});
 
         // Weather
+        if (item.weather.lastUpdated) {
+          t = new Date(item.weather.lastUpdated);
+        } else {
+          t = time;
+        }
         //  - Humidity
         value = item.weather.humidity;
-        this.data.weather.humidity.data.push({x: time, y: value});
+        this.data.weather.humidity.data.push({x: t, y: value});
         //  - Temperature
         value = item.weather.temperature;
-        this.data.weather.temperature.data.push({x: time, y: value});
+        this.data.weather.temperature.data.push({x: t, y: value});
+        //  - apparentTemperature
+        if (item.weather.apparentTemperature) {
+          value = item.weather.apparentTemperature;
+          this.data.weather.apparentTemperature.data.push({x: t, y: value});
+        }
 
         // Bathroom
         //  - Temperature (Hue)
@@ -536,8 +560,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         value = this._convertToLux(item.hueData.BR.lightLevel);
         this.data.bedroom.lux.data.push({x: t, y: value});
         //  - Temperature (Nest)
-        value = item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1'].temperature;
-        this.data.bedroom.temperature.data.push({x: time, y: value});
+        if (item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1']) {
+          value = item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1'].temperature;
+          this.data.bedroom.temperature.data.push({x: time, y: value});
+        }
         //  - Awair Score
         t = item.awair.BR.timeStamp;
         value = item.awair.BR.score;
@@ -561,19 +587,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         t = item.hueData.LR.lightUpdated + 'Z';
         value = this._convertToLux(item.hueData.LR.lightLevel);
         this.data.livingroom.lux.data.push({x: t, y: value});
-        //  - Temperature (Nest)
-        value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].temperature;
-        this.data.livingroom.temperature.data.push({x: time, y: value});
-        //  - Humidity (Nest)
-        value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].humidity;
-        this.data.livingroom.humidity.data.push({x: time, y: value});
+        // LR Nest
+        if (item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1']) {
+          //  - Temperature (Nest)
+          value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].temperature;
+          this.data.livingroom.temperature.data.push({x: time, y: value});
+          //  - Humidity (Nest)
+          value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].humidity;
+          this.data.livingroom.humidity.data.push({x: time, y: value});
+        }
       }
 
       _drawChart(room) {
+        window.lastUserInput = Date.now();
         if (this.isReady === false) {
           return;
         }
-        window.lastUserInput = Date.now();
+
         const roomObj = this.rooms[room];
         if (!roomObj) {
           console.error('roomObj not found', room);
@@ -586,25 +616,36 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (roomObj.chart) {
           roomObj.chart.destroy();
         }
+
+        const isOutsideTemp = room === 'weather' && view === 'temperature';
+
         const ctx = roomObj.canvas.getContext('2d');
-        const chartOpts = this._getDefaultChartOpts();
+        const chartOpts = isOutsideTemp ? this._getDefaultChartOpts('line', 2) :
+                                          this._getDefaultChartOpts();
 
-
-        // chartOpts.options.color = function(context) {
-        //   console.log('yes', context);
-        // }
+        if (room === 'home') {
+          chartOpts.options.maintainAspectRatio = false;
+          chartOpts.options.legend.display = false;
+          chartOpts.options.scales.yAxes[0].ticks.stepSize = 1;
+          chartOpts.data.datasets[0].fill = true;
+        }
+        // eslint-disable-next-line no-undef
         const chart = new Chart(ctx, chartOpts);
-        // chart.context.color = function(context) {
-        //   console.log('color', context);
-        // }
-        // console.log('chart', chart);
+
         const dataset = chart.data.datasets[0];
         dataset.label = opts.label || '';
         dataset.data = values;
-        // if (room === 'home') {
-        //   dataset.fill = true;
-        //   chart.options.maintainAspectRatio = false;
-        // }
+
+        if (isOutsideTemp) {
+          const dataset2 = chart.data.datasets[1];
+          const data = this.data[room]['apparentTemperature'].data;
+          dataset2.data = data;
+          const label = this.data[room]['apparentTemperature'].chartOpts.label;
+          dataset2.label = label || '';
+          dataset2.backgroundColor = '#ff0000';
+          dataset2.borderColor ='#ff0000';
+        }
+
         const yAxis = chart.options.scales.yAxes[0];
         yAxis.ticks.suggestedMin = opts.min;
         yAxis.ticks.suggestedMax = opts.max;

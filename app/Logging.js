@@ -119,8 +119,10 @@ function Logging(fbRef) {
    */
   function _getWeather(weatherNow) {
     return {
-      humidity: Math.round(weatherNow.humidity * 100),
-      temperature: Math.round(weatherNow.temperature),
+      lastUpdated: weatherNow.time * 1000,
+      humidity: weatherNow.humidity * 100,
+      temperature: weatherNow.temperature,
+      apparentTemperature: weatherNow.apparentTemperature,
       summary: weatherNow.summary,
     };
   }
