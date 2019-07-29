@@ -73,6 +73,19 @@ function Nest(authToken) {
   };
 
   /**
+   * Sets the Nest ETA
+   *
+   * @param {Number} minutesUntilHome Number of minutes until home.
+   * @return {Promise} Resolves to a boolean, with the result of the request.
+   */
+  this.setETA = function(minutesUntilHome) {
+    if (minutesUntilHome > 0 && minutesUntilHome <= 90) {
+      return _setETA(minutesUntilHome);
+    }
+    return Promise.reject(new Error('value_out_of_range'));
+  };
+
+  /**
    * Enables all Nest Cameras
    *
    * @param {Boolean} enabled If the camera is enabled or not
@@ -362,6 +375,37 @@ function Nest(authToken) {
           return;
         }
         log.debug(LOG_PREFIX, `${path}: ${state}`);
+        resolve(true);
+      });
+    });
+  }
+
+  /**
+   * Sets an ETA timer for the nest home state
+   *
+   * @param {Number} minutesUntilHome Number of minutes until home.
+   * @return {Promise} A promise that resolves to true/false based on result.
+   */
+  function _setETA(minutesUntilHome) {
+    return new Promise((resolve, reject) => {
+      const msg = `setETA(${minutesUntilHome})`;
+      const now = Date.now();
+      const start = now + (minutesUntilHome * 60 * 1000);
+      const end = start + (30 * 60 * 1000);
+      const eta = {
+        trip_id: `eta-trip-${now}`,
+        estimated_arrival_window_begin: new Date(start).toISOString(),
+        estimated_arrival_window_end: new Date(end).toISOString(),
+      };
+      log.debug(LOG_PREFIX, msg, eta);
+      const path = `structures/${_structureId}/eta`;
+      _fbNest.child(path).set(eta, (err) => {
+        if (err) {
+          log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
+          reject(err);
+          return;
+        }
+        log.debug(LOG_PREFIX, `${path}: ${eta}`);
         resolve(true);
       });
     });

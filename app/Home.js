@@ -480,6 +480,23 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Nest ETA
+    if (action.hasOwnProperty('nestETA')) {
+      if (!nest) {
+        log.warn(LOG_PREFIX, 'Nest unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+
+      return nest.setETA(action.nestETA)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: nestETA failed.`, err);
+            return _genResult(action, false, err);
+          });
+    }
+
     // Nest Fan
     if (action.hasOwnProperty('nestFan')) {
       if (!nest) {
