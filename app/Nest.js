@@ -301,34 +301,6 @@ function Nest(authToken) {
     return true;
   }
 
-  // /**
-  //  * Get the Nest ThermostatId for the specified roomId
-  //  *
-  //  * @param {string} roomId Room ID to look up.
-  //  * @return {string} thermostatId
-  //  */
-  // function _findThermostatId(roomId) {
-  //   let msg = 'Unable to find thermostatId';
-  //   if (!roomId) {
-  //     msg += ', roomId not provided.';
-  //     log.error(LOG_PREFIX, msg);
-  //     return null;
-  //   }
-  //   let thermostatId;
-  //   try {
-  //     thermostatId = _roomIdMap[roomId];
-  //   } catch (ex) {
-  //     log.exception(LOG_PREFIX, msg, ex);
-  //     return null;
-  //   }
-  //   if (thermostatId) {
-  //     return thermostatId;
-  //   }
-  //   msg += ' for roomId: ' + roomId;
-  //   log.error(LOG_PREFIX, msg);
-  //   return null;
-  // }
-
   /**
    * Finds the Nest Thermostat for the specified thermostatId
    *
@@ -374,7 +346,7 @@ function Nest(authToken) {
           reject(err);
           return;
         }
-        log.debug(LOG_PREFIX, `${path}: ${state}`);
+        log.verbose(LOG_PREFIX, `${path}: ${state}`);
         resolve(true);
       });
     });
@@ -405,7 +377,7 @@ function Nest(authToken) {
           reject(err);
           return;
         }
-        log.debug(LOG_PREFIX, `${path}: ${eta}`);
+        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(eta)}`);
         resolve(true);
       });
     });
@@ -434,7 +406,7 @@ function Nest(authToken) {
             reject(err);
             return;
           }
-          log.debug(LOG_PREFIX, `${path}: ${state}`);
+          log.verbose(LOG_PREFIX, `${path}: ${state}`);
           resolve(true);
         });
       });
@@ -492,7 +464,7 @@ function Nest(authToken) {
           }, RETRY_DELAY);
           return;
         }
-        log.debug(LOG_PREFIX, `${path}: ${temperature}`);
+        log.verbose(LOG_PREFIX, `${path}: ${temperature}`);
         resolve(true);
       });
     });
@@ -526,21 +498,6 @@ function Nest(authToken) {
         reject(new Error('invalid_fan_time'));
         return;
       }
-      // const hvacMode = thermostat['hvac_mode'];
-      // if (hvacMode === 'eco' || hvacMode === 'off') {
-      //   msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
-      //   if (isRetry !== true) {
-      //     msg += '. Will retry.';
-      //     log.warn(LOG_PREFIX, msg);
-      //     setTimeout(() => {
-      //       resolve(_runHVACFan(thermostatId, minutes, true));
-      //     }, RETRY_DELAY);
-      //     return;
-      //   }
-      //   log.warn(LOG_PREFIX, msg);
-      //   reject(new Error('incompatible_hvac_mode'));
-      //   return;
-      // }
       log.debug(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
       const opts = {
         fan_timer_active: true,
@@ -557,7 +514,7 @@ function Nest(authToken) {
           reject(err);
           return;
         }
-        log.debug(LOG_PREFIX, `${path}: ${JSON.stringify(opts)}`);
+        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(opts)}`);
         resolve(true);
       });
     });
