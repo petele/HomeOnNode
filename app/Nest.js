@@ -87,9 +87,6 @@ function Nest(authToken) {
    * @return {Promise} Resolves to a boolean, with the result of the request.
    */
   this.startETA = function(minutesUntilHome) {
-    if (_eta) {
-      return Promise.reject(new Error('eta_already_set'));
-    }
     minutesUntilHome = parseInt(minutesUntilHome, 10);
     if (minutesUntilHome === 0) {
       return _cancelETA();
@@ -375,6 +372,10 @@ function Nest(authToken) {
     const now = Date.now();
     const name = `eta-${minutesUntilHome}`;
     const msg = `startETA('${name}', ${minutesUntilHome})`;
+    if (_eta || _etaTimer) {
+      log.error(LOG_PREFIX, `${msg} failed, ETA already set.`);
+      return Promise.reject(new Error('eta_already_set'));
+    }
     const start = now + (minutesUntilHome * 60 * 1000);
     const end = start + T_22_MIN;
     const max = start + T_60_MIN;
@@ -402,6 +403,7 @@ function Nest(authToken) {
           })
           .then(() => {
             _eta = null;
+            return true;
           });
     }
     return Promise.resolve(true);
