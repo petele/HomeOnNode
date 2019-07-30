@@ -73,6 +73,28 @@ function Nest(authToken) {
   };
 
   /**
+   * Sets the Nest ETA
+   *
+   * @param {String} name Timer name
+   * @param {Number} minutesUntilHome Number of minutes until home.
+   * @return {Promise} Resolves to a boolean, with the result of the request.
+   */
+  this.setETA = function(name, minutesUntilHome) {
+    if (!name) {
+      return Promise.reject(new Error('missing name'));
+    }
+    minutesUntilHome = parseInt(minutesUntilHome, 10);
+    if (minutesUntilHome === 0) {
+      return _clearETA(name);
+    } else if (minutesUntilHome > 0 && minutesUntilHome <= 90) {
+      return _setETA(name, minutesUntilHome);
+    }
+    const msg = `setETA('${name}', ${minutesUntilHome})`;
+    log.error(LOG_PREFIX, msg);
+    return Promise.reject(new Error('value_out_of_range'));
+  };
+
+  /**
    * Enables all Nest Cameras
    *
    * @param {Boolean} enabled If the camera is enabled or not
@@ -288,34 +310,6 @@ function Nest(authToken) {
     return true;
   }
 
-  // /**
-  //  * Get the Nest ThermostatId for the specified roomId
-  //  *
-  //  * @param {string} roomId Room ID to look up.
-  //  * @return {string} thermostatId
-  //  */
-  // function _findThermostatId(roomId) {
-  //   let msg = 'Unable to find thermostatId';
-  //   if (!roomId) {
-  //     msg += ', roomId not provided.';
-  //     log.error(LOG_PREFIX, msg);
-  //     return null;
-  //   }
-  //   let thermostatId;
-  //   try {
-  //     thermostatId = _roomIdMap[roomId];
-  //   } catch (ex) {
-  //     log.exception(LOG_PREFIX, msg, ex);
-  //     return null;
-  //   }
-  //   if (thermostatId) {
-  //     return thermostatId;
-  //   }
-  //   msg += ' for roomId: ' + roomId;
-  //   log.error(LOG_PREFIX, msg);
-  //   return null;
-  // }
-
   /**
    * Finds the Nest Thermostat for the specified thermostatId
    *
@@ -361,7 +355,66 @@ function Nest(authToken) {
           reject(err);
           return;
         }
-        log.debug(LOG_PREFIX, `${path}: ${state}`);
+        log.verbose(LOG_PREFIX, `${path}: ${state}`);
+        resolve(true);
+      });
+    });
+  }
+
+  /**
+   * Sets an ETA timer for the nest home state
+   *
+   * @param {String} name Timer name
+   * @param {Number} minutesUntilHome Number of minutes until home.
+   * @return {Promise} A promise that resolves to true/false based on result.
+   */
+  function _setETA(name, minutesUntilHome) {
+    return new Promise((resolve, reject) => {
+      const msg = `setETA('${name}', ${minutesUntilHome})`;
+      const now = Date.now();
+      const start = now + (minutesUntilHome * 60 * 1000);
+      const end = start + (30 * 60 * 1000);
+      const eta = {
+        trip_id: name,
+        estimated_arrival_window_begin: new Date(start).toISOString(),
+        estimated_arrival_window_end: new Date(end).toISOString(),
+      };
+      log.debug(LOG_PREFIX, msg, eta);
+      const path = `structures/${_structureId}/eta`;
+      _fbNest.child(path).set(eta, (err) => {
+        if (err) {
+          log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
+          reject(err);
+          return;
+        }
+        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(eta)}`);
+        resolve(true);
+      });
+    });
+  }
+
+  /**
+   * Clears the ETA timer for the nest home state
+   *
+   * @param {String} name Timer name
+   * @return {Promise} A promise that resolves to true/false based on result.
+   */
+  function _clearETA(name) {
+    return new Promise((resolve, reject) => {
+      const msg = `clearETA(${name})`;
+      const eta = {
+        trip_id: name,
+        estimated_arrival_window_begin: 0,
+      };
+      log.debug(LOG_PREFIX, msg, eta);
+      const path = `structures/${_structureId}/eta`;
+      _fbNest.child(path).set(eta, (err) => {
+        if (err) {
+          log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
+          reject(err);
+          return;
+        }
+        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(eta)}`);
         resolve(true);
       });
     });
@@ -390,7 +443,7 @@ function Nest(authToken) {
             reject(err);
             return;
           }
-          log.debug(LOG_PREFIX, `${path}: ${state}`);
+          log.verbose(LOG_PREFIX, `${path}: ${state}`);
           resolve(true);
         });
       });
@@ -448,7 +501,7 @@ function Nest(authToken) {
           }, RETRY_DELAY);
           return;
         }
-        log.debug(LOG_PREFIX, `${path}: ${temperature}`);
+        log.verbose(LOG_PREFIX, `${path}: ${temperature}`);
         resolve(true);
       });
     });
@@ -482,21 +535,6 @@ function Nest(authToken) {
         reject(new Error('invalid_fan_time'));
         return;
       }
-      // const hvacMode = thermostat['hvac_mode'];
-      // if (hvacMode === 'eco' || hvacMode === 'off') {
-      //   msg += ' aborted, incompatible HVAC mode: ' + hvacMode;
-      //   if (isRetry !== true) {
-      //     msg += '. Will retry.';
-      //     log.warn(LOG_PREFIX, msg);
-      //     setTimeout(() => {
-      //       resolve(_runHVACFan(thermostatId, minutes, true));
-      //     }, RETRY_DELAY);
-      //     return;
-      //   }
-      //   log.warn(LOG_PREFIX, msg);
-      //   reject(new Error('incompatible_hvac_mode'));
-      //   return;
-      // }
       log.debug(LOG_PREFIX, `runHVACFan('${thermostat.name}', ${minutes})`);
       const opts = {
         fan_timer_active: true,
@@ -513,7 +551,7 @@ function Nest(authToken) {
           reject(err);
           return;
         }
-        log.debug(LOG_PREFIX, `${path}: ${JSON.stringify(opts)}`);
+        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(opts)}`);
         resolve(true);
       });
     });
