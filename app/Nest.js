@@ -8,6 +8,12 @@ const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'NEST';
 
+const T_01_MIN = 1 * 60 * 1000;
+const T_05_MIN = 5 * 60 * 1000;
+const T_15_MIN = 10 * 60 * 1000;
+const T_22_MIN = 22 * 60 * 1000;
+const T_60_MIN = 60 * 60 * 1000;
+
 const STATES = {
   preInit: 'start',
   init: 'init',
@@ -28,8 +34,8 @@ const STATES = {
  */
 function Nest(authToken) {
   const RETRY_DELAY = 18 * 1000;
-  const MAX_DISCONNECT = 5 * 60 * 1000;
-  const RECONNECT_TIMEOUT = 1 * 60 * 1000;
+  const MAX_DISCONNECT = T_05_MIN;
+  const RECONNECT_TIMEOUT = T_01_MIN;
   const _self = this;
   const _authToken = authToken;
   let _fbNest;
@@ -37,6 +43,8 @@ function Nest(authToken) {
   let _deviceState = STATES.preInit;
   let _nestData = {};
   let _structureId;
+  let _eta;
+  let _etaTimer;
 
   this.nestData = _nestData;
 
@@ -73,24 +81,21 @@ function Nest(authToken) {
   };
 
   /**
-   * Sets the Nest ETA
+   * Starts the Nest ETA
    *
-   * @param {String} name Timer name
    * @param {Number} minutesUntilHome Number of minutes until home.
    * @return {Promise} Resolves to a boolean, with the result of the request.
    */
-  this.setETA = function(name, minutesUntilHome) {
-    if (!name) {
-      return Promise.reject(new Error('missing name'));
+  this.startETA = function(minutesUntilHome) {
+    if (_eta) {
+      return Promise.reject(new Error('eta_already_set'));
     }
     minutesUntilHome = parseInt(minutesUntilHome, 10);
     if (minutesUntilHome === 0) {
-      return _clearETA(name);
-    } else if (minutesUntilHome > 0 && minutesUntilHome <= 90) {
-      return _setETA(name, minutesUntilHome);
+      return _cancelETA();
+    } else if (minutesUntilHome > 0 && minutesUntilHome < 90) {
+      return _startETA(minutesUntilHome);
     }
-    const msg = `setETA('${name}', ${minutesUntilHome})`;
-    log.error(LOG_PREFIX, msg);
     return Promise.reject(new Error('value_out_of_range'));
   };
 
@@ -362,60 +367,115 @@ function Nest(authToken) {
   }
 
   /**
-   * Sets an ETA timer for the nest home state
-   *
-   * @param {String} name Timer name
-   * @param {Number} minutesUntilHome Number of minutes until home.
-   * @return {Promise} A promise that resolves to true/false based on result.
+   * Starts the ETA timer.
+   * @param {Number} minutesUntilHome
+   * @return {Promise}
    */
-  function _setETA(name, minutesUntilHome) {
-    return new Promise((resolve, reject) => {
-      const msg = `setETA('${name}', ${minutesUntilHome})`;
-      const now = Date.now();
-      const start = now + (minutesUntilHome * 60 * 1000);
-      const end = start + (30 * 60 * 1000);
-      const eta = {
-        trip_id: name,
-        estimated_arrival_window_begin: new Date(start).toISOString(),
-        estimated_arrival_window_end: new Date(end).toISOString(),
-      };
-      log.debug(LOG_PREFIX, msg, eta);
-      const path = `structures/${_structureId}/eta`;
-      _fbNest.child(path).set(eta, (err) => {
-        if (err) {
-          log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
-          reject(err);
-          return;
-        }
-        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(eta)}`);
-        resolve(true);
-      });
-    });
+  function _startETA(minutesUntilHome) {
+    const now = Date.now();
+    const name = `eta-${minutesUntilHome}`;
+    const msg = `startETA('${name}', ${minutesUntilHome})`;
+    const start = now + (minutesUntilHome * 60 * 1000);
+    const end = start + T_22_MIN;
+    const max = start + T_60_MIN;
+    _eta = {name, start, end, max};
+    log.log(LOG_PREFIX, msg, _eta);
+    _scheduleETAUpdate();
+    return _updateETA();
   }
 
   /**
-   * Clears the ETA timer for the nest home state
+   * Cancels the existing ETA Timer
    *
-   * @param {String} name Timer name
-   * @return {Promise} A promise that resolves to true/false based on result.
+   * @return {Promise} Boolean, always true.
    */
-  function _clearETA(name) {
+  function _cancelETA() {
+    log.log(LOG_PREFIX, 'cancelETA');
+    if (_etaTimer) {
+      clearTimeout(_etaTimer);
+      _etaTimer = null;
+    }
+    if (_eta) {
+      return _updateETA(0)
+          .catch(() => {
+            // Ignore we've already logged the error.
+          })
+          .then(() => {
+            _eta = null;
+          });
+    }
+    return Promise.resolve(true);
+  }
+
+  /**
+   * Schedules an update to the ETA time.
+   */
+  function _scheduleETAUpdate() {
+    // Is there a timer already scheduled?
+    if (_etaTimer) {
+      log.error(LOG_PREFIX, `_scheduleETAUpdate: etaTimer already scheduled.`);
+      return;
+    }
+    // Is ETA available?
+    if (!_eta) {
+      log.error(LOG_PREFIX, `scheduleETAUpdate: failed, _eta unavailable.`);
+      return;
+    }
+    log.verbose(LOG_PREFIX, `scheduleETAUpdate: scheduled (5 minutes).`);
+    _etaTimer = setTimeout(() => {
+      _etaTimer = null;
+      // Is the state in home? If so, cancel
+      if (_nestData.structures[_structureId].away === 'home') {
+        log.debug(LOG_PREFIX, `scheduledETAUpdate: stopped, state is 'home'`);
+        return _updateETA(true);
+      }
+      // Have we exceeded the maximum time?
+      if (Date.now() > _eta.max) {
+        log.warn(LOG_PREFIX, `scheduleETAUpdate: max time exceeded.`);
+        return _updateETA(true);
+      }
+      _updateETA().then(() => {
+        _scheduleETAUpdate();
+      });
+    }, T_05_MIN);
+  }
+
+  /**
+   * Updates the Nest ETA information
+   *
+   * @param {Boolean} clearETA true if you want to clear the existing ETA.
+   * @return {Promise} Boolean true if the ETA was updated/set.
+   */
+  function _updateETA(clearETA) {
     return new Promise((resolve, reject) => {
-      const msg = `clearETA(${name})`;
+      const msg = `updateETA()`;
+      const now = Date.now();
+      let start = _eta.start;
+      if (now > start) {
+        start = now;
+      }
+      let end = _eta.end;
+      if ((now + T_05_MIN) > end) {
+        end = end + T_15_MIN;
+      }
       const eta = {
-        trip_id: name,
-        estimated_arrival_window_begin: 0,
+        trip_id: _eta.name,
       };
-      log.debug(LOG_PREFIX, msg, eta);
+      if (clearETA) {
+        eta.estimated_arrival_window_begin = 0;
+      } else {
+        eta.estimated_arrival_window_begin = new Date(start).toISOString();
+        eta.estimated_arrival_window_end = new Date(end).toISOString();
+      }
       const path = `structures/${_structureId}/eta`;
+      log.debug(LOG_PREFIX, msg, eta);
       _fbNest.child(path).set(eta, (err) => {
         if (err) {
-          log.error(LOG_PREFIX, `${msg} FB write failed.`, err);
-          reject(err);
-          return;
+          log.error(LOG_PREFIX, `${msg} failed.`, err);
+          log.verbose(LOG_PREFIX, msg, eta);
+          return reject(err);
         }
-        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(eta)}`);
-        resolve(true);
+        return resolve(true);
       });
     });
   }
