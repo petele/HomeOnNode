@@ -77,7 +77,9 @@ function Nest(authToken) {
    * @return {Promise} Resolves to a boolean, with the result of the request
    */
   this.setHome = function() {
-    return _setHomeAway('home');
+    return _setHomeAway('home').then(() => {
+      return _cancelETA();
+    });
   };
 
   /**
@@ -477,6 +479,7 @@ function Nest(authToken) {
           log.verbose(LOG_PREFIX, msg, eta);
           return reject(err);
         }
+        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(eta)}`);
         return resolve(true);
       });
     });
