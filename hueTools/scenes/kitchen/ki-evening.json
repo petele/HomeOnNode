@@ -1,6 +1,7 @@
 {
   "sceneName": "Evening",
   "roomId": 2,
+  "transitionTime": 30,
   "lights": [
     {
       "lightId": 4,
