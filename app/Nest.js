@@ -378,6 +378,11 @@ function Nest(authToken) {
       log.error(LOG_PREFIX, `${msg} failed, ETA already set.`);
       return Promise.reject(new Error('eta_already_set'));
     }
+    // TODO uncomment me
+    // if (_nestData.structures[_structureId].away === 'home') {
+    //   log.warn(LOG_PREFIX, `${msg} failed, state is already home.`);
+    //   return Promise.reject(new Error('already_home'));
+    // }
     const start = now + (minutesUntilHome * 60 * 1000);
     const end = start + T_22_MIN;
     const max = start + T_60_MIN;
@@ -399,7 +404,7 @@ function Nest(authToken) {
       _etaTimer = null;
     }
     if (_eta) {
-      return _updateETA(0)
+      return _updateETA(true)
           .catch(() => {
             // Ignore we've already logged the error.
           })
