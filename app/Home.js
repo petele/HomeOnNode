@@ -487,9 +487,7 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, false, 'not_available');
       }
 
-      const etaName = action.nest.nestETA.name;
-      const minutes = action.nest.nestETA.minutesUntilHome;
-      return nest.setETA(etaName, minutes)
+      return nest.startETA(action.nestETA)
           .then((result) => {
             return _genResult(action, true, result);
           })
