@@ -359,7 +359,7 @@ function Nest(authToken) {
           reject(err);
           return;
         }
-        log.verbose(LOG_PREFIX, `${path}: ${state}`);
+        log.verbose(LOG_PREFIX, path, state);
         resolve(true);
       });
     });
@@ -467,11 +467,13 @@ function Nest(authToken) {
       if ((now + T_05_MIN) > end) {
         end = end + T_15_MIN;
       }
-      const eta = {};
+      const eta = {
+        trip_id: _eta.name,
+      };
       if (clearETA) {
         eta.estimated_arrival_window_begin = 0;
+        eta.estimated_arrival_window_end = 0;
       } else {
-        eta.trip_id = _eta.name;
         eta.estimated_arrival_window_begin = new Date(start).toISOString();
         eta.estimated_arrival_window_end = new Date(end).toISOString();
       }
@@ -483,7 +485,7 @@ function Nest(authToken) {
           log.verbose(LOG_PREFIX, msg, eta);
           return reject(err);
         }
-        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(eta)}`);
+        log.verbose(LOG_PREFIX, path, eta);
         return resolve(true);
       });
     });
@@ -512,7 +514,7 @@ function Nest(authToken) {
             reject(err);
             return;
           }
-          log.verbose(LOG_PREFIX, `${path}: ${state}`);
+          log.verbose(LOG_PREFIX, path, state);
           resolve(true);
         });
       });
@@ -570,7 +572,7 @@ function Nest(authToken) {
           }, RETRY_DELAY);
           return;
         }
-        log.verbose(LOG_PREFIX, `${path}: ${temperature}`);
+        log.verbose(LOG_PREFIX, path, temperature);
         resolve(true);
       });
     });
@@ -620,7 +622,7 @@ function Nest(authToken) {
           reject(err);
           return;
         }
-        log.verbose(LOG_PREFIX, `${path}: ${JSON.stringify(opts)}`);
+        log.verbose(LOG_PREFIX, path, opts);
         resolve(true);
       });
     });
