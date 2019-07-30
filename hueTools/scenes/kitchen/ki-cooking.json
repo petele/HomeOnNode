@@ -1,6 +1,7 @@
 {
   "sceneName": "Cooking",
   "roomId": 11,
+  "transitionTime": 30,
   "scenes": [
     "scenes/kitchen/ks-cooking.json"
   ],
