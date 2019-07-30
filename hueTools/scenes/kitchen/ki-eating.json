@@ -1,6 +1,7 @@
 {
   "sceneName": "Eating",
   "roomId": 11,
+  "transitionTime": 30,
   "lights": [
     {
       "lightId": 4,

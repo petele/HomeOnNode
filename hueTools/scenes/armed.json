@@ -1,7 +1,7 @@
 {
   "sceneName": "Armed",
   "roomId": 0,
-  "transitionTime": 0,
+  "transitionTime": 20,
   "scenes": [
     "scenes/bathroom/ba-off.json",
     "scenes/bedroom/br-off.json",
