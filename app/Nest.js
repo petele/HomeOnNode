@@ -430,13 +430,13 @@ function Nest(authToken) {
       _etaTimer = null;
       // Is the state in home? If so, cancel
       if (_nestData.structures[_structureId].away === 'home') {
-        log.debug(LOG_PREFIX, `scheduledETAUpdate: stopped, state is 'home'`);
-        return _updateETA(true);
+        log.warn(LOG_PREFIX, `scheduledETAUpdate: stopped, state is 'home'`);
+        return _cancelETA();
       }
       // Have we exceeded the maximum time?
       if (Date.now() > _eta.max) {
         log.warn(LOG_PREFIX, `scheduleETAUpdate: max time exceeded.`);
-        return _updateETA(true);
+        return _cancelETA();
       }
       _updateETA().then(() => {
         _scheduleETAUpdate();
@@ -452,7 +452,7 @@ function Nest(authToken) {
    */
   function _updateETA(clearETA) {
     return new Promise((resolve, reject) => {
-      const msg = `updateETA()`;
+      const msg = clearETA ? `updateETA(true)` : `updateETA()`;
       const now = Date.now();
       let start = _eta.start;
       if (now > start) {
@@ -462,12 +462,11 @@ function Nest(authToken) {
       if ((now + T_05_MIN) > end) {
         end = end + T_15_MIN;
       }
-      const eta = {
-        trip_id: _eta.name,
-      };
+      const eta = {};
       if (clearETA) {
         eta.estimated_arrival_window_begin = 0;
       } else {
+        eta.trip_id = _eta.name;
         eta.estimated_arrival_window_begin = new Date(start).toISOString();
         eta.estimated_arrival_window_end = new Date(end).toISOString();
       }
