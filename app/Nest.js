@@ -11,7 +11,7 @@ const LOG_PREFIX = 'NEST';
 const T_01_MIN = 1 * 60 * 1000;
 const T_05_MIN = 5 * 60 * 1000;
 const T_15_MIN = 10 * 60 * 1000;
-const T_22_MIN = 22 * 60 * 1000;
+const T_30_MIN = 30 * 60 * 1000;
 const T_60_MIN = 60 * 60 * 1000;
 
 const STATES = {
@@ -77,9 +77,10 @@ function Nest(authToken) {
    * @return {Promise} Resolves to a boolean, with the result of the request
    */
   this.setHome = function() {
-    return _setHomeAway('home').then(() => {
-      return _cancelETA();
-    });
+    return _setHomeAway('home')
+        .then(() => {
+          return _cancelETA();
+        });
   };
 
   /**
@@ -378,13 +379,12 @@ function Nest(authToken) {
       log.error(LOG_PREFIX, `${msg} failed, ETA already set.`);
       return Promise.reject(new Error('eta_already_set'));
     }
-    // TODO uncomment me
-    // if (_nestData.structures[_structureId].away === 'home') {
-    //   log.warn(LOG_PREFIX, `${msg} failed, state is already home.`);
-    //   return Promise.reject(new Error('already_home'));
-    // }
+    if (_nestData.structures[_structureId].away === 'home') {
+      log.error(LOG_PREFIX, `${msg} failed, state is already home.`);
+      return Promise.reject(new Error('already_home'));
+    }
     const start = now + (minutesUntilHome * 60 * 1000);
-    const end = start + T_22_MIN;
+    const end = start + T_30_MIN;
     const max = start + T_60_MIN;
     _eta = {name, start, end, max};
     log.log(LOG_PREFIX, msg, _eta);
@@ -404,7 +404,7 @@ function Nest(authToken) {
       _etaTimer = null;
     }
     if (_eta) {
-      return _updateETA(true)
+      return _updateETA('clear')
           .catch(() => {
             // Ignore we've already logged the error.
           })
@@ -435,7 +435,7 @@ function Nest(authToken) {
       _etaTimer = null;
       // Is the state in home? If so, cancel
       if (_nestData.structures[_structureId].away === 'home') {
-        log.warn(LOG_PREFIX, `scheduledETAUpdate: stopped, state is 'home'`);
+        log.info(LOG_PREFIX, `scheduledETAUpdate: stopped, state is 'home'`);
         return _cancelETA();
       }
       // Have we exceeded the maximum time?
@@ -452,12 +452,12 @@ function Nest(authToken) {
   /**
    * Updates the Nest ETA information
    *
-   * @param {Boolean} clearETA true if you want to clear the existing ETA.
+   * @param {String} clearETA set to 'clear' to clear the existing ETA.
    * @return {Promise} Boolean true if the ETA was updated/set.
    */
   function _updateETA(clearETA) {
     return new Promise((resolve, reject) => {
-      const msg = clearETA ? `updateETA(true)` : `updateETA()`;
+      const msg = clearETA === 'clear' ? `updateETA('clear')` : `updateETA()`;
       const now = Date.now();
       let start = _eta.start;
       if (now > start) {
@@ -470,7 +470,7 @@ function Nest(authToken) {
       const eta = {
         trip_id: _eta.name,
       };
-      if (clearETA) {
+      if (clearETA === 'clear') {
         eta.estimated_arrival_window_begin = 0;
         eta.estimated_arrival_window_end = 0;
       } else {
