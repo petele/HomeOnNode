@@ -34,6 +34,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .card h1 {
         margin: 0;
       }
+      .secondary {
+        color: var(--secondary-text-color);
+      }
       summary {
         list-style: none;
         cursor: pointer;
@@ -51,6 +54,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         height: 2em;
         outline: none;
       }
+      .repeatButtons {
+        margin-top: 8px;
+      }
       .repeatButtons paper-button {
         min-width: inherit;
         border-radius: 100%;
@@ -62,6 +68,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin-left: 0;
       }
       .error { color: var(--paper-red-500); }
+      code {
+        font-size: 1.25em;
+      }
     </style>
 
     <firebase-query
@@ -79,7 +88,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <template is="dom-repeat" items="[[alarmState]]">
         <div class="card">
           <div class="layout horizontal">
-            <h1 class$="[[timeClass(item.status)]]">[[item.time]]</h1>
+            <h1 class$="[[timeClass(item.status)]]">
+              [[getAlarmName(item)]]
+            </h1>
             <paper-toggle-button checked="{{item.enabled}}" on-change="toggleEnabled">
             </paper-toggle-button>
           </div>
@@ -93,6 +104,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               </div>
             </summary>
             <div>
+              <div>
+                <span class="secondary">Alarm ID:</span>
+                <code>
+                  <a href="[[getAlarmURL(item)]]" target="_blank">[[item.$key]]</a>
+                </code>
+                </div>
+              <div>
+                <span class="secondary">Command name:</span>
+                <code>
+                  <a href="[[getAlarmCmdURL(item)]]" target="_blank">[[item.cmdName]]</a>
+                </code>
+              </div>
               <paper-checkbox
                 checked="{{item.repeat}}"
                 on-change="repeatChanged">Repeat</paper-checkbox>
@@ -122,8 +145,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 </div>
               </template>
             </div>
-            <!-- <div>[[item.cmdName]]</div> -->
-            <!-- <div>[[item.$key]] || [[item.status]]</div> -->
             <div class="error">[[formatError(item.status)]]</div>
           </details>
         </div>
@@ -140,6 +161,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return {
           alarmConfig: Object,
         };
+      }
+
+      getAlarmName(item) {
+        if (item.label) {
+          return item.label;
+        }
+        return item.time;
+      }
+
+      getAlarmURL(item) {
+        return `https://console.firebase.google.com/project/`
+            + `petele-at-home/database/petele-at-home/data/config/`
+            + `HomeOnNode/alarmClock/${item.$key}`;
+      }
+
+      getAlarmCmdURL(item) {
+        return `https://console.firebase.google.com/project/`
+            + `petele-at-home/database/petele-at-home/data/config/`
+            + `HomeOnNode/commands/${item.cmdName}`;
       }
 
       formatError(val) {
