@@ -37,8 +37,9 @@
     "eslint": "^6.1.0",
     "eslint-config-google": "^0.13.0"
   },
+  "eslintIgnore": ["test.js", "/tests/*"],
   "scripts": {
-    "lint": "eslint --ignore-pattern '/tests/' .",
+    "lint": "eslint .",
     "get-config": "node getConfig.js",
     "log-listen": "node logListener.js -r",
     "log-viewer": "node logViewer.js"
