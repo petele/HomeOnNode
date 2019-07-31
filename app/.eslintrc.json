@@ -8,12 +8,7 @@
     "es6": true
   },
   "rules": {
-    "brace-style": ["warn", "1tbs", {"allowSingleLine": true }],
-    "new-cap": ["error", { "capIsNewExceptions": ["Polymer"] }],
-    "no-var": "warn",
-    "no-console": ["error"],
-    "valid-jsdoc": "warn",
-    "strict": ["error", "global"]
+    "no-prototype-builtins": 0
   },
   "globals": {
   }
