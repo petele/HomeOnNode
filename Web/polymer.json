@@ -4,18 +4,23 @@
   "fragments": [
     "src/view-404.html",
     "src/view-actions.html",
+    "src/view-alarms.html",
     "src/view-devices.html",
     "src/view-door-logs.html",
+    "src/view-history.html",
     "src/view-home.html",
     "src/view-hue-groups.html",
     "src/view-hue-lights.html",
     "src/view-hue-scenes.html",
     "src/view-hvac.html",
+    "src/view-info.html",
     "src/view-media.html",
     "src/view-nanoleaf.html",
     "src/view-presence-logs.html",
+    "src/view-remote.html",
     "src/view-settings.html",
     "src/view-system-logs.html",
+    "src/view-vpn-logs.html",
     "src/view-weather.html"
   ],
   "builds": [
