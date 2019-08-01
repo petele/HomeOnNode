@@ -398,7 +398,7 @@ function Nest(authToken) {
    * @return {Promise} Boolean, always true.
    */
   function _cancelETA() {
-    log.log(LOG_PREFIX, 'cancelETA');
+    log.log(LOG_PREFIX, 'cancelETA()');
     if (_etaTimer) {
       clearTimeout(_etaTimer);
       _etaTimer = null;
@@ -478,7 +478,7 @@ function Nest(authToken) {
         eta.estimated_arrival_window_end = new Date(end).toISOString();
       }
       const path = `structures/${_structureId}/eta`;
-      log.debug(LOG_PREFIX, msg, eta);
+      log.log(LOG_PREFIX, msg, eta);
       _fbNest.child(path).set(eta, (err) => {
         if (err) {
           log.error(LOG_PREFIX, `${msg} failed.`, err);
