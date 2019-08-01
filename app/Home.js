@@ -1928,7 +1928,9 @@ function Home(initialConfig, fbRef) {
     });
     const fbWemoConfigPath = 'config/HomeOnNode/wemoDevices';
     _fb.child(fbWemoConfigPath).on('child_added', (snapshot) => {
-      wemo.addDevice(snapshot.val());
+      const snap = snapshot.val();
+      log.debug(LOG_PREFIX, `Manually adding Wemo Device`, snap);
+      wemo.addDevice(snap.url);
     });
   }
 
