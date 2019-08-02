@@ -41,6 +41,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         /* font-weight: 100;
         color: var(--secondary-text-color); */
       }
+      .hidden {
+        display: none;
+      }
       summary {
         list-style: none;
         cursor: pointer;
@@ -84,9 +87,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
       <div>
         <span class="secondary">Weather:</span>
-        <span>[[data.weather.summary]]</span>
-        <span>[[data.weather.temperature]]°F</span>
-        <span class="secondary">([[data.weather.humidity]]%)</span>
+        <span>[[data.weather.summary]],&nbsp;</span>
+        <span>[[round(data.weather.temperature)]]°F</span>
+        <span class="secondary">([[round(data.weather.humidity)]]%)</span>
       </div>
     </div>
 
@@ -94,10 +97,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <h3>Bathroom</h3>
       <div>
         <span class="secondary">Light level:</span>
-        <span>[[data.hueData.BA.lightLevel]]</span>
-        <span class="secondary">([[convertToLux(data.hueData.BA.lightLevel)]]lux)</span>
+        <span>[[convertToLux(data.hueData.BA.lightLevel)]]lux</span>
+        <span class="secondary">([[data.hueData.BA.lightLevel]])</span>
       </div>
-      <div>
+      <div class="hidden">
         <span class="secondary">Light state:</span>
         <span class$="[[isTrue(data.hueData.BA.daylight)]]">Daylight</span>
         <span class$="[[isTrue(data.hueData.BA.dark)]]">Dark</span>
@@ -113,10 +116,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <h3>Bedroom</h3>
       <div>
         <span class="secondary">Light level:</span>
-        <span>[[data.hueData.BR.lightLevel]]</span>
-        <span class="secondary">([[convertToLux(data.hueData.BR.lightLevel)]]lux)</span>
+        <span>[[convertToLux(data.hueData.BR.lightLevel)]]lux</span>
+        <span class="secondary">([[data.hueData.BR.lightLevel]])</span>
       </div>
-      <div>
+      <div class="hidden">
         <span class="secondary">Light state:</span>
         <span class$="[[isTrue(data.hueData.BR.daylight)]]">Daylight</span>
         <span class$="[[isTrue(data.hueData.BR.dark)]]">Dark</span>
@@ -125,19 +128,37 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <div>
           <span class="secondary">HVAC Mode:</span>
           <span>[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.mode]]</span>
+          <span>([[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.state]])</span>
         </div>
       </template>
       <div>
         <span class="secondary">Temperature:</span>
-        <span>[[convertCtoF(data.hueData.BR.temperature)]]°F</span>
-        <span class="secondary">(Hue)</span>
+        <span>[[convertCtoF(data.awair.BR.sensors.temp.value)]]°F</span>
+        <span class="secondary">(Awair)</span>
         <span>||</span>
         <span>[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.temperature]]°F</span>
         <span class="secondary">(Nest)</span>
       </div>
       <div>
         <span class="secondary">Humidity:</span>
+        <span>[[round(data.awair.BR.sensors.humid.value)]]%</span>
+        <span class="secondary">(Awair)</span>
+        <span>||</span>
         <span>[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.humidity]]%</span>
+        <span class="secondary">(Nest)</span>
+      </div>
+      <div>
+        <span class="secondary">Air Quality:</span>
+        <span>[[data.awair.BR.score]]</span>
+        <span>||</span>
+        <span class="secondary">CO<sub>2</sub>:</span>
+        <span>[[data.awair.BR.sensors.co2.value]]ppm</span>
+        <span>||</span>
+        <span class="secondary">PM2.5:</span>
+        <span>[[data.awair.BR.sensors.pm25.value]]μg/m<sup>3</sup></span>
+        <span>||</span>
+        <span class="secondary">VOC:</span>
+        <span>[[data.awair.BR.sensors.voc.value]]ppb</span>
       </div>
     </div>
 
@@ -145,10 +166,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <h3>Living Room</h3>
       <div>
         <span class="secondary">Light level:</span>
-        <span>[[data.hueData.LR.lightLevel]]</span>
-        <span class="secondary">([[convertToLux(data.hueData.LR.lightLevel)]]lux)</span>
+        <span>[[convertToLux(data.hueData.LR.lightLevel)]]lux</span>
+        <span class="secondary">([[data.hueData.LR.lightLevel]])</span>
       </div>
-      <div>
+      <div class="hidden">
         <span class="secondary">Light state:</span>
         <span class$="[[isTrue(data.hueData.LR.daylight)]]">Daylight</span>
         <span class$="[[isTrue(data.hueData.LR.dark)]]">Dark</span>
@@ -157,6 +178,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <div>
           <span class="secondary">HVAC Mode:</span>
           <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.mode]]</span>
+          <span>([[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.state]])</span>
         </div>
       </template>
       <div>
@@ -207,6 +229,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       convertToLux(lightlevel) {
         return Math.round(Math.pow(10, ((lightlevel - 1) / 10000)));
+      }
+
+      round(val) {
+        return Math.round(val);
       }
 
       isTrue(val) {
