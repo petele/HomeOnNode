@@ -522,79 +522,109 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         let value;
 
         // Presence
-        value = item.presence['d9a2349582bd'] === 'PRESENT' ? 1 : 0;
-        this.data.home.presence.data.push({x: time, y: value});
+        try {
+          value = item.presence['d9a2349582bd'] === 'PRESENT' ? 1 : 0;
+          this.data.home.presence.data.push({x: time, y: value});
+        } catch (ex) {
+          console.error('presence', ex);
+        }
 
         // Weather
-        if (item.weather.lastUpdated) {
-          t = new Date(item.weather.lastUpdated);
-        } else {
-          t = time;
-        }
-        //  - Humidity
-        value = item.weather.humidity;
-        this.data.weather.humidity.data.push({x: t, y: value});
-        //  - Temperature
-        value = item.weather.temperature;
-        this.data.weather.temperature.data.push({x: t, y: value});
-        //  - apparentTemperature
-        if (item.weather.apparentTemperature) {
-          value = item.weather.apparentTemperature;
-          this.data.weather.apparentTemperature.data.push({x: t, y: value});
+        try {
+          if (item.weather.lastUpdated) {
+            t = new Date(item.weather.lastUpdated);
+          } else {
+            t = time;
+          }
+          //  - Humidity
+          value = item.weather.humidity;
+          this.data.weather.humidity.data.push({x: t, y: value});
+          //  - Temperature
+          value = item.weather.temperature;
+          this.data.weather.temperature.data.push({x: t, y: value});
+          //  - apparentTemperature
+          if (item.weather.apparentTemperature) {
+            value = item.weather.apparentTemperature;
+            this.data.weather.apparentTemperature.data.push({x: t, y: value});
+          }
+        } catch (ex) {
+          console.error('weather', ex);
         }
 
         // Bathroom
-        //  - Temperature (Hue)
-        t = item.hueData.BA.tempUpdated + 'Z';
-        value = this._convertCtoF(item.hueData.BA.temperature);
-        this.data.bathroom.temperature.data.push({x: t, y: value});
-        //  - Lux (Hue)
-        t = item.hueData.BA.lightUpdated + 'Z';
-        value = this._convertToLux(item.hueData.BA.lightLevel);
-        this.data.bathroom.lux.data.push({x: t, y: value});
+        try {
+          //  - Temperature (Hue)
+          t = item.hueData.BA.tempUpdated + 'Z';
+          value = this._convertCtoF(item.hueData.BA.temperature);
+          this.data.bathroom.temperature.data.push({x: t, y: value});
+          //  - Lux (Hue)
+          t = item.hueData.BA.lightUpdated + 'Z';
+          value = this._convertToLux(item.hueData.BA.lightLevel);
+          this.data.bathroom.lux.data.push({x: t, y: value});
+        } catch (ex) {
+          console.error('bathroom hue', ex);
+        }
 
 
         // Bedroom
-        //  - Lux (Hue)
-        t = item.hueData.BR.lightUpdated + 'Z';
-        value = this._convertToLux(item.hueData.BR.lightLevel);
-        this.data.bedroom.lux.data.push({x: t, y: value});
-        //  - Temperature (Nest)
-        if (item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1']) {
-          value = item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1'].temperature;
-          this.data.bedroom.temperature.data.push({x: time, y: value});
+        try {
+          //  - Lux (Hue)
+          t = item.hueData.BR.lightUpdated + 'Z';
+          value = this._convertToLux(item.hueData.BR.lightLevel);
+          this.data.bedroom.lux.data.push({x: t, y: value});
+          //  - Temperature (Nest)
+          if (item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1']) {
+            value = item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1'].temperature;
+            this.data.bedroom.temperature.data.push({x: time, y: value});
+          }
+        } catch (ex) {
+          console.error('br hue', ex);
         }
-        //  - Awair Score
-        t = item.awair.BR.timeStamp;
-        value = item.awair.BR.score;
-        this.data.bedroom.awairScore.data.push({x: t, y: value});
-        //  - Humidity (Awair)
-        value = item.awair.BR.sensors.humid.value;
-        this.data.bedroom.humidity.data.push({x: t, y: value});
-        //  - CO2 (Awair)
-        value = item.awair.BR.sensors.co2.value;
-        this.data.bedroom.co2.data.push({x: t, y: value});
-        //  - PM25 (Awair)
-        value = item.awair.BR.sensors.pm25.value;
-        this.data.bedroom.pm25.data.push({x: t, y: value});
-        //  - VOC (Awair)
-        value = item.awair.BR.sensors.voc.value;
-        this.data.bedroom.voc.data.push({x: t, y: value});
+
+        try {
+          //  - Awair Score
+          t = item.awair.BR.timeStamp;
+          value = item.awair.BR.score;
+          this.data.bedroom.awairScore.data.push({x: t, y: value});
+          //  - Humidity (Awair)
+          value = item.awair.BR.sensors.humid.value;
+          this.data.bedroom.humidity.data.push({x: t, y: value});
+          //  - CO2 (Awair)
+          value = item.awair.BR.sensors.co2.value;
+          this.data.bedroom.co2.data.push({x: t, y: value});
+          //  - PM25 (Awair)
+          value = item.awair.BR.sensors.pm25.value;
+          this.data.bedroom.pm25.data.push({x: t, y: value});
+          //  - VOC (Awair)
+          value = item.awair.BR.sensors.voc.value;
+          this.data.bedroom.voc.data.push({x: t, y: value});
+        } catch (ex) {
+          console.error('br awair', ex, item.awair.BR);
+        }
 
 
         // Living Room
-        //  - Lux (Hue)
-        t = item.hueData.LR.lightUpdated + 'Z';
-        value = this._convertToLux(item.hueData.LR.lightLevel);
-        this.data.livingroom.lux.data.push({x: t, y: value});
-        // LR Nest
-        if (item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1']) {
-          //  - Temperature (Nest)
-          value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].temperature;
-          this.data.livingroom.temperature.data.push({x: time, y: value});
-          //  - Humidity (Nest)
-          value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].humidity;
-          this.data.livingroom.humidity.data.push({x: time, y: value});
+        try {
+          //  - Lux (Hue)
+          t = item.hueData.LR.lightUpdated + 'Z';
+          value = this._convertToLux(item.hueData.LR.lightLevel);
+          this.data.livingroom.lux.data.push({x: t, y: value});
+        } catch (ex) {
+          console.error('lr hue', ex);
+        }
+
+        try {
+          // LR Nest
+          if (item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1']) {
+            //  - Temperature (Nest)
+            value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].temperature;
+            this.data.livingroom.temperature.data.push({x: time, y: value});
+            //  - Humidity (Nest)
+            value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].humidity;
+            this.data.livingroom.humidity.data.push({x: time, y: value});
+          }
+        } catch (ex) {
+          console.error('lr nest', ex);
         }
       }
 
