@@ -26,6 +26,7 @@ let _deviceMonitor;
 
 let _flicClient;
 let _flicScanner;
+const _flicButtons = {};
 
 // Read config file
 try {
@@ -199,18 +200,33 @@ function _startScanWizard() {
  */
 function _listenToButton(bdAddr) {
   log.log(APP_NAME, `Listening for button: ${bdAddr}`);
+  _flicButtons[bdAddr] = {
+    connectionState: 'init',
+    lastPush: {
+      kind: 'init',
+      dateTime: 0,
+    },
+    battery: {
+      value: 100,
+      lastUpdated: 0,
+    },
+  };
   const cc = new FlicConnectionChannel(bdAddr);
   cc.on('connectionStatusChanged', (status, disconnectReason) => {
     const msg = `connectionStatusChanged for ${bdAddr} to ${status}`;
     log.log(APP_NAME, msg, disconnectReason);
+    _flicButtons[bdAddr].connectionState = status;
   });
   cc.on('removed', (reason) => {
     log.warn(APP_NAME, `Button ${bdAddr} was removed because ${reason}`);
+    _flicButtons[bdAddr].connectionState = 'removed';
   });
   cc.on('buttonSingleOrDoubleClickOrHold', (clickType, wasQueued, timeDiff) => {
     const obj = {bdAddr, clickType, wasQueued, timeDiff};
     log.debug(APP_NAME, `Button '${bdAddr}' was ${clickType}`, obj);
     _sendButtonPress(bdAddr, clickType, wasQueued, timeDiff);
+    _flicButtons[bdAddr].lastPush.dateTime = Date.now();
+    _flicButtons[bdAddr].lastPush.kind = clickType;
   });
   _flicClient.addConnectionChannel(cc);
   const batteryStatus = new FlicBatteryStatusListener(bdAddr);
@@ -231,7 +247,7 @@ function _sendBatteryUpdate(bdAddr, value) {
     log.verbose(APP_NAME, 'Battery level unknown.');
     return;
   }
-  const msg = `Battery for ${bdAddr}: ${value}`;
+  const msg = `Battery for '${bdAddr}' is at ${value}%`;
   if (value > 75) {
     log.verbose(APP_NAME, msg, value);
     return;
@@ -242,15 +258,29 @@ function _sendBatteryUpdate(bdAddr, value) {
   }
   let level;
   if (value > 25) {
+    level = 'DEBUG';
+    log.debug(APP_NAME, msg, value);
+  } else if (level > 15) {
     level = 'LOG';
     log.log(APP_NAME, msg, value);
-  } else if (level > 10) {
+  } else if (level > 8) {
     level = 'WARN';
     log.warn(APP_NAME, msg, value);
   } else {
     level = 'ERROR';
     log.error(APP_NAME, msg, value);
   }
+
+  // Throttle battery updates
+  const now = Date.now();
+  const msSinceUpdated = now - _flicButtons[bdAddr].battery.lastUpdated;
+  if (msSinceUpdated < (15 * 60 * 1000)) {
+    return;
+  }
+  _flicButtons[bdAddr].battery.lastUpdated = now;
+  _flicButtons[bdAddr].battery.value = value;
+
+  // Send battery update to server
   if (!_wsClient) {
     log.error(APP_NAME, 'WebSocket client not available.');
     return;
@@ -260,7 +290,7 @@ function _sendBatteryUpdate(bdAddr, value) {
       {
         log: {
           level: level,
-          sender: 'FLIC',
+          sender: 'FLIC_APP',
           message: msg,
           extra: value,
         },
