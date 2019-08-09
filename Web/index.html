@@ -234,11 +234,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       initializeCastApi = function() {
         console.log('initializeCastApi');
-        const applicationId = '3625CFA5';
+        const applicationId = '457E9272';
         // const applicationId = chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID;
         cast.framework.CastContext.getInstance().setOptions({
           receiverApplicationId: applicationId,
-          autoJoinPolicy: chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
         });
       };
 </script>
