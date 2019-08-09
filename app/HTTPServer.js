@@ -52,6 +52,10 @@ function HTTPServer(port) {
     res.sendFile(path.join(__dirname, '/web/favicon.ico'));
   });
 
+  exp.get('/cast', (req, res) => {
+    res.sendFile(path.join(__dirname, '/web/cast.html'));
+  });
+
   exp.get('/logs', (req, res) => {
     res.sendFile(path.join(__dirname, '/web/log.html'));
   });
