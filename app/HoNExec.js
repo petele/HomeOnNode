@@ -29,9 +29,12 @@ function HoNExec() {
       quiet = !!quiet;
       cwd = cwd || '.';
       const cmdId = _cmdCount++;
+      const msg = `'${title}' (${cmdId})`;
       const logOpts = {title, cmdId, cmd, cwd, quiet};
-      if (!quiet) {
-        log.log(LOG_PREFIX, `Starting '${title}' (${cmdId})`, logOpts);
+      if (quiet) {
+        log.verbose(LOG_PREFIX, `Starting ${msg}`, logOpts);
+      } else {
+        log.log(LOG_PREFIX, `Starting ${msg}`, logOpts);
       }
       const execOptions = {
         cwd: cwd,
@@ -48,11 +51,15 @@ function HoNExec() {
         }
         if (err) {
           logOpts.error = err.toString();
-          log.error(LOG_PREFIX, `Error '${title}' (${cmdId})`, logOpts);
+          log.error(LOG_PREFIX, `Error ${msg}`, logOpts);
           reject(err);
           return;
         }
-        log.log(LOG_PREFIX, `Success '${title}' (${cmdId})`, logOpts);
+        if (quiet) {
+          log.verbose(LOG_PREFIX, `Completed ${msg}`, logOpts);
+        } else {
+          log.log(LOG_PREFIX, `Completed ${msg}`, logOpts);
+        }
         resolve(true);
       });
     });
