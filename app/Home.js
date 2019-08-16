@@ -5,6 +5,7 @@ const util = require('util');
 const exec = require('child_process').exec;
 
 const Hue = require('./Hue');
+
 const Nest = require('./Nest');
 const Wemo = require('./Wemo');
 const Tivo = require('./Tivo');
@@ -14,6 +15,7 @@ const moment = require('moment');
 const BedJet = require('./BedJet');
 const log = require('./SystemLog2');
 const Logging = require('./Logging');
+const HoNExec = require('./HoNExec');
 const GCMPush = require('./GCMPush');
 const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
@@ -49,6 +51,7 @@ function Home(initialConfig, fbRef) {
   let harmony;
   let hue;
   let googleHome;
+  let honExec;
   let logging;
   let nanoLeaf;
   let nest;
@@ -292,6 +295,20 @@ function Home(initialConfig, fbRef) {
     // Doorbell
     if (action.hasOwnProperty('doorbell')) {
       return _ringDoorbell(source)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            return _genResult(action, false, err);
+          });
+    }
+
+    // Execute command
+    if (action.hasOwnProperty('exec')) {
+      const title = action.exec.title;
+      const execCmd = action.exec.cmd;
+      const execCWD = action.exec.cwd;
+      return honExec.run(title, execCmd, execCWD)
           .then((result) => {
             return _genResult(action, true, result);
           })
@@ -797,6 +814,7 @@ function Home(initialConfig, fbRef) {
     _initGoogleHome();
     _initBedJet();
     _initAwair();
+    _initHoNExec();
     setTimeout(function() {
       _self.emit('ready');
       _playSound(_config.readySound);
@@ -1051,18 +1069,21 @@ function Home(initialConfig, fbRef) {
    * @return {Promise} A promise that resolves to the result of the request
    */
   function _playSoundLocal(file) {
-    return new Promise(function(resolve, reject) {
-      log.verbose(LOG_PREFIX, `playSoundLocal('${file}')`);
-      const cmd = `mplayer ${file}`;
-      exec(cmd, function(error, stdOut, stdErr) {
-        if (error) {
-          log.exception(LOG_PREFIX, '_playSoundLocal failed', error);
-          reject(error);
-          return;
-        }
-        resolve(stdOut);
-      });
-    });
+    const title = `playSoundLocal('${file}')`;
+    const cmd = `mplayer ${file}`;
+    return honExec.run(title, cmd, '.', true);
+    // return new Promise(function(resolve, reject) {
+    //   log.verbose(LOG_PREFIX, `playSoundLocal('${file}')`);
+    //   const cmd = `mplayer ${file}`;
+    //   exec(cmd, function(error, stdOut, stdErr) {
+    //     if (error) {
+    //       log.exception(LOG_PREFIX, '_playSoundLocal failed', error);
+    //       reject(error);
+    //       return;
+    //     }
+    //     resolve(stdOut);
+    //   });
+    // });
   }
 
   /**
@@ -1515,6 +1536,19 @@ function Home(initialConfig, fbRef) {
     harmony = null;
   }
 
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * HonExec API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init HoNExec API
+   */
+  function _initHoNExec() {
+    honExec = new HoNExec();
+  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
