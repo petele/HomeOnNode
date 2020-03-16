@@ -7,7 +7,8 @@
     "scenes/front-hall/fh-evening.json",
     "scenes/kitchen/ki-evening.json",
     "scenes/kitchen/ks-off.json",
-    "scenes/living-room/lr-evening.json"
+    "scenes/living-room/lr-evening.json",
+    "scenes/office/of-off.json"
   ],
   "sceneId": "01Q26pspUSgDOWQ"
 }

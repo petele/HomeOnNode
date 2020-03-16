@@ -6,7 +6,8 @@
     "scenes/front-hall/fh-morning.json",
     "scenes/kitchen/ki-morning.json",
     "scenes/kitchen/ks-morning.json",
-    "dimmers/lr-morning.json"
+    "scenes/living-room/lr-morning.json",
+    "scenes/office/of-off.json"
   ],
   "sceneId": "UtGU7mKHPIHkzuA"
 }
