@@ -10,7 +10,8 @@
     "scenes/kitchen/ki-night-light.json",
     "scenes/kitchen/ki-off.json",
     "scenes/kitchen/ks-off.json",
-    "scenes/living-room/lr-tv-movies.json"
+    "scenes/living-room/lr-tv-movies.json",
+    "scenes/office/of-off.json"
   ],
   "lights": [
     {

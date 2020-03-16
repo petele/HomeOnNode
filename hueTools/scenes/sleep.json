@@ -10,7 +10,8 @@
     "scenes/kitchen/ki-off.json",
     "scenes/kitchen/ki-night-light.json",
     "scenes/kitchen/ks-off.json",
-    "scenes/living-room/lr-night-light.json"
+    "scenes/living-room/lr-night-light.json",
+    "scenes/office/of-off.json"
   ],
   "sceneId": "ktwBYTA7R3kJVB1"
 }

@@ -8,7 +8,8 @@
     "scenes/front-hall/fh-morning.json",
     "scenes/kitchen/ki-morning.json",
     "scenes/kitchen/ks-morning.json",
-    "scenes/living-room/lr-morning.json"
+    "scenes/living-room/lr-morning.json",
+    "scenes/office/of-morning.json"
   ],
   "sceneId": "03ctDkNtuu5ryjY"
 }

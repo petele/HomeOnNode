@@ -8,7 +8,8 @@
     "scenes/bedroom/bs-off.json",
     "scenes/kitchen/ki-off.json",
     "scenes/kitchen/ks-off.json",
-    "scenes/living-room/lr-off.json"
+    "scenes/living-room/lr-off.json",
+    "scenes/office/of-off.json"
   ],
   "lights": [
     {

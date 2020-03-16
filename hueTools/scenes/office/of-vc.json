@@ -1,0 +1,20 @@
+{
+  "sceneName": "On VC",
+  "roomId": 13,
+  "lights": [
+    {
+      "lightId": 38,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 192
+      }
+    },
+    {
+      "lightId": 39,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "sceneName": "Morning",
+  "roomId": 13,
+  "lights": [
+    {"lightId": 38, "recipeName": "OFF"},
+    {
+      "lightId": 39,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 254
+      }
+    }
+  ]
+}
