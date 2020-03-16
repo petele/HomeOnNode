@@ -16,7 +16,7 @@ const stripComments = require('strip-json-comments');
 const REQUEST_TIMEOUT = 30000;
 const UTIL_OPTS = {
   colors: true,
-  maxArrayLength: 20,
+  maxArrayLength: 50,
   breakLength: 1000,
 };
 

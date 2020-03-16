@@ -6,13 +6,6 @@
   ],
   "lights": [
     {
-      "lightId": 17,
-      "recipeName": "RED",
-      "command": {
-        "bri": 10
-      }
-    },
-    {
       "lightId": 29,
       "recipeName": "RED",
       "command": {
