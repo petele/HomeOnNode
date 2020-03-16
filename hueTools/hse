@@ -21,7 +21,7 @@ const DELAY_BETWEEN_ACTIONS = 1500;
 
 const UTIL_OPTS = {
   colors: true,
-  maxArrayLength: 20,
+  maxArrayLength: 50,
   breakLength: 1000,
 };
 const UTIL_OPTS_PRETTY = {
