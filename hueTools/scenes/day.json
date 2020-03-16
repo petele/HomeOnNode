@@ -3,6 +3,8 @@
   "roomId": 0,
   "scenes": [
     "scenes/bathroom/ba-off.json",
+    "scenes/bedroom/br-off.json",
+    "scenes/bedroom/bs-off.json",
     "scenes/front-hall/fh-morning.json",
     "scenes/kitchen/ki-morning.json",
     "scenes/kitchen/ks-morning.json",
