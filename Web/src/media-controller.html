@@ -195,6 +195,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this._onTivo();
         } else if (currentActivity === 'sonos') {
           this._onSonos();
+        } else if (currentActivity === 'appletv') {
+          this._onAppleTV();
+        } else {
+          this._onUnknownActivity();
         }
         this.updateStyles({display: 'block'});
         this.visible = true;
@@ -217,6 +221,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       _onAndroidTV() {
         this.nowPlaying = {
           top: 'AndroidTV',
+          bottom: null,
+        };
+        this.$.butVolTV.classList.toggle('hidden', false);
+        this._showTivoControls(false);
+        this._showPlayPause(false);
+        this._showSkipControls(false);
+      }
+
+      _onAppleTV() {
+        this.nowPlaying = {
+          top: 'AppleTV',
           bottom: null,
         };
         this.$.butVolTV.classList.toggle('hidden', false);
@@ -251,6 +266,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.butVolTV.classList.toggle('hidden', true);
         this._showTivoControls(false);
         this._showPlayPause(true);
+      }
+
+      _onUnknownActivity() {
+        this.nowPlaying = {
+          top: 'Harmony',
+          bottom: null,
+        };
+        this.$.butVolTV.classList.toggle('hidden', false);
+        this._showTivoControls(false);
+        this._showPlayPause(false);
+        this._showSkipControls(false);
       }
 
       _sonosTrackChanged(currentTrack) {
