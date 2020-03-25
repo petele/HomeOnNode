@@ -96,31 +96,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <media-controller></media-controller>
     </div>
 
-    <div class="card">
-      <div class="app-grid grid-three">
-        <paper-button on-tap="toggleDoNotDisturb" class$="[[doNotDisturbClass]]">
-          <iron-icon icon="[[doNotDisturbIcon]]"></iron-icon>
-        </paper-button>
-        <paper-button on-tap="toggleState" class$="[[systemStateClass]]">
-          <iron-icon icon="[[systemStateIcon]]"></iron-icon>
-        </paper-button>
-        <paper-button on-tap="toggleNestCam" class$="[[nestCamClass]]">
-          <iron-icon icon="[[nestCamIcon]]"></iron-icon>
-        </paper-button>
-      </div>
-
-      <template is="dom-if" if="[[buttonsForView.row1]]">
-        <div class$="app-grid [[buttonsForView.row1.class]]">
-          <template is="dom-repeat" items="[[buttonsForView.row1.items]]">
-            <template is="dom-if" if="[[item]]">
-              <paper-button class="button" on-tap="myTap">
-                [[item.label]]
-              </paper-button>
-            </template>
-          </template>
+    <template is="dom-if" if="[[!buttonsForView.row1.hidden]]">
+      <div class="card">
+        <div class="app-grid grid-three">
+          <paper-button on-tap="toggleDoNotDisturb" class$="[[doNotDisturbClass]]">
+            <iron-icon icon="[[doNotDisturbIcon]]"></iron-icon>
+          </paper-button>
+          <paper-button on-tap="toggleState" class$="[[systemStateClass]]">
+            <iron-icon icon="[[systemStateIcon]]"></iron-icon>
+          </paper-button>
+          <paper-button on-tap="toggleNestCam" class$="[[nestCamClass]]">
+            <iron-icon icon="[[nestCamIcon]]"></iron-icon>
+          </paper-button>
         </div>
-      </template>
-    </div>
+
+        <template is="dom-if" if="[[buttonsForView.row1]]">
+          <div class$="app-grid [[buttonsForView.row1.class]]">
+            <template is="dom-repeat" items="[[buttonsForView.row1.items]]">
+              <template is="dom-if" if="[[item]]">
+                <paper-button class="button" on-tap="myTap">
+                  [[item.label]]
+                </paper-button>
+              </template>
+            </template>
+          </div>
+        </template>
+      </div>
+    </template>
 
     <template is="dom-if" if="[[buttonsForView.row2]]">
       <div class="card">
