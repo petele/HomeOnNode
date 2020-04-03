@@ -64,17 +64,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                     ([[item.target_temperature_f]][[item.temperature_scale]])&thinsp;
                   </span>
                 </template>
-                [[item.humidity]]%
               </span>
             </span>
-            <paper-button class="button" on-tap="tapNestUp" disabled="[[!nestActive(item.hvac_mode)]]">
-              Up
+            <paper-button class="button" disabled="[[!nestActive(item.hvac_mode)]]" on-tap="tapNestDown">
+              Down
             </paper-button>
             <paper-button class$="[[getNestFanClass(item.fan_timer_active)]]" on-tap="tapNestFan">
               Fan
             </paper-button>
-            <paper-button class="button" disabled="[[!nestActive(item.hvac_mode)]]" on-tap="tapNestDown">
-              Down
+            <paper-button class="button" on-tap="tapNestUp" disabled="[[!nestActive(item.hvac_mode)]]">
+              Up
             </paper-button>
         </template>
       </div>
