@@ -183,137 +183,81 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (typeof activity !== 'string') {
           return;
         }
-        const currentActivity = activity.toLowerCase();
-        if (currentActivity === 'poweroff') {
-          return this._onPowerOff();
+        if (activity === 'PowerOff') {
+          this.visible = false;
+          this.updateStyles({display: 'none'});
+          this.nowPlaying = {
+            top: null,
+            bottom: null,
+          };
+          return;
         }
-        if (currentActivity === 'shield') {
-          this._onAndroidTV();
-        } else if (currentActivity === 'rpi') {
-          this._onRPi();
-        } else if (currentActivity === 'tivo') {
-          this._onTivo();
-        } else if (currentActivity === 'sonos') {
-          this._onSonos();
-        } else if (currentActivity === 'appletv') {
-          this._onAppleTV();
+
+        let showTivo = false;
+        let showPlayPause = false;
+        let showSkip = false;
+        let showTVVolButton = false;
+
+        if (activity === 'TiVO') {
+          showTivo = true;
+        }
+        if (activity === 'AppleTV' ||
+            activity === 'Switch' ||
+            activity === 'TiVO') {
+          showTVVolButton = true;
+        }
+        if (activity === 'Sonos') {
+          showPlayPause = true;
+          showSkip = true;
+        }
+
+        this._showTivoControls(showTivo);
+        this._showPlayPause(showPlayPause);
+        this._showSkipControls(showSkip);
+        this.$.butVolTV.classList.toggle('hidden', !showTVVolButton);
+
+        if (activity === 'Sonos') {
+          this._sonosTrackChanged(this.sonosState.currentTrack);
         } else {
-          this._onUnknownActivity();
+          this.nowPlaying = {
+            top: activity,
+            bottom: null,
+          };
         }
+
         this.updateStyles({display: 'block'});
         this.visible = true;
-      }
-
-      _onPowerOff() {
-        this.visible = false;
-        this.updateStyles({display: 'none'});
-        this.nowPlaying = {
-          top: null,
-          bottom: null,
-        };
-        this.$.butVolTV.classList.toggle('hidden', true);
-        this._showTivoControls(false);
-        this._showPlayPause(false);
-        this._showSkipControls(false);
-        return;
-      }
-
-      _onAndroidTV() {
-        this.nowPlaying = {
-          top: 'AndroidTV',
-          bottom: null,
-        };
-        this.$.butVolTV.classList.toggle('hidden', false);
-        this._showTivoControls(false);
-        this._showPlayPause(false);
-        this._showSkipControls(false);
-      }
-
-      _onAppleTV() {
-        this.nowPlaying = {
-          top: 'AppleTV',
-          bottom: null,
-        };
-        this.$.butVolTV.classList.toggle('hidden', false);
-        this._showTivoControls(false);
-        this._showPlayPause(false);
-        this._showSkipControls(false);
-      }
-
-      _onRPi() {
-        this.nowPlaying = {
-          top: 'HomeOnNode',
-          bottom: null,
-        };
-        this.$.butVolTV.classList.toggle('hidden', true);
-        this._showTivoControls(false);
-        this._showPlayPause(false);
-        this._showSkipControls(false);
-      }
-
-      _onTivo() {
-        this.nowPlaying = {
-          top: 'TiVO',
-          bottom: null,
-        };
-        this.$.butVolTV.classList.toggle('hidden', false);
-        this._showTivoControls(true);
-        this._showPlayPause(false);
-        this._showSkipControls(false);
-      }
-
-      _onSonos() {
-        this.$.butVolTV.classList.toggle('hidden', true);
-        this._showTivoControls(false);
-        this._showPlayPause(true);
-      }
-
-      _onUnknownActivity() {
-        this.nowPlaying = {
-          top: 'Harmony',
-          bottom: null,
-        };
-        this.$.butVolTV.classList.toggle('hidden', false);
-        this._showTivoControls(false);
-        this._showPlayPause(false);
-        this._showSkipControls(false);
       }
 
       _sonosTrackChanged(currentTrack) {
         if (!currentTrack) {
           return;
         }
-        if (currentTrack.uri.includes('spdif')) {
-          return;
-        }
+        let lineTop = null;
+        let lineBottom = null;
         if (currentTrack.type === 'line_in') {
-          if (this.nowPlaying.top === 'WNYC') {
-            return;
+          if (currentTrack.uri.includes('spdif')) {
+            lineTop = this.harmonyActivity;
+          } else {
+            lineTop = 'WNYC';
+            lineBottom = 'FM Radio';
           }
-          this.nowPlaying = {
-            top: 'WNYC',
-            bottom: 'FM Radio',
-          };
-          this.sonosSource = 'line_in';
-          this._showSkipControls(false);
-          return;
+        } else {
+          lineTop = currentTrack.title;
+          if (currentTrack.artist && currentTrack.album) {
+            lineBottom = currentTrack.artist + ' - ' + currentTrack.album;
+          } else if (currentTrack.artist || currentTrack.album) {
+            lineBottom = currentTrack.artist || currentTrack.album;
+          }
         }
-        let lineBottom;
-        if (currentTrack.artist && currentTrack.album) {
-          lineBottom = currentTrack.artist + ' - ' + currentTrack.album;
-        } else if (currentTrack.artist || currentTrack.album) {
-          lineBottom = currentTrack.artist || currentTrack.album;
-        }
-        if (this.nowPlaying.top === currentTrack.title &&
-            this.nowPlaying.bottom === lineBottom) {
-          return;
-        }
-        this.sonosSource = 'music';
+
         this.nowPlaying = {
-          top: currentTrack.title,
+          top: lineTop,
           bottom: lineBottom,
         };
-        this._showSkipControls(true);
+
+        const showSkipControls = currentTrack.type === 'line_in' ? false : true;
+        this._showSkipControls(showSkipControls);
       }
 
       _sonosPlayStateChanged(state) {
