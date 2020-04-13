@@ -1859,22 +1859,25 @@ function Home(initialConfig, fbRef) {
       favorites = JSON.parse(JSON.stringify(favorites));
       _fbSet('state/sonos/favorites', favorites);
     });
-    sonos.on('transport-state', (state) => {
-      try {
-        state = JSON.parse(JSON.stringify(state));
-        _fbSet('state/sonos/transportState', state);
-      } catch (ex) {
-        log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
-      }
-    });
-    sonos.on('topology-changed', (topology) => {
-      try {
-        topology = JSON.parse(JSON.stringify(topology));
-        _fbSet('state/sonos/topology', topology);
-      } catch (ex) {
-        log.debug(LOG_PREFIX, 'Unable to save Sonos topology', ex);
-      }
-    });
+    // Nothing of interest in storing this data, most of it is covered in
+    // player-state
+    // sonos.on('transport-state', (state) => {
+    //   try {
+    //     state = JSON.parse(JSON.stringify(state));
+    //     _fbSet('state/sonos/transportState', state);
+    //   } catch (ex) {
+    //     log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
+    //   }
+    // });
+    // Nothing interesting here either....
+    // sonos.on('topology-changed', (topology) => {
+    //   try {
+    //     topology = JSON.parse(JSON.stringify(topology));
+    //     _fbSet('state/sonos/topology', topology);
+    //   } catch (ex) {
+    //     log.debug(LOG_PREFIX, 'Unable to save Sonos topology', ex);
+    //   }
+    // });
     // single vol
     sonos.on('volume-changed', (val) => {
       const roomName = val.roomName;
@@ -1883,17 +1886,23 @@ function Home(initialConfig, fbRef) {
     });
     // group vol
     sonos.on('group-volume', (val) => {
-      _fbSet(`state/sonos/speakerState/group/volume`, val);
+      const vol = val.newVolume;
+      const roomName = val.roomName;
+      _fbSet(`state/sonos/speakerState/_group/volume`, vol);
+      _fbSet(`state/sonos/speakerState/_group/controller`, roomName);
     });
     // single mute
     sonos.on('mute-changed', (val) => {
-      const roomName = val.roomName;
       const isMuted = val.newMute;
+      const roomName = val.roomName;
       _fbSet(`state/sonos/speakerState/${roomName}/isMuted`, isMuted);
     });
     // group mute
     sonos.on('group-mute', (val) => {
-      _fbSet(`state/sonos/speakerState/group/muted`, val);
+      const isMuted = val.newMute;
+      const roomName = val.roomName;
+      _fbSet(`state/sonos/speakerState/_group/isMuted`, isMuted);
+      _fbSet(`state/sonos/speakerState/_group/controller`, roomName);
     });
   }
 
