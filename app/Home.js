@@ -1875,15 +1875,25 @@ function Home(initialConfig, fbRef) {
         log.debug(LOG_PREFIX, 'Unable to save Sonos topology', ex);
       }
     });
+    // single vol
     sonos.on('volume-changed', (val) => {
       const roomName = val.roomName;
       const vol = val.newVolume;
       _fbSet(`state/sonos/speakerState/${roomName}/volume`, vol);
     });
+    // group vol
+    sonos.on('group-volume', (val) => {
+      _fbSet(`state/sonos/speakerState/group/volume`, val);
+    });
+    // single mute
     sonos.on('mute-changed', (val) => {
       const roomName = val.roomName;
       const isMuted = val.newMute;
       _fbSet(`state/sonos/speakerState/${roomName}/isMuted`, isMuted);
+    });
+    // group mute
+    sonos.on('group-mute', (val) => {
+      _fbSet(`state/sonos/speakerState/group/muted`, val);
     });
   }
 
