@@ -122,23 +122,23 @@ function Sonos() {
     // Mute - single
     _sonosSystem.on('mute-change', (newVal) => {
       _self.emit('mute-changed', newVal);
-      log.verbose(LOG_PREFIX, 'Mute changed', newVal);
+      // log.verbose(LOG_PREFIX, 'Mute changed', newVal);
     });
     // Mute - group
     _sonosSystem.on('group-mute', (newVal) => {
       _self.emit('group-mute', newVal);
-      log.verbose(LOG_PREFIX, 'Group Mute changed', newVal);
+      // log.verbose(LOG_PREFIX, 'Group Mute changed', newVal);
     });
 
     // Volume - single
     _sonosSystem.on('volume-change', (newVal) => {
       _self.emit('volume-changed', newVal);
-      log.verbose(LOG_PREFIX, 'Volume changed', newVal);
+      // log.verbose(LOG_PREFIX, 'Volume changed', newVal);
     });
     // Volume - group
     _sonosSystem.on('group-volume', (newVal) => {
       _self.emit('group-volume', newVal);
-      log.verbose(LOG_PREFIX, 'Group volume changed', newVal);
+      // log.verbose(LOG_PREFIX, 'Group volume changed', newVal);
     });
 
     _sonosSystem.on('listening', (listeningPort) => {
