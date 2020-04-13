@@ -1859,14 +1859,14 @@ function Home(initialConfig, fbRef) {
       favorites = JSON.parse(JSON.stringify(favorites));
       _fbSet('state/sonos/favorites', favorites);
     });
-    // sonos.on('transport-state', (state) => {
-    //   try {
-    //     state = JSON.parse(JSON.stringify(state));
-    //     _fbSet('state/sonos/transportState', state);
-    //   } catch (ex) {
-    //     log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
-    //   }
-    // });
+    sonos.on('transport-state', (state) => {
+      try {
+        state = JSON.parse(JSON.stringify(state));
+        _fbSet('state/sonos/transportState', state);
+      } catch (ex) {
+        log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
+      }
+    });
     sonos.on('topology-changed', (topology) => {
       try {
         topology = JSON.parse(JSON.stringify(topology));
@@ -1874,6 +1874,16 @@ function Home(initialConfig, fbRef) {
       } catch (ex) {
         log.debug(LOG_PREFIX, 'Unable to save Sonos topology', ex);
       }
+    });
+    sonos.on('volume-changed', (val) => {
+      const roomName = val.roomName;
+      const vol = val.newVolume;
+      _fbSet(`state/sonos/speakerState/${roomName}/volume`, vol);
+    });
+    sonos.on('mute-changed', (val) => {
+      const roomName = val.roomName;
+      const isMuted = val.newMute;
+      _fbSet(`state/sonos/speakerState/${roomName}/isMuted`, isMuted);
     });
   }
 
