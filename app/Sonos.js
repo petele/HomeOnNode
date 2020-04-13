@@ -91,11 +91,13 @@ function Sonos() {
       _getFavorites();
     });
 
+    // Queue changed
     _sonosSystem.on('queue-change', (player) => {
       _self.emit('queue-changed', player);
       log.verbose(LOG_PREFIX, 'Queue changed', player);
     });
 
+    // List changed
     _sonosSystem.on('list-change', (listName) => {
       log.verbose(LOG_PREFIX, 'List changed', listName);
       if (listName === 'favorites') {
@@ -103,11 +105,13 @@ function Sonos() {
       }
     });
 
+    // Topology changed
     _sonosSystem.on('topology-changed', (zones) => {
       _self.emit('topology-changed', zones);
       log.verbose(LOG_PREFIX, 'Topology changed', zones);
     });
 
+    // Transport state changed
     _sonosSystem.on('transport-state', (transportState) => {
       _self.emit('transport-state', transportState);
       const playerState = transportState.system.zones[0].coordinator.state;
@@ -115,28 +119,26 @@ function Sonos() {
       log.verbose(LOG_PREFIX, 'Player State Changed', playerState);
     });
 
+    // Mute - single
     _sonosSystem.on('mute-change', (newVal) => {
-      if (newVal.previousMute === newVal.newMute) {
-        return;
-      }
       _self.emit('mute-changed', newVal);
       log.verbose(LOG_PREFIX, 'Mute changed', newVal);
     });
+    // Mute - group
+    _sonosSystem.on('group-mute', (newVal) => {
+      _self.emit('group-mute', newVal);
+      log.verbose(LOG_PREFIX, 'Group Mute changed', newVal);
+    });
 
+    // Volume - single
     _sonosSystem.on('volume-change', (newVal) => {
-      if (newVal.previousVolume === newVal.newVolume) {
-        return;
-      }
       _self.emit('volume-changed', newVal);
       log.verbose(LOG_PREFIX, 'Volume changed', newVal);
     });
-
-    _sonosSystem.on('group-mute', (newVal) => {
-      if (newVal.previousMute === newVal.newMute) {
-        return;
-      }
-      _self.emit('group-mute', newVal);
-      log.verbose(LOG_PREFIX, 'Group Mute changed', newVal);
+    // Volume - group
+    _sonosSystem.on('group-volume', (newVal) => {
+      _self.emit('group-volume', newVal);
+      log.verbose(LOG_PREFIX, 'Group volume changed', newVal);
     });
 
     _sonosSystem.on('listening', (listeningPort) => {
@@ -225,6 +227,15 @@ function Sonos() {
     }
     log.debug(LOG_PREFIX, msg);
     return speaker.setVolume(vol)
+        .then((result) => {
+          const newVal = {
+            uuid: speaker.uuid,
+            roomName: speaker.roomName,
+            newVolume: vol,
+          };
+          _self.emit('volume-changed', newVal);
+          return result;
+        })
         .catch((err) => {
           log.exception(LOG_PREFIX, `${msg} failed, with exception.`, err);
           return {success: false};
