@@ -2,7 +2,6 @@
 
 const EventEmitter = require('events').EventEmitter;
 const util = require('util');
-const exec = require('child_process').exec;
 
 const Hue = require('./Hue');
 
