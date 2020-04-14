@@ -1859,6 +1859,10 @@ function Home(initialConfig, fbRef) {
       favorites = JSON.parse(JSON.stringify(favorites));
       _fbSet('state/sonos/favorites', favorites);
     });
+    sonos.on('services-changed', (services) => {
+      _fbSet('state/sonos/services', services);
+    });
+
     // Nothing of interest in storing this data, most of it is covered in
     // player-state
     // sonos.on('transport-state', (state) => {
@@ -1878,6 +1882,7 @@ function Home(initialConfig, fbRef) {
     //     log.debug(LOG_PREFIX, 'Unable to save Sonos topology', ex);
     //   }
     // });
+
     // single vol
     sonos.on('volume-changed', (val) => {
       const roomName = val.roomName;
