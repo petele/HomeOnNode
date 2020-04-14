@@ -1859,10 +1859,6 @@ function Home(initialConfig, fbRef) {
       favorites = JSON.parse(JSON.stringify(favorites));
       _fbSet('state/sonos/favorites', favorites);
     });
-    sonos.on('playlists-changed', (list) => {
-      list = JSON.parse(JSON.stringify(list));
-      _fbSet('state/sonos/playlists', list);
-    });
 
     // Nothing of interest in storing this data, most of it is covered in
     // player-state
