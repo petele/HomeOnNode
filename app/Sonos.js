@@ -20,9 +20,11 @@ const LOG_PREFIX = 'SONOS';
  * @fires Sonos#favorites-changed
 */
 function Sonos() {
+  const SERVICES_INTERVAL = 12 * 60 * 1000;
   let _ready = false;
   let _sonosSystem;
   let _favorites;
+  let _services;
   const _self = this;
 
   /**
@@ -89,6 +91,8 @@ function Sonos() {
       log.debug(LOG_PREFIX, 'Ready.');
       _self.emit('ready');
       _getFavorites();
+      _getServices();
+      setInterval(_getServices, SERVICES_INTERVAL);
     });
 
     // Queue changed
@@ -280,6 +284,32 @@ function Sonos() {
         _favorites = favs;
       }
     });
+  }
+
+  /**
+   * Get list of available services
+   *
+   * Fires an event (services-changed) when the services have been updated.
+  */
+  function _getServices() {
+    if (!_isReady()) {
+      return;
+    }
+    if (!_sonosSystem.availableServices) {
+      log.warn(LOG_PREFIX, 'No services available...');
+      return;
+    }
+    try {
+      const stringified = JSON.stringify(_sonosSystem.availableServices);
+      const services = JSON.parse(stringified);
+      if (diff(_services, services)) {
+        log.verbose(LOG_PREFIX, 'Services changed.', services);
+        _self.emit('services-changed', services);
+        _services = services;
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to get services', ex);
+    }
   }
 
   /**
