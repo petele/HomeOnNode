@@ -20,10 +20,12 @@ const LOG_PREFIX = 'SONOS';
  * @fires Sonos#favorites-changed
 */
 function Sonos() {
-  const SERVICES_INTERVAL = 12 * 60 * 1000;
+  const SERVICES_INTERVAL = 6 * 60 * 60 * 1000;
+  const PLAYLIST_INTERVAL = 12 * 60 * 1000;
   let _ready = false;
   let _sonosSystem;
   let _favorites;
+  let _playlists;
   let _services;
   const _self = this;
 
@@ -88,11 +90,13 @@ function Sonos() {
 
     _sonosSystem.on('initialized', () => {
       _ready = true;
-      log.debug(LOG_PREFIX, 'Ready.');
-      _self.emit('ready');
       _getFavorites();
       _getServices();
+      _getPlaylists();
       setInterval(_getServices, SERVICES_INTERVAL);
+      setInterval(_getPlaylists, PLAYLIST_INTERVAL);
+      log.debug(LOG_PREFIX, 'Ready.');
+      _self.emit('ready');
     });
 
     // Queue changed
@@ -276,12 +280,31 @@ function Sonos() {
     if (!_isReady()) {
       return;
     }
-    const player = _getPlayer();
-    player.system.getFavorites().then((favs) => {
+    // const player = _getPlayer();
+    // player.system.getFavorites().then((favs) => {
+    _sonosSystem.getFavorites().then((favs) => {
       if (diff(_favorites, favs)) {
         log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
         _self.emit('favorites-changed', favs);
         _favorites = favs;
+      }
+    });
+  }
+
+  /**
+   * Update Playlists
+   *
+   * Fires an event (playlists-changed) when the playlists have been updated.
+  */
+  function _getPlaylists() {
+    if (!_isReady()) {
+      return;
+    }
+    _sonosSystem.getPlaylists().then((lists) => {
+      if (diff(_playlists, lists)) {
+        log.verbose(LOG_PREFIX, 'Playlists changed.', lists);
+        _self.emit('playlists-changed', lists);
+        _playlists = lists;
       }
     });
   }
@@ -296,6 +319,7 @@ function Sonos() {
       return;
     }
     if (!_sonosSystem.availableServices) {
+      _services = {};
       log.warn(LOG_PREFIX, 'No services available...');
       return;
     }
@@ -304,8 +328,8 @@ function Sonos() {
       const services = JSON.parse(stringified);
       if (diff(_services, services)) {
         log.verbose(LOG_PREFIX, 'Services changed.', services);
-        _self.emit('services-changed', services);
         _services = services;
+        _self.emit('services-changed', services);
       }
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to get services', ex);
