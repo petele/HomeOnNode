@@ -1862,14 +1862,14 @@ function Home(initialConfig, fbRef) {
 
     // Nothing of interest in storing this data, most of it is covered in
     // player-state
-    // sonos.on('transport-state', (state) => {
-    //   try {
-    //     state = JSON.parse(JSON.stringify(state));
-    //     _fbSet('state/sonos/transportState', state);
-    //   } catch (ex) {
-    //     log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
-    //   }
-    // });
+    sonos.on('transport-state', (state) => {
+      try {
+        state = JSON.parse(JSON.stringify(state));
+        _fbSet('state/sonos/transportState', state);
+      } catch (ex) {
+        log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
+      }
+    });
     // Nothing interesting here either....
     // sonos.on('topology-changed', (topology) => {
     //   try {
