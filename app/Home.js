@@ -141,10 +141,7 @@ function Home(initialConfig, fbRef) {
 
       // Run the action on a delay.
       if (action.delay) {
-        setTimeout(() => {
-          delete action.delay;
-          results.push(_self.executeActions(action, `${source}*`));
-        }, action.delay * 1000);
+        _runDelayedCommand(action, source);
         return;
       }
 
@@ -785,6 +782,7 @@ function Home(initialConfig, fbRef) {
         state: 'NONE',
       },
       gitHead: version.head,
+      delayedCommands: {},
     };
     _fb.child('state').once('value', function(snapshot) {
       _self.state = snapshot.val();
@@ -954,6 +952,30 @@ function Home(initialConfig, fbRef) {
       return val;
     }
     return [val];
+  }
+
+
+  /**
+   * Run a command on a delay.
+   *
+   * @param {Object} action Command to run
+   * @param {String} source Where the command was sent from.
+   */
+  function _runDelayedCommand(action, source) {
+    const runDelay = action.delay * 1000;
+    delete action.delay;
+    const id = setTimeout(() => {
+      log.debug(LOG_PREFIX, `DelayedCommand: [${id}] running`);
+      _self.executeActions(action, `delayedCommands/${id}`);
+      _fbSet(`state/delayedCommands/${id}`, null);
+    }, runDelay);
+    const msg = `DelayedCommand: [${id}] scheduled in ${runDelay} seconds.`;
+    const details = {
+      action: action,
+      source: source,
+    };
+    log.debug(LOG_PREFIX, msg, details);
+    _fbSet(`state/delayedCommands/${id}`, details);
   }
 
   /**
