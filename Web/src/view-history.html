@@ -121,7 +121,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             class="dropdown-content"
             attr-for-selected="value"
             selected="{{rooms.bedroom.view}}">
-              <paper-item value="temperature">Temperature</paper-item>
+              <paper-item value="tempAwair">Temperature (Awair)</paper-item>
+              <!-- <paper-item value="temperature">Temperature</paper-item> -->
+              <paper-item value="tempNest">Temperature (Nest)</paper-item>
               <paper-item value="humidity">Humidity</paper-item>
               <paper-item value="lux">Light level</paper-item>
               <paper-item value="awairScore">Air quality</paper-item>
@@ -197,7 +199,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 view: 'temperature',
               },
               bedroom: {
-                view: 'temperature',
+                view: 'tempAwair',
               },
               livingroom: {
                 view: 'temperature',
@@ -464,6 +466,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 max: 78,
               },
             },
+            tempAwair: {
+              data: [],
+              chartOpts: {
+                label: 'Temperature (Awair)',
+                yAxisLabel: 'Temperature (F)',
+                min: 68,
+                max: 78,
+              },
+            },
+            tempNest: {
+              data: [],
+              chartOpts: {
+                label: 'Temperature (Nest!)',
+                yAxisLabel: 'Temperature (F)',
+                min: 68,
+                max: 78,
+              },
+            },
             humidity: {
               data: [],
               chartOpts: {
@@ -576,6 +596,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           if (item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1']) {
             value = item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1'].temperature;
             this.data.bedroom.temperature.data.push({x: time, y: value});
+            this.data.bedroom.tempNest.data.push({x: time, y: value});
           }
         } catch (ex) {
           console.error('br hue', ex);
@@ -584,20 +605,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         try {
           //  - Awair Score
           t = item.awair.BR.timeStamp;
-          value = item.awair.BR.score;
-          this.data.bedroom.awairScore.data.push({x: t, y: value});
+
+          //  - Score (Awair)
+          if (item.awair.BR.score) {
+            value = item.awair.BR.score;
+            this.data.bedroom.awairScore.data.push({x: t, y: value});
+          }
+
+          if (!item.awair.BR.sensors) {
+            return;
+          }
+
+          //  - Temperature (Awair)
+          if (item.awair.BR.sensors.temp) {
+            value = item.awair.BR.sensors.temp.value;
+            value = (value * 9 / 5) + 32;
+            this.data.bedroom.tempAwair.data.push({x: t, y: value});
+          }
+
           //  - Humidity (Awair)
-          value = item.awair.BR.sensors.humid.value;
-          this.data.bedroom.humidity.data.push({x: t, y: value});
+          if (item.awair.BR.sensors.humid) {
+            value = item.awair.BR.sensors.humid.value;
+            this.data.bedroom.humidity.data.push({x: t, y: value});
+          }
+
           //  - CO2 (Awair)
-          value = item.awair.BR.sensors.co2.value;
-          this.data.bedroom.co2.data.push({x: t, y: value});
+          if (item.awair.BR.sensors.co2) {
+            value = item.awair.BR.sensors.co2.value;
+            this.data.bedroom.co2.data.push({x: t, y: value});
+          }
+
           //  - PM25 (Awair)
-          value = item.awair.BR.sensors.pm25.value;
-          this.data.bedroom.pm25.data.push({x: t, y: value});
+          if (item.awair.BR.sensors.pm25) {
+            value = item.awair.BR.sensors.pm25.value;
+            this.data.bedroom.pm25.data.push({x: t, y: value});
+          }
+
           //  - VOC (Awair)
-          value = item.awair.BR.sensors.voc.value;
-          this.data.bedroom.voc.data.push({x: t, y: value});
+          if (item.awair.BR.sensors.voc) {
+            value = item.awair.BR.sensors.voc.value;
+            this.data.bedroom.voc.data.push({x: t, y: value});
+          }
         } catch (ex) {
           console.error('br awair', ex, item.awair.BR);
         }
