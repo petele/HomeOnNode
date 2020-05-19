@@ -65,6 +65,9 @@ function Home(initialConfig, fbRef) {
   let _armingTimer;
   let _lastSoundPlayedAt = 0;
 
+  const _delayedCmdTimers = {};
+  let _delayedCmdCounter = 0;
+
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
    * Public APIs
@@ -786,6 +789,7 @@ function Home(initialConfig, fbRef) {
     };
     _fb.child('state').once('value', function(snapshot) {
       _self.state = snapshot.val();
+      _self.state.delayedCommands = {};
     });
     _fbSet('state/doors', false);
     _fbSet('state/time/started', _self.state.time.started);
@@ -962,13 +966,25 @@ function Home(initialConfig, fbRef) {
    * @param {String} source Where the command was sent from.
    */
   function _runDelayedCommand(action, source) {
+    // Get the CounterID
+    const id = (_delayedCmdCounter++).toString();
+
+    // Figure out the delay
     const runDelay = action.delay * 1000;
     delete action.delay;
-    const id = setTimeout(() => {
+
+    // Schedule the task
+    const delayTimer = setTimeout(() => {
       log.debug(LOG_PREFIX, `DelayedCommand: [${id}] running`);
       _self.executeActions(action, `delayedCommands/${id}`);
       _fbSet(`state/delayedCommands/${id}`, null);
+      delete _delayedCmdTimers[id];
     }, runDelay);
+
+    // Save the task to the log
+    _delayedCmdTimers[id] = delayTimer;
+
+    // Store and log the scheduled command
     const msg = `DelayedCommand: [${id}] scheduled in ${runDelay} seconds.`;
     const details = {
       action: action,
