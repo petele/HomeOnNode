@@ -229,6 +229,16 @@ function Home(initialConfig, fbRef) {
       return _genResult(action, true, 'noop');
     }
 
+    // Cancel a delayed timer
+    if (action.hasOwnProperty('cancelDelayedCommand')) {
+      const id = action.cancelDelayedCommand.id;
+      if (id) {
+        _cancelDelayedCommand(action.cancelDelayedCommand.id);
+        return _genResult(action, true, 'cancelDelayedCommand');
+      }
+      return _genResult(action, false, 'cancelDelayedCommand');
+    }
+
     // Awair
     if (action.hasOwnProperty('awair')) {
       if (!awair) {
@@ -958,42 +968,6 @@ function Home(initialConfig, fbRef) {
     return [val];
   }
 
-
-  /**
-   * Run a command on a delay.
-   *
-   * @param {Object} action Command to run
-   * @param {String} source Where the command was sent from.
-   */
-  function _runDelayedCommand(action, source) {
-    // Get the CounterID
-    const id = (_delayedCmdCounter++).toString();
-
-    // Figure out the delay
-    const runDelay = action.delay * 1000;
-    delete action.delay;
-
-    // Schedule the task
-    const delayTimer = setTimeout(() => {
-      log.debug(LOG_PREFIX, `DelayedCommand: [${id}] running`);
-      _self.executeActions(action, `delayedCommands/${id}`);
-      _fbSet(`state/delayedCommands/${id}`, null);
-      delete _delayedCmdTimers[id];
-    }, runDelay);
-
-    // Save the task to the log
-    _delayedCmdTimers[id] = delayTimer;
-
-    // Store and log the scheduled command
-    const msg = `DelayedCommand: [${id}] scheduled in ${runDelay} seconds.`;
-    const details = {
-      action: action,
-      source: source,
-    };
-    log.debug(LOG_PREFIX, msg, details);
-    _fbSet(`state/delayedCommands/${id}`, details);
-  }
-
   /**
    * Handles a door open/close event
    *
@@ -1346,6 +1320,75 @@ function Home(initialConfig, fbRef) {
     }
     return false;
   }
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Delayed Command Handlers
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Run a command on a delay.
+   *
+   * @param {Object} action Command to run
+   * @param {String} source Where the command was sent from.
+   */
+  function _runDelayedCommand(action, source) {
+    // Get the CounterID
+    const id = (_delayedCmdCounter++).toString();
+
+    // Figure out the delay
+    const runDelay = action.delay * 1000;
+    delete action.delay;
+
+    // Schedule the task
+    const delayTimer = setTimeout(() => {
+      log.debug(LOG_PREFIX, `DelayedCommand: '${id}' running`);
+      _self.executeActions(action, `delayedCommands/${id}`);
+      _clearDelayedCommand(id);
+    }, runDelay);
+
+    // Save the task to the log
+    _delayedCmdTimers[id] = delayTimer;
+
+    // Store and log the scheduled command
+    const msg = `DelayedCommand: '${id}' scheduled in ` +
+      `${runDelay / 1000} seconds.`;
+    const now = Date.now();
+    const details = {
+      now: now,
+      delay: runDelay,
+      runAt: now + runDelay,
+      action: action,
+      source: source,
+    };
+    log.debug(LOG_PREFIX, msg, details);
+    _fbSet(`state/delayedCommands/${id}`, details);
+  }
+
+  /**
+   * Cancels and clears the timer
+   *
+   * @param {String} id ID of the timer
+   */
+  function _cancelDelayedCommand(id) {
+    const timeout = _delayedCmdTimers[id];
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    _clearDelayedCommand(id);
+  }
+
+  /**
+   * Clears the timer from the list of in progress timers.
+   *
+   * @param {String} id ID of the timer
+   */
+  function _clearDelayedCommand(id) {
+    _fbSet(`state/delayedCommands/${id}`, null);
+    delete _delayedCmdTimers[id];
+  }
+
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
