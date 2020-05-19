@@ -21,7 +21,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
         --weather-icon-size: 120px;
-        --app-grid-item-height: 72px;
+        /* --app-grid-item-height: 72px; */
       }
       .description {
         color: var(--secondary-text-color);
@@ -45,6 +45,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .currentTemp sup {
         font-size: 0.5em;
       }
+      .app-grid {
+        height: inherit;
+      }
     </style>
 
     <fb-document path="state/weather" data="{{weatherData}}"></fb-document>
@@ -61,19 +64,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
       <div class="app-grid summary">
         [[weatherData.today.summary]]
+        <br>
+        Right now, it feels like
+        [[round(weatherData.now.apparentTemperature)]]° with a humidex of
+        [[humidity(weatherData.now.humidity)]]%
       </div>
+
       <div class="app-grid grid-two description">
         <div>
-          <div>Feel: <span>[[round(weatherData.now.apparentTemperature)]]°</span></div>
-          <div>High: <span>[[round(weatherData.today.temperatureMax)]]°</span></div>
-          <div>Low: <span>[[round(weatherData.today.temperatureMin)]]°</span></div>
-        </div>
-        <div>
+          <div>
+            High of <span>[[round(weatherData.today.temperatureHigh)]]°</span>
+            at <span>[[formatTime(weatherData.today.temperatureHighTime)]]</span>
+          </div>
           <div>
             Wind: <span>[[round(weatherData.now.windSpeed)]]</span> mph
           </div>
-          <div>Sunrise: <span>[[formatTime(weatherData.today.sunriseTime)]]</span></div>
-          <div>Sunset: <span>[[formatTime(weatherData.today.sunsetTime)]]</span></div>
+        </div>
+        <div>
+          <div>
+            Low of <span>[[round(weatherData.today.temperatureLow)]]°</span>
+            at <span>[[formatTime(weatherData.today.temperatureLowTime)]]</span>
+          </div>
+          <div>
+            UV Index: <span>[[weatherData.now.uvIndex]]</span>
+          </div>
+        </div>
+      </div>
+      <div class="app-grid description">
+        <div>
+          The <span>sun</span> will rise at
+          <span>[[formatTime(weatherData.today.sunriseTime)]]</span>
+          and set at
+          <span>[[formatTime(weatherData.today.sunsetTime)]]</span>
         </div>
       </div>
     </div>
@@ -89,6 +111,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       round(n) {
         return Math.round(n);
+      }
+
+      humidity(n) {
+        return Math.round(n * 100);
       }
     }
 
