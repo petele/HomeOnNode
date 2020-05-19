@@ -51,6 +51,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="view-info.html">
 <link rel="lazy-import" href="view-history.html">
 <link rel="lazy-import" href="view-remote.html">
+<link rel="lazy-import" href="view-scheduled.html">
 
 
 <dom-module id="my-app">
@@ -108,17 +109,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <app-toolbar>Home On Node</app-toolbar>
         <iron-selector selected="{{page}}" attr-for-selected="name" class="drawer-list" role="navigation">
           <a name="home" href="/">Home</a>
-          <a name="alarms" href="/alarms">Alarms</a>
-          <a name="hvac" href="/hvac">Heat &amp; Air</a>
-          <a name="remote" href="/remote">Remote</a>
-          <a name="info" href="/info">Info</a>
-          <a name="devices" href="/devices">Devices</a>
-          <a name="settings" href="/settings">Settings</a>
+
           <a name="weather" href="/weather">Weather</a>
+
+          <a name="alarms" href="/alarms">Recurring</a>
+          <a name="scheduled" href="/scheduled">Scheduled</a>
+
+          <a name="hvac" href="/hvac">Heat &amp; Air</a>
+
+          <!-- <a name="remote" href="/remote">Remote</a> -->
+
+          <a name="devices" href="/devices">Device Status</a>
+          <a name="settings" href="/settings">Settings</a>
+
           <a name="system-logs" href="/system-logs">Server Logs</a>
           <a name="door-logs" href="/door-logs">Door Logs</a>
           <a name="presence-logs" href="/presence-logs">Presence Logs</a>
           <a name="vpn-logs" href="/vpn-logs">VPN Logs</a>
+
+          <a name="info" href="/info">System Info</a>
           <a name="history" href="/history">History</a>
         </iron-selector>
 
@@ -170,6 +179,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <view-info name="info"></view-info>
           <view-remote name="remote"></view-remote>
           <view-history name="history"></view-history>
+          <view-scheduled name="scheduled"></view-scheduled>
           <view-404 name="404"></view-404>
         </iron-pages>
         <paper-toast id="toast" text="Hello world!"></paper-toast>
