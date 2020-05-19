@@ -99,6 +99,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             </paper-button>
         </template>
       </div>
+
+      <div class="app-grid grid-wide">
+        <template
+          is="dom-repeat"
+          items="[[commandsObj]]"
+          filter="isTestAction"
+          sort="sortAction"
+          observe="kind">
+            <paper-button class="button" on-tap="tapAction">
+              [[item.label]]
+            </paper-button>
+        </template>
+      </div>
     </div>
 
   </template>
@@ -108,7 +121,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get is() { return 'view-actions'; }
 
       isAction(item) {
+        if (item.hidden === true) {
+          return false;
+        }
         return item.kind === 'action';
+      }
+
+      isTestAction(item) {
+        if (item.hidden === true) {
+          return false;
+        }
+        return item.kind === 'test-action';
       }
 
       getWemoClass(isOn) {
