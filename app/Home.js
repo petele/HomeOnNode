@@ -753,7 +753,15 @@ function Home(initialConfig, fbRef) {
         log.warn(LOG_PREFIX, 'Wemo unavailable.');
         return _genResult(action, false, 'not_available');
       }
-      return wemo.setState(action.wemo.id, action.wemo.on)
+      let id = action.wemo.id;
+      if (!id && action.wemo.name) {
+        id = _config.wemo.lookup[action.wemo.name.toUpperCase()];
+      }
+      if (!id) {
+        log.warn(LOG_PREFIX, `Wemo device not found`, action.wemo);
+        return _genResult(action, false, 'not_found');
+      }
+      return wemo.setState(id, action.wemo.on)
           .then((result) => {
             return _genResult(action, true, result);
           })
@@ -1083,18 +1091,6 @@ function Home(initialConfig, fbRef) {
     const title = `playSoundLocal('${file}')`;
     const cmd = `mplayer ${file}`;
     return honExec.run(title, cmd, '.', true);
-    // return new Promise(function(resolve, reject) {
-    //   log.verbose(LOG_PREFIX, `playSoundLocal('${file}')`);
-    //   const cmd = `mplayer ${file}`;
-    //   exec(cmd, function(error, stdOut, stdErr) {
-    //     if (error) {
-    //       log.exception(LOG_PREFIX, '_playSoundLocal failed', error);
-    //       reject(error);
-    //       return;
-    //     }
-    //     resolve(stdOut);
-    //   });
-    // });
   }
 
   /**
@@ -2070,12 +2066,6 @@ function Home(initialConfig, fbRef) {
     });
     wemo.on('error', (err) => {
       log.error(LOG_PREFIX, `Ignored Wemo error`, err);
-    });
-    const fbWemoConfigPath = 'config/HomeOnNode/wemoDevices';
-    _fb.child(fbWemoConfigPath).on('child_added', (snapshot) => {
-      const snap = snapshot.val();
-      log.debug(LOG_PREFIX, `Manually adding Wemo Device`, snap);
-      wemo.addDevice(snap.url);
     });
   }
 
