@@ -1510,39 +1510,45 @@ function Home(initialConfig, fbRef) {
           log.warn(LOG_PREFIX, 'Unable to get humidity for room', room);
           return;
         }
-
-        // Setup the action to execute
-        const action = {
-          wemo: {
-            id: room.wemoId,
-          },
-        };
-
-        // Check the humidity, turn off if it's above...
-        if (humidity > _config.hvac.autoHumidifier.offAbove) {
-          action.wemo.on = false;
-        }
-        // Check the humidity, turn off if it's above...
-        if (humidity < _config.hvac.autoHumidifier.onBelow) {
-          action.wemo.on = true;
-        }
         // Check the current Wemo state
         const currentWemoState = _self.state.wemo[room.wemoId].value == true;
 
+        // Setup the action we'll send
+        const action = {};
+
+        // Check the humidity, turn off if it's above...
+        if (humidity > _config.hvac.autoHumidifier.offAbove) {
+          action.wemo = {on: false};
+        }
+        // Check the humidity, turn off if it's above...
+        if (humidity < _config.hvac.autoHumidifier.onBelow) {
+          action.wemo = {on: false};
+        }
+
         // Log the results
-        const msg = `autoHumidifierTick ${room.name}: ${humidity}%`;
+        let msg = `autoHumidifierTick '${room.name}'`;
         const details = {
-          room: room,
-          action: action,
+          currentHumidity: humidity,
           currentWemoState: currentWemoState,
         };
-        log.debug(LOG_PREFIX, msg, details);
+        log.verbose(LOG_PREFIX, msg, details);
+
+        // No change to current state
+        if (!action.wemo) {
+          return;
+        }
 
         // If the Wemo is already in the expected state, no change required.
         if (action.wemo.on === currentWemoState) {
           return;
         }
+
         // Turn the humidifier on/off
+        action.wemo.id = room.wemoId;
+        msg = `autoHumidifier Change for ${room.name} to ${action.wemo.on}`;
+        details.action = action;
+        details.room = room;
+        log.log(LOG_PREFIX, msg, room);
         _executeAction(action, 'AutoHumidifier');
       } catch (ex) {
         log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
