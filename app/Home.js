@@ -834,6 +834,7 @@ function Home(initialConfig, fbRef) {
     _initBedJet();
     _initAwair();
     _initHoNExec();
+    _initAutoHumidifier();
     setTimeout(function() {
       _self.emit('ready');
       _playSound(_config.readySound);
@@ -863,6 +864,24 @@ function Home(initialConfig, fbRef) {
       currentObj = currentObj[key];
     }
     currentObj[keys[len]] = value;
+  }
+
+  /**
+   * Get System State value using / notation
+   * @param {String} path Path to value
+   * @return {*} Result of value
+   */
+  function _getStateValue(path) {
+    let result = _self.state;
+    const items = path.split('/');
+    items.forEach((item) => {
+      if (result && result[item]) {
+        result = result[item];
+        return;
+      }
+      result = null;
+    });
+    return result;
   }
 
   /**
@@ -1444,6 +1463,85 @@ function Home(initialConfig, fbRef) {
         _self.executeCommandByName(details.cmdName, `alarm-${key}`);
       } else {
         log.error(LOG_PREFIX, 'Unknown alarm command', details);
+      }
+    });
+  }
+
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Auto Humidifier API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+    * Init the auto humidifier
+    */
+  function _initAutoHumidifier() {
+    _autoHumidifierTick();
+    setTimeout(() => {
+      _autoHumidifierTick();
+    }, 5 * 60 * 1000);
+  }
+
+  /**
+    *
+    */
+  function _autoHumidifierTick() {
+    // Only run when at home
+    if (_self.state.systemState !== 'HOME') {
+      return;
+    }
+    // Only run if enabled
+    if (_config.hvac.autoHumidifier.enabled === false) {
+      return;
+    }
+
+    // Loop through each room
+    _config.hvac.autoHumidifier.rooms.forEach((room) => {
+      try {
+        // Get the current humidity
+        const humidity = _getStateValue(room.pathToValue);
+        if (!humidity) {
+          log.warn(LOG_PREFIX, 'Unable to get humidity for room', room);
+          return;
+        }
+
+        // Setup the action to execute
+        const action = {
+          wemo: {
+            id: room.wemoId,
+          },
+        };
+
+        // Check the humidity, turn off if it's above...
+        if (humidity > _config.hvac.autoHumidifier.offAbove) {
+          action.wemo.on = false;
+        }
+        // Check the humidity, turn off if it's above...
+        if (humidity < _config.hvac.autoHumidifier.onBelow) {
+          action.wemo.on = true;
+        }
+        // Check the current Wemo state
+        const currentWemoState = _self.state.wemo[room.wemoId].value == true;
+
+        // Log the results
+        const msg = `autoHumidifierTick ${room.name}: ${humidity}%`;
+        const details = {
+          room: room,
+          action: action,
+          currentWemoState: currentWemoState,
+        };
+        log.debug(LOG_PREFIX, msg, details);
+
+        // If the Wemo is already in the expected state, no change required.
+        if (action.wemo.on === currentWemoState) {
+          return;
+        }
+        // Turn the humidifier on/off
+        _executeAction(action, 'AutoHumidifier');
+      } catch (ex) {
+        log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
       }
     });
   }
