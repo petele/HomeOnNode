@@ -1494,20 +1494,24 @@ function Home(initialConfig, fbRef) {
   function _autoHumidifierTick() {
     // Only run when at home
     if (_self.state.systemState !== 'HOME') {
+      log.verbose(LOG_PREFIX, `autoHumidifier: not HOME`);
       return;
     }
     // Only run if enabled
     if (_config.hvac.autoHumidifier.enabled === false) {
+      log.verbose(LOG_PREFIX, `autoHumidifier: disabled`);
       return;
     }
 
     // Loop through each room
     _config.hvac.autoHumidifier.rooms.forEach((room) => {
       try {
+        const msgBase = `autoHumidifier[${room.name}]`;
+
         // Get the current humidity
         const humidity = _getStateValue(room.pathToValue);
         if (!humidity) {
-          log.warn(LOG_PREFIX, 'Unable to get humidity for room', room);
+          log.warn(LOG_PREFIX, `${msgBase}: Unable to get humidity`, room);
           return;
         }
         // Check the current Wemo state
@@ -1519,36 +1523,38 @@ function Home(initialConfig, fbRef) {
         // Check the humidity, turn off if it's above...
         if (humidity > _config.hvac.autoHumidifier.offAbove) {
           action.wemo = {on: false};
+          log.verbose(LOG_PREFIX, `${msgBase}: on:false`);
         }
         // Check the humidity, turn off if it's above...
         if (humidity < _config.hvac.autoHumidifier.onBelow) {
-          action.wemo = {on: false};
+          action.wemo = {on: true};
+          log.verbose(LOG_PREFIX, `${msgBase}: on:true`);
         }
 
         // Log the results
-        let msg = `autoHumidifierTick '${room.name}'`;
         const details = {
           currentHumidity: humidity,
           currentWemoState: currentWemoState,
         };
-        log.verbose(LOG_PREFIX, msg, details);
+        log.debug(LOG_PREFIX, `${msgBase}`, details);
 
         // No change to current state
         if (!action.wemo) {
+          log.verbose(LOG_PREFIX, `${msgBase}: within range, no change`);
           return;
         }
 
         // If the Wemo is already in the expected state, no change required.
         if (action.wemo.on === currentWemoState) {
+          log.verbose(LOG_PREFIX, `${msgBase}: already on/off`);
           return;
         }
 
         // Turn the humidifier on/off
         action.wemo.id = room.wemoId;
-        msg = `autoHumidifier Change for ${room.name} to ${action.wemo.on}`;
         details.action = action;
         details.room = room;
-        log.log(LOG_PREFIX, msg, room);
+        log.log(LOG_PREFIX, `${msgBase} changed to ${action.wemo.on}`, room);
         _executeAction(action, 'AutoHumidifier');
       } catch (ex) {
         log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
