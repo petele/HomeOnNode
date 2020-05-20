@@ -70,6 +70,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       limit-to-last="1">
     </firebase-query>
 
+    <firebase-document
+      path="state"
+      data="{{fbState}}">
+    </firebase-document>
+
     <div class="card">
       <div class="app-grid grid-two">
         <div>
@@ -82,14 +87,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
       </div>
       <div>
-        <span class="secondary">Harmony Activity:</span>
-        <span>[[data.harmonyActivity.label]]</span>
-      </div>
-      <div>
         <span class="secondary">Weather:</span>
         <span>[[data.weather.summary]],&nbsp;</span>
         <span>[[round(data.weather.temperature)]]°F</span>
         <span class="secondary">([[round(data.weather.humidity)]]%)</span>
+      </div>
+      <div>
+        <span class="secondary">Last Doorbell:</span>
+        <span>[[formatDate(fbState.lastDoorbell.date)]]</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Media</h3>
+      <div>
+        <span class="secondary">Harmony Activity:</span>
+        <span>[[data.harmonyActivity.label]]</span>
+      </div>
+      <div>
+        <span class="secondary">Sonos Controller:</span>
+        <span>[[fbState.sonos.speakerState._group.controller]]</span>
+      </div>
+      <div>
+        <span class="secondary">Sonos Volume:</span>
+        <span>[[speakerVol._group]]</span>
+      </div>
+      <div>
+        <span class="secondary">Tivo:</span>
+        <span>[[fbState.tivo.data]]</span>
       </div>
     </div>
 
@@ -104,6 +129,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span class="secondary">Light state:</span>
         <span class$="[[isTrue(data.hueData.BA.daylight)]]">Daylight</span>
         <span class$="[[isTrue(data.hueData.BA.dark)]]">Dark</span>
+      </div>
+      <div>
+        <span class="secondary">Sonos Volume:</span>
+        <span>[[speakerVol.bathroom]]</span>
       </div>
       <div>
         <span class="secondary">Temperature:</span>
@@ -123,6 +152,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span class="secondary">Light state:</span>
         <span class$="[[isTrue(data.hueData.BR.daylight)]]">Daylight</span>
         <span class$="[[isTrue(data.hueData.BR.dark)]]">Dark</span>
+      </div>
+      <div>
+        <span class="secondary">Sonos Volume:</span>
+        <span>[[speakerVol.bedroom]]</span>
       </div>
       <template is="dom-if" if="[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.mode]]">
         <div>
@@ -174,6 +207,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span class$="[[isTrue(data.hueData.LR.daylight)]]">Daylight</span>
         <span class$="[[isTrue(data.hueData.LR.dark)]]">Dark</span>
       </div>
+      <div>
+        <span class="secondary">Sonos Volume:</span>
+        <span>[[speakerVol.livingRoom]]</span>
+      </div>
       <template is="dom-if" if="[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.mode]]">
         <div>
           <span class="secondary">HVAC Mode:</span>
@@ -194,6 +231,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.humidity]]%</span>
       </div>
     </div>
+
+    <div class="card">
+      <h3>Kitchen</h3>
+      <div>
+        <span class="secondary">Sonos Volume:</span>
+        <span>[[speakerVol.kitchen]]</span>
+      </div>
+    </div>
   </template>
 
   <script>
@@ -203,19 +248,65 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get properties() {
         return {
           fbData: Array,
+          fbState: Object,
           data: Object,
+          speakerVol: {
+            type: String,
+            value: {},
+          },
         };
       }
 
       static get observers() {
         return [
           'fbDataChanged(fbData.length)',
+          'volChanged(fbState.sonos.speakerState)',
         ];
       }
 
       fbDataChanged(len) {
         if (len === 1) {
           this.data = this.fbData[0];
+        }
+      }
+
+      volChanged(state) {
+        if (!state) {
+          return;
+        }
+        try {
+          let value;
+          value = state._group.volume;
+          if (state._group.isMuted) {
+            value = 'Muted';
+          }
+          this.set('speakerVol._group', value);
+
+          value = state.Bathroom.volume;
+          if (state.Bathroom.isMuted) {
+            value = 'Muted';
+          }
+          this.set('speakerVol.bathroom', value);
+
+          value = state.Bedroom.volume;
+          if (state.Bedroom.isMuted) {
+            value = 'Muted';
+          }
+          this.set('speakerVol.bedroom', value);
+
+          value = state.Kitchen.volume;
+          if (state.Kitchen.isMuted) {
+            value = 'Muted';
+          }
+          this.set('speakerVol.kitchen', value);
+
+          value = state['Living Room'].volume;
+          if (state['Living Room'].isMuted) {
+            value = 'Muted';
+          }
+          this.set('speakerVol.livingRoom', value);
+        } catch (ex) {
+          console.error('oops', ex, state);
         }
       }
 

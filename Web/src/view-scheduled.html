@@ -118,7 +118,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       getCmdInfo(item) {
         try {
-          const key = Object.keys(item.action)[0];
+          const keys = Object.keys(item.action);
+          let key = keys[0];
+          if (key === 'conditions' && keys[1]) {
+            key = keys[1];
+          }
           return JSON.stringify(item.action[key]);
         } catch (ex) {
           console.error('Unable to parse action key', ex);
