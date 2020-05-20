@@ -1478,8 +1478,12 @@ function Home(initialConfig, fbRef) {
     * Init the auto humidifier
     */
   function _initAutoHumidifier() {
-    _autoHumidifierTick();
     setTimeout(() => {
+      log.init(LOG_PREFIX, 'Starting autoHumidifier...');
+      _autoHumidifierTick();
+    }, 90 * 1000);
+
+    setInterval(() => {
       _autoHumidifierTick();
     }, 5 * 60 * 1000);
   }
