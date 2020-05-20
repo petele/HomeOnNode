@@ -17,6 +17,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="../bower_components/paper-toggle-button/paper-toggle-button.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="fb-document.html">
 <link rel="import" href="fb-query.html">
@@ -55,11 +56,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
 
-    <fb-document path="state/nest/devices/thermostats" data="{{nestThermostats}}">
-    </fb-document>
-
-    <!-- 12 rec/hr = 288 rec/day * 4 days = 1152 -->
-    <fb-query path="logs/cron" limit-to-last="1152" data="{{cronLogs}}">
+    <fb-query path="state/nest/devices/thermostats" data="{{nestThermostats}}">
     </fb-query>
 
     <fb-document
@@ -67,94 +64,86 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       data="{{nestState}}">
     </fb-document>
 
+    <firebase-document
+    path="config/HomeOnNode/hvac/autoHumidifier"
+    data="{{autoHumidifier}}">
+  </firebase-document>
+
     <fb-query path="config/HomeOnNode/nest/hvacAuto" data="{{nestHVACAuto}}">
     </fb-query>
 
     <div class="card">
-      <div class="app-grid grid-two">
+      <div class="app-grid grid-one">
         <paper-toggle-button id="ptAway" checked="{{nestAway}}" on-change="awayChanged">
           Nest Away
         </paper-toggle-button>
-        <paper-dropdown-menu disabled no-label-float label="Mode">
-          <paper-listbox
-            on-selected-changed="hvacModeChanged"
-            slot="dropdown-content"
-            class="dropdown-content"
-            attr-for-selected="value"
-            selected="{{hvacMode}}">
-            <paper-item value="heat">Heat</paper-item>
-            <paper-item value="cool">Cool</paper-item>
-            <paper-item value="off">Off</paper-item>
-          </paper-listbox>
-        </paper-dropdown-menu>
       </div>
     </div>
 
     <div class="card">
-      <details on-toggle="userInteraction">
-        <summary>
-          <div class="layout horizontal">
-            <div class="flex">
-              HVAC Auto Temperatures
-            </div>
-            <div>expand</div>
-          </div>
-        </summary>
-        <div>
-          <template is="dom-repeat" items="{{nestHVACAuto}}">
-            <div class="app-grid grid-three">
-              <div>[[item.$key]]</div>
-              <paper-input
-                label="Living Room"
-                type="number"
-                required
-                min="60" max="80"
-                value="[[item.LR]]"
-                on-value-changed="lrTempChanged">
-              </paper-input>
-              <paper-input
-                label="Bedroom"
-                type="number"
-                required
-                min="60" max="80"
-                value="[[item.BR]]"
-                on-value-changed="brTempChanged">
-              </paper-input>
-            </div>
-          </template>
+      <div class="app-grid grid-one">
+        <paper-toggle-button checked="{{autoHumidifier.enabled}}">
+          Auto Humidfier
+        </paper-toggle-button>
+      </div>
+      <div class="app-grid grid-two">
+        <paper-input
+            label="On Below"
+            type="number"
+            required
+            min="0" max="50"
+            value="{{autoHumidifier.onBelow}}">
+        </paper-input>
+        <paper-input
+            label="Off Above"
+            type="number"
+            required
+            min="20" max="90"
+            value="{{autoHumidifier.offAbove}}">
+        </paper-input>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="app-grid grid-two">
+        <template is="dom-repeat" items="{{nestThermostats}}">
+          <paper-dropdown-menu disabled label="[[item.name]]">
+            <paper-listbox
+              on-selected-changed="hvacModeChanged"
+              slot="dropdown-content"
+              class="dropdown-content"
+              attr-for-selected="value"
+              selected="[[item.hvac_mode]]">
+              <paper-item value="heat">Heat</paper-item>
+              <paper-item value="cool">Cool</paper-item>
+              <paper-item value="off">Off</paper-item>
+            </paper-listbox>
+          </paper-dropdown-menu>
+        </template>
+      </div>
+      <template is="dom-repeat" items="{{nestHVACAuto}}">
+        <div class="app-grid grid-three">
+          <div>[[item.$key]]</div>
+          <paper-input
+            label="Living Room"
+            type="number"
+            required
+            min="60" max="80"
+            value="[[item.LR]]"
+            on-value-changed="lrTempChanged">
+          </paper-input>
+          <paper-input
+            label="Bedroom"
+            type="number"
+            required
+            min="60" max="80"
+            value="[[item.BR]]"
+            on-value-changed="brTempChanged">
+          </paper-input>
         </div>
-      </details>
+      </template>
     </div>
 
-    <div class="card">
-      <div class="app-grid grid-two">
-        <span>
-          Living Room
-        </span>
-        <span class="nest-details">
-            [[lr.temperature]]
-            <span class="secondary">[[br.humidity]]</span>
-          </span>
-      </div>
-      <div id="lrChart"></div>
-    </div>
-
-    <div class="card">
-      <div class="app-grid grid-two">
-        <span>
-          Bedroom
-        </span>
-        <span class="nest-details">
-          [[br.temperature]]
-          <span class="secondary">[[br.humidity]]</span>
-        </span>
-      </div>
-      <div id="brChart"></div>
-    </div>
-
-    <script type="text/javascript" async on-load="chartsLoaded"
-            src="https://www.gstatic.com/charts/loader.js">
-    </script>
   </template>
 
   <script>
@@ -193,23 +182,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: String,
             value: 'heat',
           },
+          autoHumidifier: {
+            type: Object,
+            value: {},
+          },
         };
-      }
-
-      static get observers() {
-        return [
-          'nestStateChanged(nestState)',
-          'nestThermostatChanged(nestThermostats.*)',
-          'logsChanged(cronLogs.splices)',
-        ];
-      }
-
-      ready() {
-        super.ready();
-        const qs = window.location.search;
-        if (qs.indexOf('humidity') > 0) {
-          this.showHumidity = true;
-        }
       }
 
       hvacModeChanged(evt, newVal) {
@@ -238,155 +215,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       userInteraction() {
         window.lastUserInput = Date.now();
-      }
-
-      chartsLoaded() {
-        const google = window.google;
-        google.charts.load('current', {'packages': ['line']});
-        // google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(this.chartsReady.bind(this));
-      }
-
-      chartsReady() {
-        const google = window.google;
-        this.lrChartData = new google.visualization.DataTable();
-        this.lrChartData.addColumn('datetime', '');
-        this.lrChartData.addColumn('number', 'Temp (F)');
-        if (this.showHumidity) {
-          this.lrChartData.addColumn('number', 'Humidity');
-        }
-        this.brChartData = new google.visualization.DataTable();
-        this.brChartData.addColumn('datetime', '');
-        this.brChartData.addColumn('number', 'Temp (F)');
-        if (this.showHumidity) {
-          this.brChartData.addColumn('number', 'Humidity');
-        }
-        if (this.cronLogs.length > 0) {
-          this.chartsFirstFill();
-        }
-      }
-
-      chartsCreateRow(item, thermostatId) {
-        const row = [];
-        row.push(new Date(item.date));
-        row.push(item.thermostats[thermostatId].temperature);
-        if (this.showHumidity) {
-          row.push(item.thermostats[thermostatId].humidity);
-        }
-        return row;
-      }
-
-      chartsFirstFill() {
-        if (!this.lrChartData) {
-          return;
-        }
-        this.firstFill = false;
-        const daysToShow = this.offsetWidth < 500 ? 1 : 4;
-        const timeCutOff = Date.now() - (daysToShow * 24 * 60 * 60 * 1000);
-        const lrId = this.lrThermostatId;
-        const brId = this.brThermostatId;
-        this.cronLogs.forEach((item) => {
-          if (item.date < timeCutOff || !item.thermostats) {
-            return;
-          }
-          if (!item.thermostats) {
-            console.error('chartsFirstFill is missing thermostats', item);
-            return;
-          }
-          if (item.thermostats[lrId]) {
-            this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
-          }
-          if (item.thermostats[brId]) {
-            this.brChartData.addRow(this.chartsCreateRow(item, brId));
-          }
-        });
-        this.chartsDraw();
-      }
-
-      chartsDraw() {
-        const google = window.google;
-        const options = {
-          chart: {
-            title: 'Temperature',
-          },
-          curveType: 'function',
-        };
-        if (this.showHumidity) {
-          options.chart.title += ' & Humidity';
-        }
-        // const chartOpts = options;
-        const chartOpts = google.charts.Line.convertOptions(options);
-        if (!this.lrChart) {
-          this.lrChart = new google.charts.Line(this.$.lrChart);
-          // this.lrChart = new google.visualization.LineChart(this.$.lrChart);
-        }
-        this.lrChart.draw(this.lrChartData, chartOpts);
-        if (!this.brChart) {
-          this.brChart = new google.charts.Line(this.$.brChart);
-          // this.brChart = new google.visualization.LineChart(this.$.brChart);
-        }
-        this.brChart.draw(this.brChartData, chartOpts);
-      }
-
-      logsChanged(change) {
-        if (!change || !change.indexSplices) {
-          if (this.firstFill && this.cronLogs.length > 0) {
-            this.chartsFirstFill();
-          }
-          return;
-        }
-        let recordsAdded = 0;
-        const lrId = this.lrThermostatId;
-        const brId = this.brThermostatId;
-        change.indexSplices.forEach((splice) => {
-          for (let i = 0; i < splice.addedCount; i++) {
-            const item = splice.object[splice.index + i];
-            this.lrChartData.addRow(this.chartsCreateRow(item, lrId));
-            this.brChartData.addRow(this.chartsCreateRow(item, brId));
-            recordsAdded++;
-          }
-        });
-        if (recordsAdded > 0) {
-          this.chartsDraw();
-        }
-      }
-
-      nestThermostatChanged(changeRecord) {
-        this._debouncer = Polymer.Debouncer.debounce(
-            this._debouncer,
-            Polymer.Async.timeOut.after(750),
-            () => {
-              this.updateThermostatState();
-            });
-      }
-
-      updateThermostatState() {
-        const keys = Object.keys(this.nestThermostats);
-        keys.forEach((k) => {
-          const t = this.nestThermostats[k];
-          const val = {
-            temperature: `${t['ambient_temperature_f']}F`,
-            humidity: `${t['humidity']}%`,
-
-          };
-          if (k === this.lrThermostatId) {
-            this.lr = val;
-          } else if (k === this.brThermostatId) {
-            this.br = val;
-          } else {
-            console.error('Unknown key', k);
-          }
-        });
-      }
-
-      nestStateChanged(newState) {
-        if (newState && typeof newState === 'string') {
-          if (newState === 'away') {
-            this.nestAway = true;
-          } else {
-            this.nestAway = false;
-          }
-        }
       }
 
       awayChanged(e) {

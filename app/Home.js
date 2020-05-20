@@ -1509,8 +1509,9 @@ function Home(initialConfig, fbRef) {
         const msgBase = `autoHumidifier[${room.name}]`;
 
         // Get the current humidity
-        const humidity = _getStateValue(room.pathToValue);
-        if (!humidity) {
+        const path = room.pathToValue;
+        const humidity = Math.round(parseFloat(_getStateValue(path)));
+        if (Number.isNaN(humidity)) {
           log.warn(LOG_PREFIX, `${msgBase}: Unable to get humidity`, room);
           return;
         }
@@ -1548,7 +1549,7 @@ function Home(initialConfig, fbRef) {
           currentHumidity: humidity,
           currentWemoState: currentWemoState,
         };
-        log.log(LOG_PREFIX, `${msgBase} changed to' ${action.wemo.on}'`, info);
+        log.log(LOG_PREFIX, `${msgBase} changed to '${action.wemo.on}'`, info);
 
         // Turn the humidifier on/off
         action.wemo.id = room.wemoId;
