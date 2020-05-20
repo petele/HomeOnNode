@@ -1494,12 +1494,12 @@ function Home(initialConfig, fbRef) {
   function _autoHumidifierTick() {
     // Only run when at home
     if (_self.state.systemState !== 'HOME') {
-      log.verbose(LOG_PREFIX, `autoHumidifier: not HOME`);
+      // log.verbose(LOG_PREFIX, `autoHumidifier: not HOME`);
       return;
     }
     // Only run if enabled
     if (_config.hvac.autoHumidifier.enabled === false) {
-      log.verbose(LOG_PREFIX, `autoHumidifier: disabled`);
+      // log.verbose(LOG_PREFIX, `autoHumidifier: disabled`);
       return;
     }
 
@@ -1523,20 +1523,13 @@ function Home(initialConfig, fbRef) {
         // Check the humidity, turn off if it's above...
         if (humidity > _config.hvac.autoHumidifier.offAbove) {
           action.wemo = {on: false};
-          log.verbose(LOG_PREFIX, `${msgBase}: on:false`);
+          // log.verbose(LOG_PREFIX, `${msgBase}: on:false`);
         }
         // Check the humidity, turn off if it's above...
         if (humidity < _config.hvac.autoHumidifier.onBelow) {
           action.wemo = {on: true};
-          log.verbose(LOG_PREFIX, `${msgBase}: on:true`);
+          // log.verbose(LOG_PREFIX, `${msgBase}: on:true`);
         }
-
-        // Log the results
-        const details = {
-          currentHumidity: humidity,
-          currentWemoState: currentWemoState,
-        };
-        log.debug(LOG_PREFIX, `${msgBase}`, details);
 
         // No change to current state
         if (!action.wemo) {
@@ -1550,11 +1543,15 @@ function Home(initialConfig, fbRef) {
           return;
         }
 
+        // Log details
+        const info = {
+          currentHumidity: humidity,
+          currentWemoState: currentWemoState,
+        };
+        log.log(LOG_PREFIX, `${msgBase} changed to' ${action.wemo.on}'`, info);
+
         // Turn the humidifier on/off
         action.wemo.id = room.wemoId;
-        details.action = action;
-        details.room = room;
-        log.log(LOG_PREFIX, `${msgBase} changed to ${action.wemo.on}`, room);
         _executeAction(action, 'AutoHumidifier');
       } catch (ex) {
         log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
