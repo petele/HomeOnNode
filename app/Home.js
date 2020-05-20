@@ -1522,12 +1522,12 @@ function Home(initialConfig, fbRef) {
         const action = {};
 
         // Check the humidity, turn off if it's above...
-        if (humidity > _config.hvac.autoHumidifier.offAbove) {
+        if (humidity > parseInt(_config.hvac.autoHumidifier.offAbove)) {
           action.wemo = {on: false};
           // log.verbose(LOG_PREFIX, `${msgBase}: on:false`);
         }
         // Check the humidity, turn off if it's above...
-        if (humidity < _config.hvac.autoHumidifier.onBelow) {
+        if (humidity < parseInt(_config.hvac.autoHumidifier.onBelow)) {
           action.wemo = {on: true};
           // log.verbose(LOG_PREFIX, `${msgBase}: on:true`);
         }
