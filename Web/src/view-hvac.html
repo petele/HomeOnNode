@@ -88,18 +88,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
       <div class="app-grid grid-two">
         <paper-input
+            id="piOnBelow"
             label="On Below"
             type="number"
             required
             min="0" max="50"
-            value="{{autoHumidifier.onBelow}}">
+            data-key="onBelow"
+            on-value-changed="peteChanged"
+            value="[[autoHumidifier.onBelow]]">
         </paper-input>
         <paper-input
+            id="piOffAbove"
             label="Off Above"
             type="number"
             required
             min="20" max="90"
-            value="{{autoHumidifier.offAbove}}">
+            data-key="offAbove"
+            on-value-changed="peteChanged"
+            value="[[autoHumidifier.offAbove]]">
         </paper-input>
       </div>
     </div>
@@ -130,7 +136,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             required
             min="60" max="80"
             value="[[item.LR]]"
-            on-value-changed="lrTempChanged">
+            data-key="LR"
+            on-value-changed="autoTempChanged">
           </paper-input>
           <paper-input
             label="Bedroom"
@@ -138,7 +145,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             required
             min="60" max="80"
             value="[[item.BR]]"
-            on-value-changed="brTempChanged">
+            data-key="BR"
+            on-value-changed="autoTempChanged">
           </paper-input>
         </div>
       </template>
@@ -155,36 +163,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           nestState: Object,
           nestAway: Boolean,
           nestThermostats: Object,
-          lr: Object,
-          lrChart: Object,
-          lrChartData: Object,
-          br: Object,
-          brChart: Object,
-          brChartData: Object,
-          lrThermostatId: {
-            type: String,
-            value: 'dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1',
-          },
-          brThermostatId: {
-            type: String,
-            value: 'dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1',
-          },
-          cronLogs: Array,
-          firstFill: {
-            type: Boolean,
-            value: true,
-          },
-          showHumidity: {
-            type: Boolean,
-            value: false,
-          },
-          hvacMode: {
-            type: String,
-            value: 'heat',
-          },
           autoHumidifier: {
             type: Object,
-            value: {},
+            value: {
+              enabled: true,
+              offAbove: 48,
+              onBelow: 40,
+            },
           },
         };
       }
@@ -195,22 +180,28 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         console.warn('NYI: Changing HVAC mode to...', newVal.value);
       }
 
-      lrTempChanged(evt, newVal) {
+
+      peteChanged(evt, newVal) {
         window.lastUserInput = Date.now();
-        if (!evt.srcElement.validate()) {
+        this.$.piOnBelow.setAttribute('max', this.$.piOffAbove.value);
+        this.$.piOffAbove.setAttribute('min', this.$.piOnBelow.value);
+        const validates = evt.srcElement.validate();
+        if (!validates) {
           return;
         }
-        const index = evt.model.index;
-        this.set(`nestHVACAuto.${index}.LR`, newVal.value);
+        const path = `autoHumidifier.${evt.srcElement.dataset.key}`;
+        this.set(path, parseInt(newVal.value));
       }
 
-      brTempChanged(evt, newVal) {
+      autoTempChanged(evt, newVal) {
         window.lastUserInput = Date.now();
         if (!evt.srcElement.validate()) {
           return;
         }
         const index = evt.model.index;
-        this.set(`nestHVACAuto.${index}.BR`, newVal.value);
+        const key = evt.srcElement.dataset.key;
+        const path = `nestHVACAuto.${index}.${key}`;
+        this.set(path, parseInt(newVal.value));
       }
 
       userInteraction() {
