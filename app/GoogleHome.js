@@ -17,6 +17,12 @@ const LOG_PREFIX = 'GOOGLE_HOME';
  * @see https://rithvikvibhu.github.io/GHLocalApi/
  * @see https://developers.google.com/cast/docs/media
  *
+ * @see https://github.com/ghostrick/node-googlehome/blob/master/lib/search.js
+ * @see https://developers.google.com/assistant/smarthome/develop/local
+ * @see https://medium.com/google-cloud/building-your-first-action-for-google-home-in-30-minutes-ec6c65b7bd32
+ * @see https://github.com/oznu/homebridge-gsh
+ * @see https://github.com/actions-on-google/smart-home-nodejs
+ *
  * @param {string} ipAddress IP Address of the Google Home
 */
 function GoogleHome(ipAddress) {
