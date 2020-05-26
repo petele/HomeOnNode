@@ -13,6 +13,7 @@ const Awair = require('./Awair');
 const moment = require('moment');
 const BedJet = require('./BedJet');
 const log = require('./SystemLog2');
+const AppleTV = require('./AppleTV');
 const Logging = require('./Logging');
 const HoNExec = require('./HoNExec');
 const GCMPush = require('./GCMPush');
@@ -43,6 +44,7 @@ function Home(initialConfig, fbRef) {
   const _fb = fbRef;
 
   let alarmClock;
+  let appleTV;
   let awair;
   let bedJet;
   let bluetooth;
@@ -237,6 +239,22 @@ function Home(initialConfig, fbRef) {
         return _genResult(action, true, 'cancelDelayedCommand');
       }
       return _genResult(action, false, 'cancelDelayedCommand');
+    }
+
+    // AppleTV
+    if (action.hasOwnProperty('appleTV')) {
+      if (!appleTV) {
+        log.error(LOG_PREFIX, 'AppleTV unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      return appleTV.send(action.appleTV)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: AppleTV failed.`, err);
+            return _genResult(action, false, err);
+          });
     }
 
     // Awair
@@ -817,6 +835,7 @@ function Home(initialConfig, fbRef) {
     _fbSet('state/gitHead', _self.state.gitHead);
     gcmPush = new GCMPush(_fb);
     _initAlarmClock();
+    _initAppleTV();
     _initBluetooth();
     _initNotifications();
     _initNest();
@@ -1172,13 +1191,26 @@ function Home(initialConfig, fbRef) {
    * @return {Object}
    */
   function _ringDoorbell(source) {
-    log.verbose(LOG_PREFIX, `Doorbell from ${source}`);
-    _self.executeCommandByName('RUN_ON_DOORBELL', source);
+    // Note current simte
     const now = Date.now();
+
+    // Play the doorbell sound
+    const soundFile = _config.doorbell.soundFile;
+    _playSoundLocal(soundFile);
+
+    // Execute any additional steps
+    const command = _config.commands.RUN_ON_DOORBELL;
+    if (command && command.actions && command.actions.length > 0) {
+      _self.executeActions(command.actions, `DOORBELL_${source}`);
+    }
+
+    // Log the doorbell was run
     const details = {
       date: now,
       date_: log.formatTime(now),
+      source: source,
     };
+    log.verbose(LOG_PREFIX, `Doorbell from ${source}`, details);
     _fbSet('state/lastDoorbell', details);
     return Promise.resolve({doorbell: source});
   }
@@ -1404,6 +1436,27 @@ function Home(initialConfig, fbRef) {
     delete _delayedCmdTimers[id];
   }
 
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * AppleTV API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the AppleTV API
+   */
+  function _initAppleTV() {
+    _fbSet('state/appleTV', false);
+
+    const credentials = _config.appleTV.credentials;
+    if (!credentials) {
+      log.error(LOG_PREFIX, 'AppleTV unavailable, no credentials provided.');
+      return;
+    }
+
+    appleTV = new AppleTV(credentials);
+  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
