@@ -2,6 +2,14 @@
 
 const nodemailer = require('nodemailer');
 
+/**
+ * Sends an email message
+ *
+ * @param {String} user
+ * @param {String} pass
+ * @param {String} msg
+ * @return {Object} Result of message
+ */
 function _send(user, pass, msg) {
   const transporter = nodemailer.createTransport({
     host: 'smtp.pobox.com',
