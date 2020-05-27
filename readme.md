@@ -36,6 +36,10 @@ Now, the rest of the steps can be completed by SSH'ing into the box
 
 ### Change default settings
 
+#### Harden security on system
+
+1. Follow steps at <https://www.raspberrypi.org/documentation/configuration/security.md>
+
 #### Disable HDMI CEC & Set GPU Memory
 
 1. `echo "hdmi_ignore_cec=1" | sudo tee -a /boot/config.txt`
@@ -49,6 +53,8 @@ Edit `/etc/kbd/config` and set:
 1. `BLANK_TIME=0`
 1. `BLANK_DPMS=off`
 1. `POWERDOWN_TIME=0`
+
+Source: <https://www.raspberrypi.org/documentation/configuration/screensaver.md>
 
 #### Disable screen blanking
 
@@ -70,24 +76,34 @@ Edit `/etc/kbd/config` and set:
 ### Install Required Packages
 
 **Required:**
-`sudo apt-get -y install alsa-utils mpg321 mplayer git-core lynx netatalk bluetooth bluez libbluetooth-dev`
 
-_Optional:_
-`sudo apt-get -y install python-setuptools python-dev python-rpi.gpio`
+1. `sudo apt-get -y install git git-core build-essentials`
+1. `sudo apt-get -y install lynx netatalk libssl-dev`
+1. `sudo apt-get -y install alsa-utils mpg321 mplayer`
+1. `sudo apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev`
+1. `sudo apt-get -y install libavahi-compat-libdnssd-dev`
+1. `sudo apt-get -y install libcap2-bin libtool-bin`
+1. `sudo apt-get -y install python-setuptools python-dev python-rpi.gpio`
+1. `sudo apt-get -y install android-tools-adb`
 
-### Setup Bluetooth
-
-Enable Bluetooth without root
-
-* `find -path '*noble*Release/hci-ble' -exec sudo setcap cap_net_raw+eip '{}' \;`
-
-### Update/Install Node via nvm
+### Install Node via nvm
 
 Follow instructions at <https://github.com/creationix/nvm> or:
 
-1. `curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash`
+1. Follow instructions at <https://github.com/nvm-sh/nvm#installing-and-updating>
 2. `source ./.bashrc`
 3. `nvm install 6`
+
+### Install global node modules
+
+1. `npm install -g forever`
+
+### Setup Bluetooth
+
+1. `sudo apt-get -y install bluetooth bluez libbluetooth-dev libudev-dev`
+1. `find -path '*noble*Release/hci-ble' -exec sudo setcap cap_net_raw+eip '{}' \;`
+1. ``sudo setcap cap_net_raw+eip $(eval readlink -f `which node`)``
+
 
 ### Clone Repo
 
