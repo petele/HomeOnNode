@@ -84,6 +84,11 @@ function Tivo(ipAddress) {
   };
 
   /**
+   * Make the commands visible
+   */
+  this.KEYS = COMMANDS;
+
+  /**
    * Connect to the Tivo.
    */
   function _connectToTivo() {

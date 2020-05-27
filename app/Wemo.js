@@ -161,12 +161,11 @@ function Wemo() {
     const dName = deviceInfo.friendlyName;
     const dMac = deviceInfo.macAddress.toUpperCase();
     const msg = `Wemo ${dName} (${dMac}) found.`;
-    // Commented out 05/23/2020 - I think this may happen if the IP address
-    // other other info about the device changes.
-    // if (_devices[dMac]) {
-    //   log.warn(LOG_PREFIX, `${msg} Ignoring, already added`, deviceInfo);
-    //   return;
-    // }
+    if (_devices[dMac]) {
+      log.warn(LOG_PREFIX, `${msg} Already exists, will replace.`, deviceInfo);
+      _devices[dMac] = null;
+      _clients[dMac] = null;
+    }
     log.debug(LOG_PREFIX, msg, deviceInfo);
     _self.emit('device_found', dMac, deviceInfo);
 
@@ -183,6 +182,35 @@ function Wemo() {
       deviceInfo.value = value;
       _self.emit('change', dMac, deviceInfo);
       log.verbose(LOG_PREFIX, `binaryState for ${dName} changed to ${value}`);
+    });
+
+    client.on('statusChange', (deviceId, capabilityId, value) => {
+      const details = {
+        device: {
+          name: dName,
+          mac: dMac,
+        },
+        deviceId: deviceId,
+        capabilityId: capabilityId,
+        value: value,
+      };
+      const msg = `Status of '${deviceId}' changed to '${value}'`;
+      log.log(LOG_PREFIX, msg, details);
+    });
+
+    client.on('attributeList', (name, value, prevVal, timestamp) => {
+      const details = {
+        device: {
+          name: dName,
+          mac: dMac,
+        },
+        name: name,
+        value: value,
+        prevValue: prevVal,
+        timestamp: timestamp,
+      };
+      const msg = `Attribute '${name}' changed to '${value}' was '${prevVal}'`;
+      log.log(LOG_PREFIX, msg, details);
     });
   }
 
