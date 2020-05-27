@@ -1,8 +1,5 @@
 #!/bin/sh
 
-echo "Install forever..."
-npm install -g forever
-
 echo "NPM Install (app)"
 cd app
 mkdir logs
