@@ -12,6 +12,8 @@ const LOG_PREFIX = 'APPLE_TV';
  * AppleTV API.
  * @constructor
  *
+ * @see https://github.com/evandcoleman/node-appletv
+ *
  * @param {Object} credentials login credentials.
 */
 function AppleTV(credentials) {

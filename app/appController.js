@@ -112,9 +112,13 @@ function init() {
   if (_config.cmdPorts.wss) {
     _wss = new WSServer('CMD', _config.cmdPorts.wss);
     _wss.on('message', (cmd, sender) => {
+      if (cmd.flic && cmd.flic.address) {
+        sender = `flic://${cmd.flic.address}`;
+      }
       if (cmd.hasOwnProperty('cmdName')) {
         return _home.executeCommandByName(cmd.cmdName, sender);
       } else if (cmd.hasOwnProperty('actions')) {
+        log.warn(APP_NAME, `Potential invalid command.`, cmd);
         return _home.executeActions(cmd.actions, sender);
       }
       return _home.executeActions(cmd, sender);
@@ -123,13 +127,14 @@ function init() {
 
   _fb.child('commands').on('child_added', function(snapshot) {
     const cmd = snapshot.val();
+    const source = cmd.source || 'FB';
     if (cmd.hasOwnProperty('cmdName')) {
-      _home.executeCommandByName(cmd.cmdName, 'FB');
+      _home.executeCommandByName(cmd.cmdName, source);
     } else if (cmd.hasOwnProperty('actions')) {
-      _home.executeActions(cmd.actions, 'FB');
+      _home.executeActions(cmd.actions, source);
     } else {
       log.warn(APP_NAME, `Potential invalid command.`, cmd);
-      _home.executeActions(cmd, 'FB');
+      _home.executeActions(cmd, source);
     }
     snapshot.ref().remove();
   });

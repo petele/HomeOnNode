@@ -63,6 +63,12 @@ function Sonos() {
     if (command.name === 'VOLUME_DOWN') {
       return _volumeDown();
     }
+    if (command.name === 'MUTE') {
+      return Promise.reject(new Error('NYI'));
+    }
+    if (command.name === 'UNMUTE') {
+      return Promise.reject(new Error('NYI'));
+    }
     if (command.name === 'SET_VOLUME') {
       const results = [];
       if (typeof command.speakers !== 'object') {
