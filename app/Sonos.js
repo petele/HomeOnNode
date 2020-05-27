@@ -64,10 +64,26 @@ function Sonos() {
       return _volumeDown();
     }
     if (command.name === 'MUTE') {
-      return Promise.reject(new Error('NYI'));
+      const results = [];
+      _arrayify(command.speakers).forEach((speaker) => {
+        if (speaker === '_group') {
+          results.push(_muteGroup(true));
+        } else {
+          results.push(_muteSpeaker(speaker, true));
+        }
+      });
+      return Promise.all(results);
     }
     if (command.name === 'UNMUTE') {
-      return Promise.reject(new Error('NYI'));
+      const results = [];
+      _arrayify(command.speakers).forEach((speaker) => {
+        if (speaker === '_group') {
+          results.push(_muteGroup(false));
+        } else {
+          results.push(_muteSpeaker(speaker, false));
+        }
+      });
+      return Promise.all(results);
     }
     if (command.name === 'SET_VOLUME') {
       const results = [];
@@ -191,6 +207,19 @@ function Sonos() {
   }
 
   /**
+   * Take an object and turns it into an array
+   *
+   * @param {Object} val - Object to arrayify.
+   * @return {Array} arrayified object.
+   */
+  function _arrayify(val) {
+    if (Array.isArray(val)) {
+      return val;
+    }
+    return [val];
+  }
+
+  /**
    * Gets Sonos Player
    *
    * @param {string} roomName The name of the player to return (optional).
@@ -259,15 +288,70 @@ function Sonos() {
    * @return {Promise} The promise that will be resolved on completion.
   */
   function _adjustVolume(vol) {
+    const msg = `adjustVolume(${vol})`;
     return Promise.all(
         _sonosSystem.zones.map((zone) => {
           const player = _sonosSystem.getPlayerByUUID(zone.uuid);
           if (!player) {
+            log.error(LOG_PREFIX, `${msg} failed, group not found.`, zone.uuid);
             return Promise.resolve({success: false});
           }
+          log.verbose(LOG_PREFIX, `${msg} (${zone.uuid})`);
           return player.coordinator.setGroupVolume(vol)
               .catch((err) => {
-                log.exception(LOG_PREFIX, `_adjustVolume(${vol}) failed.`, err);
+                log.exception(LOG_PREFIX, `${msg} failed.`, err);
+                return {success: false};
+              });
+        }));
+  }
+
+  /**
+   * Mute or unmute a specific speaker
+   *
+   * @param {string} speakerName Name of speaker to adjust.
+   * @param {boolean} muted If the speaker should be muted or not.
+   * @return {Promise} The promise that will be resolved on completion.
+   */
+  function _muteSpeaker(speakerName, muted) {
+    const msg = `muteSpeaker('${speakerName}', ${muted})`;
+    const speaker = _getPlayer(speakerName, true);
+    if (!speaker) {
+      log.error(LOG_PREFIX, `${msg} failed, speaker not found.`);
+      return Promise.reject(new Error('speaker_not_found'));
+    }
+    log.debug(LOG_PREFIX, msg);
+    if (muted) {
+      return speaker.mute();
+    }
+    return speaker.unMute();
+  }
+
+  /**
+   * Mute or unmute the whole system
+   *
+   * @param {boolean} muted If the system should be muted or not.
+   * @return {Promise} The promise that will be resolved on completion.
+   */
+  function _muteGroup(muted) {
+    const msg = `muteGroup(${muted})`;
+    return Promise.all(
+        _sonosSystem.zones.map((zone) => {
+          const player = _sonosSystem.getPlayerByUUID(zone.uuid);
+          if (!player) {
+            log.error(LOG_PREFIX, `${msg} failed, group not found.`, zone.uuid);
+            return Promise.resolve({success: false});
+          }
+          log.verbose(LOG_PREFIX, `${msg} (${zone.uuid})`);
+          if (muted) {
+            return player.coordinator.muteGroup()
+                .catch((err) => {
+                  log.exception(LOG_PREFIX, `${msg} failed.`, err);
+                  return {success: false};
+                });
+          }
+          return player.coordinator.unMuteGroup()
+              .catch((err) => {
+                log.exception(LOG_PREFIX, `${msg} failed.`, err);
                 return {success: false};
               });
         }));
