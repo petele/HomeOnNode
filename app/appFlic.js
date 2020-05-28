@@ -319,7 +319,7 @@ function _sendBatteryUpdate(bdAddr, value) {
  * @param {Number} timeDiff
  */
 function _sendButtonPress(address, clickType, wasQueued, timeDiff) {
-  const msg = `buttonPressed('${address}', '${clickType}')`;
+  let msg = `buttonPressed(${address}, '${clickType}')`;
   const flicInfo = {address, clickType, wasQueued, timeDiff};
   // Verify app is not disabled
   if (_config.disabled) {
@@ -341,6 +341,8 @@ function _sendButtonPress(address, clickType, wasQueued, timeDiff) {
   }
   flicInfo.key = key;
 
+  msg = `buttonPressed('${key}', '${clickType}')`;
+
   // Get the details for the button
   const button = _config.commands[key];
   if (!button) {
@@ -350,14 +352,14 @@ function _sendButtonPress(address, clickType, wasQueued, timeDiff) {
 
   // Bail if the button is disabled
   if (button.disabled) {
-    log.log(APP_NAME, `${msg} - Skipped: Button is disabled.`);
+    log.log(APP_NAME, `${msg} - Skipped: Button is disabled.`, flicInfo);
     return;
   }
 
   // Get the command for the button based on the click type
   const command = button[clickType];
   if (!command) {
-    log.log(APP_NAME, `${msg} - Skipped: No command for click type found.`);
+    log.log(APP_NAME, `${msg} - Skipped: Click type not found.`, flicInfo);
     return;
   }
   command.flic = flicInfo;
