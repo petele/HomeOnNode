@@ -81,22 +81,26 @@ function init() {
 
   // Listen for changes to config
   _fb.child(`config/${APP_NAME}`).on('value', (snapshot) => {
-    log.log(APP_NAME, `Config changed, updating 'config.json'`);
-    const config = JSON.stringify(snapshot.val(), null, 2);
+    const newConfig = snapshot.val();
+    log.log(APP_NAME, `Config changed...`, newConfig);
+    _config = newConfig;
+
+    log.verbose(APP_NAME, `Updating 'config.json'`);
+    const config = JSON.stringify(newConfig, null, 2);
     fs.writeFileSync('config.json', config, {encoding: 'utf8'});
   });
 
-  // Listen for changes to config commands
-  _fb.child(`config/${APP_NAME}/commands`).on('value', (snapshot) => {
-    log.log(APP_NAME, 'Commands updated');
-    _config.commands = snapshot.val();
-  });
+  // // Listen for changes to config commands
+  // _fb.child(`config/${APP_NAME}/commands`).on('value', (snapshot) => {
+  //   log.log(APP_NAME, 'Commands updated');
+  //   _config.commands = snapshot.val();
+  // });
 
-  // Listen for changes to disabled
-  _fb.child(`config/${APP_NAME}/disabled`).on('value', function(snapshot) {
-    _config.disabled = snapshot.val();
-    log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
-  });
+  // // Listen for changes to disabled
+  // _fb.child(`config/${APP_NAME}/disabled`).on('value', function(snapshot) {
+  //   _config.disabled = snapshot.val();
+  //   log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
+  // });
 
   // Listen for changes to log level
   _fb.child(`config/${APP_NAME}/logLevel`).on('value', (snapshot) => {
@@ -315,26 +319,51 @@ function _sendBatteryUpdate(bdAddr, value) {
  * @param {Number} timeDiff
  */
 function _sendButtonPress(address, clickType, wasQueued, timeDiff) {
-  if (_config.disabled === true) {
-    log.warn(APP_NAME, `Command not sent, ${APP_NAME} is disabled.`);
+  const msg = `buttonPressed('${address}', '${clickType}')`;
+  const flicInfo = {address, clickType, wasQueued, timeDiff};
+  // Verify app is not disabled
+  if (_config.disabled) {
+    log.log(APP_NAME, `${msg} - Skipped: App is disabled.`);
     return;
   }
+
+  // Verify we have a valid web socket client
   if (!_wsClient) {
-    log.warn(APP_NAME, `wsClient not available, command not sent.`);
+    log.warn(APP_NAME, `${msg} - Failed: wsClient not available.`);
     return;
   }
-  if (!_config.commands || !_config.commands[address]) {
-    log.error(APP_NAME, `No commands found for ${address}`);
+
+  // Get the key, based on the address
+  const key = _config.lookup[address];
+  if (!key) {
+    log.warn(APP_NAME, `${msg} - Failed: No key found for address.`);
     return;
   }
-  const cmdsForAddr = _config.commands[address];
-  const command = cmdsForAddr[clickType];
+  flicInfo.key = key;
+
+  // Get the details for the button
+  const button = _config.commands[key];
+  if (!button) {
+    log.warn(APP_NAME, `${msg} - Failed: No button found for key.`, flicInfo);
+    return;
+  }
+
+  // Bail if the button is disabled
+  if (button.disabled) {
+    log.log(APP_NAME, `${msg} - Skipped: Button is disabled.`);
+    return;
+  }
+
+  // Get the command for the button based on the click type
+  const command = button[clickType];
   if (!command) {
-    log.debug(APP_NAME, `No command found for ${clickType} on ${address}`);
+    log.log(APP_NAME, `${msg} - Skipped: No command for click type found.`);
     return;
   }
-  command.flic = {address, clickType, wasQueued, timeDiff};
-  log.log(APP_NAME, `Sending command`, command);
+  command.flic = flicInfo;
+
+  // Send the command
+  log.log(APP_NAME, `${msg}`, command);
   _wsClient.send(JSON.stringify(command))
       .then(() => {
         log.debug(APP_NAME, `Command sent`, command);
