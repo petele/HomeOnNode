@@ -2,117 +2,92 @@
 
 const util = require('util');
 const log = require('./SystemLog2');
-const diff = require('deep-diff').diff;
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'BEDJET';
 
 /**
- * BedJet API.
+ * BedJet API
+ *
+ * * SvcX:  00001000-bed0-0080-aa55-4265644a6574
+ *  * Char: 00002000-bed0-0080-aa55-4265644a6574
+ *      Byte 01: Unknown
+ *      Byte 02: Unknown
+ *      Byte 03: Unknown
+ *      Byte 04: Unknown
+ *      Byte 05: Hours Remaining
+ *      Byte 06: Minutes Remaining
+ *      Byte 07: Seconds Remaining
+ *      Byte 08: Temperature (Actual)
+ *      Byte 09: Temperature (Set Point)
+ *      Byte 10: Mode [01-05]
+ *      Byte 11: Fan Speed [13=100%]
+ *      Byte 12: Unknown
+ *      Byte 13: Unknown
+ *      Byte 14: Unknown
+ *      Byte 15: Unknown
+ *      Byte 16: Unknown
+ *      Byte 17: Unknown
+ *      Byte 18: Unknown
+ *      Byte 19: Unknown
+ *      Byte 20: Unknown
  * @constructor
  *
- * @param {String} ipAddress IP Address of the BedJet.
- * @fires BedJet#change
- * @fires BedJet#error
+ * @param {String} address Bluetooth address
+ * @param {Object} bt Bluetooth object
 */
-function BedJet(ipAddress) {
-  this.state = null;
-  let _ready = false;
-  let _timer = null;
+function BedJet(address, bt) {
+  let _address;
+  let _bedJet;
+  const _bluetooth = bt;
   const _self = this;
-  const _ipAddress = ipAddress;
-  const REFRESH_INTERVAL = 4 * 60 * 1000;
-  const MAX_REFRESH_INTERVAL = 30 * 60 * 1000;
 
   /**
-   * Init
-   */
+   * Init the BedJet Connection
+  */
   function _init() {
-    log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
-    _getDeviceInfo()
-        .then(() => {
-          _monitorBedJet(REFRESH_INTERVAL);
-        })
-        .catch((err) => {
-          log.exception(LOG_PREFIX, 'Unable to initialize bedJet', err);
-          _self.emit(`error`, err);
-        });
-  }
-
-  /**
-   * Sets the state of the BedJet.
-   *
-   * @param {Object} opts Options
-   * @return {Promise} result of request.
-   */
-  this.setState = function(opts) {
-    const msg = `setState(...)`;
-    if (!_ready) {
-      log.error(LOG_PREFIX, `${msg} failed, not ready.`, opts);
-      return Promise.reject(new Error('not_ready'));
+    log.init(LOG_PREFIX, 'Starting...');
+    if (!_bluetooth) {
+      log.error(LOG_PREFIX, 'Bluetooth not available.');
+      return;
     }
-    log.debug(LOG_PREFIX, msg, opts);
-    // TODO
-    log.todo(LOG_PREFIX, `setState(...) Not Yet Implemented.`);
-    _getDeviceInfo();
-    return Promise.resolve('Not Yet Implemented');
-  };
-
-  /**
-   * Start the BedJet monitor interval.
-   *
-   * @param {Number} delay Number of MS to wait to be called again.
-   */
-  function _monitorBedJet(delay) {
-    _timer = setTimeout(() => {
-      _timer = null;
-      _getDeviceInfo()
-          .then(() => {
-            _monitorBedJet(REFRESH_INTERVAL);
-          })
-          .catch((err) => {
-            const msg = `Failed to update BedJet state (monitor)`;
-            log.exception(LOG_PREFIX, msg, err);
-            if (delay < MAX_REFRESH_INTERVAL) {
-              delay += REFRESH_INTERVAL;
-            }
-            _monitorBedJet(delay);
-          });
-    }, delay);
-  }
-
-  /**
-   * Ping the BedJet and get the current state.
-   *
-   * @return {Promise} Object of BedJet state.
-   */
-  function _getDeviceInfo() {
-    log.verbose(LOG_PREFIX, `_getDeviceInfo()`);
-    if (_timer) {
-      log.verbose(LOG_PREFIX, `existing timer scheduled`);
+    if (!address) {
+      log.error(LOG_PREFIX, `No address provided.`);
+      return;
     }
-    return Promise.resolve()
-        .then(() => {
-          log.todo(LOG_PREFIX, `getDeviceInfo() Not Yet Implemented.`);
-          return null;
-        })
-        .then((newState) => {
-          if (diff(_self.state, newState)) {
-            _self.state = newState;
-            if (_ready) {
-              _self.emit('change', newState);
-            } else {
-              _ready = true;
-              _self.emit('ready', newState);
-            }
-          }
-          return _self.state;
-        });
+    _address = address.toLowerCase();
+
+    _bluetooth.on('discover', (peripheral) => {
+      const uuid = peripheral.uuid.toLowerCase();
+      if (uuid !== _address) {
+        // Not the bedJet, abort...
+        return;
+      }
+      if (_bedJet) {
+        // Already found a BedJet, skipping...
+        return;
+      }
+      _foundBedJet(peripheral);
+    });
   }
+
+  /**
+   * Connects to the BedJet
+   *
+   * @fires BedJet#found
+   *
+   * @param {Peripheral} bedJet BedJet peripheral
+   */
+  function _foundBedJet(bedJet) {
+    _bedJet = bedJet;
+    _bedJet.on('connect', () => {});
+    _bedJet.on('disconnect', () => {});
+    _self.emit('found', {uuid: bedJet.uuid});
+  }
+
 
   _init();
 }
-
 util.inherits(BedJet, EventEmitter);
 
 module.exports = BedJet;
