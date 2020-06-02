@@ -4,9 +4,10 @@
   "lights": [
     {
       "lightId": 38,
-      "recipeName": "PEACH",
       "command": {
-        "bri": 192
+        "on": true,
+        "ct": 326,
+        "bri": 63
       }
     },
     {
