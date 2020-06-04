@@ -1,0 +1,61 @@
+{
+  "sceneName": "Video Shoot - GDS",
+  "roomId": 0,
+  "scenes": [
+    "scenes/day.json",
+    "scenes/bedroom/br-off.json",
+    "scenes/bedroom/bs-off.json",
+    "scenes/office/of-morning.json"
+  ],
+  "lights": [
+    {
+      "lightId": 11,
+      "command": {
+        "on": true,
+        "xy": [ 0.2591, 0.0916 ],
+        "bri": 120
+      }
+    },
+    {
+      "lightId": 27,
+      "command": {
+        "on": true,
+        "xy": [ 0.2591, 0.0916 ],
+        "bri": 100
+      }
+    },
+    {
+      "lightId": 30,
+      "command": {
+        "on": true,
+        "xy": [ 0.2591, 0.0916 ],
+        "bri": 254
+      }
+    },
+    {
+      "lightId": 35,
+      "command": {
+        "on": true,
+        "xy": [ 0.4283, 0.4013 ],
+        "bri": 124
+      }
+    },
+    {
+      "lightId": 36,
+      "command": {
+        "on": true,
+        "xy": [ 0.3612, 0.1604 ],
+        "bri": 152
+      }
+    },
+    {
+      "lightId": 37,
+      "command": {
+        "on": true,
+        "xy": [ 0.4283, 0.4013 ],
+        "bri": 152
+      }
+    }
+  ],
+  "sceneId": "f7aGhl8BYxyohu-"
+}
