@@ -20,6 +20,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 
+<link rel="import" href="chart-js.html">
+
 <dom-module id="view-history">
   <template>
     <style include="shared-styles app-grid-style">
@@ -37,49 +39,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin-bottom: .25em;
         margin-top: .25em;
       }
-      .is-true {
-        /* font-weight: bold; */
-      }
-      .is-false {
-        display: none;
-        /* font-weight: 100;
-        color: var(--secondary-text-color); */
-      }
-      summary {
-        list-style: none;
-        cursor: pointer;
-        display: inline-block;
-        float: right;
-      }
-      summary::-webkit-details-marker {
-        display: none;
-      }
-      details {
-        min-height: 2em;
-      }
-      details > summary {
-        width: 100%;
-        height: 2em;
-        outline: none;
-      }
       .hidden { display: none !important; }
-
       .top-line {
         display: flex;
       }
       .top-line h3 {
         flex-grow: 1;
       }
-
-      paper-item {
-        cursor: pointer;
-      }
-
       .card-home {
         height: 100px;
       }
       .card-home canvas {
         max-height: 80px;
+      }
+      paper-item {
+        cursor: pointer;
       }
     </style>
 
@@ -90,10 +64,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       limit-to-last="432">
     </firebase-query>
 
+    <!--
     <div class="card card-home">
       <h3>Home</h3>
       <canvas id="canvasHome" class="hidden"></canvas>
     </div>
+    -->
 
     <div class="card">
       <div class="top-line">
@@ -105,11 +81,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="value"
             selected="{{rooms.bathroom.view}}">
               <paper-item value="temperature">Temperature</paper-item>
-              <paper-item value="lux">Light level</paper-item>
+              <paper-item value="lightlevel">Light level</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
       </div>
-      <canvas id="canvasBA" class="hidden"></canvas>
+      <chart-js datasets="{{rooms.bathroom.data}}"></chart-js>
     </div>
 
     <div class="card">
@@ -125,15 +101,15 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <!-- <paper-item value="temperature">Temperature</paper-item> -->
               <paper-item value="tempNest">Temperature (Nest)</paper-item>
               <paper-item value="humidity">Humidity</paper-item>
-              <paper-item value="lux">Light level</paper-item>
+              <paper-item value="lightlevel">Light level</paper-item>
               <paper-item value="awairScore">Air quality</paper-item>
               <paper-item value="co2">CO2 level</paper-item>
-              <paper-item value="pm25">PM2.5 level</paper-item>
               <paper-item value="voc">VOC level</paper-item>
+              <paper-item value="pm25">PM2.5 level</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
       </div>
-      <canvas id="canvasBR" class="hidden"></canvas>
+      <chart-js datasets="{{rooms.bedroom.data}}"></chart-js>
     </div>
 
     <div class="card">
@@ -145,19 +121,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             class="dropdown-content"
             attr-for-selected="value"
             selected="{{rooms.livingroom.view}}">
-              <paper-item value="temperature">Temperature</paper-item>
+              <paper-item value="tempNest">Temperature</paper-item>
               <paper-item value="humidity">Humidity</paper-item>
-              <paper-item value="lux">Light level</paper-item>
+              <paper-item value="lightlevel">Light level</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
       </div>
-      <canvas id="canvasLR" class="hidden"></canvas>
+      <chart-js datasets="{{rooms.livingroom.data}}"></chart-js>
     </div>
 
     <div class="card">
       <div class="top-line">
         <h3>Weather</h3>
-        <paper-dropdown-menu label="View" no-label-float>
+        <!--<paper-dropdown-menu label="View" no-label-float>
           <paper-listbox
             slot="dropdown-content"
             class="dropdown-content"
@@ -166,16 +142,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <paper-item value="temperature">Temperature</paper-item>
               <paper-item value="humidity">Humidity</paper-item>
           </paper-listbox>
-        </paper-dropdown-menu>
+        </paper-dropdown-menu>-->
       </div>
-      <canvas id="canvasWeather" class="hidden"></canvas>
+      <chart-js datasets="{{rooms.weather.data}}"></chart-js>
     </div>
 
   </template>
 
-  <script type="text/javascript"
-          src="../bower_components/chart.js/dist/Chart.js">
-  </script>
 
   <script>
     class HistoryView extends Polymer.Element {
@@ -183,10 +156,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get properties() {
         return {
-          isReady: {
-            type: Boolean,
-            value: false,
-          },
           fbData: Array,
           data: Object,
           rooms: {
@@ -194,18 +163,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             value: {
               home: {
                 view: 'presence',
+                data: {},
               },
               bathroom: {
                 view: 'temperature',
+                data: {},
               },
               bedroom: {
                 view: 'tempAwair',
+                data: {},
               },
               livingroom: {
-                view: 'temperature',
+                view: 'tempNest',
+                data: {},
               },
               weather: {
                 view: 'temperature',
+                data: {},
               },
             },
           },
@@ -215,7 +189,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get observers() {
         return [
           '_fbDataChanged(fbData.splices)',
-          '_homeViewChanged(rooms.home.view)',
           '_baViewChanged(rooms.bathroom.view)',
           '_brViewChanged(rooms.bedroom.view)',
           '_lrViewChanged(rooms.livingroom.view)',
@@ -223,33 +196,50 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ];
       }
 
-      ready() {
-        super.ready();
-        this.rooms.home.canvas = this.$.canvasHome;
-        this.rooms.bathroom.canvas = this.$.canvasBA;
-        this.rooms.bedroom.canvas = this.$.canvasBR;
-        this.rooms.livingroom.canvas = this.$.canvasLR;
-        this.rooms.weather.canvas = this.$.canvasWeather;
-      }
-
-      _homeViewChanged() {
-        this._drawChart('home');
-      }
-
       _baViewChanged() {
-        this._drawChart('bathroom');
+        window.lastUserInput = Date.now();
+        this._drawRoom('bathroom');
       }
 
       _brViewChanged() {
-        this._drawChart('bedroom');
+        window.lastUserInput = Date.now();
+        this._drawRoom('bedroom');
       }
 
       _lrViewChanged() {
-        this._drawChart('livingroom');
+        window.lastUserInput = Date.now();
+        this._drawRoom('livingroom');
       }
 
       _weatherViewChanged() {
-        this._drawChart('weather');
+        window.lastUserInput = Date.now();
+        this._drawWeather();
+      }
+
+      _drawWeather() {
+        const data = [];
+        data.push(this.rooms.weather.temperature);
+        data.push(this.rooms.weather.apparentTemperature);
+        data.push(this.rooms.weather.humidity);
+        this.set('rooms.weather.data', data);
+      }
+
+      _drawAll() {
+        this._drawRoom('bathroom');
+        this._drawRoom('bedroom');
+        this._drawRoom('livingroom');
+        this._drawWeather();
+        this._weatherViewChanged();
+      }
+
+      _drawRoom(room) {
+        const view = this.rooms[room].view;
+        const data = this.rooms[room][view];
+        if (data) {
+          const key = `rooms.${room}.data`;
+          const val = [data];
+          this.set(key, val);
+        }
       }
 
       _fbDataChanged(change) {
@@ -258,278 +248,141 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
         if (!change && this.fbData.length > 0) {
           this._parseInitialData();
-          this.isReady = true;
-
-          this._drawChart('bathroom');
-          this._drawChart('bedroom');
-          this._drawChart('livingroom');
-          this._drawChart('weather');
-          this._drawChart('home');
-
-          return;
         }
-        if (change.indexSplices[0].addedCount) {
+        if (change && change.indexSplices[0].addedCount) {
           const i = this.fbData.length - 1;
           const newItem = this.fbData[i];
           this._addDataPoint(newItem);
-          if (this.rooms.home.chart) {
-            this.rooms.home.chart.update();
-          }
-          if (this.rooms.bathroom.chart) {
-            this.rooms.bathroom.chart.update();
-          }
-          if (this.rooms.bedroom.chart) {
-            this.rooms.bedroom.chart.update();
-          }
-          if (this.rooms.livingroom.chart) {
-            this.rooms.livingroom.chart.update();
-          }
-          if (this.rooms.weather.chart) {
-            this.rooms.weather.chart.update();
-          }
-          return;
-        }
-      }
-
-      _getDefaultChartOpts(chartType, numDataSets) {
-        const dataset = {
-          label: '',
-          backgroundColor: '#3f51b5',
-          borderColor: '#3f51b5',
-          fill: false,
-          data: [],
         };
-        const result = {
-          type: chartType || 'line',
-          data: {
-            datasets: [],
-          },
-          options: {
-            responsive: true,
-            title: {display: false},
-            legend: {display: true},
-            elements: {
-              point: {
-                radius: 0,
-                borderWidth: 0,
-                hitRadius: 4,
-                hoverRadius: 4,
-                hoverBorderWidth: 4,
-              },
-              line: {
-                borderWidth: 2,
-              },
-            },
-            scales: {
-              xAxes: [{
-                type: 'time',
-                display: true,
-                scaleLabel: {
-                  display: false,
-                },
-                ticks: {
-                  major: {
-                    fontStyle: 'bold',
-                    fontColor: '#3f51b5',
-                  },
-                },
-              }],
-              yAxes: [{
-                display: true,
-                scaleLabel: {
-                  display: true,
-                  labelString: '',
-                },
-                ticks: {
-
-                },
-              }],
-            },
-          },
-        };
-        numDataSets = numDataSets || 1;
-        for (let i = 1; i <= numDataSets; i++) {
-          result.data.datasets.push(Object.assign({}, dataset));
-        }
-        return result;
-      }
-
-      _fakePresenceData() {
-        this.fakePresence = [];
-        let state = 'HOME';
-        let now = Date.now();
-        for (let i = 0; i < 50; i++) {
-          if (i > 10 && i < 20) {
-            state = 'AWAY';
-          } else {
-            state = 'HOME';
-          }
-          const item = {
-            date: now,
-            presence: {
-              d9a2349582bd: state,
-            },
-          };
-          this.fakePresence.push(item);
-          now -= 1000 * 60 * 6;
-        }
-        this.fakePresence.reverse();
+        this._drawAll();
       }
 
       _parseInitialData() {
-        this.data = {
-          home: {
-            presence: {
-              data: [],
-              chartOpts: {
-                label: 'Presence',
-                yAxisLabel: 'Presence',
-                stepSize: 1,
-              },
-            },
+        this.rooms.bathroom.temperature = {
+          data: [],
+          label: 'Temperature (Hue)',
+          yAxis: {
+            label: 'Temperature (F)',
+            min: 68,
+            max: 78,
           },
-          weather: {
-            humidity: {
-              data: [],
-              chartOpts: {
-                label: 'Outside Humidity',
-                yAxisLabel: 'Humidity (%)',
-              },
-            },
-            temperature: {
-              data: [],
-              chartOpts: {
-                label: 'Outside Temperature',
-                yAxisLabel: 'Temperature (F)',
-              },
-            },
-            apparentTemperature: {
-              data: [],
-              chartOpts: {
-                label: 'Apparent Outside Temperature',
-                yAxisLabel: 'Temperature (F)',
-              },
-            },
+        };
+        this.rooms.bathroom.lightlevel = {
+          data: [],
+          label: 'Light Level (Hue)',
+          yAxis: {
+            label: 'Lux',
           },
-          bathroom: {
-            temperature: {
-              data: [],
-              chartOpts: {
-                label: 'Temperature (Hue)',
-                yAxisLabel: 'Temperature (F)',
-                min: 68,
-                max: 78,
-              },
-            },
-            lux: {
-              data: [],
-              chartOpts: {
-                label: 'Light Level (Hue)',
-                yAxisLabel: 'Lux',
-                min: 0,
-              },
-            },
+        }
+        this.rooms.bedroom.tempNest = {
+          data: [],
+          label: 'Temperature (Nest)',
+          yAxis: {
+            label: 'Temperature (F)',
+            min: 68,
+            max: 78,
           },
-          livingroom: {
-            temperature: {
-              data: [],
-              chartOpts: {
-                label: 'Temperature (Nest)',
-                yAxisLabel: 'Temperature (F)',
-                min: 68,
-                max: 78,
-              },
-            },
-            humidity: {
-              data: [],
-              chartOpts: {
-                label: 'Humidity (Nest)',
-                yAxisLabel: 'Humidity (%)',
-              },
-            },
-            lux: {
-              data: [],
-              chartOpts: {
-                label: 'Light Level (Hue)',
-                yAxisLabel: 'Lux',
-                min: 0,
-              },
-            },
+        };
+        this.rooms.bedroom.tempAwair = {
+          data: [],
+          label: 'Temperature (Awair)',
+          yAxis: {
+            label: 'Temperature (F)',
+            min: 68,
+            max: 78,
           },
-          bedroom: {
-            temperature: {
-              data: [],
-              chartOpts: {
-                label: 'Temperature (Nest)',
-                yAxisLabel: 'Temperature (F)',
-                min: 68,
-                max: 78,
-              },
-            },
-            tempAwair: {
-              data: [],
-              chartOpts: {
-                label: 'Temperature (Awair)',
-                yAxisLabel: 'Temperature (F)',
-                min: 68,
-                max: 78,
-              },
-            },
-            tempNest: {
-              data: [],
-              chartOpts: {
-                label: 'Temperature (Nest!)',
-                yAxisLabel: 'Temperature (F)',
-                min: 68,
-                max: 78,
-              },
-            },
-            humidity: {
-              data: [],
-              chartOpts: {
-                label: 'Humidity (Awair)',
-                yAxisLabel: 'Humidity (%)',
-              },
-            },
-            awairScore: {
-              data: [],
-              chartOpts: {
-                label: 'Air Quality (Awair)',
-                yAxisLabel: 'Awair Score',
-              },
-            },
-            co2: {
-              data: [],
-              chartOpts: {
-                label: 'CO2 Levels (Awair)',
-                yAxisLabel: 'ppm',
-              },
-            },
-            pm25: {
-              data: [],
-              chartOpts: {
-                label: 'Fine Dust (Awair)',
-                yAxisLabel: 'μg/m3',
-                min: 0,
-              },
-            },
-            voc: {
-              data: [],
-              chartOpts: {
-                label: 'Chemicals (Awair)',
-                yAxisLabel: 'ppb',
-                min: 0,
-              },
-            },
-            lux: {
-              data: [],
-              chartOpts: {
-                label: 'Light Level (Hue)',
-                yAxisLabel: 'Lux',
-                min: 0,
-              },
-            },
+        };
+        this.rooms.bedroom.humidity = {
+          data: [],
+          label: 'Humidity (Awair)',
+          yAxis: {
+            label: 'Humidity (%)',
           },
+        };
+        this.rooms.bedroom.lightlevel = {
+          data: [],
+          label: 'Light Level (Hue)',
+          yAxis: {
+            label: 'Lux',
+          },
+        };
+        this.rooms.bedroom.awairScore = {
+          data: [],
+          label: 'Air Quality (Awair)',
+          yAxis: {
+            label: 'Awair Score',
+          },
+        };
+        this.rooms.bedroom.co2 = {
+          data: [],
+          label: 'CO2 Levels (Awair)',
+          yAxis: {
+            label: 'ppm',
+          },
+        };
+        this.rooms.bedroom.pm25 = {
+          data: [],
+          label: 'Fine Dust (Awair)',
+          yAxis: {
+            label: 'μg/m3',
+          },
+        };
+        this.rooms.bedroom.voc = {
+          data: [],
+          label: 'Chemicals (Awair)',
+          yAxis: {
+            label: 'ppb',
+          },
+        };
+        this.rooms.livingroom.tempNest = {
+          data: [],
+          label: 'Temperature (Nest)',
+          yAxis: {
+            label: 'Temperature (F)',
+            min: 68,
+            max: 78,
+          },
+        };
+        this.rooms.livingroom.humidity = {
+          data: [],
+          label: 'Humidity (Nest)',
+          yAxis: {
+            label: 'Humidity (%)',
+          },
+        };
+        this.rooms.livingroom.lightlevel = {
+          data: [],
+          label: 'Light Level (Hue)',
+          yAxis: {
+            label: 'Lux',
+          },
+        };
+        this.rooms.weather.temperature = {
+          data: [],
+          label: 'Outside Temperature',
+          yAxis: {
+            label: 'Temperature (F)',
+          }
+        };
+        this.rooms.weather.apparentTemperature = {
+          data: [],
+          label: 'Apparent Temperature',
+          yAxis: {
+            label: 'Temperature (F)',
+            display: false,
+          },
+          color: '#F44336',
+        };
+        this.rooms.weather.humidity = {
+          data: [],
+          label: 'Humidity',
+          yAxis: {
+            label: 'Humidity (%)',
+            min: 0,
+            max: 100,
+            position: 'right',
+          },
+          color: '#9FA8DA',
         };
         this.fbData.forEach((item) => {
           this._addDataPoint(item);
@@ -537,204 +390,105 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _addDataPoint(item) {
-        const time = item.date;
-        let t;
-        let value;
-
-        // Presence
         try {
-          value = item.presence['d9a2349582bd'] === 'PRESENT' ? 1 : 0;
-          this.data.home.presence.data.push({x: time, y: value});
-        } catch (ex) {
-          console.error('presence', ex);
-        }
-
-        // Weather
-        try {
-          if (item.weather.lastUpdated) {
-            t = new Date(item.weather.lastUpdated);
-          } else {
-            t = time;
-          }
-          //  - Humidity
-          value = item.weather.humidity;
-          this.data.weather.humidity.data.push({x: t, y: value});
-          //  - Temperature
-          value = item.weather.temperature;
-          this.data.weather.temperature.data.push({x: t, y: value});
-          //  - apparentTemperature
-          if (item.weather.apparentTemperature) {
-            value = item.weather.apparentTemperature;
-            this.data.weather.apparentTemperature.data.push({x: t, y: value});
-          }
-        } catch (ex) {
-          console.error('weather', ex);
-        }
-
-        // Bathroom
-        try {
-          //  - Temperature (Hue)
-          t = item.hueData.BA.tempUpdated + 'Z';
-          value = this._convertCtoF(item.hueData.BA.temperature);
-          this.data.bathroom.temperature.data.push({x: t, y: value});
-          //  - Lux (Hue)
-          t = item.hueData.BA.lightUpdated + 'Z';
-          value = this._convertToLux(item.hueData.BA.lightLevel);
-          this.data.bathroom.lux.data.push({x: t, y: value});
-        } catch (ex) {
-          console.error('bathroom hue', ex);
-        }
-
-
-        // Bedroom
-        try {
-          //  - Lux (Hue)
-          t = item.hueData.BR.lightUpdated + 'Z';
-          value = this._convertToLux(item.hueData.BR.lightLevel);
-          this.data.bedroom.lux.data.push({x: t, y: value});
-          //  - Temperature (Nest)
-          if (item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1']) {
-            value = item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1'].temperature;
-            this.data.bedroom.temperature.data.push({x: time, y: value});
-            this.data.bedroom.tempNest.data.push({x: time, y: value});
-          }
-        } catch (ex) {
-          console.error('br hue', ex);
-        }
+          const t = item.hueData.BA.tempUpdated + 'Z';
+          const v = this._convertCtoF(item.hueData.BA.temperature);
+          this.push('rooms.bathroom.temperature.data', {x: t, y: v});
+        } catch (ex) { }
 
         try {
-          //  - Awair Score
-          t = item.awair.BR.timeStamp;
-
-          //  - Score (Awair)
-          if (item.awair.BR.score) {
-            value = item.awair.BR.score;
-            this.data.bedroom.awairScore.data.push({x: t, y: value});
-          }
-
-          if (!item.awair.BR.sensors) {
-            return;
-          }
-
-          //  - Temperature (Awair)
-          if (item.awair.BR.sensors.temp) {
-            value = item.awair.BR.sensors.temp.value;
-            value = (value * 9 / 5) + 32;
-            this.data.bedroom.tempAwair.data.push({x: t, y: value});
-          }
-
-          //  - Humidity (Awair)
-          if (item.awair.BR.sensors.humid) {
-            value = item.awair.BR.sensors.humid.value;
-            this.data.bedroom.humidity.data.push({x: t, y: value});
-          }
-
-          //  - CO2 (Awair)
-          if (item.awair.BR.sensors.co2) {
-            value = item.awair.BR.sensors.co2.value;
-            this.data.bedroom.co2.data.push({x: t, y: value});
-          }
-
-          //  - PM25 (Awair)
-          if (item.awair.BR.sensors.pm25) {
-            value = item.awair.BR.sensors.pm25.value;
-            this.data.bedroom.pm25.data.push({x: t, y: value});
-          }
-
-          //  - VOC (Awair)
-          if (item.awair.BR.sensors.voc) {
-            value = item.awair.BR.sensors.voc.value;
-            this.data.bedroom.voc.data.push({x: t, y: value});
-          }
-        } catch (ex) {
-          console.error('br awair', ex, item.awair.BR);
-        }
-
-
-        // Living Room
-        try {
-          //  - Lux (Hue)
-          t = item.hueData.LR.lightUpdated + 'Z';
-          value = this._convertToLux(item.hueData.LR.lightLevel);
-          this.data.livingroom.lux.data.push({x: t, y: value});
-        } catch (ex) {
-          console.error('lr hue', ex);
-        }
+          const t = item.hueData.BA.lightUpdated + 'Z';
+          const v = this._convertToLux(item.hueData.BA.lightLevel);
+          this.push('rooms.bathroom.lightlevel.data', {x: t, y: v});
+        } catch (ex) { }
 
         try {
-          // LR Nest
-          if (item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1']) {
-            //  - Temperature (Nest)
-            value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].temperature;
-            this.data.livingroom.temperature.data.push({x: time, y: value});
-            //  - Humidity (Nest)
-            value = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].humidity;
-            this.data.livingroom.humidity.data.push({x: time, y: value});
-          }
-        } catch (ex) {
-          console.error('lr nest', ex);
-        }
-      }
+          const t = item.date;
+          const v = item.thermostats['dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1'].temperature;
+          this.push('rooms.bedroom.tempNest.data', {x: t, y: v});
+        } catch (ex) { }
 
-      _drawChart(room) {
-        window.lastUserInput = Date.now();
-        if (this.isReady === false) {
-          return;
-        }
+        try {
+          const t = item.hueData.BR.lightUpdated + 'Z';
+          const v = this._convertToLux(item.hueData.BR.lightLevel);
+          this.push('rooms.bedroom.lightlevel.data', {x: t, y: v});
+        } catch (ex) { }
 
-        const roomObj = this.rooms[room];
-        if (!roomObj) {
-          console.error('roomObj not found', room);
-          return;
-        }
-        const view = roomObj.view;
-        const values = this.data[room][view].data;
-        const opts = this.data[room][view].chartOpts;
+        try {
+          const t = item.awair.BR.timeStamp;
+          const v = item.awair.BR.score;
+          this.push('rooms.bedroom.awairScore.data', {x: t, y: v});
+        } catch (ex) { }
 
-        if (roomObj.chart) {
-          roomObj.chart.destroy();
-        }
+        try {
+          const t = item.awair.BR.timeStamp;
+          const v = this._convertCtoF(item.awair.BR.sensors.temp.value);
+          this.push('rooms.bedroom.tempAwair.data', {x: t, y: v});
+        } catch (ex) { }
 
-        const isOutsideTemp = room === 'weather' && view === 'temperature';
+        try {
+          const t = item.awair.BR.timeStamp;
+          const v = item.awair.BR.sensors.humid.value;
+          this.push('rooms.bedroom.humidity.data', {x: t, y: v});
+        } catch (ex) { }
 
-        const ctx = roomObj.canvas.getContext('2d');
-        const chartOpts = isOutsideTemp ? this._getDefaultChartOpts('line', 2) :
-                                          this._getDefaultChartOpts();
+        try {
+          const t = item.awair.BR.timeStamp;
+          const v = item.awair.BR.sensors.co2.value;
+          this.push('rooms.bedroom.co2.data', {x: t, y: v});
+        } catch (ex) { }
 
-        if (room === 'home') {
-          chartOpts.options.maintainAspectRatio = false;
-          chartOpts.options.legend.display = false;
-          chartOpts.options.scales.yAxes[0].ticks.stepSize = 1;
-          chartOpts.data.datasets[0].fill = true;
-        }
-        // eslint-disable-next-line no-undef
-        const chart = new Chart(ctx, chartOpts);
+        try {
+          const t = item.awair.BR.timeStamp;
+          const v = item.awair.BR.sensors.pm25.value;
+          this.push('rooms.bedroom.pm25.data', {x: t, y: v});
+        } catch (ex) { }
 
-        const dataset = chart.data.datasets[0];
-        dataset.label = opts.label || '';
-        dataset.data = values;
+        try {
+          const t = item.awair.BR.timeStamp;
+          const v = item.awair.BR.sensors.voc.value;
+          this.push('rooms.bedroom.voc.data', {x: t, y: v});
+        } catch (ex) { }
 
-        if (isOutsideTemp) {
-          const dataset2 = chart.data.datasets[1];
-          const data = this.data[room]['apparentTemperature'].data;
-          dataset2.data = data;
-          const label = this.data[room]['apparentTemperature'].chartOpts.label;
-          dataset2.label = label || '';
-          dataset2.backgroundColor = '#ff0000';
-          dataset2.borderColor ='#ff0000';
-        }
+        try {
+          const t = item.hueData.LR.lightUpdated + 'Z';
+          const v = this._convertToLux(item.hueData.LR.lightLevel);
+          this.push('rooms.livingroom.lightlevel.data', {x: t, y: v});
+        } catch (ex) { }
 
-        const yAxis = chart.options.scales.yAxes[0];
-        yAxis.ticks.suggestedMin = opts.min;
-        yAxis.ticks.suggestedMax = opts.max;
-        yAxis.scaleLabel.labelString = opts.yAxisLabel;
-        chart.update({duration: 400, easing: 'easeOutBounce'});
-        roomObj.canvas.classList.remove('hidden');
-        roomObj.chart = chart;
+        try {
+          const t = item.date;
+          const v = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].temperature;
+          this.push('rooms.livingroom.tempNest.data', {x: t, y: v});
+        } catch (ex) { }
+
+        try {
+          const t = item.date;
+          const v = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].humidity;
+          this.push('rooms.livingroom.humidity.data', {x: t, y: v});
+        } catch (ex) { }
+
+        try {
+          const t = item.weather.lastUpdated;
+          const v = item.weather.temperature;
+          this.push('rooms.weather.temperature.data', {x: t, y: v});
+        } catch (ex) { }
+
+        try {
+          const t = item.weather.lastUpdated;
+          const v = item.weather.apparentTemperature;
+          this.push('rooms.weather.apparentTemperature.data', {x: t, y: v});
+        } catch (ex) { console.log(e) }
+
+        try {
+          const t = item.weather.lastUpdated;
+          const v = item.weather.humidity;
+          this.push('rooms.weather.humidity.data', {x: t, y: v});
+        } catch (ex) { }
       }
 
       _convertCtoF(val) {
-        return Math.round((val * 9 / 5) + 32);
+        return (val * 9 / 5) + 32;
       }
 
       _convertToLux(lightlevel) {

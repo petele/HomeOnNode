@@ -14,6 +14,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
 <link rel="import" href="fb-document.html">
 <link rel="import" href="shared-styles.html">
+<link rel="import" href="chart-js.html">
 
 <dom-module id="view-weather">
   <template>
@@ -48,6 +49,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .app-grid {
         height: inherit;
       }
+      .top-line {
+        display: flex;
+      }
+      .top-line h3 {
+        flex-grow: 1;
+      }
+
     </style>
 
     <fb-document path="state/weather" data="{{weatherData}}"></fb-document>
@@ -99,11 +107,88 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
       </div>
     </div>
+
+    <div class="card">
+      <div class="top-line">
+        <h3>Weather Forecast</h3>
+      </div>
+      <chart-js datasets="{{hourlyForecast}}"></chart-js>
+    </div>
   </template>
 
   <script>
     class WeatherView extends Polymer.Element {
       static get is() { return 'view-weather'; }
+
+      static get observers() {
+        return [
+          '_hourlyForecastChanged(weatherData.hourly.data.length)',
+        ];
+      }
+
+      _hourlyForecastChanged(len) {
+        this._debouncer = Polymer.Debouncer.debounce(
+          this._debouncer, // initially undefined
+          Polymer.Async.timeOut.after(250),
+          () => {
+            if (len > 0) {
+              this._updateHourlyForecast();
+            }
+          });
+      }
+
+      _updateHourlyForecast() {
+        const temperature = {
+          data: [],
+          label: 'Temperature',
+          yAxis: {
+            label: 'Temperature (F)',
+          },
+        }
+        const apparentTemperature = {
+          data: [],
+          label: 'Apparent Temperature',
+          yAxis: {
+            display: false,
+          },
+          color: '#F44336',
+        }
+        const humidity = {
+          data: [],
+          label: 'Humidity',
+          yAxis: {
+            label: 'Humidity (%)',
+            position: 'right',
+            min: 0,
+            max: 100,
+          },
+          color: '#9FA8DA',
+        }
+
+        const tempList = [];
+        this.weatherData.hourly.data.forEach((point) => {
+          const when = point.time * 1000;
+
+          const t = this.round(point.temperature);
+          temperature.data.push({x: when, y: t});
+          tempList.push(t);
+
+          const at = this.round(point.apparentTemperature);
+          apparentTemperature.data.push({x: when, y: at});
+          tempList.push(at);
+
+          const h = this.humidity(point.humidity);
+          humidity.data.push({x: when, y: h});
+        });
+
+        const minTemp = Math.min(...tempList);
+        const maxTemp = Math.max(...tempList);
+        temperature.yAxis.min = minTemp;
+        temperature.yAxis.max = maxTemp;
+        apparentTemperature.yAxis.min = minTemp;
+        apparentTemperature.yAxis.max = maxTemp;
+        this.set('hourlyForecast', [temperature, apparentTemperature, humidity]);
+      }
 
       formatTime(t) {
         return moment(t * 1000).format('h:mm a');
