@@ -52,7 +52,9 @@ function Weather(latLon, key) {
         const fullForecast = JSON.parse(body);
         const forecast = {
           now: fullForecast.currently,
+          hourly: fullForecast.hourly,
           today: fullForecast.daily.data[0],
+          tomorrow: fullForecast.daily.data[1],
         };
         /**
          * Fires when the weather info has changed
