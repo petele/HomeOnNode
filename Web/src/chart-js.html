@@ -1,0 +1,220 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
+<dom-module id="chart-js">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        /* --app-grid-item-height: reset; */
+      }
+      .hidden { display: none !important; }
+    </style>
+    <canvas id="myCanvas" class="hidden"></canvas>
+  </template>
+
+  <script type="text/javascript"
+          src="../bower_components/chart.js/dist/Chart.js">
+  </script>
+
+  <script>
+    class ChartJS extends Polymer.Element {
+      static get is() { return 'chart-js'; }
+
+      static get properties() {
+        return {
+          datasets: {
+            type: Array,
+            value: function() { return []; },
+            notify: true,
+          },
+          chartType: {
+            type: String,
+            value: 'line',
+          },
+          fill: {
+            type: Boolean,
+            value: false,
+          },
+          color: {
+            type: String,
+            value: '#3f51b5',
+          },
+          maxPoints: {
+            type: Number,
+            value: 25000,
+          },
+          animate: {
+            type: Boolean,
+            value: false,
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+          '_datasetsChanged(datasets.*)',
+        ];
+      }
+
+      _datasetsChanged(changeRec) {
+        // console.log('change', changeRec.path, changeRec);
+        if (changeRec.path === 'datasets' && changeRec.value.length > 0) {
+          this._createChart();
+        }
+        // this._debouncer = Polymer.Debouncer.debounce(
+        //   this._debouncer, // initially undefined
+        //   Polymer.Async.timeOut.after(250),
+        //   () => {
+        //     console.log('change', changeRec.path, changeRec);
+        //     if (changeRec.path === 'datasets' && changeRec.value.length > 0) {
+        //       this._createChart();
+        //     }
+        //   });
+      }
+
+      _getChartYAxisOpts() {
+        return {
+          type: 'linear',
+          display: true,
+          scaleLabel: {
+            display: false,
+            labelString: '',
+          },
+          ticks: {},
+        };
+      }
+
+      _getChartTemplate(chartType) {
+        const result = {
+          type: this.chartType,
+          data: {
+            datasets: [],
+          },
+          options: {
+            stacked: true,
+            responsive: true,
+            title: {display: false},
+            legend: {display: true},
+            elements: {
+              point: {
+                radius: 0,
+                borderWidth: 0,
+                hitRadius: 4,
+                hoverRadius: 4,
+                hoverBorderWidth: 4,
+              },
+              line: {
+                borderWidth: 2,
+              },
+            },
+            scales: {
+              xAxes: [{
+                type: 'time',
+                display: true,
+                scaleLabel: {
+                  display: false,
+                },
+                ticks: {
+                  major: {
+                    fontStyle: 'bold',
+                    fontColor: this.color,
+                  },
+                },
+              }],
+              yAxes: [],
+            },
+          },
+        };
+        return result;
+      }
+
+      _createChart() {
+        const cvs = this.$.myCanvas;
+        const ctx = cvs.getContext('2d');
+
+        const chartData = this._getChartTemplate();
+        this.datasets.forEach((dataset, idx) => {
+          if (!dataset) {
+            return;
+          }
+          const yAxisID = `y-axis-${idx}`;
+          const ds = {
+            data: dataset.data,
+            label: dataset.label,
+            backgroundColor: dataset.color || this.color,
+            borderColor: dataset.color || this.color,
+            fill: dataset.fill || this.fill,
+            yAxisID: dataset.yAxisID || yAxisID,
+          };
+          chartData.data.datasets.push(ds);
+
+          const yAxis = this._getChartYAxisOpts();
+          yAxis.id = yAxisID;
+          if (dataset.yAxis) {
+            if (dataset.yAxis.hasOwnProperty('display')) {
+              yAxis.display = dataset.yAxis.display;
+            }
+
+            if (dataset.yAxis.label) {
+              yAxis.scaleLabel.labelString = dataset.yAxis.label;
+              yAxis.scaleLabel.display = true;
+            }
+            if (dataset.yAxis.position) {
+              yAxis.position = dataset.yAxis.position;
+            }
+            if (dataset.yAxis.hasOwnProperty('min')) {
+              yAxis.ticks.suggestedMin = dataset.yAxis.min;
+            }
+            if (dataset.yAxis.hasOwnProperty('max')) {
+              yAxis.ticks.suggestedMax = dataset.yAxis.max;
+            }
+            if (idx > 0) {
+              yAxis.gridLines = {
+                drawOnChartArea: false,
+              };
+            }
+          }
+
+          chartData.options.scales.yAxes.push(yAxis);
+        });
+
+        if (this._chart) {
+          this._chart.destroy();
+        }
+
+        // eslint-disable-next-line no-undef
+        this._chart = new Chart(ctx, chartData);
+
+        if (this._drawChart()) {
+          cvs.classList.remove('hidden');
+        }
+
+      }
+
+      _drawChart() {
+        if (!this._chart) {
+          return false;
+        }
+
+        const aniOpt = {duration: 200, easing: 'easeOutBounce'};
+        const opts = this.animate ? aniOpt : null;
+        this._chart.update(opts);
+        return true;
+      }
+
+
+    }
+
+    window.customElements.define(ChartJS.is, ChartJS);
+  </script>
+</dom-module>
