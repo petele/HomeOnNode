@@ -64,13 +64,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       limit-to-last="432">
     </firebase-query>
 
-    <!--
-    <div class="card card-home">
-      <h3>Home</h3>
-      <canvas id="canvasHome" class="hidden"></canvas>
-    </div>
-    -->
-
     <div class="card">
       <div class="top-line">
         <h3>Bathroom</h3>
@@ -243,12 +236,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
         if (!change && this.fbData.length > 0) {
-          console.log('_fbDataChanged: 0');
           this._parseInitialData();
           this._drawAll();
         }
         if (change && change.indexSplices[0].addedCount) {
-          console.log('_fbDataChanged: +1');
           const i = this.fbData.length - 1;
           const newItem = this.fbData[i];
           this._addDataPoint(newItem);
@@ -262,8 +253,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           label: 'Temperature (Hue)',
           yAxis: {
             label: 'Temperature (F)',
-            min: 68,
-            max: 78,
+            stepSize: 1,
           },
         };
         this.rooms.bathroom.lightlevel = {
@@ -390,13 +380,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _addDataPoint(item) {
         try {
-          const t = item.hueData.BA.tempUpdated + 'Z';
+          const t = this._convertTime(item.hueData.BA.tempUpdated, true);
           const v = this._convertCtoF(item.hueData.BA.temperature);
           this.push('rooms.bathroom.temperature.data', {x: t, y: v});
         } catch (ex) { }
 
         try {
-          const t = item.hueData.BA.lightUpdated + 'Z';
+          const t = this._convertTime(item.hueData.BA.lightUpdated, true);
           const v = this._convertToLux(item.hueData.BA.lightLevel);
           this.push('rooms.bathroom.lightlevel.data', {x: t, y: v});
         } catch (ex) { }
@@ -408,49 +398,54 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         } catch (ex) { }
 
         try {
-          const t = item.hueData.BR.lightUpdated + 'Z';
+          const t = this._convertTime(item.hueData.BR.lightUpdated, true);
           const v = this._convertToLux(item.hueData.BR.lightLevel);
           this.push('rooms.bedroom.lightlevel.data', {x: t, y: v});
         } catch (ex) { }
 
+        let awairBRTimeStamp;
         try {
-          const t = item.awair.BR.timeStamp;
+          awairBRTimeStamp = this._convertTime(item.awair.BR.timeStamp);
+        } catch (ex) { }
+
+        try {
+          const t = awairBRTimeStamp
           const v = item.awair.BR.score;
           this.push('rooms.bedroom.awairScore.data', {x: t, y: v});
         } catch (ex) { }
 
         try {
-          const t = item.awair.BR.timeStamp;
+          const t = awairBRTimeStamp
           const v = this._convertCtoF(item.awair.BR.sensors.temp.value);
           this.push('rooms.bedroom.tempAwair.data', {x: t, y: v});
         } catch (ex) { }
 
         try {
-          const t = item.awair.BR.timeStamp;
+          const t = awairBRTimeStamp
           const v = item.awair.BR.sensors.humid.value;
           this.push('rooms.bedroom.humidity.data', {x: t, y: v});
         } catch (ex) { }
 
         try {
-          const t = item.awair.BR.timeStamp;
+          const t = awairBRTimeStamp
           const v = item.awair.BR.sensors.co2.value;
           this.push('rooms.bedroom.co2.data', {x: t, y: v});
         } catch (ex) { }
 
         try {
-          const t = item.awair.BR.timeStamp;
+          const t = awairBRTimeStamp
           const v = item.awair.BR.sensors.pm25.value;
           this.push('rooms.bedroom.pm25.data', {x: t, y: v});
         } catch (ex) { }
 
         try {
-          const t = item.awair.BR.timeStamp;
+          const t = awairBRTimeStamp
           const v = item.awair.BR.sensors.voc.value;
           this.push('rooms.bedroom.voc.data', {x: t, y: v});
         } catch (ex) { }
 
         try {
-          const t = item.hueData.LR.lightUpdated + 'Z';
+          const t = this._convertTime(item.hueData.LR.lightUpdated, true);
           const v = this._convertToLux(item.hueData.LR.lightLevel);
           this.push('rooms.livingroom.lightlevel.data', {x: t, y: v});
         } catch (ex) { }
@@ -477,7 +472,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           const t = item.weather.lastUpdated;
           const v = item.weather.apparentTemperature;
           this.push('rooms.weather.apparentTemperature.data', {x: t, y: v});
-        } catch (ex) { console.log(e) }
+        } catch (ex) { }
 
         try {
           const t = item.weather.lastUpdated;
@@ -492,6 +487,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _convertToLux(lightlevel) {
         return Math.round(Math.pow(10, ((lightlevel - 1) / 10000)));
+      }
+
+      _convertTime(val, addZ) {
+        const tz = addZ ? 'Z' : '';
+        const dt = new Date(`${val}${tz}`);
+        return dt.valueOf();
       }
 
     }

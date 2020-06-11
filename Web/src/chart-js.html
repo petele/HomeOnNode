@@ -82,6 +82,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             responsive: true,
             title: {display: false},
             legend: {display: true},
+            tooltips: {
+              mode: 'index',
+            },
             elements: {
               point: {
                 radius: 0,
@@ -167,6 +170,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             if (dataset.yAxis.hasOwnProperty('max')) {
               yAxis.ticks.suggestedMax = dataset.yAxis.max;
             }
+            if (dataset.yAxis.hasOwnProperty('stepSize')) {
+              yAxis.ticks.stepSize = dataset.yAxis.stepSize;
+            }
             if (idx > 0) {
               yAxis.gridLines = {
                 drawOnChartArea: false,
@@ -190,8 +196,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return this.draw();
         }
 
-        const x = this._chart.data.datasets[0]
-        console.log('update', x.label, x.data.length);
+        // const x = this._chart.data.datasets[0]
+        // console.log('update', x.label, x.data.length);
 
         const aniOpt = {duration: 200, easing: 'easeOutBounce'};
         const opts = this.animate ? aniOpt : null;
