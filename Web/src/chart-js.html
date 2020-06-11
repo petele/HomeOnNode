@@ -17,9 +17,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         display: block;
         /* --app-grid-item-height: reset; */
       }
-      .hidden { display: none !important; }
     </style>
-    <canvas id="myCanvas" class="hidden"></canvas>
+    <canvas id="myCanvas"></canvas>
   </template>
 
   <script type="text/javascript"
@@ -58,28 +57,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             value: false,
           }
         };
-      }
-
-      static get observers() {
-        return [
-          '_datasetsChanged(datasets.*)',
-        ];
-      }
-
-      _datasetsChanged(changeRec) {
-        // console.log('change', changeRec.path, changeRec);
-        if (changeRec.path === 'datasets' && changeRec.value.length > 0) {
-          this._createChart();
-        }
-        // this._debouncer = Polymer.Debouncer.debounce(
-        //   this._debouncer, // initially undefined
-        //   Polymer.Async.timeOut.after(250),
-        //   () => {
-        //     console.log('change', changeRec.path, changeRec);
-        //     if (changeRec.path === 'datasets' && changeRec.value.length > 0) {
-        //       this._createChart();
-        //     }
-        //   });
       }
 
       _getChartYAxisOpts() {
@@ -138,13 +115,26 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return result;
       }
 
-      _createChart() {
+      draw() {
+        if (this._chart) {
+          this._chart.destroy();
+          this._chart = null;
+        }
+        if (!this.datasets || this.datasets.length === 0) {
+          console.error('Oops, no data');
+          return;
+        }
+
         const cvs = this.$.myCanvas;
         const ctx = cvs.getContext('2d');
-
         const chartData = this._getChartTemplate();
-        this.datasets.forEach((dataset, idx) => {
+        const datasets = Array.isArray(this.datasets) ? this.datasets : [this.datasets];
+
+        datasets.forEach((dataset, idx) => {
           if (!dataset) {
+            return;
+          }
+          if (!dataset.data || dataset.data.length === 0) {
             return;
           }
           const yAxisID = `y-axis-${idx}`;
@@ -164,7 +154,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             if (dataset.yAxis.hasOwnProperty('display')) {
               yAxis.display = dataset.yAxis.display;
             }
-
             if (dataset.yAxis.label) {
               yAxis.scaleLabel.labelString = dataset.yAxis.label;
               yAxis.scaleLabel.display = true;
@@ -184,27 +173,25 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               };
             }
           }
-
           chartData.options.scales.yAxes.push(yAxis);
         });
 
-        if (this._chart) {
-          this._chart.destroy();
+        if (chartData.data.datasets.length === 0) {
+          return;
         }
 
-        // eslint-disable-next-line no-undef
         this._chart = new Chart(ctx, chartData);
 
-        if (this._drawChart()) {
-          cvs.classList.remove('hidden');
-        }
-
+        return this.update();
       }
 
-      _drawChart() {
+      update() {
         if (!this._chart) {
-          return false;
+          return this.draw();
         }
+
+        const x = this._chart.data.datasets[0]
+        console.log('update', x.label, x.data.length);
 
         const aniOpt = {duration: 200, easing: 'easeOutBounce'};
         const opts = this.animate ? aniOpt : null;
@@ -212,6 +199,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return true;
       }
 
+      destroy() {
+        if (this._chart) {
+          this._chart.destroy();
+          this._chart = null;
+          return;
+        }
+      }
 
     }
 
