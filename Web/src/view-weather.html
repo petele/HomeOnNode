@@ -112,7 +112,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       <div class="top-line">
         <h3>Weather Forecast</h3>
       </div>
-      <chart-js datasets="{{hourlyForecast}}"></chart-js>
+      <chart-js id="weChart" datasets="[[hourlyForecast]]"></chart-js>
     </div>
   </template>
 
@@ -122,22 +122,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get observers() {
         return [
+          '_pageChanged(page)',
           '_hourlyForecastChanged(weatherData.hourly.data.length)',
         ];
       }
 
+      _pageChanged() {
+        if (this.page === 'weather' &&
+            this.weatherData &&
+            this.weatherData.hourly &&
+            this.weatherData.hourly.data) {
+          this._hourlyForecastChanged(this.weatherData.hourly.data.length);
+        }
+      }
+
       _hourlyForecastChanged(len) {
+        if (this.page !== 'weather') {
+          return;
+        }
         this._debouncer = Polymer.Debouncer.debounce(
           this._debouncer, // initially undefined
           Polymer.Async.timeOut.after(250),
           () => {
             if (len > 0) {
-              this._updateHourlyForecast();
+              this._updateChart();
             }
           });
       }
 
-      _updateHourlyForecast() {
+      _updateChart() {
         const temperature = {
           data: [],
           label: 'Temperature',
@@ -188,6 +201,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         apparentTemperature.yAxis.min = minTemp;
         apparentTemperature.yAxis.max = maxTemp;
         this.set('hourlyForecast', [temperature, apparentTemperature, humidity]);
+        this.$.weChart.update();
       }
 
       formatTime(t) {
