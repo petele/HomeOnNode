@@ -157,6 +157,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           yAxis: {
             label: 'Temperature (F)',
           },
+          yAxisID: 'y-axis-0',
         }
         const apparentTemperature = {
           data: [],
@@ -165,6 +166,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             display: false,
           },
           color: '#F44336',
+          yAxisID: 'y-axis-0',
         }
         const humidity = {
           data: [],
@@ -194,12 +196,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           humidity.data.push({x: when, y: h});
         });
 
-        const minTemp = Math.min(...tempList);
-        const maxTemp = Math.max(...tempList);
-        temperature.yAxis.min = minTemp;
-        temperature.yAxis.max = maxTemp;
-        apparentTemperature.yAxis.min = minTemp;
-        apparentTemperature.yAxis.max = maxTemp;
+        // const minTemp = Math.min(...tempList);
+        // const maxTemp = Math.max(...tempList);
+        // temperature.yAxis.min = minTemp;
+        // temperature.yAxis.max = maxTemp;
+        // apparentTemperature.yAxis.min = minTemp;
+        // apparentTemperature.yAxis.max = maxTemp;
         this.set('hourlyForecast', [temperature, apparentTemperature, humidity]);
         this.$.weChart.update();
       }
