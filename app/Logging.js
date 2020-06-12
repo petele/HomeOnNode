@@ -120,7 +120,7 @@ function Logging(fbRef) {
   function _getWeather(weatherNow) {
     return {
       lastUpdated: weatherNow.time * 1000,
-      humidity: weatherNow.humidity * 100,
+      humidity: Math.round(weatherNow.humidity * 100),
       temperature: weatherNow.temperature,
       apparentTemperature: weatherNow.apparentTemperature,
       summary: weatherNow.summary,
