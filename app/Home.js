@@ -1938,6 +1938,8 @@ function Home(initialConfig, fbRef) {
     });
     nest.on('hvacStateChanged', (data) => {
       log.debug(LOG_PREFIX, 'HVAC State Changed', data);
+      const path = `logs/hvacState/${data.key}`;
+      _fbPush(path, data);
     });
   }
 
