@@ -1936,6 +1936,9 @@ function Home(initialConfig, fbRef) {
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
     });
+    nest.on('hvacStateChanged', (data) => {
+      log.debug(LOG_PREFIX, 'HVAC State Changed', data);
+    });
   }
 
   /**

@@ -270,6 +270,17 @@ function Nest(authToken) {
       _disconnectedTimer = setTimeout(
           _onDisconnectTimeoutExceeded, MAX_DISCONNECT);
     });
+
+    const thermostats = _nestData.structures[_structureId].thermostats;
+    thermostats.forEach((key) => {
+      const path = `devices/thermostats/${key}/hvac_state`;
+      _fbNest.child(path).on('value', (snapshot) => {
+        const mode = snapshot.val();
+        const date = Date.now();
+        const data = {key, mode, date};
+        _self.emit('hvacStateChanged', data);
+      });
+    });
   }
 
   /**
