@@ -1,0 +1,298 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="chart-js.html">
+
+<dom-module id="hvac-usage">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+      }
+      .card h2 {
+        margin: 0;
+      }
+    </style>
+
+    <script type="text/javascript"
+      src="../bower_components/chart.js/dist/Chart.js">
+    </script>
+
+    <firebase-query
+      data="{{hvacDataLR}}" limit-to-last="[[MAX_ITEMS]]"
+      path="logs/hvacState/dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1">
+    </firebase-query>
+
+    <firebase-query
+      data="{{hvacDataBR}}" limit-to-last="[[MAX_ITEMS]]"
+      path="logs/hvacState/dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1">
+    </firebase-query>
+
+    <div class="card">
+      <div class="top-line">
+        <h2>HVAC Usage</h2>
+      </div>
+      <canvas id="myCanvas"></canvas>
+    </div>
+
+  </template>
+
+  <script>
+    class HVACUsage extends Polymer.Element {
+      static get is() { return 'hvac-usage'; }
+
+      static get properties() {
+        return {
+          MAX_ITEMS: {
+            type: Number,
+            value: 500,
+          },
+          colorBR: {
+            type: String,
+            value: '#757de8'
+          },
+          colorLR: {
+            type: String,
+            value: '#002984'
+          },
+          lastSevenDays: Array,
+          lastSevenDaysNames: Array,
+          hvacDataLR: Array,
+          hvacDataBR: Array,
+          chartObj: Object,
+          chartOpts: Object,
+        };
+      }
+
+      static get observers() {
+        return [
+          '_hvacDataLRChanged(hvacDataLR.splices)',
+          '_hvacDataBRChanged(hvacDataBR.splices)',
+        ];
+      }
+
+      ready() {
+        super.ready();
+        this._initLastSevenDays();
+        this._initChart();
+      }
+
+      _hvacDataLRChanged(change) {
+        this._hvacDataChanged('LR', change, this.hvacDataLR);
+      }
+
+      _hvacDataBRChanged(change) {
+        this._hvacDataChanged('BR', change, this.hvacDataBR);
+      }
+
+      _hvacDataChanged(roomKey, change, data) {
+        if (!change && data.length === 0) {
+          return;
+        }
+        if (!change && data.length > 0) {
+          if (data[0].mode === 'off') {
+            data.shift();
+          }
+          const byPeriod = this._splitDataByPeriod(data, this.lastSevenDays);
+          this._updateChart(roomKey, byPeriod);
+
+          this._calcTotalRuntime(roomKey, data);
+        }
+        if (change && change.indexSplices[0].addedCount) {
+          // console.log('added', roomKey, change);
+        }
+      }
+
+      _initChart() {
+        const cvs = this.$.myCanvas;
+        const ctx = cvs.getContext('2d');
+
+        const chartData = {
+          labels: this.lastSevenDaysNames,
+          datasets: [
+            {
+                label: 'Bedroom',
+                data: [],
+                backgroundColor: this.colorBR,
+                borderColor: this.colorBR,
+                borderWidth: 1,
+                yAxisID: 'first-y-axis',
+              },
+            {
+              label: 'Living Room',
+              data: [],
+              backgroundColor: this.colorLR,
+              borderColor: this.colorLR,
+              borderWidth: 1,
+              yAxisID: 'first-y-axis',
+            },
+          ],
+        };
+
+        this.chartOpts = {
+          type: 'bar',
+          data: chartData,
+          options: {
+            responsive: true,
+            legend: {
+              position: 'top',
+            },
+            title: {
+              display: false,
+            },
+            tooltips: {
+              mode: 'index',
+            },
+            scales: {
+              yAxes: [{
+                id: 'first-y-axis',
+                ticks: {
+                  min: 0,
+                  suggestedMax: 400,
+                },
+                scaleLabel: {
+                  labelString: 'Minutes',
+                  display: true,
+                }
+              }]
+            }
+          }
+        };
+
+        this.chartObj = new Chart(ctx, this.chartOpts);
+      }
+
+      _initLastSevenDays() {
+        const msPerDay = 60 * 60 * 24 * 1000;
+        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const startOfDay = [];
+        const dayNames = [];
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        let val = now.valueOf();
+        for (let i = 1; i <= 7; i++) {
+          startOfDay.push(val);
+          const d = new Date(val);
+          dayNames.push(daysOfWeek[d.getDay()]);
+          val -= msPerDay;
+        }
+        this.lastSevenDays = startOfDay.reverse();
+        this.lastSevenDaysNames = dayNames.reverse();
+      }
+
+      _updateChart(roomKey, dataPerDay) {
+        const usagePerDay = [];
+        dataPerDay.forEach((day) => {
+          const events = day.events;
+          const min = day.min;
+          const max = day.max;
+          const usageForDayMS = this._calcRunTimeForPeriod(events, min, max);
+          const usageForDayMinutes = Math.round(usageForDayMS / 1000 / 60);
+          usagePerDay.push(usageForDayMinutes);
+        });
+        // console.log(roomKey, usagePerDay);
+        if (roomKey === 'BR') {
+          this.chartOpts.data.datasets[0].data = usagePerDay;
+        }
+        if (roomKey === 'LR') {
+          this.chartOpts.data.datasets[1].data = usagePerDay;
+        }
+        this.chartObj.update();
+      }
+
+      _splitDataByPeriod(data, periodStarts) {
+        const results = [];
+        let prevVal;
+        periodStarts.forEach((min, idx, _arr) => {
+          const max = _arr[idx + 1] || Date.now();
+          const events = data.filter((val) => {
+            if (val.mode === prevVal) {
+              // Don't add duplicate values
+              return false;
+            }
+            if (val.date < min) {
+              // It's before the start of the current period
+              return false;
+            }
+            if (val.date >= max) {
+              // It's after the end of the current period
+              return false;
+            }
+            prevVal = val.mode;
+            return true;
+          });
+          // If there are no entries, add one for the previous value.
+          if (events.length === 0) {
+            events.push({date: min, mode: prevVal || 'off'});
+          }
+          results.push({min, max, events});
+        });
+        return results;
+      }
+
+      _calcTotalRuntime(roomKey, events) {
+        const now = Date.now();
+        const start = events[0].date;
+
+        const runTimeMS = this._calcRunTimeForPeriod(events, start, now);
+        const runTimeMin = Math.round(runTimeMS / 1000 / 60);
+
+        const since = new Date(start).toLocaleString();
+        const msg1 = `Run time for ${roomKey} since ${since}`
+        const msg2 = `was ${runTimeMin} minutes.`;
+        console.log(msg1, msg2);
+      }
+
+      _calcRunTimeForPeriod(events, start, end) {
+        let runTime = 0;
+        let startTime = null;
+        if (events.length === 0 || !events) {
+          return 0;
+        }
+        // If there's only one entry, we can skip the lot
+        if (events.length === 1) {
+          if (events[0].mode === 'off') {
+            return 0;
+          }
+          return end - start;
+        }
+        // Add an entry for the very start of the day if there isn't one.
+        if (events[0].date > start) {
+          const newVal = events[0].mode === 'off' ? 'prob-on' : 'off';
+          events.unshift({date: start, mode: newVal});
+        }
+        let prevVal;
+        events.forEach((event) => {
+          if (prevVal === event.mode) {
+            // It's a duplicate entry, ignore it.
+            return;
+          }
+          prevVal = event.mode;
+          if (event.mode === 'off' && startTime !== null) {
+            const duration = event.date - startTime;
+            runTime += duration;
+            startTime = null;
+            return;
+          }
+          startTime = event.date;
+        });
+        if (startTime !== null) {
+          const duration = end - startTime;
+          runTime += duration;
+        }
+        return runTime;
+      }
+    }
+    window.customElements.define(HVACUsage.is, HVACUsage);
+  </script>
+</dom-module>
