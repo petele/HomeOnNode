@@ -23,17 +23,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="fb-query.html">
 <link rel="import" href="send-command.html">
 <link rel="import" href="hon-icons.html">
+<link rel="import" href="hvac-usage.html">
 
 <dom-module id="view-hvac">
   <template>
     <style include="shared-styles app-grid-style iron-flex">
       :host {
         display: block;
-        --app-grid-item-height: reset;
+        /* --app-grid-item-height: reset; */
       }
       .nest-details { text-align: right; }
       .secondary {
         color: var(--secondary-text-color);
+      }
+      .card h2 {
+        margin: 0;
       }
       summary {
         list-style: none;
@@ -65,52 +69,120 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </fb-document>
 
     <firebase-document
-    path="config/HomeOnNode/hvac/autoHumidifier"
-    data="{{autoHumidifier}}">
-  </firebase-document>
+      path="config/HomeOnNode/hvac/autoHumidifier"
+      data="{{autoHumidifier}}">
+    </firebase-document>
 
     <fb-query path="config/HomeOnNode/nest/hvacAuto" data="{{nestHVACAuto}}">
     </fb-query>
 
+    <firebase-query
+      id="query"
+      data="{{hvacData}}"
+      path="logs/hvacState"
+      limit-to-last="[[MAX_ITEMS]]">
+    </firebase-query>
+
     <div class="card">
-      <div class="app-grid grid-one">
-        <paper-toggle-button id="ptAway" checked="{{nestAway}}" on-change="awayChanged">
+      <div class="layout horizontal">
+        <h2 class="flex">
           Nest Away
+        </h2>
+        <paper-toggle-button id="ptAway" checked="{{nestAway}}" on-change="toggleEnabled">
         </paper-toggle-button>
       </div>
+      <!-- <details on-toggle="userInteraction">
+        <summary>
+        </summary>
+      </details> -->
     </div>
 
     <div class="card">
-      <div class="app-grid grid-one">
+      <div class="layout horizontal">
+        <h2 class="flex">
+          Auto Humidifier
+        </h2>
         <paper-toggle-button checked="{{autoHumidifier.enabled}}">
-          Auto Humidfier
         </paper-toggle-button>
       </div>
-      <div class="app-grid grid-two">
-        <paper-input
-            id="piOnBelow"
-            label="On Below"
-            type="number"
-            required
-            min="0" max="50"
-            data-key="onBelow"
-            on-value-changed="peteChanged"
-            value="[[autoHumidifier.onBelow]]">
-        </paper-input>
-        <paper-input
-            id="piOffAbove"
-            label="Off Above"
-            type="number"
-            required
-            min="20" max="90"
-            data-key="offAbove"
-            on-value-changed="peteChanged"
-            value="[[autoHumidifier.offAbove]]">
-        </paper-input>
-      </div>
+      <details on-toggle="userInteraction">
+        <summary>
+          <div class="layout horizontal">
+            <div class="flex">
+              &nbsp;
+            </div>
+            <div>expand</div>
+          </div>
+        </summary>
+        <div class="app-grid grid-two">
+          <paper-input
+              id="piOnBelow"
+              label="On Below"
+              type="number"
+              required
+              min="0" max="50"
+              data-key="onBelow"
+              on-value-changed="validateAutoHumidEntry"
+              value="[[autoHumidifier.onBelow]]">
+          </paper-input>
+          <paper-input
+              id="piOffAbove"
+              label="Off Above"
+              type="number"
+              required
+              min="20" max="90"
+              data-key="offAbove"
+              on-value-changed="validateAutoHumidEntry"
+              value="[[autoHumidifier.offAbove]]">
+          </paper-input>
+        </div>
+      </details>
     </div>
 
     <div class="card">
+      <!-- <div class="layout horizontal">
+        <h2 class="flex">
+          Preset Temperatures
+        </h2>
+      </div> -->
+      <details on-toggle="userInteraction">
+        <summary>
+          <div class="layout horizontal">
+            <h2 class="flex">
+              Preset Temperatures
+            </h2>
+            <div>expand</div>
+          </div>
+        </summary>
+        <template is="dom-repeat" items="{{nestHVACAuto}}">
+          <div class="app-grid grid-three">
+            <div>[[item.$key]]</div>
+            <paper-input
+              label="Living Room"
+              type="number"
+              required
+              min="60" max="80"
+              value="[[item.LR]]"
+              data-key="LR"
+              on-value-changed="autoTempChanged">
+            </paper-input>
+            <paper-input
+              label="Bedroom"
+              type="number"
+              required
+              min="60" max="80"
+              value="[[item.BR]]"
+              data-key="BR"
+              on-value-changed="autoTempChanged">
+            </paper-input>
+          </div>
+        </template>
+      </details>
+    </div>
+
+
+
+    <!-- <div class="card">
       <div class="app-grid grid-two">
         <template is="dom-repeat" items="{{nestThermostats}}">
           <paper-dropdown-menu disabled label="[[item.name]]">
@@ -150,7 +222,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-input>
         </div>
       </template>
-    </div>
+    </div> -->
+
+    <hvac-usage>
+    </hvac-usage>
 
   </template>
 
@@ -181,7 +256,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
 
-      peteChanged(evt, newVal) {
+      validateAutoHumidEntry(evt, newVal) {
         window.lastUserInput = Date.now();
         this.$.piOnBelow.setAttribute('max', this.$.piOffAbove.value);
         this.$.piOffAbove.setAttribute('min', this.$.piOnBelow.value);
@@ -215,6 +290,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.$.sendCommand.send({nestState: 'HOME'});
         }
       }
+
+
     }
 
     window.customElements.define(HVACView.is, HVACView);
