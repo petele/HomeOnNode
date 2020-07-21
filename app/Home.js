@@ -2097,6 +2097,8 @@ function Home(initialConfig, fbRef) {
   function _initSonos() {
     _fbSet('state/sonos', false);
 
+    return;
+
     sonos = new Sonos();
     sonos.on('player-state', (playerState) => {
       playerState = JSON.parse(JSON.stringify(playerState));
