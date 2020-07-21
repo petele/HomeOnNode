@@ -374,6 +374,8 @@ function Sonos() {
         _self.emit('favorites-changed', favs);
         _favorites = favs;
       }
+    }).catch((err) => {
+      log.exception(LOG_PREFIX, 'Error in getFavorites', err);
     });
   }
 
