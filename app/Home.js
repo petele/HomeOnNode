@@ -2097,7 +2097,10 @@ function Home(initialConfig, fbRef) {
   function _initSonos() {
     _fbSet('state/sonos', false);
 
-    return;
+    if (_config.sonos.disabled === true) {
+      log.warn(LOG_PREFIX, 'Sonos disabled via config.');
+      return;
+    }
 
     sonos = new Sonos();
     sonos.on('player-state', (playerState) => {
