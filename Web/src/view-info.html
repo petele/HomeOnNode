@@ -220,15 +220,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </template>
       <div>
         <span class="secondary">Temperature:</span>
-        <span>[[convertCtoF(data.hueData.LR.temperature)]]°F</span>
-        <span class="secondary">(Hue)</span>
+        <span>[[convertCtoF(data.awair.LR.sensors.temp.value)]]°F</span>
+        <span class="secondary">(Awair)</span>
         <span>||</span>
         <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.temperature]]°F</span>
         <span class="secondary">(Nest)</span>
       </div>
       <div>
         <span class="secondary">Humidity:</span>
+        <span>[[round(data.awair.LR.sensors.humid.value)]]%</span>
+        <span class="secondary">(Awair)</span>
+        <span>||</span>
         <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.humidity]]%</span>
+        <span class="secondary">(Nest)</span>
+      </div>
+      <div>
+        <span class="secondary">Air Quality:</span>
+        <span>[[data.awair.LR.score]]</span>
+        <span>||</span>
+        <span class="secondary">CO<sub>2</sub>:</span>
+        <span>[[data.awair.LR.sensors.co2.value]]ppm</span>
+        <span>||</span>
+        <span class="secondary">PM2.5:</span>
+        <span>[[data.awair.LR.sensors.pm25.value]]μg/m<sup>3</sup></span>
+        <span>||</span>
+        <span class="secondary">VOC:</span>
+        <span>[[data.awair.LR.sensors.voc.value]]ppb</span>
       </div>
     </div>
 
