@@ -1641,6 +1641,15 @@ function Home(initialConfig, fbRef) {
     awair.on('data_changed', (key, data) => {
       _fbSet(`state/awair/${key}/data`, data);
     });
+    awair.on('sensors_changed', (key, data) => {
+      _fbSet(`state/awair/local/${key}/data`, data);
+    });
+    const fbAwairPath = 'config/HomeOnNode/awair/devices';
+    _fb.child(fbAwairPath).on('child_added', (snapshot) => {
+      const deviceId = snapshot.key();
+      const ipAddress = snapshot.val();
+      awair.monitorLocalDevice(deviceId, ipAddress);
+    });
   }
 
 
