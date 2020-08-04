@@ -1642,7 +1642,7 @@ function Home(initialConfig, fbRef) {
       _fbSet(`state/awair/${key}/data`, data);
     });
     awair.on('sensors_changed', (key, data) => {
-      _fbSet(`state/awair/local/${key}/data`, data);
+      _fbSet(`state/awair/local/${key}`, data);
     });
     const fbAwairPath = 'config/HomeOnNode/awair/devices';
     _fb.child(fbAwairPath).on('child_added', (snapshot) => {

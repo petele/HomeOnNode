@@ -69,8 +69,8 @@ function Logging(fbRef) {
     // Store Awair data.
     if (state.awair) {
       const br = _getAwairData(state.awair, 'awair-r2', '11438');
-      const lr = null;
-      // const lr = _getAwairData(state.awair, 'awair-element', '');
+      // const lr = null;
+      const lr = _getAwairData(state.awair, 'awair-element', '3635');
       if (br || lr) {
         value.awair = {};
         if (br) {
