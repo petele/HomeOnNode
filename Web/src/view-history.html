@@ -114,9 +114,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             class="dropdown-content"
             attr-for-selected="value"
             selected="{{rooms.livingroom.view}}">
-              <paper-item value="tempNest">Temperature</paper-item>
-              <paper-item value="humidity">Humidity</paper-item>
-              <paper-item value="lightlevel">Light level</paper-item>
+            <paper-item value="tempAwair">Temperature (Awair)</paper-item>
+            <paper-item value="tempNest">Temperature (Nest)</paper-item>
+            <paper-item value="humidity">Humidity</paper-item>
+            <paper-item value="lightlevel">Light level</paper-item>
+            <paper-item value="awairScore">Air quality</paper-item>
+            <paper-item value="co2">CO2 level</paper-item>
+            <paper-item value="voc">VOC level</paper-item>
+            <paper-item value="pm25">PM2.5 level</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
       </div>
@@ -332,11 +337,48 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             max: 78,
           },
         };
+        this.rooms.livingroom.tempAwair = {
+          data: [],
+          label: 'Temperature (Awair)',
+          yAxis: {
+            label: 'Temperature (F)',
+            min: 68,
+            max: 78,
+          },
+        };
         this.rooms.livingroom.humidity = {
           data: [],
-          label: 'Humidity (Nest)',
+          label: 'Humidity (Awair)',
           yAxis: {
             label: 'Humidity (%)',
+          },
+        };
+        this.rooms.livingroom.awairScore = {
+          data: [],
+          label: 'Air Quality (Awair)',
+          yAxis: {
+            label: 'Awair Score',
+          },
+        };
+        this.rooms.livingroom.co2 = {
+          data: [],
+          label: 'CO2 Levels (Awair)',
+          yAxis: {
+            label: 'ppm',
+          },
+        };
+        this.rooms.livingroom.pm25 = {
+          data: [],
+          label: 'Fine Dust (Awair)',
+          yAxis: {
+            label: 'μg/m3',
+          },
+        };
+        this.rooms.livingroom.voc = {
+          data: [],
+          label: 'Chemicals (Awair)',
+          yAxis: {
+            label: 'ppb',
           },
         };
         this.rooms.livingroom.lightlevel = {
@@ -446,6 +488,47 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           this.push('rooms.bedroom.voc.data', {x: t, y: v});
         } catch (ex) { }
 
+        let awairLRTimeStamp;
+        try {
+          awairLRTimeStamp = this._convertTime(item.awair.LR.timeStamp);
+        } catch (ex) { }
+
+        try {
+          const t = awairLRTimeStamp
+          const v = item.awair.LR.score;
+          this.push('rooms.livingroom.awairScore.data', {x: t, y: v});
+        } catch (ex) { }
+
+        try {
+          const t = awairLRTimeStamp
+          const v = this._convertCtoF(item.awair.LR.sensors.temp.value);
+          this.push('rooms.livingroom.tempAwair.data', {x: t, y: v});
+        } catch (ex) { }
+
+        try {
+          const t = awairLRTimeStamp
+          const v = item.awair.LR.sensors.humid.value;
+          this.push('rooms.livingroom.humidity.data', {x: t, y: v});
+        } catch (ex) { }
+
+        try {
+          const t = awairLRTimeStamp
+          const v = item.awair.LR.sensors.co2.value;
+          this.push('rooms.livingroom.co2.data', {x: t, y: v});
+        } catch (ex) { }
+
+        try {
+          const t = awairLRTimeStamp
+          const v = item.awair.LR.sensors.pm25.value;
+          this.push('rooms.livingroom.pm25.data', {x: t, y: v});
+        } catch (ex) { }
+
+        try {
+          const t = awairLRTimeStamp
+          const v = item.awair.LR.sensors.voc.value;
+          this.push('rooms.livingroom.voc.data', {x: t, y: v});
+        } catch (ex) { }
+
         try {
           const t = this._convertTime(item.hueData.LR.lightUpdated, true);
           const v = this._convertToLux(item.hueData.LR.lightLevel);
@@ -456,12 +539,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           const t = item.date;
           const v = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].temperature;
           this.push('rooms.livingroom.tempNest.data', {x: t, y: v});
-        } catch (ex) { }
-
-        try {
-          const t = item.date;
-          const v = item.thermostats['dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1'].humidity;
-          this.push('rooms.livingroom.humidity.data', {x: t, y: v});
         } catch (ex) { }
 
         try {
