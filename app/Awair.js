@@ -3,6 +3,7 @@
 const util = require('util');
 const request = require('request');
 const log = require('./SystemLog2');
+const fetch = require('node-fetch');
 const diff = require('deep-diff').diff;
 const EventEmitter = require('events').EventEmitter;
 
@@ -13,10 +14,12 @@ const LOG_PREFIX = 'AWAIR';
  * @constructor
  *
  * @see https://docs.developer.getawair.com/?version=latest
+ * @see https://docs.google.com/document/d/1001C-ro_ig7aEyz0GiWUiiJn0M6DLj47BYWj31acesg/edit
  *
  * @param {String} token Authentication token.
  * @fires Awair#device_found
  * @fires Awair#data_changed
+ * @fires Awair#sensors_changed
  * @fires Awair#settings_changed
 */
 function Awair(token) {
@@ -26,6 +29,7 @@ function Awair(token) {
 
   const REFRESH_INTERVAL_AIR_DATA = 5 * 60 * 1000;
   const REFRESH_INTERVAL_SETTINGS = 10 * 60 * 1000;
+  const REFRESH_INTERVAL_LOCAL_SENSORS = 2 * 60 * 1000;
 
   const DISPLAY_MODES = [
     'score', 'temp', 'humid', 'co2', 'voc', 'pm25', 'clock',
@@ -35,6 +39,7 @@ function Awair(token) {
   ];
 
   this.dataStore = {};
+  this.localSensors = {};
 
   /**
    * Init
@@ -55,6 +60,7 @@ function Awair(token) {
             const deviceType = device.deviceType;
             const deviceId = device.deviceId;
             const key = `${deviceType}/${deviceId}`;
+            log.log(LOG_PREFIX, 'Found device', device);
             _self.emit('device_found', key, device);
             device.data = {};
             device.settings = {};
@@ -67,6 +73,40 @@ function Awair(token) {
           const msg = `Unable to get Awair devices on startup.`;
           log.exception(LOG_PREFIX, msg, err);
         });
+  }
+
+  /**
+   * Monitors the local sensors for changes, fires sensor_changed when updated.
+   *
+   * @param {String} deviceId
+   * @param {String} ipAddress
+   */
+  this.monitorLocalDevice = function(deviceId, ipAddress) {
+    _monitorLocalDevice(deviceId, ipAddress);
+  };
+
+  /**
+   * Monitors the local sensors for changes, fires sensor_changed when updated.
+   *
+   * @param {String} deviceId
+   * @param {String} ipAddress
+   */
+  function _monitorLocalDevice(deviceId, ipAddress) {
+    const path = `http://${ipAddress}/air-data/latest`;
+    fetch(path).then((res) => {
+      return res.json();
+    }).then((newVal) => {
+      log.verbose(LOG_PREFIX, `localData for '${deviceId}' updated`, newVal);
+      _self.localSensors[deviceId] = newVal;
+      _self.emit('sensors_changed', deviceId, newVal);
+    }).catch((ex) => {
+      const msg = `monitorLocalDevice for ${deviceId} at ${ipAddress} failed.`;
+      log.exception(LOG_PREFIX, msg, ex);
+    }).then(() => {
+      setTimeout(() => {
+        _monitorLocalDevice(deviceId, ipAddress);
+      }, REFRESH_INTERVAL_LOCAL_SENSORS);
+    });
   }
 
   /**
@@ -155,9 +195,9 @@ function Awair(token) {
   function _getLatestAirData(deviceType, deviceId) {
     log.debug(LOG_PREFIX, `getLatestAirData('${deviceType}', '${deviceId}')`);
     const queryString = `?fahrenheit=false`;
-    const path = `/users/self/devices/`
-        + `${deviceType}/${deviceId}/`
-        + `air-data/latest${queryString}`;
+    const path = `/users/self/devices/` +
+        `${deviceType}/${deviceId}/` +
+        `air-data/latest${queryString}`;
     return _makeAwairRequest(path).then((rawData) => {
       const data = rawData.data[0];
       const result = {

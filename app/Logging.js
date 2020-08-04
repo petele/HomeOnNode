@@ -68,15 +68,17 @@ function Logging(fbRef) {
 
     // Store Awair data.
     if (state.awair) {
-      try {
-        if (state.awair['awair-r2'] && state.awair['awair-r2']['11438']) {
-          const awair = state.awair['awair-r2']['11438'];
-          value.awair = {
-            BR: awair.data,
-          };
+      const br = _getAwairData(state.awair, 'awair-r2', '11438');
+      const lr = null;
+      // const lr = _getAwairData(state.awair, 'awair-element', '');
+      if (br || lr) {
+        value.awair = {};
+        if (br) {
+          value.awair.BR = br;
         }
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Unable to save Awair data.', ex);
+        if (lr) {
+          value.awair.LR = lr;
+        }
       }
     }
 
@@ -110,6 +112,30 @@ function Logging(fbRef) {
       log.exception(LOG_PREFIX, 'Error saving to Firebase [2]', ex);
     }
   };
+
+  /**
+   * Gets the Awair data for the specified device.
+   *
+   * @param {Object} awairData State data for Awair
+   * @param {String} kind Type of Awair Device
+   * @param {String} deviceId Device ID
+   * @return {Object}
+   */
+  function _getAwairData(awairData, kind, deviceId) {
+    try {
+      if (awairData[kind] && awairData[kind][deviceId]) {
+        const result = awairData[kind][deviceId];
+        if (result.data) {
+          return result.data;
+        }
+      }
+    } catch (ex) {
+      const msg = `Unable to get Awair Data for [${kind}][${deviceId}]`;
+      log.exception(LOG_PREFIX, msg, ex);
+      log.error(LOG_PREFIX, msg, awairData);
+    }
+    return null;
+  }
 
   /**
    * Creates an object with the current weather data.
