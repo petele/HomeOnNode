@@ -23,6 +23,7 @@ const version = require('./version');
 const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
 const Bluetooth = require('./Bluetooth');
+const HVACUsage = require('./HVACUsage');
 const PushBullet = require('./PushBullet');
 const AlarmClock = require('./AlarmClock');
 const GoogleHome = require('./GoogleHome');
@@ -56,6 +57,7 @@ function Home(initialConfig, fbRef) {
   let logging;
   let nanoLeaf;
   let nest;
+  let hvacUsage;
   let presence;
   let pushBullet;
   let sonos;
@@ -464,6 +466,13 @@ function Home(initialConfig, fbRef) {
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: hueSceneForRules failed.`, err);
             return _genResult(action, false, err);
+          });
+    }
+
+    if (action.hasOwnProperty('hvacUsage')) {
+      return hvacUsage.generateSummaryForDay()
+          .then((result) => {
+            return _genResult(action, true, result);
           });
     }
 
@@ -1945,18 +1954,16 @@ function Home(initialConfig, fbRef) {
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
     });
-    // nest.on('hvacStateChanged', (data) => {
-    //   log.debug(LOG_PREFIX, 'HVAC State Changed', data);
-    //   const path = `logs/hvacState/events/${data.key}`;
-    //   _fbPush(path, data);
-    // });
+
+    hvacUsage = new HVACUsage(_fb);
+
     nest.on('hvacStateChanged', (data) => {
       const key = data.date;
       const startDate = moment(key).format('YYYY-MM-DD');
       const roomName = _config.nest.thermostats[data.key];
-      // const path = `logs/hvacUsage/${startDate}/${roomName}/events/${key}`;
       const path = `logs/hvacUsage/events/${startDate}/${roomName}/${key}`;
       _fbSet(path, data.mode);
+      hvacUsage.generateSummaryForDay();
     });
   }
 
