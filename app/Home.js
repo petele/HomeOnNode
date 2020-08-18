@@ -1954,7 +1954,7 @@ function Home(initialConfig, fbRef) {
       const key = data.date;
       const startDate = moment(key).format('YYYY-MM-DD');
       const roomName = _config.nest.thermostats[data.key];
-      const path = `logs/hvacUsage/${startDate}/events/${roomName}/${key}`;
+      const path = `logs/hvacUsage/${startDate}/${roomName}/events/${key}`;
       _fbSet(path, data.mode);
     });
   }
