@@ -1951,10 +1951,11 @@ function Home(initialConfig, fbRef) {
       _fbPush(path, data);
     });
     nest.on('hvacStateChanged', (data) => {
-      const startDate = moment().format('YYYY-MM-DD');
+      const key = data.date;
+      const startDate = moment(key).format('YYYY-MM-DD');
       const roomName = _config.nest.thermostats[data.key];
-      const path = `logs/hvacUsage/${startDate}/events/${roomName}`;
-      _fbPush(path, data);
+      const path = `logs/hvacUsage/${startDate}/events/${roomName}/${key}`;
+      _fbSet(path, data.mode);
     });
   }
 
