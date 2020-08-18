@@ -1945,11 +1945,11 @@ function Home(initialConfig, fbRef) {
     nest.on('change', (data) => {
       _fbSet('state/nest', data);
     });
-    nest.on('hvacStateChanged', (data) => {
-      log.debug(LOG_PREFIX, 'HVAC State Changed', data);
-      const path = `logs/hvacState/events/${data.key}`;
-      _fbPush(path, data);
-    });
+    // nest.on('hvacStateChanged', (data) => {
+    //   log.debug(LOG_PREFIX, 'HVAC State Changed', data);
+    //   const path = `logs/hvacState/events/${data.key}`;
+    //   _fbPush(path, data);
+    // });
     nest.on('hvacStateChanged', (data) => {
       const key = data.date;
       const startDate = moment(key).format('YYYY-MM-DD');
