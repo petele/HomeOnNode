@@ -1469,6 +1469,11 @@ function Home(initialConfig, fbRef) {
   function _initAppleTV() {
     _fbSet('state/appleTV', false);
 
+    if (_config.appleTV.disabled === true) {
+      log.warn(LOG_PREFIX, 'AppleTV disabled via config.');
+      return;
+    }
+
     const credentials = _config.appleTV.credentials;
     if (!credentials) {
       log.error(LOG_PREFIX, 'AppleTV unavailable, no credentials provided.');
@@ -1646,6 +1651,11 @@ function Home(initialConfig, fbRef) {
   function _initAwair() {
     _fbSet('state/awair', false);
 
+    if (_config.awair.disabled === true) {
+      log.warn(LOG_PREFIX, 'Cron disabled via config.');
+      return;
+    }
+
     const token = _config.awair.key;
     if (!token) {
       log.error(LOG_PREFIX, 'Awair unavailable, no token specified.');
@@ -1684,6 +1694,11 @@ function Home(initialConfig, fbRef) {
    */
   function _initBedJet() {
     _fbSet('state/bedJet', false);
+
+    if (_config.bedJet.disabled === true) {
+      log.warn(LOG_PREFIX, 'BedJet disabled via config.');
+      return;
+    }
 
     const ip = _config.bedJet.ipAddress;
     if (!ip) {
