@@ -97,6 +97,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
                 borderWidth: 2,
               },
             },
+            onHover: this._chartInteract,
+            onClick: this._chartInteract,
             scales: {
               xAxes: [{
                 type: 'time',
@@ -189,6 +191,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this._chart = new Chart(ctx, chartData);
 
         return this.update();
+      }
+
+      _chartInteract(event, chartElems) {
+        if (chartElems.length > 0) {
+          window.lastUserInput = Date.now();
+        }
       }
 
       update() {
