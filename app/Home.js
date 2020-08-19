@@ -469,10 +469,21 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // Update HVAC Usage
     if (action.hasOwnProperty('hvacUsage')) {
-      return hvacUsage.generateSummaryForDay()
+      if (!hvacUsage) {
+        log.error(LOG_PREFIX, 'HVAC Usage unavailable.', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      const forDay = action.hvacUsage.forDay;
+      return hvacUsage.generateSummaryForDay(forDay)
           .then((result) => {
             return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: hvacUsage failed.`, err);
+            return _genResult(action, false, err);
           });
     }
 
@@ -1560,7 +1571,7 @@ function Home(initialConfig, fbRef) {
       return;
     }
     // Only run if enabled
-    if (_config.hvac.autoHumidifier.enabled === false) {
+    if (_config.hvac.autoHumidifier.disabled === true) {
       // log.verbose(LOG_PREFIX, `autoHumidifier: disabled`);
       return;
     }
@@ -1704,6 +1715,11 @@ function Home(initialConfig, fbRef) {
   function _initBluetooth() {
     _fbSet('state/bluetooth', false);
 
+    if (_config.bluetooth.disabled === true) {
+      log.warn(LOG_PREFIX, 'Bluetooth disabled via config.');
+      return;
+    }
+
     bluetooth = new Bluetooth();
     bluetooth.on('scanning', (scanning) => {
       _fbSet('state/bluetooth/scanning', scanning);
@@ -1731,6 +1747,11 @@ function Home(initialConfig, fbRef) {
    * Init Cron API
    */
   function _initCron() {
+    if (_config.cron.disabled === true) {
+      log.warn(LOG_PREFIX, 'Cron disabled via config.');
+      return;
+    }
+
     try {
       logging = new Logging(_fb.child('logs/cron'));
       const CronJob = require('cron').CronJob;
@@ -1755,6 +1776,12 @@ function Home(initialConfig, fbRef) {
    */
   function _initHarmony() {
     _fbSet('state/harmony', false);
+
+    if (_config.harmony.disabled === true) {
+      log.warn(LOG_PREFIX, 'Harmony disabled via config.');
+      return;
+    }
+
     const ip = _config.harmony.ipAddress;
     if (!ip) {
       log.error(LOG_PREFIX, `Harmony unavailable, no IP address specified.`);
@@ -1820,6 +1847,11 @@ function Home(initialConfig, fbRef) {
    */
   function _initHue() {
     _fbSet('state/hue', false);
+
+    if (_config.philipsHue.disabled === true) {
+      log.warn(LOG_PREFIX, 'Hue disabled via config.');
+      return;
+    }
 
     const apiKey = _config.philipsHue.key;
     if (!apiKey) {
@@ -1890,6 +1922,11 @@ function Home(initialConfig, fbRef) {
   function _initGoogleHome() {
     _fbSet('state/googleHome', false);
 
+    if (_config.googleHome.disabled === true) {
+      log.warn(LOG_PREFIX, 'GoogleHome disabled via config.');
+      return;
+    }
+
     const ghConfig = _config.googleHome;
     if (!ghConfig || !ghConfig.ipAddress) {
       log.error(LOG_PREFIX, `Google Home unavailable, no config`, ghConfig);
@@ -1914,6 +1951,11 @@ function Home(initialConfig, fbRef) {
    */
   function _initNanoLeaf() {
     _fbSet('state/nanoLeaf', false);
+
+    if (_config.nanoLeaf.disabled === true) {
+      log.warn(LOG_PREFIX, 'NanoLeaf disabled via config.');
+      return;
+    }
 
     const ip = _config.nanoLeaf.ip;
     const port = _config.nanoLeaf.port || 16021;
@@ -1945,6 +1987,11 @@ function Home(initialConfig, fbRef) {
   function _initNest() {
     _fbSet('state/nest', false);
 
+    if (_config.nest.disabled === true) {
+      log.warn(LOG_PREFIX, 'Nest disabled via config.');
+      return;
+    }
+
     const apiKey = _config.nest.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `Nest unavailable, no API key available.`);
@@ -1955,7 +2002,12 @@ function Home(initialConfig, fbRef) {
       _fbSet('state/nest', data);
     });
 
-    hvacUsage = new HVACUsage(_fb);
+    try {
+      hvacUsage = new HVACUsage(_fb);
+    } catch (ex) {
+      const msg = `Unable to initialize hvacUsage`;
+      log.exception(LOG_PREFIX, msg, ex);
+    }
 
     nest.on('hvacStateChanged', (data) => {
       const key = data.date;
@@ -1963,7 +2015,9 @@ function Home(initialConfig, fbRef) {
       const roomName = _config.nest.thermostats[data.key];
       const path = `logs/hvacUsage/events/${startDate}/${roomName}/${key}`;
       _fbSet(path, data.mode);
-      hvacUsage.generateSummaryForDay();
+      if (hvacUsage) {
+        hvacUsage.generateSummaryForDay();
+      }
     });
   }
 
@@ -2014,6 +2068,11 @@ function Home(initialConfig, fbRef) {
    */
   function _initPresence() {
     _fbSet('state/presence/state', 'NONE');
+
+    if (!bluetooth) {
+      log.warn(LOG_PREFIX, 'Presence disabled, no bluetooth available.');
+      return;
+    }
 
     presence = new Presence(bluetooth);
     // Set up the presence detection
@@ -2069,6 +2128,11 @@ function Home(initialConfig, fbRef) {
    * Init Push Bullet
    */
   function _initPushBullet() {
+    if (_config.pushBullet.disabled === true) {
+      log.warn(LOG_PREFIX, 'PushBullet disabled via config.');
+      return;
+    }
+
     const apiKey = _config.pushBullet.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `PushBullet unavailable, no API key available.`);
@@ -2197,6 +2261,11 @@ function Home(initialConfig, fbRef) {
   function _initTivo() {
     _fbSet('state/tivo', false);
 
+    if (_config.tivo.disabled === true) {
+      log.warn(LOG_PREFIX, 'TiVo disabled via config.');
+      return;
+    }
+
     const tivoIP = _config.tivo.ip;
     if (!tivoIP) {
       log.warn(LOG_PREFIX, `TiVo unavailable, no IP address specified.`);
@@ -2232,6 +2301,11 @@ function Home(initialConfig, fbRef) {
   function _initWeather() {
     _fbSet('state/weather', false);
 
+    if (_config.forecastIO.disabled === true) {
+      log.warn(LOG_PREFIX, 'Weather disabled via config.');
+      return;
+    }
+
     const apiKey = _config.forecastIO.key;
     if (!apiKey) {
       log.error(LOG_PREFIX, `ForecastIO unavailable, no API key available.`);
@@ -2255,6 +2329,11 @@ function Home(initialConfig, fbRef) {
    */
   function _initWemo() {
     _fbSet('state/wemo', false);
+
+    if (_config.wemo.disabled === true) {
+      log.warn(LOG_PREFIX, 'Wemo disabled via config.');
+      return;
+    }
 
     wemo = new Wemo();
     wemo.on('device_found', (id, data) => {
