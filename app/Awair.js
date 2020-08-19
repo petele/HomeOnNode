@@ -60,7 +60,7 @@ function Awair(token) {
             const deviceType = device.deviceType;
             const deviceId = device.deviceId;
             const key = `${deviceType}/${deviceId}`;
-            log.log(LOG_PREFIX, 'Found device', device);
+            log.log(LOG_PREFIX, `Found '${device.name}'`, device);
             _self.emit('device_found', key, device);
             device.data = {};
             device.settings = {};
