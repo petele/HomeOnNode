@@ -35,11 +35,14 @@ function HVACUsage(fbRef, manual) {
       _self.generateSummaryForDay(yesterday);
     }, 2 * 60 * 1000);
 
-    // Run every night, at one minute past midnight.
-    const cronSchedule = '00 01 00 * * *';
+    // Run every night, at 15 seconds past midnight.
+    const cronSchedule = '15 00 00 * * *';
     new CronJob(cronSchedule, () => {
       const yesterday = moment().subtract(1, 'days').format('YYYY-MM-DD');
-      _self.generateSummaryForDay(yesterday);
+      _self.generateSummaryForDay(yesterday)
+          .then(() => {
+            _self.generateSummaryForDay();
+          });
     }, null, true, 'America/New_York');
   }
 
@@ -50,8 +53,7 @@ function HVACUsage(fbRef, manual) {
     log.verbose(LOG_PREFIX, `Generating HVACUsage report for ${day}...`);
     return _getEvents(day)
         .then((events) => {
-          const summary = _generateSummary(day, events);
-          return summary;
+          return _generateSummary(day, events);
         })
         .then((summary) => {
           return _saveSummary(day, summary);
@@ -76,9 +78,8 @@ function HVACUsage(fbRef, manual) {
         const entries = snapshot.val();
 
         if (!entries) {
-          const msg = `No data available for ${day}.`;
-          reject(new Error(msg));
-          return;
+          const msg = `No events for ${day}.`;
+          log.debug(LOG_PREFIX, msg);
         }
 
         resolve(entries);
@@ -95,21 +96,35 @@ function HVACUsage(fbRef, manual) {
    */
   function _generateSummary(day, events) {
     log.verbose(LOG_PREFIX, `Building summary for ${day}`);
+
     const start = moment(day, 'YYYY-MM-DD').valueOf();
-
-    const dayDataBR = parseDataForDay(start, events.BR);
-    const runTimeBR = calculateRunTime(dayDataBR);
-
-    const dayDataLR = parseDataForDay(start, events.LR);
-    const runTimeLR = calculateRunTime(dayDataLR);
-
-    return {
-      start,
+    const result = {
+      start: start,
       runTime: {
-        BR: runTimeBR,
-        LR: runTimeLR,
+        BR: 0,
+        LR: 0,
       },
     };
+
+    try {
+      if (events && events.BR) {
+        const dayDataBR = parseDataForDay(start, events.BR);
+        result.runTime.BR = calculateRunTime(dayDataBR);
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Unable to generate summary for BR`, ex);
+    }
+
+    try {
+      if (events && events.LR) {
+        const dayDataLR = parseDataForDay(start, events.LR);
+        result.runTime.LR = calculateRunTime(dayDataLR);
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Unable to generate summary for LR`, ex);
+    }
+
+    return result;
   }
 
   /**
@@ -124,8 +139,8 @@ function HVACUsage(fbRef, manual) {
     log.verbose(LOG_PREFIX, `Saving summary for ${day}`);
     return _fbRef.child(path).set(summary)
         .then(() => {
-          log.log(LOG_PREFIX, `Saved HVACUsage summary for ${day}`, summary);
-          return true;
+          log.debug(LOG_PREFIX, `Saved HVACUsage summary for ${day}`, summary);
+          return {day, summary};
         });
   }
 
@@ -137,6 +152,9 @@ function HVACUsage(fbRef, manual) {
    * @return {Array}
    */
   function parseDataForDay(start, entries) {
+    if (!entries) {
+      return [];
+    }
     const results = [];
     const times = Object.keys(entries);
     times.forEach((time) => {
@@ -172,6 +190,10 @@ function HVACUsage(fbRef, manual) {
    * @return {Number} Number of minutes the HVAC unit was on.
    */
   function calculateRunTime(events) {
+    if (!events || events.length === 0) {
+      return 0;
+    }
+
     let runTime = 0;
     let startTime = null;
     let prevVal;
