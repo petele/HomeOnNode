@@ -61,10 +61,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: String,
             value: '#002984'
           },
-          lastSevenDays: Array,
-          lastSevenDaysNames: Array,
           hvacDataLR: Array,
           hvacDataBR: Array,
+          hvacLabels: Array,
           chartObj: Object,
           chartOpts: Object,
         };
@@ -78,7 +77,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       ready() {
         super.ready();
-        this._initLastSevenDays();
         this._initChart();
       }
 
@@ -88,19 +86,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
 
-        console.log('update', data);
-
         const lrData = [];
         const brData = [];
+        const labels = [];
 
         const len = data.length;
         const start = len - this.MAX_ITEMS;
 
         for (let i = start; i < len; i++) {
+          labels.push(moment(data[i].start).format('ddd MMM Do'));
           lrData.push(data[i].runTime.LR);
           brData.push(data[i].runTime.BR);
         }
 
+        this.hvacLabels = labels;
         this.hvacDataLR = lrData;
         this.hvacDataBR = brData;
 
@@ -108,9 +107,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
 
       _updateChart() {
+        this.chartOpts.data.labels = this.hvacLabels;
         this.chartOpts.data.datasets[0].data = this.hvacDataBR;
         this.chartOpts.data.datasets[1].data = this.hvacDataLR;
-        this.chartObj.update();
+        this.chartObj.update({duration: 100});
       }
 
       _initChart() {
@@ -153,6 +153,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             tooltips: {
               mode: 'index',
             },
+            onHover: this._chartInteract,
+            onClick: this._chartInteract,
             scales: {
               yAxes: [{
                 id: 'first-y-axis',
@@ -172,22 +174,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.chartObj = new Chart(ctx, this.chartOpts);
       }
 
-      _initLastSevenDays() {
-        const msPerDay = 60 * 60 * 24 * 1000;
-        const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const startOfDay = [];
-        const dayNames = [];
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        let val = now.valueOf();
-        for (let i = 1; i <= this.MAX_ITEMS; i++) {
-          startOfDay.push(val);
-          const d = new Date(val);
-          dayNames.push(daysOfWeek[d.getDay()]);
-          val -= msPerDay;
+      _chartInteract(event, chartElems) {
+        if (chartElems.length > 0) {
+          window.lastUserInput = Date.now();
         }
-        this.lastSevenDays = startOfDay.reverse();
-        this.lastSevenDaysNames = dayNames.reverse();
       }
 
     }
