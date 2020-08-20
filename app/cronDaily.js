@@ -19,10 +19,6 @@ const _cleanLogs = function() {
   promises.push(log.cleanLogs('logs/logs', 7));
   promises.push(log.cleanLogs('logs/messages', 7));
   promises.push(log.cleanLogs('logs/pushBullet', 1));
-  promises.push(
-      log.cleanLogs('logs/hvacState/dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1', 120));
-  promises.push(
-      log.cleanLogs('logs/hvacState/dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1', 120));
 
   return Promise.all(promises)
       .catch((err) => {
