@@ -1,5 +1,5 @@
 {
-  "name": "HomeOnNode",
+  "name": "home-on-node",
   "description": "Home Automation using a Raspberry Pi and Node.",
   "version": "0.0.1",
   "private": true,
@@ -38,11 +38,13 @@
     "chai": "^4.0.2",
     "eslint": "^7.1.0",
     "eslint-config-google": "^0.14.0",
+    "eslint-plugin-mocha": "^8.0.0",
     "mocha": "^3.4.2"
   },
   "eslintIgnore": [
     "test.js",
-    "/tests/*"
+    "/tests/*",
+    "Keys.js"
   ],
   "scripts": {
     "lint": "eslint .",

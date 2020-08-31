@@ -6,6 +6,7 @@ const util = require('util');
 const Hue = require('./Hue');
 
 const Nest = require('./Nest');
+const LGTV = require('./LGtv');
 const Wemo = require('./Wemo');
 const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
@@ -54,6 +55,7 @@ function Home(initialConfig, fbRef) {
   let hue;
   let googleHome;
   let honExec;
+  let lgTV;
   let logging;
   let nanoLeaf;
   let nest;
@@ -487,6 +489,23 @@ function Home(initialConfig, fbRef) {
           });
     }
 
+    // LG TV
+    if (action.hasOwnProperty('lgTV')) {
+      if (!lgTV) {
+        log.error(LOG_PREFIX, 'LG TV unavailable.', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      return lgTV.executeCommand(action.lgTV)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: LGTV failed.`, err);
+            return _genResult(action, false, err);
+          });
+    }
+
     // Log
     if (action.hasOwnProperty('log')) {
       const level = action.log.level || 'LOG';
@@ -860,6 +879,7 @@ function Home(initialConfig, fbRef) {
     _initNotifications();
     _initNest();
     _initHue();
+    _initLGTV();
     _initNanoLeaf();
     _initSonos();
     _initHarmony();
@@ -1952,6 +1972,33 @@ function Home(initialConfig, fbRef) {
     googleHome.on('device_info_changed', (data) => {
       _fbSet('state/googleHome', data);
     });
+  }
+
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * LG TV API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the LG TV API
+   */
+  function _initLGTV() {
+    _fbSet('state/lgTV', false);
+
+    const lgConfig = _config.lgTV;
+    if (lgConfig.disabled === true) {
+      log.warn(LOG_PREFIX, 'LG TV disabled via config.');
+      return;
+    }
+
+    if (!lgConfig || !lgConfig.ipAddress || !lgConfig.key) {
+      log.error(LOG_PREFIX, `LG TV unavailable, no config`, lgConfig);
+      return;
+    }
+
+    lgTV = new LGTV(lgConfig.ipAddress, lgConfig.key);
   }
 
 
