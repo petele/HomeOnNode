@@ -2081,6 +2081,15 @@ function Home(initialConfig, fbRef) {
         hvacUsage.generateSummaryForDay();
       }
     });
+
+    nest.on('hvacTempChanged', (data) => {
+      const key = data.date;
+      const startDate = moment(key).format('YYYY-MM-DD');
+      const roomName = _config.nest.thermostats[data.key];
+      const path = `logs/hvacUsage/events/${startDate}` +
+                   `/setTemp/${roomName}/${key}`;
+      _fbSet(path, data.temp);
+    });
   }
 
   /**
