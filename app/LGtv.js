@@ -8,9 +8,12 @@ const LOG_PREFIX = 'LG_TV';
 
 const LG_URLS = {
   get: {
+    appStatus: 'ssap://com.webos.service.appstatus/getAppStatus',
     foregroundAppInfo: 'ssap://com.webos.applicationManager/getForegroundAppInfo',
     powerState: 'ssap://com.webos.service.tvpower/power/getPowerState',
     servicesList: 'ssap://api/getServiceList',
+    systemInfo: 'ssap://system/getSystemInfo',
+    volume: 'ssap://audio/getVolume',
   },
   createToast: 'ssap://system.notifications/createToast',
   launch: 'ssap://system.launcher/launch',
@@ -25,24 +28,33 @@ const LG_URLS = {
  *
  * @see https://github.com/hobbyquaker/lgtv2
  *
+ * @param {String} ipAddress IP Address of TV.
  * @param {Object} credentials login credentials.
 */
-function LGTV(credentials) {
-  let _ready = false;
+function LGTV(ipAddress, credentials) {
   let _lgtv;
+  const _lgtvURL = `ws://${ipAddress}:3000`;
   const _self = this;
+  // connectionState - 0 not connected, 1 connecting, 2 connected.
+  this.state = {
+    connectionState: 0,
+  };
 
   /**
    * Init
    */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
+    if (!ipAddress) {
+      log.error(LOG_PREFIX, 'No IP Address provided, aborting...');
+      return;
+    }
     if (!credentials) {
-      log.error(LOG_PREFIX, 'Not credentials provided, aborting...');
+      log.error(LOG_PREFIX, 'No credentials provided, aborting...');
       return;
     }
     const initOpts = {
-      url: 'ws://lgwebostv:3000',
+      url: _lgtvURL,
       saveKey: _saveKey,
       clientKey: credentials,
     };
@@ -65,7 +77,7 @@ function LGTV(credentials) {
    * @return {Promise} The promise that will be resolved on completion.
   */
   this.executeCommand = function(command) {
-    if (_ready !== true) {
+    if (_self.state.connectionState !== 2) {
       return Promise.reject(new Error('Not Ready'));
     }
     if (command.hasOwnProperty('powerOff')) {
@@ -83,19 +95,21 @@ function LGTV(credentials) {
       return _sendRequest(LG_URLS.launch, opts);
     }
     if (command.hasOwnProperty('setInput')) {
-      const opts = {};
+      const opts = {inputId: command.setInput};
       return _sendRequest(LG_URLS.switchInput, opts);
     }
   };
 
   /**
-   * Saves the Key
-   * @param {*} a
-   * @param {*} b
-   * @param {*} c
+   *
+   * @param {*} key
+   * @param {Function} callback
    */
-  function _saveKey(a, b, c) {
-    console.log('saveKey', a, b, c);
+  function _saveKey(key, callback) {
+    log.log(LOG_PREFIX, 'saveKey()', key);
+    if (callback) {
+      callback();
+    }
   }
 
   /**
@@ -120,18 +134,76 @@ function LGTV(credentials) {
    */
   function _onConnect() {
     log.log(LOG_PREFIX, 'Connected');
-    _sendRequest(LG_URLS.get.servicesList)
-        .then((services) => {
-          log.verbose(LOG_PREFIX, 'Services', services);
-          _self.emit('services', services);
+    const promises = [];
+
+    // Power State
+    const p = _sendRequest(LG_URLS.get.powerState)
+        .then((powerState) => {
+          _setState('powerState', null, powerState);
+        })
+        .catch((err) => {
+          _setState('powerState', err);
+        })
+        .then(() => {
+          _subscribe('powerState', LG_URLS.get.powerState);
         });
-    _lgtv.subscribe(LG_URLS.get.foregroundAppInfo, (err, res) => {
-      _emitChange('foreground_app', err, res);
+    promises.push(p);
+
+    // Foreground App
+    const fai = _sendRequest(LG_URLS.get.foregroundAppInfo)
+        .then((data) => {
+          _setState('foregroundApp', null, data);
+        })
+        .catch((err) => {
+          _setState('foregroundApp', err);
+        })
+        .then(() => {
+          _subscribe('foregroundApp', LG_URLS.get.foregroundAppInfo);
+        });
+    promises.push(fai);
+
+    // System Info
+    const si = _sendRequest(LG_URLS.get.systemInfo)
+        .then((data) => {
+          _setState('systemInfo', null, data);
+        })
+        .catch((err) => {
+          _setState('systemInfo', err);
+        })
+        .then(() => {
+          _subscribe('systemInfo', LG_URLS.get.systemInfo);
+        });
+    promises.push(si);
+
+    // Volume
+    const vol = _sendRequest(LG_URLS.get.volume)
+        .then((data) => {
+          _setState('volume', null, data);
+        })
+        .catch((err) => {
+          _setState('volume', err);
+        })
+        .then(() => {
+          _subscribe('volume', LG_URLS.get.volume);
+        });
+    promises.push(vol);
+
+    // App Status
+    const as = _sendRequest(LG_URLS.get.appStatus)
+        .then((data) => {
+          _setState('appStatus', null, data);
+        })
+        .catch((err) => {
+          _setState('appStatus', err);
+        })
+        .then(() => {
+          _subscribe('appStatus', LG_URLS.get.appStatus);
+        });
+    promises.push(as);
+
+    Promise.all(promises).then(() => {
+      _setState('connectionState', null, 2);
     });
-    _lgtv.subscribe(LG_URLS.get.powerState, (err, res) => {
-      _emitChange('power_state', err, res);
-    });
-    _ready = true;
   }
 
   /**
@@ -140,12 +212,13 @@ function LGTV(credentials) {
    * @param {Error} err
    * @param {Object} value
    */
-  function _emitChange(apiName, err, value) {
+  function _setState(apiName, err, value) {
     if (err) {
       log.exception(LOG_PREFIX, `Error in '${apiName}' change`, err);
       return;
     }
     log.verbose(LOG_PREFIX, `Changed: '${apiName}'`, value);
+    _self.state[apiName] = value;
     _self.emit(apiName, value);
   }
 
@@ -154,14 +227,15 @@ function LGTV(credentials) {
    */
   function _onConnecting() {
     log.debug(LOG_PREFIX, 'Connecting...');
+    _setState('connectionState', null, 1);
   }
 
   /**
    * Called when connection is closed.
    */
   function _onClose() {
-    log.warn(LOG_PREFIX, 'Connection closed');
-    _ready = false;
+    log.warn(LOG_PREFIX, 'Connection closed.');
+    _setState('connectionState', null, 0);
   }
 
   /**
@@ -181,6 +255,19 @@ function LGTV(credentials) {
         }
         resolve(result);
       });
+    });
+  }
+
+  /**
+   *
+   * @param {String} apiName
+   * @param {String} url
+   */
+  function _subscribe(apiName, url) {
+    const msg = `subscribe('${apiName}', '${url}')`;
+    log.verbose(LOG_PREFIX, msg);
+    _lgtv.subscribe(url, (err, res) => {
+      _setState(apiName, err, res);
     });
   }
 
