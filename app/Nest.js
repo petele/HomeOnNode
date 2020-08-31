@@ -258,7 +258,8 @@ function Nest(authToken) {
       }
     });
     _fbNest.child('.info/connected').on('value', function(snapshot) {
-      if (snapshot.val() === true) {
+      const isConnected = snapshot.val();
+      if (isConnected === true) {
         if (_disconnectedTimer) {
           clearTimeout(_disconnectedTimer);
           _disconnectedTimer = null;
@@ -273,13 +274,20 @@ function Nest(authToken) {
 
     const thermostats = _nestData.structures[_structureId].thermostats;
     thermostats.forEach((key) => {
-      const path = `devices/thermostats/${key}/hvac_state`;
-      _fbNest.child(path).on('value', (snapshot) => {
+      const basePath = `devices/thermostats/${key}`;
+      _fbNest.child(`${basePath}/hvac_state`).on('value', (snapshot) => {
         const mode = snapshot.val();
         const date = Date.now();
         const data = {key, mode, date};
         _self.emit('hvacStateChanged', data);
       });
+      _fbNest.child(`${basePath}/target_temperature_f`)
+          .on('value', (snapshot) => {
+            const temp = snapshot.val();
+            const date = Date.now();
+            const data = {key, temp, date};
+            _self.emit('hvacTempChanged', data);
+          });
     });
   }
 
