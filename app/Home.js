@@ -199,6 +199,7 @@ function Home(initialConfig, fbRef) {
     _shutdownHarmony();
     _shutdownPushBullet();
     _shutdownTivo();
+    _shutdownLGTV();
   };
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -1999,6 +2000,18 @@ function Home(initialConfig, fbRef) {
     }
 
     lgTV = new LGTV(lgConfig.ipAddress, lgConfig.key);
+    lgTV.on('stateUpdated', (state) => {
+      _fbSet('state/lgTV', state);
+    });
+  }
+
+  /**
+   * Shut down the LGTV service
+   */
+  function _shutdownLGTV() {
+    if (lgTV) {
+      lgTV.shutdown();
+    }
   }
 
 
