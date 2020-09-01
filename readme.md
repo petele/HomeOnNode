@@ -85,6 +85,7 @@ Source: <https://www.raspberrypi.org/documentation/configuration/screensaver.md>
 1. `sudo apt-get -y install libcap2-bin libtool-bin`
 1. `sudo apt-get -y install python-setuptools python-dev python-rpi.gpio`
 1. `sudo apt-get -y install android-tools-adb`
+1. `sudo apt-get -y install sshfs`
 
 ### Install Node via nvm
 
