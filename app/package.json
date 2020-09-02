@@ -1,7 +1,7 @@
 {
   "name": "home-on-node",
   "description": "Home Automation using a Raspberry Pi and Node.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "license": "Apache2",
   "repository": {
