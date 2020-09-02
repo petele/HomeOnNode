@@ -6,15 +6,17 @@ const log = require('./SystemLog2');
 const WSClient = require('./WSClient');
 const commander = require('commander');
 
-let _host = 'rpi-server:8881';
+const DEFAULT_HOST = `rpi-server:8881`;
+
+let _host;
 
 commander
     .version('0.2.0')
     .option('-l, --level <value>', 'Max log level to show', 100)
     .option('-r, --retry', 'Retry the connection', false)
-    .arguments('<host:port>')
+    .arguments('[host:port]')
     .action((host) => {
-      _host = host;
+      _host = host || DEFAULT_HOST;
     })
     .parse(process.argv);
 commander.level = parseInt(commander.level);
