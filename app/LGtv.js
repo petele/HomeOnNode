@@ -65,10 +65,10 @@ const LG_BUTTONS = [
  * Returns after specified seconds, defaults to 30.
  *
  * @param {Number} [seconds] Number of seconds to wait (optional).
- * @return {?Promise<undefined>} A promise that resolves after defined number of seconds.
+ * @return {?Promise<undefined>} A promise that resolves after specified time.
  */
 function promiseSleep(seconds) {
-  seconds = seconds || 30;
+  seconds = seconds || 3;
   return new Promise((resolve) => {
     setTimeout(resolve, seconds * 1000);
   });
@@ -97,7 +97,7 @@ function isAlive(ipAddress, port) {
       resolve(false);
     });
   });
-};
+}
 
 /**
  * LG TV API.
@@ -197,15 +197,15 @@ function LGTV(ipAddress, credentials) {
 
   /**
    * Waits for the TV to come to life on startup.
+   *
+   * @return {Promise<undefined>}
    */
   function _waitForAlive() {
     return isAlive(_ipAddress, _port)
         .then((alive) => {
           if (alive === true) {
-            log.verbose(LOG_PREFIX, 'alive');
             return true;
           }
-          log.verbose(LOG_PREFIX, 'asleep');
           return promiseSleep().then(_waitForAlive);
         });
   }
@@ -308,7 +308,7 @@ function LGTV(ipAddress, credentials) {
     isAlive(_ipAddress, _port)
         .then((alive) => {
           if (alive) {
-            log.log(LOG_PREFIX, 'TV alive, attempting reconnect...');
+            log.debug(LOG_PREFIX, 'TV alive, attempting reconnect...');
             _lgtv.connect(_connectionOptions.url);
           }
         });
@@ -348,7 +348,6 @@ function LGTV(ipAddress, credentials) {
     log.debug(LOG_PREFIX, 'Checking power status...');
     _sendRequest(LG_URLS.power.state)
         .then((resp) => {
-          log.log(LOG_PREFIX, 'Connected, maybe?', resp);
           _setupConnection();
           _setState('connected', true);
         })
@@ -412,7 +411,6 @@ function LGTV(ipAddress, credentials) {
 
     const systemInfo = _sendRequest(LG_URLS.get.systemInfo);
     systemInfo.then((resp) => {
-      delete resp['returnValue'];
       _setState('systemInfo', resp);
     }).catch((err) => {
       log.error(LOG_PREFIX, `getTVInfo: 'systemInfo' failed`, err);
@@ -421,7 +419,6 @@ function LGTV(ipAddress, credentials) {
 
     const swInfo = _sendRequest(LG_URLS.get.swInfo);
     swInfo.then((resp) => {
-      delete resp['returnValue'];
       _setState('swInfo', resp);
     }).catch((err) => {
       log.error(LOG_PREFIX, `getTVInfo: 'swInfo' failed`, err);
@@ -430,8 +427,7 @@ function LGTV(ipAddress, credentials) {
 
     const services = _sendRequest(LG_URLS.get.servicesList);
     services.then((resp) => {
-      delete resp['returnValue'];
-      _setState('services', resp);
+      _setState('services', resp.services);
     }).catch((err) => {
       log.error(LOG_PREFIX, `getTVInfo: 'services' failed`, err);
     });
@@ -447,7 +443,7 @@ function LGTV(ipAddress, credentials) {
 
     const externalInputs = _sendRequest(LG_URLS.get.externalInputList);
     externalInputs.then((resp) => {
-      _setState('inputs', resp);
+      _setState('inputs', resp.devices);
     }).catch((err) => {
       log.error(LOG_PREFIX, `getTVInfo: 'externalInputs' failed`, err);
     });
@@ -531,6 +527,7 @@ function LGTV(ipAddress, credentials) {
         }
         _pointerInputSocket = sock;
         log.verbose(LOG_PREFIX, `${msg} ready.`);
+        resolve(true);
       });
     });
   }
@@ -552,14 +549,15 @@ function LGTV(ipAddress, credentials) {
       log.error(LOG_PREFIX, `${msg} - failed, empty state`);
       return;
     }
+    if (value.hasOwnProperty('returnValue')) {
+      delete value['returnValue'];
+    }
     if (_self.state[apiName] === value) {
-      // log.verbose(LOG_PREFIX, `${msg} - skipped, already set`, value);
       return;
     }
     log.verbose(LOG_PREFIX, msg, value);
     _self.state[apiName] = value;
     _self.emit(apiName, value);
-    _self.emit('stateUpdated', _self.state);
   }
 
   /**
