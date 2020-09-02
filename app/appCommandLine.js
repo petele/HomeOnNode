@@ -2,17 +2,16 @@
 
 'use strict';
 
-const log = require('./SystemLog2');
-const Keys = require('./Keys').keys;
-const Firebase = require('firebase');
 const inquirer = require('inquirer');
-
-let commands;
+const FBHelper = require('./FBHelper');
 
 /**
  * Shows the prompt with a list of commands
+ *
+ * @param {Array} commands
+ * @return {Promise<Object>} Response
  */
-function prompt() {
+function prompt(commands) {
   const choices = [];
   choices.push({name: 'Exit', value: '--EXIT--'});
   choices.push({name: 'Manual Entry', value: '--MANUAL--'});
@@ -56,28 +55,29 @@ function prompt() {
       return answers.cmdName === '--MANUAL--';
     },
   };
-  inquirer.prompt([qCommands, qManualInput])
-      .then((answer) => {
-        const cmdName = answer.cmdName;
-        if (cmdName === '--EXIT--') {
-          process.exit(0);
-        }
-        return fb.child('commands').push({cmdName: cmdName});
-      })
-      .then((snapshot) => {
-        prompt();
-      });
+  return inquirer.prompt([qCommands, qManualInput]);
 }
 
-const fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
-fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
-  if (error) {
-    log.exception('FB', 'Firebase auth failed.', error);
-    process.exit(1);
-  } else {
-    fb.child('config/HomeOnNode/commands').on('value', (snapshot) => {
-      commands = snapshot.val();
-      prompt();
-    });
+/**
+ * Start the app
+ */
+async function go() {
+  const db = await FBHelper.getDB();
+  if (!db) {
+    return;
   }
-});
+  const cmdRef = await db.ref('config/HomeOnNode/commands').once('value');
+  const cmds = cmdRef.val();
+  let keepRunning = true;
+  while (keepRunning) {
+    const cmd = await prompt(cmds);
+    if (cmd.cmdName === '--EXIT--') {
+      keepRunning = false;
+    } else {
+      await db.ref('commands').push({cmdName: cmd.cmdName});
+    }
+  }
+  process.exit(0);
+}
+
+go();
