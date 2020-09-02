@@ -11,13 +11,15 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "commander": "^6.1.0",
+    "firebase": "^7.19.1",
     "moment": "^2.27.0",
     "strip-ansi": "^6.0.0",
     "ws": "^7.3.1"
   },
   "devDependencies": {
     "eslint": "^7.8.1",
-    "eslint-config-google": "^0.14.0"
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-mocha": "^8.0.0"
   },
   "eslintIgnore": [
     "test.js",
