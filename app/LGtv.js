@@ -61,7 +61,27 @@ const LG_BUTTONS = [
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 ];
 
-const isAlive = function(ipAddress, port) {
+/**
+ * Returns after specified seconds, defaults to 30.
+ *
+ * @param {Number} [seconds] Number of seconds to wait (optional).
+ * @return {?Promise<undefined>} A promise that resolves after defined number of seconds.
+ */
+function promiseSleep(seconds) {
+  seconds = seconds || 30;
+  return new Promise((resolve) => {
+    setTimeout(resolve, seconds * 1000);
+  });
+}
+
+/**
+ * Pings a device to see if it's alive and the specified port is open.
+ *
+ * @param {String} ipAddress
+ * @param {Number} port
+ * @return {Promise<Boolean>} Is the server alive.
+ */
+function isAlive(ipAddress, port) {
   return new Promise((resolve) => {
     const s = new net.Socket();
     s.connect(port, ipAddress, () => {
@@ -158,21 +178,37 @@ function LGTV(ipAddress, credentials) {
       log.error(LOG_PREFIX, 'No credentials provided, aborting...');
       return;
     }
-    try {
-      _lgtv = require('lgtv2')(_connectionOptions);
-      _lgtv.on('error', _onError);
-      _lgtv.on('prompt', _onPrompt);
-      _lgtv.on('connect', _onConnect);
-      _lgtv.on('connecting', _onConnecting);
-      _lgtv.on('close', _onClose);
-      setInterval(() => {
-        _checkConnectionStateTick();
-      }, RECONNECT_DELAY);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to initialize LG TV.', ex);
-    }
+    _waitForAlive()
+        .then(() => {
+          _lgtv = require('lgtv2')(_connectionOptions);
+          _lgtv.on('error', _onError);
+          _lgtv.on('prompt', _onPrompt);
+          _lgtv.on('connect', _onConnect);
+          _lgtv.on('connecting', _onConnecting);
+          _lgtv.on('close', _onClose);
+          setInterval(() => {
+            _checkConnectionStateTick();
+          }, RECONNECT_DELAY);
+        })
+        .catch((err) => {
+          log.exception(LOG_PREFIX, 'Failed: Unable to initialize LG TV.', err);
+        });
   }
 
+  /**
+   * Waits for the TV to come to life on startup.
+   */
+  function _waitForAlive() {
+    return isAlive(_ipAddress, _port)
+        .then((alive) => {
+          if (alive === true) {
+            log.verbose(LOG_PREFIX, 'alive');
+            return true;
+          }
+          log.verbose(LOG_PREFIX, 'asleep');
+          return promiseSleep().then(_waitForAlive);
+        });
+  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    * Public methods
