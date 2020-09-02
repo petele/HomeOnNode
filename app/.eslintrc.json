@@ -1,11 +1,8 @@
 {
   "extends": ["eslint:recommended", "google"],
-  "parserOptions": {
-    "ecmaVersion": 6
-  },
   "env": {
     "node": true,
-    "es6": true
+    "es2017": true
   },
   "rules": {
     "no-prototype-builtins": 0
