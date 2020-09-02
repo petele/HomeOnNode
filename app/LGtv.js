@@ -68,7 +68,7 @@ const LG_BUTTONS = [
  * @return {?Promise<undefined>} A promise that resolves after specified time.
  */
 function promiseSleep(seconds) {
-  seconds = seconds || 3;
+  seconds = seconds || 30;
   return new Promise((resolve) => {
     setTimeout(resolve, seconds * 1000);
   });
@@ -126,20 +126,21 @@ function LGTV(ipAddress, credentials) {
   // IP Address, Port & Connection Options
   const _port = 3000;
   const _ipAddress = ipAddress;
+  const RECONNECT_DELAY = 45 * 1000;
   const _connectionOptions = {
     url: `ws://${_ipAddress}:${_port}`,
     saveKey: _saveKey,
     clientKey: credentials,
+    reconnect: RECONNECT_DELAY,
   };
 
   //  LGTV & Pointer Input Socket
   let _lgtv;
   let _pointerInputSocket;
 
-  // Reconnection settings
-  let _reconnect = true;
-  let _connecting = false;
-  const RECONNECT_DELAY = 45 * 1000;
+  // // Reconnection settings
+  // let _reconnect = true;
+  // let _connecting = false;
 
   // LG TV State Info
   this.state = {
@@ -186,9 +187,9 @@ function LGTV(ipAddress, credentials) {
           _lgtv.on('connect', _onConnect);
           _lgtv.on('connecting', _onConnecting);
           _lgtv.on('close', _onClose);
-          setInterval(() => {
-            _checkConnectionStateTick();
-          }, RECONNECT_DELAY);
+          // setInterval(() => {
+          //   _checkConnectionStateTick();
+          // }, RECONNECT_DELAY);
         })
         .catch((err) => {
           log.exception(LOG_PREFIX, 'Failed: Unable to initialize LG TV.', err);
@@ -219,7 +220,7 @@ function LGTV(ipAddress, credentials) {
    */
   this.shutdown = function() {
     _setState('ready', false);
-    _reconnect = false;
+    // _reconnect = false;
     if (_lgtv) {
       _lgtv.disconnect();
     }
@@ -295,24 +296,24 @@ function LGTV(ipAddress, credentials) {
    * Reconnection Handlers
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
 
-  /**
-   * Checks if the app is connected and attempts to reconnect if not.
-   */
-  function _checkConnectionStateTick() {
-    if (_self.state.connected || _connecting) {
-      return;
-    }
-    if (_reconnect === false) {
-      return;
-    }
-    isAlive(_ipAddress, _port)
-        .then((alive) => {
-          if (alive) {
-            log.debug(LOG_PREFIX, 'TV alive, attempting reconnect...');
-            _lgtv.connect(_connectionOptions.url);
-          }
-        });
-  }
+  // /**
+  //  * Checks if the app is connected and attempts to reconnect if not.
+  //  */
+  // function _checkConnectionStateTick() {
+  //   if (_self.state.connected || _connecting) {
+  //     return;
+  //   }
+  //   if (_reconnect === false) {
+  //     return;
+  //   }
+  //   isAlive(_ipAddress, _port)
+  //       .then((alive) => {
+  //         if (alive) {
+  //           log.debug(LOG_PREFIX, 'TV alive, attempting reconnect...');
+  //           _lgtv.connect(_connectionOptions.url);
+  //         }
+  //       });
+  // }
 
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -325,8 +326,11 @@ function LGTV(ipAddress, credentials) {
    * @param {Error} err error
    */
   function _onError(err) {
-    const msg = `Generic Error`;
-    log.exception(LOG_PREFIX, msg, err);
+    const msg = `Error: ${err.name}`;
+    // console.log('1', err.name);
+    // console.log('2', err.message);
+    // console.log('3', typeof err);
+    log.error(LOG_PREFIX, msg, err);
   }
 
   /**
@@ -336,7 +340,7 @@ function LGTV(ipAddress, credentials) {
     log.log(LOG_PREFIX, 'Please authorize on TV');
     _setState('connected', false);
     _setState('ready', false);
-    _connecting = false;
+    // _connecting = false;
   }
 
   /**
@@ -354,18 +358,18 @@ function LGTV(ipAddress, credentials) {
         .catch((err) => {
           _setState('connected', false);
           _setState('ready', false);
-        })
-        .then(() => {
-          _connecting = false;
         });
+        // .then(() => {
+        //   _connecting = false;
+        // });
   }
 
   /**
    * Called when trying to establish a connection.
    */
   function _onConnecting() {
-    _connecting = true;
-    log.debug(LOG_PREFIX, 'Connecting to TV...');
+    // _connecting = true;
+    // log.debug(LOG_PREFIX, 'Connecting to TV...');
     _setState('connected', false);
     _setState('ready', false);
   }
@@ -378,7 +382,7 @@ function LGTV(ipAddress, credentials) {
     _setState('connected', false);
     _setState('ready', false);
     _pointerInputSocket = null;
-    _connecting = false;
+    // _connecting = false;
   }
 
 
@@ -544,7 +548,7 @@ function LGTV(ipAddress, credentials) {
    * @param {Object} value
    */
   function _setState(apiName, value) {
-    const msg = `setState:'${apiName}'`;
+    const msg = `setState: '${apiName}'`;
     if (value === null || value === undefined) {
       log.error(LOG_PREFIX, `${msg} - failed, empty state`);
       return;
