@@ -513,11 +513,11 @@ function LGTV(ipAddress, credentials) {
   function _setState(apiName, value) {
     const msg = `setState:'${apiName}'`;
     if (value === null || value === undefined) {
-      log.verbose(LOG_PREFIX, `${msg} - failed, empty state`);
+      log.error(LOG_PREFIX, `${msg} - failed, empty state`);
       return;
     }
     if (_self.state[apiName] === value) {
-      log.verbose(LOG_PREFIX, `${msg} - skipped, already set`, value);
+      // log.verbose(LOG_PREFIX, `${msg} - skipped, already set`, value);
       return;
     }
     log.verbose(LOG_PREFIX, msg, value);
