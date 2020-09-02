@@ -346,22 +346,6 @@ function LGTV(ipAddress, credentials) {
     _connecting = false;
   }
 
-  /**
-   * Input Socket Message
-   * @param {*} message
-   */
-  function _onInputSocketMessage(message) {
-    log.verbose(LOG_PREFIX, 'Input Socket Message', message);
-  }
-
-  /**
-   * Input Socket Error
-   * @param {*} error
-   */
-  function _onInputSocketError(error) {
-    log.error(LOG_PREFIX, 'Input Socket Error', error);
-  }
-
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    * Setup for first connection
@@ -503,15 +487,13 @@ function LGTV(ipAddress, credentials) {
     const msg = `Pointer Input Socket:`;
     log.verbose(LOG_PREFIX, `${msg} init.`);
     return new Promise((resolve, reject) => {
-      _lgtv.getSocket(LG_URLS.pointer.getSocket, (err, sock) => {
+      _lgtv.getSocket(`ssap://${LG_URLS.pointer.getSocket}`, (err, sock) => {
         if (err) {
           log.exception(LOG_PREFIX, `${msg} error.`, err);
           reject(err);
           return;
         }
         _pointerInputSocket = sock;
-        _pointerInputSocket.on('message', _onInputSocketMessage);
-        _pointerInputSocket.on('error', _onInputSocketError);
         log.verbose(LOG_PREFIX, `${msg} ready.`);
       });
     });
