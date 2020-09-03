@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
-/* node14_ready */
-
 'use strict';
+
+/* node14_ready */
 
 const inquirer = require('inquirer');
 const FBHelper = require('./FBHelper');

@@ -15,6 +15,7 @@
     "firebase": "^7.19.1",
     "inquirer": "^7.3.3",
     "moment": "^2.27.0",
+    "node-fetch": "^2.6.0",
     "strip-ansi": "^6.0.0",
     "ws": "^7.3.1"
   },
