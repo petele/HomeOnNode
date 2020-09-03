@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* node14_ready */
+
 'use strict';
 
 const log = require('./SystemLog2');
@@ -46,12 +48,13 @@ function printLogs(fbRef) {
  * Start the app
  */
 async function go() {
-  const db = await FBHelper.getDB();
-  if (!db) {
+  log.log(LOG_PREFIX, `Log path: ${_path}`);
+  const ref = await FBHelper.getRef(_path);
+  if (!ref) {
+    log.fatal(LOG_PREFIX, 'Oops, unable to get FB Ref');
     return;
   }
-  log.log(LOG_PREFIX, `Log path: ${_path}`);
-  printLogs(db.ref(_path));
+  printLogs(ref);
 }
 
 
