@@ -8,11 +8,11 @@ require('firebase/database');
 const log = require('./SystemLog2');
 const Keys = require('./Keys').keys;
 
-const LOG_PREFIX = 'LOG_VIEWER';
+const LOG_PREFIX = 'FB_HELPER';
 
-let _fbApp;
-let _fbAuth;
-let _fbDB;
+let _fbApp = null;
+let _fbAuth = null;
+let _fbDB = null;
 
 /**
  * Gets the default Firebase App.
@@ -41,10 +41,19 @@ async function _getApp() {
 /**
  * Get the current Firebase Auth object
  *
- * @return {auth}
+ * @return {?auth}
  */
-async function _getAuth() {
+function _getAuth() {
   return _fbAuth;
+}
+
+/**
+ * Returns the Firebase ServerValue.TIMESTAMP
+ *
+ * @return {Object}
+ */
+function _getServerTimeStamp() {
+  return Firebase.database.ServerValue.TIMESTAMP;
 }
 
 /**
@@ -56,7 +65,7 @@ async function _getDB() {
   const fbApp = await _getApp();
   if (!fbApp) {
     log.error(LOG_PREFIX, 'Unabled to get DB - no app.');
-    return;
+    return null;
   }
   try {
     log.log(LOG_PREFIX, `Retrieving Firebase database...`);
@@ -72,13 +81,13 @@ async function _getDB() {
  * Get a reference to a specific Firebase DB reference.
  *
  * @param {String} path Path to datastore
- * @return {Promise<database.ref>}
+ * @return {?Promise<database.ref>}
  */
 async function _getRef(path) {
   const fbDB = await _getDB();
   if (!fbDB) {
     log.error(LOG_PREFIX, 'Unable to get REF - no DB');
-    return;
+    return null;
   }
   try {
     log.verbose(LOG_PREFIX, `Retrieving Firebase database reference...`, path);
@@ -93,3 +102,4 @@ exports.getApp = _getApp;
 exports.getAuth = _getAuth;
 exports.getDB = _getDB;
 exports.getRef = _getRef;
+exports.getServerTimeStamp = _getServerTimeStamp;
