@@ -1,10 +1,14 @@
 'use strict';
 
+/* node14_ready */
+
 const fs = require('fs');
 const os = require('os');
 const log = require('./SystemLog2');
 const FBHelper = require('./FBHelper');
 const DeviceMonitor = require('./DeviceMonitor');
+
+const LOG_CLEAN_TIMER = 60 * 60 * 24 * 1000;
 
 const LOG_PREFIX = 'MONITOR';
 const HOST_NAME = _getHostname();
@@ -45,7 +49,6 @@ async function go() {
     log.fatal(LOG_PREFIX, 'Unable to obtain Firebase reference.');
     return;
   }
-
   log.setFirebaseRef(fbRef);
 
   _deviceMonitor = new DeviceMonitor(HOST_NAME);
@@ -59,20 +62,26 @@ async function go() {
     _deviceMonitor.restart('FB', 'connection_timedout', false);
   });
 
-  setInterval(() => {
-    log.cleanLogs(7).catch((err) => {
+  setInterval(async () => {
+    try {
+      await log.cleanLogs(7);
+    } catch (err) {
       log.exception(LOG_PREFIX, 'Unable to clean firebase logs.', err);
-    });
-    log.cleanFile().catch((err) => {
-      log.exception(LOG_PREFIX, 'Unable to clean log file.', err);
-    });
-    const foreverLogFile = './logs/forever.log';
-    if (fs.existsSync(foreverLogFile)) {
-      log.cleanFile(foreverLogFile).catch((err) => {
-        log.exception(LOG_PREFIX, 'Unable to clean forever file.', err);
-      });
     }
-  }, 60 * 60 * 24 * 1000);
+    try {
+      await log.cleanFile();
+    } catch (err) {
+      log.exception(LOG_PREFIX, 'Unable to clean log file.', err);
+    }
+    try {
+      const foreverLogFile = './logs/forever.log';
+      if (fs.existsSync(foreverLogFile)) {
+        await log.cleanFile(foreverLogFile);
+      }
+    } catch (err) {
+      log.exception(LOG_PREFIX, 'Unable to clean forever file.', err);
+    }
+  }, LOG_CLEAN_TIMER);
 }
 
 process.on('SIGINT', function() {

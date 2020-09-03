@@ -2,6 +2,8 @@
 
 'use strict';
 
+/* node14_ready */
+
 const log = require('./SystemLog2');
 const WSClient = require('./WSClient');
 const commander = require('commander');
