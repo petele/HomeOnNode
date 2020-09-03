@@ -14,7 +14,6 @@ let _deviceMonitor;
 const logOpts = {
   consoleLogLevel: 0,
   firebaseLogLevel: 45,
-  firebasePath: `logs/monitor/${HOST_NAME}`,
   fileLogLevel: 45,
   fileFilename: './logs/monitor.log',
 };
@@ -41,7 +40,7 @@ function _getHostname() {
  * Init
  */
 async function go() {
-  const fbRef = await FBHelper.getRef('/');
+  const fbRef = await FBHelper.getRef(`logs/monitor/${HOST_NAME}`);
   if (!fbRef) {
     log.fatal(LOG_PREFIX, 'Unable to obtain Firebase reference.');
     return;
@@ -61,7 +60,7 @@ async function go() {
   });
 
   setInterval(() => {
-    log.cleanLogs(logOpts.firebasePath, 7).catch((err) => {
+    log.cleanLogs(7).catch((err) => {
       log.exception(LOG_PREFIX, 'Unable to clean firebase logs.', err);
     });
     log.cleanFile().catch((err) => {
