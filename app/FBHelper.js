@@ -1,3 +1,5 @@
+/* node14_ready */
+
 'use strict';
 
 const Firebase = require('firebase/app');
@@ -9,7 +11,41 @@ const Keys = require('./Keys').keys;
 const LOG_PREFIX = 'LOG_VIEWER';
 
 let _fbApp;
+let _fbAuth;
 let _fbDB;
+
+/**
+ * Gets the default Firebase App.
+ *
+ * @return {?Promise<app>}
+ */
+async function _getApp() {
+  if (_fbApp) {
+    return _fbApp;
+  }
+  const email = Keys.fbUser.email;
+  const password = Keys.fbUser.password;
+  try {
+    log.log(LOG_PREFIX, `Retrieving Firebase App...`);
+    _fbApp = Firebase.initializeApp(Keys.fbConfig);
+    _fbAuth = await _fbApp.auth().signInWithEmailAndPassword(email, password);
+    log.verbose(LOG_PREFIX, 'Firebase auth success.');
+  } catch (ex) {
+    log.exception(LOG_PREFIX, 'Firebase auth failed.', ex);
+    _fbApp = null;
+    _fbAuth = null;
+  }
+  return _fbApp;
+}
+
+/**
+ * Get the current Firebase Auth object
+ *
+ * @return {auth}
+ */
+async function _getAuth() {
+  return _fbAuth;
+}
 
 /**
  * Gets the default Firebase Database.
@@ -17,21 +53,43 @@ let _fbDB;
  * @return {?Promise<database>}
  */
 async function _getDB() {
-  if (_fbApp && _fbDB) {
-    return _fbDB;
+  const fbApp = await _getApp();
+  if (!fbApp) {
+    log.error(LOG_PREFIX, 'Unabled to get DB - no app.');
+    return;
   }
-  _fbApp = Firebase.initializeApp(Keys.fbConfig);
-  const email = Keys.fbUser.email;
-  const password = Keys.fbUser.password;
   try {
-    await _fbApp.auth().signInWithEmailAndPassword(email, password);
-    log.log(LOG_PREFIX, 'Firebase auth success.');
+    log.log(LOG_PREFIX, `Retrieving Firebase database...`);
     _fbDB = _fbApp.database();
-    return _fbDB;
   } catch (ex) {
-    log.exception(LOG_PREFIX, 'Firebase auth failed.', ex);
+    log.exception(LOG_PREFIX, 'Unable to obtain database.', ex);
+    _fbDB = null;
+  }
+  return _fbDB;
+}
+
+/**
+ * Get a reference to a specific Firebase DB reference.
+ *
+ * @param {String} path Path to datastore
+ * @return {Promise<database.ref>}
+ */
+async function _getRef(path) {
+  const fbDB = await _getDB();
+  if (!fbDB) {
+    log.error(LOG_PREFIX, 'Unable to get REF - no DB');
+    return;
+  }
+  try {
+    log.verbose(LOG_PREFIX, `Retrieving Firebase database reference...`, path);
+    return fbDB.ref(path);
+  } catch (ex) {
+    log.exception(LOG_PREFIX, 'Unable to obtain reference.', ex);
     return null;
   }
 }
 
+exports.getApp = _getApp;
+exports.getAuth = _getAuth;
 exports.getDB = _getDB;
+exports.getRef = _getRef;

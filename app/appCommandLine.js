@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+/* node14_ready */
+
 'use strict';
 
 const inquirer = require('inquirer');
@@ -62,19 +64,17 @@ function prompt(commands) {
  * Start the app
  */
 async function go() {
-  const db = await FBHelper.getDB();
-  if (!db) {
-    return;
-  }
-  const cmdRef = await db.ref('config/HomeOnNode/commands').once('value');
-  const cmds = cmdRef.val();
+  const commandsRef = await FBHelper.getRef('config/HomeOnNode/commands');
+  const sendCommandRef = await FBHelper.getRef('commands');
+  const snapshot = await commandsRef.once('value');
+  const cmds = snapshot.val();
   let keepRunning = true;
   while (keepRunning) {
     const cmd = await prompt(cmds);
     if (cmd.cmdName === '--EXIT--') {
       keepRunning = false;
     } else {
-      await db.ref('commands').push({cmdName: cmd.cmdName});
+      await sendCommandRef.push({cmdName: cmd.cmdName});
     }
   }
   process.exit(0);
