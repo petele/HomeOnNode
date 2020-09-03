@@ -2,15 +2,13 @@
 
 const fs = require('fs');
 const os = require('os');
-const Keys = require('./Keys').keys;
 const log = require('./SystemLog2');
-const Firebase = require('firebase');
+const FBHelper = require('./FBHelper');
 const DeviceMonitor = require('./DeviceMonitor');
 
 const LOG_PREFIX = 'MONITOR';
 const HOST_NAME = _getHostname();
 
-let _fb;
 let _deviceMonitor;
 
 const logOpts = {
@@ -42,18 +40,16 @@ function _getHostname() {
 /**
  * Init
  */
-function init() {
-  _fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
-  _fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
-    if (error) {
-      log.exception(LOG_PREFIX, 'Firebase auth failed.', error);
-    } else {
-      log.log(LOG_PREFIX, 'Firebase auth success.');
-    }
-  });
-  log.setFirebaseRef(_fb);
+async function go() {
+  const fbRef = await FBHelper.getRef('/');
+  if (!fbRef) {
+    log.fatal(LOG_PREFIX, 'Unable to obtain Firebase reference.');
+    return;
+  }
 
-  _deviceMonitor = new DeviceMonitor(_fb.child('monitor'), HOST_NAME);
+  log.setFirebaseRef(fbRef);
+
+  _deviceMonitor = new DeviceMonitor(HOST_NAME);
   _deviceMonitor.on('restart_request', () => {
     _deviceMonitor.restart('FB', 'restart_request', false);
   });
@@ -84,4 +80,4 @@ process.on('SIGINT', function() {
   _deviceMonitor.shutdown('SIGINT', 'shutdown_request', 0);
 });
 
-init();
+go();
