@@ -18,7 +18,6 @@ const DEFAULT_OPTIONS = {
   fileFilename: './logs/system.log',
   consoleLogLevel: 90,
   firebaseLogLevel: -1,
-  firebasePath: 'logs/generic',
 };
 const LOG_LEVELS = {
   /* eslint-disable no-multi-spaces */
@@ -111,7 +110,7 @@ function _setFirebaseRef(fbRef) {
   if (fbRef) {
     let logObj = _fbLogCache.shift();
     while (logObj) {
-      fbRef.child(_opts.firebasePath).push(logObj);
+      fbRef.push(logObj);
       logObj = _fbLogCache.shift();
     }
   }
@@ -250,14 +249,6 @@ function _generateLog(level, prefix, message, extra) {
       result.extra = extra;
     } else {
       result.extra = _removeCircularRefs(extra);
-      // try {
-      //   result.extra = JSON.parse(JSON.stringify(extra));
-      // } catch (ex) {
-      //   result.extra = {circular: true};
-      //   _exception(LOG_PREFIX, 'generateLog() circular exception', ex);
-      //   // eslint-disable-next-line no-console
-      //   console.log(extra);
-      // }
     }
   }
   return result;
@@ -358,8 +349,7 @@ function _stringifyLog(logObj) {
  */
 function _saveLogToFirebase(logObj) {
   if (_opts.firebaseLogLevel === -1 ||
-      logObj.levelValue > _opts.firebaseLogLevel ||
-      !_opts.firebasePath) {
+      logObj.levelValue > _opts.firebaseLogLevel) {
     return;
   }
   if (!_fbRef) {
@@ -381,7 +371,7 @@ function _saveLogToFirebase(logObj) {
     }
   }
   try {
-    _fbRef.child(_opts.firebasePath).push(logObj, function(err) {
+    _fbRef.push(logObj, function(err) {
       if (err) {
         _exception(LOG_PREFIX, 'Unable to log item to Firebase', err);
         _fbErrorCount++;
@@ -720,37 +710,47 @@ function _cleanFile(logFile) {
 /**
  * Cleans/removes old log messages from Firebase.
  *
+ * // function _cleanLogs(path, maxAgeDays) {
+ *
  * @function cleanLogs
  * @static
- * @param {String} path The Firebase path to clean.
  * @param {Number} [maxAgeDays] Remove any log item older than x days.
  * @return {Promise}
  */
-function _cleanLogs(path, maxAgeDays) {
-  maxAgeDays = maxAgeDays || 365;
-  const msg = `cleanLogs('${path}', ${maxAgeDays})`;
-  _debug(LOG_PREFIX, msg);
+function _cleanLogs(maxAgeDays) {
+  if (maxAgeDays === null || maxAgeDays === undefined) {
+    maxAgeDays = 365;
+  }
+  if (isNaN(parseInt(maxAgeDays))) {
+    _error(LOG_PREFIX, 'cleanLogs - invalid max age', maxAgeDays);
+    return Promise.reject(new Error('Invalid Param'));
+  }
   if (!_fbRef) {
     _error(LOG_PREFIX, 'Cannot clean logs, Firebase reference not set.');
     return Promise.reject(new Error('Firebase reference not set.'));
   }
-  if (path.indexOf('logs/') !== 0) {
+  const path = _fbRef.toString();
+  const msg = `cleanLogs('${path}', ${maxAgeDays})`;
+  _debug(LOG_PREFIX, msg);
+  if (!path.includes('/logs/')) {
     _error(LOG_PREFIX, 'Cannot clean logs, invalid path provided.');
     return Promise.reject(new Error('Path must start with `logs`'));
   }
+
   const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
   const niceDate = _formatTime(endAt);
+
   _debug(LOG_PREFIX, `Removing items older than ${niceDate} from ${path}`);
-  return _fbRef.child(path).orderByChild('date').endAt(endAt).once('value')
+  return _fbRef.orderByChild('date').endAt(endAt).once('value')
       .then((snapshot) => {
         const numChildren = snapshot.numChildren();
         if (numChildren >= 50000) {
           _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
         }
-        _debug(LOG_PREFIX, `${msg} - found ${numChildren} items`);
+        _verbose(LOG_PREFIX, `${msg} - found ${numChildren} items`);
         const promises = [];
         snapshot.forEach((item) => {
-          promises.push(item.ref().remove());
+          promises.push(item.ref.remove());
         });
         return Promise.all(promises);
       })
