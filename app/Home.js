@@ -14,7 +14,7 @@ const Awair = require('./Awair');
 const moment = require('moment');
 const BedJet = require('./BedJet');
 const log = require('./SystemLog2');
-const AppleTV = require('./AppleTV');
+// const AppleTV = require('./AppleTV');
 const Logging = require('./Logging');
 const HoNExec = require('./HoNExec');
 const GCMPush = require('./GCMPush');
@@ -1490,6 +1490,8 @@ function Home(initialConfig, fbRef) {
   function _initAppleTV() {
     _fbSet('state/appleTV', false);
 
+    return;
+
     if (_config.appleTV.disabled === true) {
       log.warn(LOG_PREFIX, 'AppleTV disabled via config.');
       return;
@@ -1501,7 +1503,7 @@ function Home(initialConfig, fbRef) {
       return;
     }
 
-    appleTV = new AppleTV(credentials);
+    // appleTV = new AppleTV(credentials);
   }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
