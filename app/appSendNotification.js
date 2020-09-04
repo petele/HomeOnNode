@@ -2,9 +2,7 @@
 
 const os = require('os');
 const log = require('./SystemLog2');
-const Keys = require('./Keys').keys;
 const GCMPush = require('./GCMPush');
-const Firebase = require('firebase');
 
 const LOG_PREFIX = 'SEND_ON_ERROR';
 
@@ -34,26 +32,17 @@ const DEFAULT_MESSAGE = {
 /**
  * Send default message to all users
  */
-function _sendMessage() {
-  const fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com`);
-  fb.authWithCustomToken(Keys.firebase.key, function(error) {
-    if (error) {
-      log.exception(LOG_PREFIX, 'Authentication error', error);
-      process.exit(1);
-    } else {
-      const gcmPush = new GCMPush(fb);
-      gcmPush.on('ready', function() {
-        gcmPush.sendMessage(DEFAULT_MESSAGE)
-            .catch((ex) => {
-              log.exception(LOG_PREFIX, 'Unable to send message', ex);
-            })
-            .then(() => {
-              log.custom('STOP', LOG_PREFIX, 'Sent messages...');
-              process.exit(0);
-            });
-      });
-    }
-  });
+async function _sendMessage() {
+  try {
+    await gcmPush.sendMessage(DEFAULT_MESSAGE);
+    log.log(LOG_PREFIX, LOG_PREFIX, 'Sent messages...');
+    process.exit(0);
+  } catch (ex) {
+    log.exception(LOG_PREFIX, 'Unable to send messsages.', ex);
+    process.exit(1);
+  }
 }
 
-_sendMessage();
+const gcmPush = new GCMPush();
+gcmPush.on('ready', _sendMessage);
+
