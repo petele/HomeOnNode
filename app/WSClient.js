@@ -1,5 +1,7 @@
 'use strict';
 
+/* node14_ready */
+
 const url = require('url');
 const util = require('util');
 const WebSocket = require('ws');
