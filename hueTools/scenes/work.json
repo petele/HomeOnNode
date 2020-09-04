@@ -11,6 +11,7 @@
     "scenes/office/of-morning.json"
   ],
   "lights": [
+    {"lightId": 3, "command": {"bri": 64}},
     {"lightId": 4, "command": {"bri": 64}},
     {"lightId": 5, "command": {"bri": 64}},
     {"lightId": 17, "command": {"bri": 64}},

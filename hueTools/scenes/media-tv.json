@@ -17,7 +17,7 @@
       "lightId": 11,
       "recipeName": "PEACH",
       "command": {
-        "bri": 200
+        "bri": 85
       }
     },
     {
@@ -45,7 +45,7 @@
       "lightId": 27,
       "recipeName": "PEACH",
       "command": {
-        "bri": 64
+        "bri": 25
       }
     }
   ],

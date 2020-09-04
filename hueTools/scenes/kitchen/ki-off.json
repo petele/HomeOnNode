@@ -3,6 +3,7 @@
   "dontSave": true,
   "roomId": 2,
   "lights": [
+    {"lightId": 3, "recipeName": "OFF"},
     {"lightId": 4, "recipeName": "OFF"},
     {"lightId": 5, "recipeName": "OFF"},
     {"lightId": 6, "recipeName": "OFF"},
