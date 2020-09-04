@@ -1,5 +1,7 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
 const log = require('./SystemLog2');
 const WemoAPI = require('wemo-client');
