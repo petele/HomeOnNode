@@ -2,6 +2,8 @@
 
 'use strict';
 
+/* node14_ready */
+
 const fs = require('fs');
 const MyIP = require('./MyIP');
 const log = require('./SystemLog2');
