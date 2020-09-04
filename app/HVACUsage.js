@@ -1,8 +1,11 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
 const moment = require('moment');
 const log = require('./SystemLog2');
+const FBHelper = require('./FBHelper');
 const CronJob = require('cron').CronJob;
 const EventEmitter = require('events').EventEmitter;
 
@@ -12,12 +15,10 @@ const LOG_PREFIX = 'HVAC_Usage';
  * HVACUsage API.
  * @constructor
  *
- * @param {Object} fbRef Firebase reference to alarms config
  * @param {Boolean} [manual] Don't auto-generate reports
  */
-function HVACUsage(fbRef, manual) {
+function HVACUsage(manual) {
   const _self = this;
-  const _fbRef = fbRef;
 
   /**
    * Init
@@ -30,11 +31,6 @@ function HVACUsage(fbRef, manual) {
 
     log.init(LOG_PREFIX, `Starting in 'auto' mode...`);
 
-    setTimeout(() => {
-      const yesterday = moment().subtract(1, 'days').format('YYYY-MM-DD');
-      _self.generateSummaryForDay(yesterday);
-    }, 2 * 60 * 1000);
-
     // Run every night, at 15 seconds past midnight.
     const cronSchedule = '15 00 00 * * *';
     new CronJob(cronSchedule, () => {
@@ -46,22 +42,20 @@ function HVACUsage(fbRef, manual) {
     }, null, true, 'America/New_York');
   }
 
-  this.generateSummaryForDay = function(day) {
+  this.generateSummaryForDay = async function(day) {
     if (!day) {
       day = moment().format('YYYY-MM-DD');
     }
     log.verbose(LOG_PREFIX, `Generating HVACUsage report for ${day}...`);
-    return _getEvents(day)
-        .then((events) => {
-          return _generateSummary(day, events);
-        })
-        .then((summary) => {
-          return _saveSummary(day, summary);
-        })
-        .catch((err) => {
-          const msg = `Unable to generate/save summary for ${day}`;
-          log.exception(LOG_PREFIX, msg, err);
-        });
+    try {
+      const events = await _getEvents(day);
+      const summary = _generateSummary(day, events);
+      return await _saveSummary(day, summary);
+    } catch (ex) {
+      const msg = `Unable to generate/save summary for ${day}`;
+      log.exception(LOG_PREFIX, msg, ex);
+      return null;
+    }
   };
 
   /**
@@ -70,21 +64,17 @@ function HVACUsage(fbRef, manual) {
    * @param {String} day YYYY-MM-DD
    * @return {Promise} Resolves to data
    */
-  function _getEvents(day) {
-    return new Promise((resolve, reject) => {
-      const path = `logs/hvacUsage/events/${day}`;
-      log.verbose(LOG_PREFIX, `Getting 'events' for ${day}`);
-      _fbRef.child(path).once('value', (snapshot) => {
-        const entries = snapshot.val();
-
-        if (!entries) {
-          const msg = `No events for ${day}.`;
-          log.debug(LOG_PREFIX, msg);
-        }
-
-        resolve(entries);
-      });
-    });
+  async function _getEvents(day) {
+    log.verbose(LOG_PREFIX, `Getting 'events' for ${day}`);
+    const path = `logs/hvacUsage/events/${day}`;
+    const fbRef = await FBHelper.getRef(path);
+    const entriesSnap = await fbRef.once('value');
+    const entries = entriesSnap.val();
+    if (!entries) {
+      const msg = `No events for ${day}.`;
+      log.debug(LOG_PREFIX, msg);
+    }
+    return entries;
   }
 
   /**
@@ -108,8 +98,8 @@ function HVACUsage(fbRef, manual) {
 
     try {
       if (events && events.BR) {
-        const dayDataBR = parseDataForDay(start, events.BR);
-        result.runTime.BR = calculateRunTime(dayDataBR);
+        const dayDataBR = _parseDataForDay(start, events.BR);
+        result.runTime.BR = _calculateRunTime(dayDataBR);
       }
     } catch (ex) {
       log.exception(LOG_PREFIX, `Unable to generate summary for BR`, ex);
@@ -117,8 +107,8 @@ function HVACUsage(fbRef, manual) {
 
     try {
       if (events && events.LR) {
-        const dayDataLR = parseDataForDay(start, events.LR);
-        result.runTime.LR = calculateRunTime(dayDataLR);
+        const dayDataLR = _parseDataForDay(start, events.LR);
+        result.runTime.LR = _calculateRunTime(dayDataLR);
       }
     } catch (ex) {
       log.exception(LOG_PREFIX, `Unable to generate summary for LR`, ex);
@@ -134,14 +124,13 @@ function HVACUsage(fbRef, manual) {
    * @param {Object} summary - HVAC usage summary for specified day
    * @return {Promise}
    */
-  function _saveSummary(day, summary) {
-    const path = `logs/hvacUsage/summary/${day}`;
+  async function _saveSummary(day, summary) {
     log.verbose(LOG_PREFIX, `Saving summary for ${day}`);
-    return _fbRef.child(path).set(summary)
-        .then(() => {
-          log.debug(LOG_PREFIX, `Saved HVACUsage summary for ${day}`, summary);
-          return {day, summary};
-        });
+    const path = `logs/hvacUsage/summary/${day}`;
+    const fbRef = await FBHelper.getRef(path);
+    await fbRef.set(summary);
+    log.debug(LOG_PREFIX, `Saved HVACUsage summary for ${day}`, summary);
+    return {day, summary};
   }
 
   /**
@@ -151,7 +140,7 @@ function HVACUsage(fbRef, manual) {
    * @param {Object} entries List of entries to parse and clean
    * @return {Array}
    */
-  function parseDataForDay(start, entries) {
+  function _parseDataForDay(start, entries) {
     if (!entries) {
       return [];
     }
@@ -189,7 +178,7 @@ function HVACUsage(fbRef, manual) {
    * @param {Array} events
    * @return {Number} Number of minutes the HVAC unit was on.
    */
-  function calculateRunTime(events) {
+  function _calculateRunTime(events) {
     if (!events || events.length === 0) {
       return 0;
     }

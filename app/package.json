@@ -11,6 +11,7 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "commander": "^6.1.0",
+    "cron": "^1.8.2",
     "deep-diff": "^1.0.2",
     "firebase": "^7.19.1",
     "inquirer": "^7.3.3",
