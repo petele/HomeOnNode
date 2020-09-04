@@ -1,5 +1,7 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
 const moment = require('moment');
 const log = require('./SystemLog2');
