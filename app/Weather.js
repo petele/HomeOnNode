@@ -1,8 +1,10 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
-const request = require('request');
 const log = require('./SystemLog2');
+const fetch = require('node-fetch');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'WEATHER';
@@ -33,41 +35,28 @@ function Weather(latLon, key) {
    * Get's the latest weather.
    *  Fires an event (weather) when the weather has been updated.
   */
-  function _getWeather() {
-    request(_weatherURL, function(error, response, body) {
-      const msg = 'Forecast.io request error';
-      if (error) {
-        log.error(LOG_PREFIX, msg, error);
+  async function _getWeather() {
+    let weatherForecast;
+    try {
+      const resp = await fetch(_weatherURL);
+      if (!resp.ok) {
+        log.exception(LOG_PREFIX, 'Invalid server response', resp);
         return;
       }
-      if (!response) {
-        log.error(LOG_PREFIX, msg + ': no response.');
-        return;
-      }
-      if (response.statusCode !== 200) {
-        log.error(LOG_PREFIX, msg + ': response code:' + response.statusCode);
-        return;
-      }
-      try {
-        const fullForecast = JSON.parse(body);
-        const forecast = {
-          now: fullForecast.currently,
-          hourly: fullForecast.hourly,
-          today: fullForecast.daily.data[0],
-          tomorrow: fullForecast.daily.data[1],
-        };
-        /**
-         * Fires when the weather info has changed
-         * @event Weather#weather
-         */
-        _self.emit('weather', forecast);
-        log.verbose(LOG_PREFIX, 'Weather updated.', forecast);
-        return;
-      } catch (ex) {
-        log.exception(LOG_PREFIX, 'Unable to parse forecast.io response', ex);
-        return;
-      }
-    });
+      weatherForecast = await resp.json();
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'An error occured getting forecast.', ex);
+      return;
+    }
+    const forecast = {
+      now: weatherForecast.currently,
+      hourly: weatherForecast.hourly,
+      today: weatherForecast.daily.data[0],
+      tomorrow: weatherForecast.daily.data[1],
+    };
+    log.verbose(LOG_PREFIX, 'Weather updated.', forecast);
+    _self.emit('weather', forecast);
+    return;
   }
 
   _init();
