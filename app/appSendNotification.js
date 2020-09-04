@@ -1,5 +1,7 @@
 'use strict';
 
+/* node14_ready */
+
 const os = require('os');
 const log = require('./SystemLog2');
 const GCMPush = require('./GCMPush');

@@ -1,55 +1,73 @@
 'use strict';
 
-const fs = require('fs');
+/* node14_ready */
+
+const fs = require('fs/promises');
 const log = require('./SystemLog2');
-const Firebase = require('firebase');
-const Keys = require('./Keys').keys.firebase;
+const FBHelper = require('./FBHelper');
 
 const LOG_PREFIX = 'GET_CONFIG';
 
-const fb = new Firebase(`https://${Keys.appId}.firebaseio.com/`);
 log.setAppName(LOG_PREFIX);
 log.appStart();
 
 /**
  * Gets the config data from Firebase.
  *
- * @param {String} path The path to the config file.
+ * @param {String} appID The path to the config file.
 */
-function _getConfigFromFB(path) {
-  fb.authWithCustomToken(Keys.key, function(error, authToken) {
-    if (error) {
-      log.exception(LOG_PREFIX, 'Auth Error', error);
-      process.exit(1);
-    }
-    log.log(LOG_PREFIX, 'Requesting config file...');
-    path = 'config/' + path;
-    fb.child(path).once('value', function(snapshot) {
-      log.log(LOG_PREFIX, 'Config file received.');
-      const config = snapshot.val();
-      if (config) {
-        fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-        log.log(LOG_PREFIX, 'Config file saved.');
-        process.exit(0);
-      } else {
-        log.error(LOG_PREFIX, 'No config file file found at that location.');
-        process.exit(1);
-      }
-    }, function(err) {
-      log.exception(LOG_PREFIX, 'Error retreiving config file.', err);
-      process.exit(1);
-    });
+async function _getConfigFromFB(appID) {
+  log.log(LOG_PREFIX, 'Requesting config file...');
+  const fbRef = await FBHelper.getRef(`config/${appID}`);
+  if (!fbRef) {
+    log.exception(LOG_PREFIX, 'Unable to get Firebase Ref');
+    return;
+  }
+  const configSnap = await fbRef.once('value');
+  const config = configSnap.val();
+  return config;
+}
+
+/**
+ * Returns a promise that is rejected after 45 seconds.
+ *
+ * @return {Promise<error>} Promise always rejects after 45 seconds.
+ */
+function timeout() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error('timeout'));
+    }, 45 * 1000);
   });
+}
 
-  setTimeout(function() {
-    log.error(LOG_PREFIX, 'Timeout exceeded.');
+/**
+ * Main function
+ */
+async function go() {
+  const appId = process.argv[2] || 'HomeOnNode';
+  const config = _getConfigFromFB(appId);
+  try {
+    await Promise.race([config, timeout()]);
+  } catch (ex) {
+    log.log(LOG_PREFIX, 'Timeout exceeded.', ex);
     process.exit(1);
-  }, 30000);
+  }
+
+  await Promise.race([config, timeout()]);
+  if (!config) {
+    log.exception(LOG_PREFIX, 'No config data returned.');
+    process.exit(1);
+  }
+
+  try {
+    await fs.writeFile('config.json', JSON.stringify(config, null, 2));
+    log.log(LOG_PREFIX, 'Config file saved to disk.');
+    process.exit(0);
+  } catch (ex) {
+    log.exception(LOG_PREFIX, 'Unable to write config file.', ex);
+    process.exit(1);
+  }
 }
 
-let appId = process.argv[2];
-if (!appId) {
-  log.warn('No app id provided, using HomeOnNode');
-  appId = 'HomeOnNode';
-}
-_getConfigFromFB(appId);
+go();
