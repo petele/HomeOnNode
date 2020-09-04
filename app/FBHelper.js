@@ -1,6 +1,6 @@
-/* node14_ready */
-
 'use strict';
+
+/* node14_ready */
 
 const Firebase = require('firebase/app');
 require('firebase/auth');

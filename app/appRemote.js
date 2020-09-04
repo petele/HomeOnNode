@@ -2,15 +2,15 @@
 
 'use strict';
 
+/* node14_ready */
+
 const fs = require('fs');
 const Keypad = require('./Keypad');
 const log = require('./SystemLog2');
-const Keys = require('./Keys').keys;
-const Firebase = require('firebase');
 const WSClient = require('./WSClient');
+const FBHelper = require('./FBHelper');
 const DeviceMonitor = require('./DeviceMonitor');
 
-let _fb;
 let _config;
 let _wsClient;
 let _deviceMonitor;
@@ -35,7 +35,6 @@ if (!_config.appName) {
   process.exit(1);
 }
 const APP_NAME = _config.appName;
-const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
 
 // Verify config has wsServer
 if (!_config.wsServer) {
@@ -43,12 +42,10 @@ if (!_config.wsServer) {
   process.exit(1);
 }
 
-
 // Setup logging
 log.setAppName(APP_NAME);
 log.setOptions({
   firebaseLogLevel: _config.logLevel || 50,
-  firebasePath: FB_LOG_PATH,
 });
 log.startWSS();
 log.appStart();
@@ -56,17 +53,17 @@ log.appStart();
 /**
  * Init
  */
-function init() {
-  _fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
-  _fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
-    if (error) {
-      log.exception(APP_NAME, 'Firebase auth failed.', error);
-    } else {
-      log.log(APP_NAME, 'Firebase auth success.');
-    }
-  });
-  log.setFirebaseRef(_fb);
-  _deviceMonitor = new DeviceMonitor(_fb.child('devices'), APP_NAME);
+async function init() {
+  const fbApp = await FBHelper.getApp();
+  if (!fbApp) {
+    log.error(APP_NAME, 'Unable to get Firebase app...');
+    return;
+  }
+
+  const fbLogRef = await FBHelper.getRef(`logs/${APP_NAME}`);
+  log.setFirebaseRef(fbLogRef);
+
+  _deviceMonitor = new DeviceMonitor(APP_NAME);
   _deviceMonitor.on('restart_request', () => {
     _close();
     _deviceMonitor.restart('FB', 'restart_request', false);
@@ -76,32 +73,29 @@ function init() {
     _deviceMonitor.shutdown('FB', 'shutdown_request', false);
   });
 
-  _fb.child(`config/${APP_NAME}/logLevel`).on('value', (snapshot) => {
+  const fbConfig = await FBHelper.getRef(`config/${APP_NAME}`);
+  fbConfig.child(`logLevel`).on('value', (snapshot) => {
     const logLevel = snapshot.val();
     log.setOptions({
       firebaseLogLevel: logLevel || 50,
-      firebasePath: `logs/${APP_NAME.toLowerCase()}`,
     });
     log.log(APP_NAME, `Log level changed to ${logLevel}`);
   });
-
-  _wsClient = new WSClient(_config.wsServer, true, 'server');
-
-  _fb.child(`config/${APP_NAME}/keypad`).on('value', function(snapshot) {
+  fbConfig.child(`keypad`).on('value', (snapshot) => {
     _config.keypad = snapshot.val();
     log.log(APP_NAME, 'Keypad settings updated.');
   });
-
-  _fb.child(`config/${APP_NAME}/disabled`).on('value', function(snapshot) {
+  fbConfig.child(`disabled`).on('value', (snapshot) => {
     _config.disabled = snapshot.val();
     log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
   });
 
+  _wsClient = new WSClient(_config.wsServer, true, 'server');
   Keypad.listen(_config.keypad.modifiers, _handleKeyPress);
 
-  setInterval(function() {
+  setInterval(() => {
     log.cleanFile();
-    log.cleanLogs(FB_LOG_PATH, 7);
+    log.cleanLogs(7);
   }, 60 * 60 * 24 * 1000);
 }
 
