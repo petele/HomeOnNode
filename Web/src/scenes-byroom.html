@@ -82,6 +82,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         const scenesInRoom = [];
         scenes.forEach((scene) => {
           const sceneId = scene.$key;
+          if (!scene.appdata || !scene.appdata.data) {
+            return;
+          }
           const appData = scene.appdata.data;
           const inRoom = appData.includes(roomId);
           if (!inRoom) {
