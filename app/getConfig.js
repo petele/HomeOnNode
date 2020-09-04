@@ -46,15 +46,15 @@ function timeout() {
  */
 async function go() {
   const appId = process.argv[2] || 'HomeOnNode';
-  const config = _getConfigFromFB(appId);
+  const configPromise = _getConfigFromFB(appId);
   try {
-    await Promise.race([config, timeout()]);
+    await Promise.race([configPromise, timeout()]);
   } catch (ex) {
     log.log(LOG_PREFIX, 'Timeout exceeded.', ex);
     process.exit(1);
   }
 
-  await Promise.race([config, timeout()]);
+  const config = await configPromise;
   if (!config) {
     log.exception(LOG_PREFIX, 'No config data returned.');
     process.exit(1);
