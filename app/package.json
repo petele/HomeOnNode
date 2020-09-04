@@ -17,6 +17,7 @@
     "keypress": "^0.2.1",
     "moment": "^2.27.0",
     "node-fetch": "^2.6.0",
+    "sonos-discovery": "^1.7.3",
     "strip-ansi": "^6.0.0",
     "web-push": "^3.4.4",
     "wemo-client": "^0.15.0",
