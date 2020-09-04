@@ -2,7 +2,6 @@
 
 /* node14_ready */
 
-
 /**
  * Returns after specified seconds, defaults to 30.
  *
@@ -22,7 +21,7 @@ function _promiseSleep(seconds) {
  * @param {*} val
  * @param {Number} min
  * @param {Number} max
- * @return {Boolean}
+ * @return {?Number} Value, or null if invalid.
  */
 function _isValidInt(val, min, max) {
   val = parseInt(val);

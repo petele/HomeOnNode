@@ -1,7 +1,8 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
-const request = require('request');
 const log = require('./SystemLog2');
 const fetch = require('node-fetch');
 const diff = require('deep-diff').diff;
@@ -44,35 +45,29 @@ function Awair(token) {
   /**
    * Init
    */
-  function _init() {
+  async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     if (!_authToken) {
       log.error(LOG_PREFIX, 'Failed. No auth token provided.');
       return;
     }
-    _getDevices()
-        .then((devices) => {
-          if (!devices) {
-            log.error(LOG_PREFIX, 'No Awair devices found.');
-            return;
-          }
-          devices.forEach((device) => {
-            const deviceType = device.deviceType;
-            const deviceId = device.deviceId;
-            const key = `${deviceType}/${deviceId}`;
-            log.log(LOG_PREFIX, `Found '${device.name}'`, device);
-            _self.emit('device_found', key, device);
-            device.data = {};
-            device.settings = {};
-            _self.dataStore[key] = device;
-            _monitorAirData(deviceType, deviceId);
-            _monitorSettings(deviceType, deviceId);
-          });
-        })
-        .catch((err) => {
-          const msg = `Unable to get Awair devices on startup.`;
-          log.exception(LOG_PREFIX, msg, err);
-        });
+    const devices = await _getDevices();
+    if (!devices) {
+      log.error(LOG_PREFIX, 'No Awair devices found.');
+      return;
+    }
+    devices.forEach((device) => {
+      const deviceType = device.deviceType;
+      const deviceId = device.deviceId;
+      const key = `${deviceType}/${deviceId}`;
+      log.log(LOG_PREFIX, `Found '${device.name}'`, device);
+      _self.emit('device_found', key, device);
+      device.data = {};
+      device.settings = {};
+      _self.dataStore[key] = device;
+      _monitorAirData(deviceType, deviceId);
+      _monitorSettings(deviceType, deviceId);
+    });
   }
 
   /**
@@ -393,39 +388,36 @@ function Awair(token) {
    * @param {Object} [body] The body to send.
    * @return {Promise} Object with result of request.
    */
-  function _makeAwairRequest(requestPath, method, body) {
+  async function _makeAwairRequest(requestPath, method, body) {
     if (!_authToken) {
       log.error(LOG_PREFIX, 'Failed. No auth token provided.');
       return;
     }
-    method = method || 'GET';
     const msg = `makeAwairRequest('${method}', '${requestPath}')`;
-    log.verbose(LOG_PREFIX, msg, body);
-    const requestOpts = {
-      url: `${BASE_URL}${requestPath}`,
-      method: method,
-      json: true,
-      auth: {
-        bearer: _authToken,
-      },
+
+    const url = `${BASE_URL}${requestPath}`;
+    const fetchOpts = {
+      method: method || 'GET',
+      headers: {'Authorization': `Bearer ${_authToken}`},
     };
     if (body) {
-      requestOpts.body = body;
+      fetchOpts.body = JSON.stringify(body);
+      fetchOpts.headers['Content-Type'] = 'application/json';
     }
-    return new Promise((resolve, reject) => {
-      request(requestOpts, (error, response, respBody) => {
-        if (error) {
-          log.error(LOG_PREFIX, `${msg} failed`, error);
-          return reject(error);
-        }
-        if (response.statusCode === 200) {
-          return resolve(respBody);
-        }
-        const statusCode = response.statusCode;
-        log.error(LOG_PREFIX, `${msg} failed (${statusCode})`, respBody);
-        return resolve(null);
-      });
-    });
+    let respBody;
+    try {
+      const resp = await fetch(url, fetchOpts);
+      if (!resp.ok) {
+        log.exception(LOG_PREFIX, `${msg} Server error`, resp);
+        throw new Error('Response Error');
+      }
+      respBody = await resp.json();
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `${msg} Request error.`, ex);
+      throw new Error('Request Error');
+    }
+    log.verbose(LOG_PREFIX, `${msg}`, respBody);
+    return respBody;
   }
 
   _init();
