@@ -1,5 +1,7 @@
 'use strict';
 
+/* node14_ready */
+
 const log = require('./SystemLog2');
 const keypress = require('keypress');
 
