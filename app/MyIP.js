@@ -1,7 +1,7 @@
 'use strict';
 
 const util = require('util');
-const request = require('request');
+const fetch = require('node-fetch');
 const log = require('./SystemLog2');
 const EventEmitter = require('events').EventEmitter;
 
@@ -16,10 +16,8 @@ const LOG_PREFIX = 'My_IP';
  */
 function MyIP(dnsAccount) {
   const REFRESH_INTERVAL = 5 * 60 * 1000;
-  const IPIFY_URL = 'https://api.ipify.org?format=json';
   const _dnsAccount = dnsAccount;
   const _self = this;
-  let _dnsTimer;
   this.myIP = null;
 
   /**
@@ -28,8 +26,7 @@ function MyIP(dnsAccount) {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     if (_dnsAccount) {
-      log.log(LOG_PREFIX, `DNS update enabled for ${_dnsAccount.hostname}`);
-      _self.myIP = _dnsAccount.externalIP;
+      log.log(LOG_PREFIX, `DNS update enabled for '${_dnsAccount.hostname}'`);
     }
     _getIP();
     setInterval(_getIP, REFRESH_INTERVAL);
@@ -39,94 +36,71 @@ function MyIP(dnsAccount) {
    * Get's the current IP address.
    *  Fires an event (change) when the IP has been updated.
   */
-  function _getIP() {
-    request(IPIFY_URL, (error, response, body) => {
-      const LOG_PREFIX = 'IPIFY';
-      const msgErr = `IPify request failed.`;
-      if (error) {
-        log.error(LOG_PREFIX, `${msgErr} (Request Error)`, error);
+  async function _getIP() {
+    let ip;
+    try {
+      const resp = await fetch('https://domains.google.com/checkip');
+      if (!resp.ok) {
+        log.exception(LOG_PREFIX, 'Invalid server response.', resp);
         return;
       }
-      if (!response) {
-        log.error(LOG_PREFIX, `${msgErr} (No Response Obj)`);
-        return;
-      }
-      if (response.statusCode !== 200) {
-        log.error(LOG_PREFIX, `${msgErr} (${response.statusCode})`, body);
-        return;
-      }
-      try {
-        const myIPObj = JSON.parse(body);
-        const myIP = myIPObj.ip;
-        /**
-         * Fires when the IP address has changed
-         * @event MyIP#change
-         */
-        if (myIP !== _self.myIP) {
-          _self.myIP = myIP;
-          _self.emit('change', myIP);
-          log.log(LOG_PREFIX, `IP address changed to: ${myIP}`, body);
-          _updateDNS();
-        }
-        return;
-      } catch (ex) {
-        const extra = {
-          exception: ex,
-          respBody: body,
-        };
-        log.exception(LOG_PREFIX, `${msgErr} (Parse Response)`, extra);
-        return;
-      }
-    });
+      const respTXT = await resp.text();
+      ip = respTXT.trim();
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to get IP address.', ex);
+      return;
+    }
+    if (!ip) {
+      log.exception(LOG_PREFIX, 'Invalid IP response.', ip);
+      return;
+    }
+    if (ip !== _self.myIP) {
+      _self.myIP = ip;
+      log.log(LOG_PREFIX, `IP address changed to: ${ip}`);
+      _self.emit('change', ip);
+      _updateDNS();
+    }
   }
 
   /**
    * Updates the Dynamic DNS entry on the Google DNS.
   */
-  function _updateDNS() {
+  async function _updateDNS() {
     if (!_dnsAccount) {
       return;
     }
     const LOG_PREFIX = 'G_DNS';
-    if (_dnsTimer) {
-      log.debug(LOG_PREFIX, 'DNS update timer active, skipping this request.');
-      return;
-    }
+
     const user = _dnsAccount.user;
     const password = _dnsAccount.password;
     const hostname = _dnsAccount.hostname;
 
+    log.debug(LOG_PREFIX, 'Updating DNS entry...');
+
     // See https://support.google.com/domains/answer/6147083 for Dynamic DNS API
     const host = `${user}:${password}@domains.google.com`;
     const path = `nic/update?hostname=${hostname}`;
-
-    const requestOptions = {
-      uri: `https://${host}/${path}`,
-      method: 'POST',
-      agent: false,
+    const url = `https://${host}/${path}`;
+    const fetchOpts = {
+      method: 'post',
     };
-    log.debug(LOG_PREFIX, 'Updating DNS entry...');
-    request(requestOptions, (error, response, body) => {
-      const msgErr = `DNS update failed.`;
-      const msgOK = `DNS updated.`;
-      if (error) {
-        log.exception(LOG_PREFIX, `${msgErr} (Request Error)`, error);
+
+    let respTXT;
+    try {
+      const resp = await fetch(url, fetchOpts);
+      if (!resp.ok) {
+        log.exception(LOG_PREFIX, 'Server error', resp);
         return;
       }
-      if (body.indexOf('good') >= 0 || body.indexOf('nochg') >= 0) {
-        log.verbose(LOG_PREFIX, msgOK, body);
-        return;
-      }
-      if (body.indexOf('911') >= 0) {
-        log.warn(LOG_PREFIX, `${msgErr} (Server Error), will retry.`, body);
-        _dnsTimer = setTimeout(() => {
-          _dnsTimer = null;
-          _updateDNS();
-        }, 5 * 60 * 1000);
-        return;
-      }
-      log.error(LOG_PREFIX, msgErr, body);
-    });
+      respTXT = await resp.text();
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'DNS update failed.', ex);
+    }
+    if (respTXT.includes('good') || respTXT.includes('nochg')) {
+      log.log(LOG_PREFIX, 'DNS updated successfully.', respTXT);
+      return;
+    }
+    log.error(LOG_PREFIX, 'DNS update failed.', respTXT);
   }
 
   _init();
