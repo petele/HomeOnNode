@@ -3,15 +3,17 @@
 /* node14_ready */
 
 /**
- * Returns after specified seconds, defaults to 30.
+ * Returns after specified seconds, defaults to 30,000.
  *
- * @param {Number} [seconds] Number of seconds to wait (optional).
+ * @param {Number} [ms] Number of milliseconds to wait (optional).
  * @return {?Promise<undefined>} A promise that resolves after specified time.
  */
-function _promiseSleep(seconds) {
-  seconds = seconds || 30;
+function _sleep(ms) {
+  if (ms === null || ms === undefined) {
+    ms = 30 * 1000;
+  }
   return new Promise((resolve) => {
-    setTimeout(resolve, seconds * 1000);
+    setTimeout(resolve, ms);
   });
 }
 
@@ -38,5 +40,5 @@ function _isValidInt(val, min, max) {
 }
 
 
-exports.promiseSleep = _promiseSleep;
+exports.sleep = _sleep;
 exports.isValidInt = _isValidInt;
