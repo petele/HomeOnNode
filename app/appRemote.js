@@ -54,13 +54,7 @@ log.appStart();
  * Init
  */
 async function init() {
-  const fbApp = await FBHelper.getApp();
-  if (!fbApp) {
-    log.error(APP_NAME, 'Unable to get Firebase app...');
-    return;
-  }
-
-  const fbLogRef = await FBHelper.getRef(`logs/${APP_NAME}`);
+  const fbLogRef = FBHelper.getRef(`logs/${APP_NAME}`);
   log.setFirebaseRef(fbLogRef);
 
   _deviceMonitor = new DeviceMonitor(APP_NAME);

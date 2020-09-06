@@ -33,10 +33,6 @@ function AlarmClock() {
     log.init(LOG_PREFIX, 'Starting...');
 
     _fbRef = await FBHelper.getRef(FB_PATH);
-    if (!_fbRef) {
-      log.exception(LOG_PREFIX, 'Unable to get Firebase reference.');
-      return;
-    }
 
     _fbRef.on('child_added', (snapshot) => {
       const key = snapshot.key;

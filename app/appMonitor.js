@@ -45,10 +45,6 @@ function _getHostname() {
  */
 async function go() {
   const fbRef = await FBHelper.getRef(`logs/monitor/${HOST_NAME}`);
-  if (!fbRef) {
-    log.fatal(LOG_PREFIX, 'Unable to obtain Firebase reference.');
-    return;
-  }
   log.setFirebaseRef(fbRef);
 
   _deviceMonitor = new DeviceMonitor(HOST_NAME);

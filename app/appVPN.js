@@ -42,12 +42,7 @@ log.appStart();
  * Init
  */
 async function init() {
-  const fbApp = await FBHelper.getApp();
-  if (!fbApp) {
-    log.error(APP_NAME, 'Unable to get Firebase app...');
-    return;
-  }
-  const fbLogRef = await FBHelper.getRef(`logs/${APP_NAME}`);
+  const fbLogRef = FBHelper.getRef(`logs/${APP_NAME}`);
   log.setFirebaseRef(fbLogRef);
 
   _deviceMonitor = new DeviceMonitor(APP_NAME);
@@ -61,20 +56,19 @@ async function init() {
     _deviceMonitor.restart('FB', 'connection_timedout', false);
   });
 
-  const fbConfig = await FBHelper.getRef(`config/${APP_NAME}`);
-  fbConfig.child(`logLevel`).on('value', (snapshot) => {
+  const fbHoNStateIP = await FBHelper.getRef('state/externalIP');
+  _myIP = new MyIP(_config.googleDNS);
+  _myIP.on('change', (ip) => {
+    fbHoNStateIP.set(ip);
+  });
+
+  const fbLogConfig = await FBHelper.getRef(`config/${APP_NAME}/logLevel`);
+  fbLogConfig.on('value', (snapshot) => {
     const logLevel = snapshot.val();
     log.setOptions({
       firebaseLogLevel: logLevel || 50,
     });
     log.log(APP_NAME, `Log level changed to ${logLevel}`);
-  });
-
-  const fbHoNStateIP = await FBHelper.getRef('state/externalIP');
-  _myIP = new MyIP(_config.googleDNS);
-  _myIP.on('change', (ip) => {
-    fbConfig.child(`externalIP`).set(ip);
-    fbHoNStateIP.set(ip);
   });
 
   setInterval(() => {

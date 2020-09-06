@@ -26,14 +26,12 @@ function DeviceMonitor(deviceName) {
   const MAX_DISCONNECT = 12 * 60 * 60 * 1000;
   const _deviceName = deviceName || 'DEVICE_MONITOR';
   const _self = this;
-  let _fbApp;
   let _fbRef;
   let _heartbeatInterval;
   let _ipAddressInterval;
   let _lastWrite = Date.now();
   let _hasExceededTimeout = false;
   let _firstConnect = true;
-  let _firstAuth = true;
   let _ipAddresses = [];
 
   /**
@@ -41,7 +39,6 @@ function DeviceMonitor(deviceName) {
   */
   async function _init() {
     log.init('DeviceMonitor', 'Starting...');
-    _fbApp = await FBHelper.getApp();
     _fbRef = await FBHelper.getRef('monitor');
     if (!deviceName) {
       log.error(_deviceName, 'deviceName not provided.');
@@ -85,7 +82,6 @@ function DeviceMonitor(deviceName) {
     _fbRef.root.child(`.info/connected`).on('value', _connectionChanged);
     _fbRef.child(`${_deviceName}/restart`).on('value', _restartRequest);
     _fbRef.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
-    _fbApp.auth().onAuthStateChanged(_authChanged);
     _getPiModelInfo();
     _heartbeatInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
     _ipAddressInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
@@ -272,23 +268,6 @@ function DeviceMonitor(deviceName) {
     _fbRef.child(`${_deviceName}/shutdownAt`)
         .onDisconnect()
         .set(FBHelper.getServerTimeStamp());
-  }
-
-  /**
-   * Handles a Firebase authentication state change.
-   *
-   * @param {Object} authData Firebase authentication data.
-   */
-  function _authChanged(authData) {
-    if (_firstAuth) {
-      _firstAuth = false;
-      return;
-    }
-    if (authData) {
-      log.log(_deviceName, 'Firebase client authenticated.', authData);
-      return;
-    }
-    log.warn(_deviceName, 'Firebase client unauthenticated.');
   }
 
   /**

@@ -8,6 +8,26 @@ const inquirer = require('inquirer');
 const FBHelper = require('./FBHelper');
 
 /**
+ * Start the app
+ */
+async function go() {
+  const commandsRef = await FBHelper.getRef('config/HomeOnNode/commands');
+  const sendCommandRef = await FBHelper.getRef('commands');
+  const snapshot = await commandsRef.once('value');
+  const cmds = snapshot.val();
+  let keepRunning = true;
+  while (keepRunning) {
+    const cmd = await prompt(cmds);
+    if (cmd.cmdName === '--EXIT--') {
+      keepRunning = false;
+    } else {
+      await sendCommandRef.push({cmdName: cmd.cmdName});
+    }
+  }
+  process.exit(0);
+}
+
+/**
  * Shows the prompt with a list of commands
  *
  * @param {Array} commands
@@ -60,24 +80,5 @@ function prompt(commands) {
   return inquirer.prompt([qCommands, qManualInput]);
 }
 
-/**
- * Start the app
- */
-async function go() {
-  const commandsRef = await FBHelper.getRef('config/HomeOnNode/commands');
-  const sendCommandRef = await FBHelper.getRef('commands');
-  const snapshot = await commandsRef.once('value');
-  const cmds = snapshot.val();
-  let keepRunning = true;
-  while (keepRunning) {
-    const cmd = await prompt(cmds);
-    if (cmd.cmdName === '--EXIT--') {
-      keepRunning = false;
-    } else {
-      await sendCommandRef.push({cmdName: cmd.cmdName});
-    }
-  }
-  process.exit(0);
-}
 
 go();
