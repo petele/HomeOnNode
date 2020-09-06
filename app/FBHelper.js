@@ -7,10 +7,11 @@ require('firebase/auth');
 require('firebase/database');
 const log = require('./SystemLog2');
 const Keys = require('./Keys').keys;
+const honHelpers = require('./HoNHelpers');
 
 const LOG_PREFIX = 'FB_HELPER';
 
-let _fbApp = null;
+const _fbApp = Firebase.initializeApp(Keys.fbConfig);
 let _fbAuth = null;
 let _fbDB = null;
 
@@ -20,20 +21,20 @@ let _fbDB = null;
  * @return {?Promise<app>}
  */
 async function _getApp() {
-  if (_fbApp) {
+  if (_fbAuth) {
     return _fbApp;
   }
   const email = Keys.fbUser.email;
   const password = Keys.fbUser.password;
   try {
     log.log(LOG_PREFIX, `Retrieving Firebase App...`);
-    _fbApp = Firebase.initializeApp(Keys.fbConfig);
+    // _fbApp = Firebase.initializeApp(Keys.fbConfig);
     _fbAuth = await _fbApp.auth().signInWithEmailAndPassword(email, password);
     log.verbose(LOG_PREFIX, 'Firebase auth success.');
   } catch (ex) {
     log.exception(LOG_PREFIX, 'Firebase auth failed.', ex);
-    _fbApp = null;
     _fbAuth = null;
+    return null;
   }
   return _fbApp;
 }
@@ -87,7 +88,9 @@ async function _getRef(path) {
   const fbDB = await _getDB();
   if (!fbDB) {
     log.error(LOG_PREFIX, 'Unable to get REF - no DB');
-    return null;
+    await honHelpers.sleep(20 * 1000);
+    return _getRef(path);
+    // return null;
   }
   try {
     log.verbose(LOG_PREFIX, `Retrieving Firebase database reference...`, path);
