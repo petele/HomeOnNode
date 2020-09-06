@@ -50,7 +50,7 @@ async function go() {
   try {
     await Promise.race([configPromise, timeout()]);
   } catch (ex) {
-    log.log(LOG_PREFIX, 'Timeout exceeded.', ex);
+    log.error(LOG_PREFIX, 'Timeout exceeded.', ex);
     process.exit(1);
   }
 
