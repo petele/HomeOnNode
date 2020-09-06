@@ -106,8 +106,9 @@ function _setOptions(options) {
  * @static
  * @param {Object} fbRef A Firebase reference
  */
-function _setFirebaseRef(fbRef) {
+async function _setFirebaseRef(fbRef) {
   if (fbRef) {
+    fbRef = await fbRef;
     let logObj = _fbLogCache.shift();
     while (logObj) {
       fbRef.push(logObj);

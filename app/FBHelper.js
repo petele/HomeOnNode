@@ -11,98 +11,87 @@ const honHelpers = require('./HoNHelpers');
 
 const LOG_PREFIX = 'FB_HELPER';
 
-const _fbApp = Firebase.initializeApp(Keys.fbConfig);
-let _fbAuth = null;
-let _fbDB = null;
+let _initRequired = true;
+let _fbApp;
+let _fbDB;
 
 /**
- * Gets the default Firebase App.
- *
- * @return {?Promise<app>}
+ * Attempt to autenticate with credentials.
  */
-async function _getApp() {
-  if (_fbAuth) {
-    return _fbApp;
-  }
+async function _login() {
+  log.verbose(LOG_PREFIX, 'Starting Firebase auth...');
   const email = Keys.fbUser.email;
   const password = Keys.fbUser.password;
   try {
-    log.log(LOG_PREFIX, `Retrieving Firebase App...`);
-    // _fbApp = Firebase.initializeApp(Keys.fbConfig);
-    _fbAuth = await _fbApp.auth().signInWithEmailAndPassword(email, password);
-    log.verbose(LOG_PREFIX, 'Firebase auth success.');
+    await _fbApp.auth().signInWithEmailAndPassword(email, password);
+    log.verbose(LOG_PREFIX, 'Firebase auth succeeded.');
   } catch (ex) {
     log.exception(LOG_PREFIX, 'Firebase auth failed.', ex);
-    _fbAuth = null;
-    return null;
+    await honHelpers.sleep(5 * 1000);
+    return _login();
   }
-  return _fbApp;
 }
 
 /**
- * Get the current Firebase Auth object
+ * Wait for the authentication to complete.
  *
- * @return {?auth}
+ * @return {Promise<Boolean>} true once authenication has completed.
  */
-function _getAuth() {
-  return _fbAuth;
-}
-
-/**
- * Returns the Firebase ServerValue.TIMESTAMP
- *
- * @return {Object}
- */
-function _getServerTimeStamp() {
-  return Firebase.database.ServerValue.TIMESTAMP;
-}
-
-/**
- * Gets the default Firebase Database.
- *
- * @return {?Promise<database>}
- */
-async function _getDB() {
-  const fbApp = await _getApp();
-  if (!fbApp) {
-    log.error(LOG_PREFIX, 'Unabled to get DB - no app.');
-    return null;
-  }
-  try {
-    log.log(LOG_PREFIX, `Retrieving Firebase database...`);
+async function _waitForAuth() {
+  if (_initRequired) {
+    log.init(LOG_PREFIX, `Initializing Firebase database...`);
+    _fbApp = Firebase.initializeApp(Keys.fbConfig);
     _fbDB = _fbApp.database();
-  } catch (ex) {
-    log.exception(LOG_PREFIX, 'Unable to obtain database.', ex);
-    _fbDB = null;
+    _initRequired = false;
+    _login();
+    await honHelpers.sleep(250);
   }
-  return _fbDB;
+  if (_fbApp.auth().currentUser) {
+    return true;
+  }
+  await honHelpers.sleep(500);
+  return _waitForAuth();
 }
 
 /**
  * Get a reference to a specific Firebase DB reference.
  *
  * @param {String} path Path to datastore
- * @return {?Promise<database.ref>}
+ * @return {Promise<database.ref>}
  */
 async function _getRef(path) {
-  const fbDB = await _getDB();
-  if (!fbDB) {
-    log.error(LOG_PREFIX, 'Unable to get REF - no DB');
-    await honHelpers.sleep(20 * 1000);
-    return _getRef(path);
-    // return null;
+  if (!_fbApp || !_fbApp.currentUser) {
+    await _waitForAuth();
   }
-  try {
-    log.verbose(LOG_PREFIX, `Retrieving Firebase database reference...`, path);
-    return fbDB.ref(path);
-  } catch (ex) {
-    log.exception(LOG_PREFIX, 'Unable to obtain reference.', ex);
-    return null;
-  }
+  log.verbose(LOG_PREFIX, `Retrieving Firebase database reference...`, path);
+  return _fbDB.ref(path);
 }
 
-exports.getApp = _getApp;
-exports.getAuth = _getAuth;
-exports.getDB = _getDB;
+/**
+ * Get the current FB Auth object
+ *
+ * @return {auth}
+ */
+function _getAuth() {
+  return _fbApp.auth();
+}
+
+/**
+ * Returns the authentication status.
+ *
+ * @return {Boolean}
+ */
+function _getAuthStatus() {
+  if (_fbApp.auth().currentUser) {
+    return true;
+  }
+  return false;
+}
+
+// init();
+
 exports.getRef = _getRef;
-exports.getServerTimeStamp = _getServerTimeStamp;
+exports.getAuth = _getAuth;
+exports.waitForAuth = _waitForAuth;
+exports.getAuthStatus = _getAuthStatus;
+

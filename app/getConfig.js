@@ -19,10 +19,6 @@ log.appStart();
 async function _getConfigFromFB(appID) {
   log.log(LOG_PREFIX, 'Requesting config file...');
   const fbRef = await FBHelper.getRef(`config/${appID}`);
-  if (!fbRef) {
-    log.exception(LOG_PREFIX, 'Unable to get Firebase Ref');
-    return;
-  }
   const configSnap = await fbRef.once('value');
   const config = configSnap.val();
   return config;
