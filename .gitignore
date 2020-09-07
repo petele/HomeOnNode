@@ -16,6 +16,7 @@ scratch-*.*
 */logs/*
 /Web/scripts/fbKey.js
 /scratch/
+/app/sounds/
 /app/test*.js
 /app/config.json
 /app/state.json
