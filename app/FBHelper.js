@@ -11,144 +11,95 @@ const honHelpers = require('./HoNHelpers');
 
 const LOG_PREFIX = 'FB_HELPER';
 
-let _initRequired = true;
+const AUTH_TIMEOUT = 9 * 1000;
+const MAX_TIMEOUT = 30 * 1000;
+
 let _fbApp;
 let _fbRootRef;
+let _isAuthInProgress = false;
+
 
 /**
- * Attempt to autenticate with credentials.
+ * Initialize the Firebase App
  */
-async function _login() {
-  log.verbose(LOG_PREFIX, 'Starting Firebase auth...');
+async function _initFBApp() {
+  if (_fbApp) {
+    return _fbApp;
+  }
+  log.verbose(LOG_PREFIX, 'Creating app...');
+  _fbApp = await Firebase.initializeApp(Keys.fbConfig);
+  return;
+}
+
+/**
+ * Login and get the Firebase root ref, if auth fails, wait AUTH_TIMEOUT
+ * then try again.
+ */
+async function _go() {
+  _isAuthInProgress = true;
+  log.verbose(LOG_PREFIX, 'Authenticating...');
   const email = Keys.fbUser.email;
   const password = Keys.fbUser.password;
   try {
+    await _initFBApp();
     await _fbApp.auth().signInWithEmailAndPassword(email, password);
-    log.verbose(LOG_PREFIX, 'Firebase auth succeeded.');
+    log.verbose(LOG_PREFIX, 'Authentication succeeded.');
     _fbRootRef = _fbApp.database().ref();
+    _isAuthInProgress = false;
+    return _fbRootRef;
   } catch (ex) {
-    log.exception(LOG_PREFIX, 'Firebase auth failed.', ex);
-    await honHelpers.sleep(5 * 1000);
-    return _login();
+    log.error(LOG_PREFIX, 'Authentication failed, will retry.', ex);
+    await honHelpers.sleep(AUTH_TIMEOUT);
+    return _go();
   }
 }
 
 /**
- * Wait for the authentication to complete.
+ * Promise that rejects after MAX_TIMEOUT
  *
- * @return {Promise<Boolean>} true once authenication has completed.
+ * @return {Promise}
  */
-async function _waitForAuth() {
-  if (_initRequired) {
-    log.init(LOG_PREFIX, `Initializing Firebase database...`);
-    _fbApp = Firebase.initializeApp(Keys.fbConfig);
-    _initRequired = false;
-    _login();
-    await honHelpers.sleep(250);
-  }
-  if (_fbApp.auth().currentUser) {
-    return true;
-  }
-  await honHelpers.sleep(500);
-  return _waitForAuth();
+function _timer() {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error('Timeout exceeded.'));
+    }, MAX_TIMEOUT);
+  });
 }
 
 /**
- * Get a reference to a specific Firebase DB reference.
+ * Wait for authentication to complete, stop after MAX_TIMEOUT seconds.
  *
- * @param {String} path Path to datastore
- * @return {Promise<database.ref>}
+ * @param {Number} startedAt Time the loop was started.
+ * @return {Promise<?database.reference>}
  */
-async function _getRef(path) {
-  if (!_fbRootRef) {
-    await _waitForAuth();
+async function _waitForFBRoot(startedAt) {
+  if (_fbRootRef) {
+    return _fbRootRef;
   }
-  log.verbose(LOG_PREFIX, `Retrieving Firebase database reference...`, path);
-  return _fbRootRef.child(path);
-  // return _fbDB.ref(path);
-}
-
-/**
- * Get the current FB Auth object
- *
- * @return {auth}
- */
-function _getAuth() {
-  return _fbApp.auth();
-}
-
-/**
- * Returns the authentication status.
- *
- * @return {Boolean}
- */
-function _getAuthStatus() {
-  if (_fbApp.auth().currentUser) {
-    return true;
-  }
-  return false;
-}
-
-/**
- * Sets the state of a specific object to its value.
- * @param {String} path
- * @param {Object} value
- * @return {Object<any>}
- */
-async function _set(path, value) {
-  if (!path || path.length === 0) {
-    log.exception(LOG_PREFIX, `set failed, path missing.`);
+  const duration = Date.now() - startedAt;
+  if (Date.now() - startedAt > MAX_TIMEOUT) {
     return null;
   }
-  if (!_fbRootRef) {
-    await _waitForAuth();
-  }
-  if (value === null) {
-    return _fbRootRef.child(path).remove();
-  }
-  return _fbRootRef.child(path).set(value);
+  log.verbose(LOG_PREFIX, `Authentication in progress... ${duration/1000}`);
+  await honHelpers.sleep(2 * 1000);
+  return _waitForFBRoot(startedAt);
 }
 
 /**
- * Update the item at the {path} to the {value}
+ * Attempts to get the root reference, will fail after MAX_TIMEOUT.
  *
- * @param {String} path
- * @param {Object} value
- * @return {Object<any>}
+ * @return {Promise<?database.reference>}
  */
-async function _update(path, value) {
-  if (!path || path.length === 0) {
-    log.exception(LOG_PREFIX, `set failed, path missing.`);
-    return null;
+async function _getFBRootRef() {
+  if (_fbRootRef) {
+    return _fbRootRef;
   }
-  if (!_fbRootRef) {
-    await _waitForAuth();
+  if (_isAuthInProgress) {
+    const startedAt = Date.now();
+    return Promise.race([_waitForFBRoot(startedAt), _timer()]);
   }
-  return _fbRootRef.child(path).update(value);
+  return Promise.race([_go(), _timer()]);
 }
 
-/**
- * Pushes an object to the Firebase store.
- * @param {String} path
- * @param {Object} value
- * @return {Object<any>}
- */
-async function _push(path, value) {
-  if (!path || path.length === 0) {
-    log.exception(LOG_PREFIX, `set failed, path missing.`);
-    return null;
-  }
-  if (!_fbRootRef) {
-    await _waitForAuth();
-  }
-  return _fbRootRef.child(path).push(value);
-}
-
-exports.set = _set;
-exports.push = _push;
-exports.update = _update;
-exports.getRef = _getRef;
-exports.getAuth = _getAuth;
-exports.waitForAuth = _waitForAuth;
-exports.getAuthStatus = _getAuthStatus;
-
+exports.getFBRootRef = _getFBRootRef;
