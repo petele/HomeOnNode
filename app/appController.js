@@ -8,7 +8,7 @@ const FBHelper = require('./FBHelper');
 const HTTPServer = require('./HTTPServer');
 const DeviceMonitor = require('./DeviceMonitor');
 
-const APP_NAME = 'HomeOnNode2';
+const APP_NAME = 'HomeOnNode';
 const FB_LOG_PATH = 'logs/server';
 
 let _wss;

@@ -30,7 +30,7 @@ function Bluetooth() {
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     try {
-      _noble = require('noble');
+      _noble = require('@abandonware/noble');
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Noble initialization error.', ex);
       _self.adapterState = 'not_found';
