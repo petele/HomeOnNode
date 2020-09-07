@@ -12,12 +12,11 @@ const honHelpers = require('./HoNHelpers');
 const LOG_PREFIX = 'FB_HELPER';
 
 const AUTH_TIMEOUT = 9 * 1000;
-const MAX_TIMEOUT = 30 * 1000;
 
 let _fbApp;
+let _fbDB;
 let _fbRootRef;
 let _isAuthInProgress = false;
-
 
 /**
  * Initialize the Firebase App
@@ -44,7 +43,8 @@ async function _go() {
     await _initFBApp();
     await _fbApp.auth().signInWithEmailAndPassword(email, password);
     log.verbose(LOG_PREFIX, 'Authentication succeeded.');
-    _fbRootRef = _fbApp.database().ref();
+    _fbDB = _fbApp.database();
+    _fbRootRef = _fbDB.ref();
     _isAuthInProgress = false;
     return _fbRootRef;
   } catch (ex) {
@@ -57,13 +57,14 @@ async function _go() {
 /**
  * Promise that rejects after MAX_TIMEOUT
  *
+ * @param {Number} timeout Number of ms to wait until rejection.
  * @return {Promise}
  */
-function _timer() {
+function _timer(timeout) {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
       reject(new Error('Timeout exceeded.'));
-    }, MAX_TIMEOUT);
+    }, timeout);
   });
 }
 
@@ -71,35 +72,65 @@ function _timer() {
  * Wait for authentication to complete, stop after MAX_TIMEOUT seconds.
  *
  * @param {Number} startedAt Time the loop was started.
+ * @param {Number} timeout How long to wait before bailing.
  * @return {Promise<?database.reference>}
  */
-async function _waitForFBRoot(startedAt) {
+async function _waitForFBRoot(startedAt, timeout) {
   if (_fbRootRef) {
     return _fbRootRef;
   }
-  const duration = Date.now() - startedAt;
-  if (Date.now() - startedAt > MAX_TIMEOUT) {
+  if (Date.now() - startedAt > timeout) {
     return null;
   }
-  log.verbose(LOG_PREFIX, `Authentication in progress... ${duration/1000}`);
-  await honHelpers.sleep(2 * 1000);
-  return _waitForFBRoot(startedAt);
+  log.verbose(LOG_PREFIX, `Authentication in progress...`);
+  await honHelpers.sleep(750);
+  return _waitForFBRoot(startedAt, timeout);
 }
 
 /**
- * Attempts to get the root reference, will fail after MAX_TIMEOUT.
- *
- * @return {Promise<?database.reference>}
+ * Get the Firebase root, wait forever
  */
-async function _getFBRootRef() {
+async function _getFBRootRefUnlimited() {
   if (_fbRootRef) {
     return _fbRootRef;
   }
   if (_isAuthInProgress) {
-    const startedAt = Date.now();
-    return Promise.race([_waitForFBRoot(startedAt), _timer()]);
+    return _waitForFBRoot(Date.now(), Number.MAX_SAFE_INTEGER);
   }
-  return Promise.race([_go(), _timer()]);
+  return _go();
 }
 
-exports.getFBRootRef = _getFBRootRef;
+/**
+ * Get the Firebase root, if timeout is exceeded, fail.
+ *
+ * @param {Number} timeout
+ */
+async function _getFBRootRefWithTimeout(timeout) {
+  if (!timeout) {
+    throw new RangeError('No timeout provided');
+  }
+  if (_fbRootRef) {
+    return _fbRootRef;
+  }
+  if (_isAuthInProgress) {
+    return Promise.race([
+      _waitForFBRoot(Date.now(), timeout),
+      _timer(timeout),
+    ]);
+  }
+  return Promise.race([_go(), _timer(timeout)]);
+}
+
+/**
+ * Returns the Firebase Timestamp value.
+ *
+ * @return {Object}
+ */
+function _getServerTimeStamp() {
+  return Firebase.database.ServerValue.TIMESTAMP;
+}
+
+exports.getRootRef = _getFBRootRefWithTimeout;
+exports._getRootRefUnlimited = _getFBRootRefUnlimited;
+
+exports.getServerTimeStamp = _getServerTimeStamp;
