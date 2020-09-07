@@ -31,11 +31,6 @@ function GCMPush() {
   async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     _fbBaseRef = await FBHelper.getRef('config/GCMPush');
-    if (!_fbBaseRef) {
-      log.error(LOG_PREFIX, 'Unable to get Firebase reference.');
-      return;
-    }
-
     const gcmConfigSnap = await _fbBaseRef.once('value');
     const gcmConfig = gcmConfigSnap.val();
     _options.vapidDetails = gcmConfig.vapidDetails;

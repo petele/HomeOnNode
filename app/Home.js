@@ -12,7 +12,6 @@ const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
 const Awair = require('./Awair');
 const moment = require('moment');
-const BedJet = require('./BedJet');
 const log = require('./SystemLog2');
 const AppleTV = require('./AppleTV');
 const Logging = require('./Logging');
@@ -20,40 +19,37 @@ const HoNExec = require('./HoNExec');
 const GCMPush = require('./GCMPush');
 const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
-const version = require('./version');
 const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
 const Bluetooth = require('./Bluetooth');
 const HVACUsage = require('./HVACUsage');
 const PushBullet = require('./PushBullet');
 const AlarmClock = require('./AlarmClock');
-const GoogleHome = require('./GoogleHome');
+
+const FBHelper = require('./FBHelper');
+const StateHelper = require('./StateHelper');
+const ConfigHelper = require('./ConfigHelper');
 
 const LOG_PREFIX = 'HOME';
 
 /**
  * Home API
  * @constructor
- *
- * @param {Object} initialConfig Default config to start
- * @param {Object} fbRef Firebase object
-*/
-function Home(initialConfig, fbRef) {
+ */
+function Home() {
   const _self = this;
   _self.state = {};
 
-  let _config = initialConfig;
-  const _fb = fbRef;
+  let _config; // = initialConfig;
+  let _fb; // = fbRef;
 
   let alarmClock;
   let appleTV;
   let awair;
-  let bedJet;
   let bluetooth;
   let gcmPush;
   let harmony;
   let hue;
-  let googleHome;
   let honExec;
   let lgTV;
   let logging;
@@ -73,6 +69,87 @@ function Home(initialConfig, fbRef) {
 
   const _delayedCmdTimers = {};
   let _delayedCmdCounter = 0;
+
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Init
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Initialize the HOME API
+   */
+  function _init() {
+    log.init(LOG_PREFIX, 'Starting...');
+
+    const now = Date.now();
+
+    const configHelper = new ConfigHelper();
+    _config = configHelper.getConfig();
+    if (_config._configType !== 'HoN') {
+      throw new Error(`Invalid Config Type '${_config._configType}'`);
+    }
+    configHelper.on('changed', (newConfig) => {
+      _config = newConfig;
+      log.log(LOG_PREFIX, 'Config updated.');
+    });
+    _config = configHelper.getConfig();
+
+    _self.state = {
+      delayedCommands: {},
+      doNotDisturb: false,
+      hasNotification: false,
+      presence: {
+        people: {},
+        state: 'NONE',
+      },
+      systemState: 'AWAY',
+      time: {
+        started: now,
+        started_: log.formatTime(now),
+        lastUpdated: now,
+        lastUpdated_: log.formatTime(now),
+      },
+    };
+
+    const localState = StateHelper.getState();
+    Object.keys(localState).forEach((key) => {
+      _self.state[key] = localState[key];
+    });
+
+    gcmPush = new GCMPush();
+
+    _initAlarmClock();
+    _initNotifications();
+
+    return;
+
+    _initAlarmClock();
+    _initAppleTV();
+    _initBluetooth();
+
+    _initNest();
+    _initHue();
+    _initLGTV();
+    _initNanoLeaf();
+    _initSonos();
+    _initHarmony();
+    _initPresence();
+    _initTivo();
+    _initPushBullet();
+    _initWeather();
+    _initWemo();
+    _initCron();
+    _initAwair();
+    _initHoNExec();
+    _initAutoHumidifier();
+    setTimeout(function() {
+      _self.emit('ready');
+      _playSound(_config.readySound);
+    }, 750);
+  }
+
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
@@ -282,22 +359,6 @@ function Home(initialConfig, fbRef) {
           })
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: Awair failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
-    // BedJet
-    if (action.hasOwnProperty('bedJet')) {
-      if (!bedJet) {
-        log.error(LOG_PREFIX, 'BedJet unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-      return bedJet.setState(action.bedJet)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: bedJet failed.`, err);
             return _genResult(action, false, err);
           });
     }
@@ -834,72 +895,6 @@ function Home(initialConfig, fbRef) {
     return _genResult(action, false, 'unknown_action');
   }
 
-  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
-   *
-   * Init
-   *
-   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Initialize the HOME API
-   */
-  function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
-    const now = Date.now();
-    _self.state = {
-      doNotDisturb: false,
-      hasNotification: false,
-      systemState: 'AWAY',
-      time: {
-        started: now,
-        started_: log.formatTime(now),
-        lastUpdated: now,
-        lastUpdated_: log.formatTime(now),
-      },
-      presence: {
-        people: {},
-        state: 'NONE',
-      },
-      gitHead: version.head,
-      delayedCommands: {},
-    };
-    _fb.child('state').once('value', function(snapshot) {
-      _self.state = snapshot.val();
-      _self.state.delayedCommands = {};
-    });
-    _fbSet('state/doors', false);
-    _fbSet('state/time/started', _self.state.time.started);
-    _fbSet('state/time/updated', _self.state.time.started);
-    _fbSet('state/time/started_', _self.state.time.started_);
-    _fbSet('state/time/updated_', _self.state.time.started_);
-    _fbSet('state/gitHead', _self.state.gitHead);
-    gcmPush = new GCMPush(_fb);
-    _initAlarmClock();
-    _initAppleTV();
-    _initBluetooth();
-    _initNotifications();
-    _initNest();
-    _initHue();
-    _initLGTV();
-    _initNanoLeaf();
-    _initSonos();
-    _initHarmony();
-    _initPresence();
-    _initTivo();
-    _initPushBullet();
-    _initWeather();
-    _initWemo();
-    _initCron();
-    _initGoogleHome();
-    _initBedJet();
-    _initAwair();
-    _initHoNExec();
-    _initAutoHumidifier();
-    setTimeout(function() {
-      _self.emit('ready');
-      _playSound(_config.readySound);
-    }, 750);
-  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
@@ -924,6 +919,7 @@ function Home(initialConfig, fbRef) {
       currentObj = currentObj[key];
     }
     currentObj[keys[len]] = value;
+    StateHelper.writeState(_self.state);
   }
 
   /**
@@ -1154,9 +1150,6 @@ function Home(initialConfig, fbRef) {
     }
     _lastSoundPlayedAt = now;
     log.debug(LOG_PREFIX, `playSound('${file}', ...)`, opts);
-    if (opts.useHome) {
-      return _playSoundGoogleHome(file, opts.contentType);
-    }
     return _playSoundLocal(file);
   }
 
@@ -1173,22 +1166,6 @@ function Home(initialConfig, fbRef) {
   }
 
   /**
-   * Plays a sound through a Google Home Speaker
-   *
-   * @param {String} url The audio URL to play
-   * @param {String} [contentType] default: 'audio/mp3'.
-   * @return {Promise} A promise that resolves to the result of the request
-   */
-  function _playSoundGoogleHome(url, contentType) {
-    if (!googleHome) {
-      log.error(LOG_PREFIX, 'Unable to play sound, Google Home not available.');
-      return _playSoundLocal(url);
-    }
-    log.verbose(LOG_PREFIX, `_playSoundGoogleHome('${url}')`);
-    return googleHome.play(url, contentType);
-  }
-
-  /**
    * Uses Google Home to speak
    *
    * @param {String} utterance The words to say
@@ -1196,20 +1173,21 @@ function Home(initialConfig, fbRef) {
    * @return {Promise} A promise that resolves to the result of the request
    */
   function _sayThis(utterance, opts) {
-    const force = !!opts.force;
-    if (!utterance) {
-      log.error(LOG_PREFIX, 'sayThis failed, no utterance provided.');
-      return Promise.reject(new Error('no_utterance'));
-    }
-    if (!googleHome) {
-      log.error(LOG_PREFIX, 'Unable to speak, Google Home not available.');
-      return Promise.reject(new Error('gh_not_available'));
-    }
-    log.debug(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
-    if (_self.state.doNotDisturb === false || force === true) {
-      return googleHome.say(utterance);
-    }
-    return Promise.reject(new Error('do_not_disturb'));
+    return Promise.reject(new Error('Not Implemented'));
+    // const force = !!opts.force;
+    // if (!utterance) {
+    //   log.error(LOG_PREFIX, 'sayThis failed, no utterance provided.');
+    //   return Promise.reject(new Error('no_utterance'));
+    // }
+    // if (!googleHome) {
+    //   log.error(LOG_PREFIX, 'Unable to speak, Google Home not available.');
+    //   return Promise.reject(new Error('gh_not_available'));
+    // }
+    // log.debug(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
+    // if (_self.state.doNotDisturb === false || force === true) {
+    //   return googleHome.say(utterance);
+    // }
+    // return Promise.reject(new Error('do_not_disturb'));
   }
 
   /**
@@ -1706,41 +1684,6 @@ function Home(initialConfig, fbRef) {
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
-   * BedJet API
-   *
-   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Init the BedJet API
-   */
-  function _initBedJet() {
-    _fbSet('state/bedJet', false);
-
-    if (_config.bedJet.disabled === true) {
-      log.warn(LOG_PREFIX, 'BedJet disabled via config.');
-      return;
-    }
-
-    const ip = _config.bedJet.ipAddress;
-    if (!ip) {
-      log.error(LOG_PREFIX, `BedJet unavailable, no IP address specified.`);
-      return;
-    }
-    bedJet = new BedJet(ip);
-    bedJet.on('ready', (bjState) => {
-      _fbSet('state/bedJet', bjState);
-    });
-    bedJet.on('change', (bjState) => {
-      _fbSet('state/bedJet', bjState);
-    });
-    bedJet.on('error', (err) => {
-      log.error(LOG_PREFIX, `Unknown BedJet error`, err);
-    });
-  }
-
-
-  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
-   *
    * Bluetooth API
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
@@ -1948,36 +1891,6 @@ function Home(initialConfig, fbRef) {
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
-   * Google Home API
-   *
-   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Init the Google Home API
-   */
-  function _initGoogleHome() {
-    _fbSet('state/googleHome', false);
-
-    if (_config.googleHome.disabled === true) {
-      log.warn(LOG_PREFIX, 'GoogleHome disabled via config.');
-      return;
-    }
-
-    const ghConfig = _config.googleHome;
-    if (!ghConfig || !ghConfig.ipAddress) {
-      log.error(LOG_PREFIX, `Google Home unavailable, no config`, ghConfig);
-      return;
-    }
-
-    googleHome = new GoogleHome(ghConfig.ipAddress);
-    googleHome.on('device_info_changed', (data) => {
-      _fbSet('state/googleHome', data);
-    });
-  }
-
-
-  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
-   *
    * LG TV API
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
@@ -2130,12 +2043,13 @@ function Home(initialConfig, fbRef) {
   /**
    * Initialize the Notification System
    */
-  function _initNotifications() {
-    _fb.child('state/hasNotification').on('value', function(snapshot) {
-      if (snapshot.val() === true) {
+  async function _initNotifications() {
+    const fbNotRef = await FBHelper.getRef('state/hasNotification');
+    fbNotRef.on('value', (snapshot) => {
+      if (snapshot.val()) {
         _self.executeCommandByName('NEW_NOTIFICATION', 'HOME');
         log.log(LOG_PREFIX, 'New notification received.');
-        snapshot.ref().set(false);
+        snapshot.ref.set(false);
       }
     });
   }
