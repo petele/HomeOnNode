@@ -3,7 +3,7 @@
 const EventEmitter = require('events').EventEmitter;
 const util = require('util');
 
-const Hue = require('./Hue2');
+const Hue = require('./Hue');
 const LGTV = require('./LGtv');
 const Wemo = require('./Wemo');
 const Tivo = require('./Tivo');
@@ -25,7 +25,6 @@ const PushBullet = require('./PushBullet');
 const AlarmClock = require('./AlarmClock');
 
 const FBHelper = require('./FBHelper');
-const StateHelper = require('./StateHelper');
 const ConfigHelper = require('./ConfigHelper');
 
 const LOG_PREFIX = 'HOME';
@@ -107,12 +106,15 @@ function Home() {
       },
     };
 
-    const localState = StateHelper.getState();
-    Object.keys(localState).forEach((key) => {
-      _self.state[key] = localState[key];
-    });
-
-    console.log('s', _self.state);
+    FBHelper.getRef('state')
+        .then((ref) => {
+          return ref.once('value');
+        })
+        .then((snapshot) => {
+          const val = snapshot.val();
+          _self.state.hasNotification = val.hasNotification;
+          _self.state.systemState = val.systemState;
+        });
 
     // gcmPush = new GCMPush();
 
@@ -121,9 +123,9 @@ function Home() {
     // _initBluetooth();
     // _initNotifications();
     _initHue();
-    // _initNanoLeaf();
-    // _initSonos();
-    // _initHarmony();
+    _initNanoLeaf();
+    _initSonos();
+    _initHarmony();
     // _initTivo();
     // _initPushBullet();
     // _initWeather();
@@ -720,7 +722,6 @@ function Home() {
       currentObj = currentObj[key];
     }
     currentObj[keys[len]] = value;
-    StateHelper.writeState(_self.state);
   }
 
   // /**
@@ -1605,7 +1606,7 @@ function Home() {
    * Init Hue
    */
   function _initHue() {
-    _fbSet('state/hue', false);
+    _fbSet('state/hue', null);
 
     if (_config.philipsHue.disabled === true) {
       log.warn(LOG_PREFIX, 'Hue disabled via config.');
@@ -1755,7 +1756,7 @@ function Home() {
    * Init NanoLeaf
    */
   function _initNanoLeaf() {
-    _fbSet('state/nanoLeaf', false);
+    // _fbSet('state/nanoLeaf', null);
 
     if (_config.nanoLeaf.disabled === true) {
       log.warn(LOG_PREFIX, 'NanoLeaf disabled via config.');
