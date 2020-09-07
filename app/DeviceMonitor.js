@@ -20,8 +20,9 @@ const EventEmitter = require('events').EventEmitter;
  * @fires DeviceMonitor#shutdown_request
  * @fires DeviceMonitor#connection_timedout
  * @param {String} deviceName Name of the device.
+ * @param {Boolean} isMonitor
 */
-function DeviceMonitor(deviceName) {
+function DeviceMonitor(deviceName, isMonitor) {
   const RESTART_TIMEOUT = 2500;
   const MAX_DISCONNECT = 12 * 60 * 60 * 1000;
   const _deviceName = deviceName || 'DEVICE_MONITOR';
@@ -39,7 +40,8 @@ function DeviceMonitor(deviceName) {
   */
   async function _init() {
     log.init('DeviceMonitor', 'Starting...');
-    _fbRef = await FBHelper.getRef('monitor');
+    const fbPath = isMonitor === true ? 'monitor' : 'devices';
+    _fbRef = await FBHelper.getRef(fbPath);
     if (!deviceName) {
       log.error(_deviceName, 'deviceName not provided.');
       _self.emit('error', 'no_device_name');
