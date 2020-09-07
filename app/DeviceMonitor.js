@@ -41,7 +41,8 @@ function DeviceMonitor(deviceName, isMonitor) {
   async function _init() {
     log.init('DeviceMonitor', 'Starting...');
     const fbPath = isMonitor === true ? 'monitor' : 'devices';
-    _fbRef = await FBHelper.getRef(fbPath);
+    const fbRoot = await FBHelper._getRootRefUnlimited();
+    _fbRef = await fbRoot.child(fbPath);
     if (!deviceName) {
       log.error(_deviceName, 'deviceName not provided.');
       _self.emit('error', 'no_device_name');

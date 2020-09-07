@@ -11,8 +11,10 @@ const FBHelper = require('./FBHelper');
  * Start the app
  */
 async function go() {
-  const commandsRef = await FBHelper.getRef('config/HomeOnNode/commands');
-  const sendCommandRef = await FBHelper.getRef('commands');
+  const fbRootRef = await FBHelper.getFBRootRef();
+  const commandsRef = fbRootRef.child('config/HomeOnNode/commands');
+  const sendCommandRef = fbRootRef.child('commands');
+
   const snapshot = await commandsRef.once('value');
   const cmds = snapshot.val();
   let keepRunning = true;

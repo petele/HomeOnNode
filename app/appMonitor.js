@@ -44,7 +44,8 @@ function _getHostname() {
  * Init
  */
 async function go() {
-  const fbRef = await FBHelper.getRef(`logs/monitor/${HOST_NAME}`);
+  const fbRootRef = await FBHelper._getRootRefUnlimited();
+  const fbRef = await fbRootRef.child(`logs/monitor/${HOST_NAME}`);
   log.setFirebaseRef(fbRef);
 
   _deviceMonitor = new DeviceMonitor(HOST_NAME, true);
