@@ -47,7 +47,7 @@ async function go() {
   const fbRef = await FBHelper.getRef(`logs/monitor/${HOST_NAME}`);
   log.setFirebaseRef(fbRef);
 
-  _deviceMonitor = new DeviceMonitor(HOST_NAME);
+  _deviceMonitor = new DeviceMonitor(HOST_NAME, true);
   _deviceMonitor.on('restart_request', () => {
     _deviceMonitor.restart('FB', 'restart_request', false);
   });
