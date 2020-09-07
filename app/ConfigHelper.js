@@ -12,7 +12,7 @@ const EventEmitter = require('events').EventEmitter;
 const LOG_PREFIX = 'Config_Helper';
 
 /**
- * Sends a GCM message
+ * Config Helper
  * @constructor
 */
 function ConfigHelper() {
@@ -58,7 +58,6 @@ function ConfigHelper() {
   async function _initFBConfig() {
     const fbConfigRef = await FBHelper.getRef(`config/HomeOnNode`);
     fbConfigRef.on('value', (snapshot) => {
-      console.log('got config');
       const newConfig = snapshot.val();
       if (!deepDiff(_config, newConfig)) {
         return;

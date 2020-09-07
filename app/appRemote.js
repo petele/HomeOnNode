@@ -29,6 +29,11 @@ try {
   process.exit(1);
 }
 
+if (_config._configType !== 'remote') {
+  console.error(`Invalid config type '${_config._configType}'`);
+  process.exit(1);
+}
+
 // Verify config has appName
 if (!_config.appName) {
   console.error(`'appName' not set in config.`);

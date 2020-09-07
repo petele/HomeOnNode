@@ -43,9 +43,7 @@ async function init() {
   } catch (ex) {
     const msg = `Error initializing 'home' module.`;
     log.exception(APP_NAME, msg, ex);
-    _close();
-    _deviceMonitor.shutdown('init_home_fail', msg, 1);
-    return;
+    process.exit(1);
   }
 
   _initHTTPServer();
