@@ -58,8 +58,8 @@ function _writeState(state) {
   if (!diff(_lastState, newState)) {
     return;
   }
+  _lastState = newState;
   const stateStr = JSON.stringify(newState, null, 2);
-  console.log('yes', stateStr);
   fs.writeFile('state.json', stateStr, (err) => {
     if (err) {
       log.exception(LOG_PREFIX, `Unable to save 'state.json'`, err);

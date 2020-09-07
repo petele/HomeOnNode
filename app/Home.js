@@ -1465,7 +1465,7 @@ function Home() {
     const fbAwairPath = 'config/HomeOnNode/awair/devices';
     const fbAwairRef = await FBHelper.getRef(fbAwairPath);
     fbAwairRef.on('child_added', (snapshot) => {
-      const deviceId = snapshot.key();
+      const deviceId = snapshot.key;
       const ipAddress = snapshot.val();
       awair.monitorLocalDevice(deviceId, ipAddress);
     });
@@ -1823,15 +1823,15 @@ function Home() {
     const fbPresencePeopleRef = await FBHelper.getRef(fbPresPath);
 
     fbPresencePeopleRef.on('child_added', (snapshot) => {
-      const uuid = snapshot.key();
+      const uuid = snapshot.key;
       presence.add(uuid, snapshot.val());
     });
     fbPresencePeopleRef.on('child_removed', (snapshot) => {
-      const uuid = snapshot.key();
+      const uuid = snapshot.key;
       presence.remove(uuid);
     });
     fbPresencePeopleRef.on('child_changed', (snapshot) => {
-      const uuid = snapshot.key();
+      const uuid = snapshot.key;
       presence.update(uuid, snapshot.val());
     });
   }
