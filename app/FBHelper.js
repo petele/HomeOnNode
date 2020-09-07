@@ -88,8 +88,64 @@ function _getAuthStatus() {
   return false;
 }
 
-// init();
+/**
+ * Sets the state of a specific object to its value.
+ * @param {String} path
+ * @param {Object} value
+ * @return {Object<any>}
+ */
+async function _set(path, value) {
+  if (!path || path.length === 0) {
+    log.exception(LOG_PREFIX, `set failed, path missing.`);
+    return null;
+  }
+  if (!_fbApp || !_fbApp.currentUser) {
+    await _waitForAuth();
+  }
+  if (value === null) {
+    return _fbDB.ref(path).remove();
+  }
+  return _fbDB.ref(path).set(value);
+}
 
+/**
+ * Update the item at the {path} to the {value}
+ *
+ * @param {String} path
+ * @param {Object} value
+ * @return {Object<any>}
+ */
+async function _update(path, value) {
+  if (!path || path.length === 0) {
+    log.exception(LOG_PREFIX, `set failed, path missing.`);
+    return null;
+  }
+  if (!_fbApp || !_fbApp.currentUser) {
+    await _waitForAuth();
+  }
+  return _fbDB.ref(path).update(value);
+}
+
+/**
+ * Pushes an object to the Firebase store.
+ * @param {String} path
+ * @param {Object} value
+ * @return {Object<any>}
+ */
+async function _push(path, value) {
+  if (!path || path.length === 0) {
+    log.exception(LOG_PREFIX, `set failed, path missing.`);
+    return null;
+  }
+  if (!_fbApp || !_fbApp.currentUser) {
+    await _waitForAuth();
+  }
+  return _fbDB.ref(path).push(value);
+}
+
+exports.set = _set;
+exports.push = _push;
+exports.update = _update;
 exports.getRef = _getRef;
 exports.getAuth = _getAuth;
 exports.waitForAuth = _waitForAuth;

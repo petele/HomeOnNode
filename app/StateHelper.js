@@ -26,6 +26,7 @@ function _getState() {
   } catch (ex) {
     const msg = `Error reading 'state.json' file.`;
     log.exception(LOG_PREFIX, msg, ex);
+    data = '{}';
   }
 
   let state = {};
@@ -38,7 +39,8 @@ function _getState() {
     state = {};
   }
 
-  _lastState = state;
+  // const message = Object.assign({}, srcMessage);
+  _lastState = Object.assign({}, state);
 
   state.gitHead = version.head;
   return state;
@@ -57,6 +59,7 @@ function _writeState(state) {
     return;
   }
   const stateStr = JSON.stringify(newState, null, 2);
+  console.log('yes', stateStr);
   fs.writeFile('state.json', stateStr, (err) => {
     if (err) {
       log.exception(LOG_PREFIX, `Unable to save 'state.json'`, err);
