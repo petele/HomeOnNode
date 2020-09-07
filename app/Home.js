@@ -112,7 +112,9 @@ function Home() {
       _self.state[key] = localState[key];
     });
 
-    gcmPush = new GCMPush();
+    console.log('s', _self.state);
+
+    // gcmPush = new GCMPush();
 
     // _initAlarmClock();
     // _initAppleTV();
