@@ -36,28 +36,29 @@ const _cleanLogs = function() {
 };
 
 const _backupConfig = function() {
-  log.debug(LOG_PREFIX, 'Backing up config...');
-  return new Promise((resolve, reject) => {
-    _fb.child(`config`).once('value', (snapshot) => {
-      const filename = `config-${moment().format('YYYY-MM-DD')}.json`;
-      if (!fs.existsSync(CONFIG_BACKUP_PATH)) {
-        fs.mkdirSync(CONFIG_BACKUP_PATH);
-      }
-      const file = path.join(CONFIG_BACKUP_PATH, filename);
-      const config = JSON.stringify(snapshot.val(), null, 2);
-      fs.writeFile(file, config, (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        log.debug(LOG_PREFIX, `Config backed up to: ${file}`);
-        resolve(true);
-      });
-    });
-  }).catch((err) => {
-    log.exception(LOG_PREFIX, `Error while backing up config.`, err);
-    return false;
-  });
+  log.error(LOG_PREFIX, 'TODO: _backupConfig in cronDaily.js');
+  // log.debug(LOG_PREFIX, 'Backing up config...');
+  // return new Promise((resolve, reject) => {
+  //   _fb.child(`config`).once('value', (snapshot) => {
+  //     const filename = `config-${moment().format('YYYY-MM-DD')}.json`;
+  //     if (!fs.existsSync(CONFIG_BACKUP_PATH)) {
+  //       fs.mkdirSync(CONFIG_BACKUP_PATH);
+  //     }
+  //     const file = path.join(CONFIG_BACKUP_PATH, filename);
+  //     const config = JSON.stringify(snapshot.val(), null, 2);
+  //     fs.writeFile(file, config, (err) => {
+  //       if (err) {
+  //         reject(err);
+  //         return;
+  //       }
+  //       log.debug(LOG_PREFIX, `Config backed up to: ${file}`);
+  //       resolve(true);
+  //     });
+  //   });
+  // }).catch((err) => {
+  //   log.exception(LOG_PREFIX, `Error while backing up config.`, err);
+  //   return false;
+  // });
 };
 
 const cronJob = function() {
