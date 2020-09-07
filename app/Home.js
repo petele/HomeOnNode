@@ -15,7 +15,7 @@ const moment = require('moment');
 const log = require('./SystemLog2');
 const AppleTV = require('./AppleTV');
 const Logging = require('./Logging');
-const HoNExec = require('./HoNExec');
+const honExec = require('./HoNExec');
 const GCMPush = require('./GCMPush');
 const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
@@ -50,7 +50,6 @@ function Home() {
   let gcmPush;
   let harmony;
   let hue;
-  let honExec;
   let lgTV;
   let logging;
   let nanoLeaf;
@@ -121,33 +120,32 @@ function Home() {
     gcmPush = new GCMPush();
 
     _initAlarmClock();
-    _initNotifications();
-
-    return;
-
-    _initAlarmClock();
     _initAppleTV();
     _initBluetooth();
-
-    _initNest();
+    _initNotifications();
     _initHue();
-    _initLGTV();
     _initNanoLeaf();
     _initSonos();
     _initHarmony();
-    _initPresence();
     _initTivo();
     _initPushBullet();
     _initWeather();
     _initWemo();
-    _initCron();
+    _initLGTV();
     _initAwair();
-    _initHoNExec();
-    _initAutoHumidifier();
+
     setTimeout(function() {
       _self.emit('ready');
       _playSound(_config.readySound);
     }, 750);
+
+    return;
+
+    _initNest();
+    _initPresence();
+    _initCron();
+    _initAutoHumidifier();
+
   }
 
 
@@ -1447,6 +1445,8 @@ function Home() {
   function _initAppleTV() {
     _fbSet('state/appleTV', false);
 
+    return;
+
     if (_config.appleTV.disabled === true) {
       log.warn(LOG_PREFIX, 'AppleTV disabled via config.');
       return;
@@ -1625,7 +1625,7 @@ function Home() {
   /**
    * Init the Awair API
    */
-  function _initAwair() {
+  async function _initAwair() {
     _fbSet('state/awair', false);
 
     if (_config.awair.disabled === true) {
@@ -1652,7 +1652,8 @@ function Home() {
       _fbSet(`state/awair/local/${key}`, data);
     });
     const fbAwairPath = 'config/HomeOnNode/awair/devices';
-    _fb.child(fbAwairPath).on('child_added', (snapshot) => {
+    const fbAwairRef = await FBHelper.getRef(fbAwairPath);
+    fbAwairRef.on('child_added', (snapshot) => {
       const deviceId = snapshot.key();
       const ipAddress = snapshot.val();
       awair.monitorLocalDevice(deviceId, ipAddress);
@@ -1690,7 +1691,9 @@ function Home() {
    * Shutdown the Bluetooth Services
    */
   function _shutdownBluetooth() {
-    bluetooth.stopScanning();
+    if (bluetooth) {
+      bluetooth.stopScanning();
+    }
   }
 
 
@@ -1782,19 +1785,6 @@ function Home() {
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
-   * HonExec API
-   *
-   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Init HoNExec API
-   */
-  function _initHoNExec() {
-    honExec = new HoNExec();
-  }
-
-  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
-   *
    * Philips Hue API
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
@@ -1811,11 +1801,12 @@ function Home() {
     }
 
     const apiKey = _config.philipsHue.key;
-    if (!apiKey) {
-      log.error(LOG_PREFIX, `Hue unavailable, no API key available.`);
+    const hueIP = _config.philipsHue.ipAddress;
+    if (!apiKey || !hueIP) {
+      log.error(LOG_PREFIX, `Hue unavailable, no API key or IP available.`);
       return;
     }
-    const hueIP = _config.philipsHue.ipAddress;
+
     hue = new Hue(apiKey, hueIP);
     hue.on('config_changed', (config) => {
       _fbSet('state/hue', config);

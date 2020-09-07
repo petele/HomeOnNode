@@ -42,25 +42,39 @@ function AppleTV() {
           _appleTV.on('playbackqueue', _onPlaybackQueue);
           _appleTV.on('supportedCommands', _onSupportedCommands);
           _self.emit('found');
-        })
+        });
   }
 
+  /**
+   * Run on close.
+   */
   function _onClose() {
     log.warn(LOG_PREFIX, 'EVENT - close');
     _ready = false;
     _self.emit('closed');
   }
 
+  /**
+   * Run on connect
+   */
   function _onConnect() {
     log.log(LOG_PREFIX, 'Connected.');
     _ready = true;
     _self.emit('ready');
   }
 
+  /**
+   * Error handler
+   * @param {Error} err
+   */
   function _onError(err) {
     log.error(LOG_PREFIX, 'Generic Error', err);
   }
 
+  /**
+   * Message Handler
+   * @param {Object} message
+   */
   function _onMessage(message) {
     // log.log(LOG_PREFIX, 'Message', message);
   }

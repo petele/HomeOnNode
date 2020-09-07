@@ -138,10 +138,6 @@ function LGTV(ipAddress, credentials) {
   let _lgtv;
   let _pointerInputSocket;
 
-  // // Reconnection settings
-  // let _reconnect = true;
-  // let _connecting = false;
-
   // LG TV State Info
   this.state = {
     connected: false,
@@ -359,9 +355,6 @@ function LGTV(ipAddress, credentials) {
           _setState('connected', false);
           _setState('ready', false);
         });
-        // .then(() => {
-        //   _connecting = false;
-        // });
   }
 
   /**
