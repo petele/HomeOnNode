@@ -947,21 +947,11 @@ function Home() {
    * @param {Object} value The value to push.
    */
   function _fbPush(path, value) {
-    let fbObj = _fb;
-    if (path) {
-      fbObj = _fb.child(path);
-    }
     try {
-      fbObj.push(value, function(err) {
-        if (err) {
-          log.exception(LOG_PREFIX, 'Unable to push to Firebase. (CB)', err);
-        }
-      });
+      FBHelper.push(path, value);
       fbSetLastUpdated();
     } catch (ex) {
-      const msg = 'Unable to PUSH data to Firebase. (TC)';
-      log.exception(LOG_PREFIX, `${msg}: ex`, ex);
-      log.error(LOG_PREFIX, `${msg}: data`, {path: path, value: value});
+      log.exception(LOG_PREFIX, 'Unable to push data on path: ' + path, ex);
     }
   }
 
@@ -975,20 +965,8 @@ function Home() {
     if (path.indexOf('state/') === 0) {
       _updateLocalState(path, value);
     }
-    let fbObj = _fb;
-    if (path) {
-      fbObj = _fb.child(path);
-    }
     try {
-      if (value === null) {
-        fbObj.remove();
-      } else {
-        fbObj.set(value, function(err) {
-          if (err) {
-            log.exception(LOG_PREFIX, 'Set data failed on path: ' + path, err);
-          }
-        });
-      }
+      FBHelper.set(path, value);
       fbSetLastUpdated();
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to set data on path: ' + path, ex);
@@ -1000,10 +978,11 @@ function Home() {
    */
   function fbSetLastUpdated() {
     const now = Date.now();
-    _fb.child('state/time').update({
+    const info = {
       lastUpdated: now,
       lastUpdated_: log.formatTime(now),
-    });
+    };
+    FBHelper.update('state/time', info);
   }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -1494,8 +1473,7 @@ function Home() {
   function _initAlarmClock() {
     _fbSet('state/alarmClock', false);
 
-    const fbAlarms = _fb.child('config/HomeOnNode/alarmClock');
-    alarmClock = new AlarmClock(fbAlarms);
+    alarmClock = new AlarmClock();
 
     alarmClock.on('alarm_changed', (key, details) => {
       const clone = Object.assign({}, details);
