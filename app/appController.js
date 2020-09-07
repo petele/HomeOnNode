@@ -56,7 +56,7 @@ async function init() {
  * Initialize the logs
  */
 async function _initLogs() {
-  const fbLogRef = await FBHelper.getRef(`logs/${APP_NAME}`);
+  const fbLogRef = FBHelper.getRef(`logs/server`);
   log.setFirebaseRef(fbLogRef);
 
   const fbLogConfig = await FBHelper.getRef('config/HomeOnNode/logs');

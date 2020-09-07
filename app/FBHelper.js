@@ -13,7 +13,7 @@ const LOG_PREFIX = 'FB_HELPER';
 
 let _initRequired = true;
 let _fbApp;
-let _fbDB;
+let _fbRootRef;
 
 /**
  * Attempt to autenticate with credentials.
@@ -25,6 +25,7 @@ async function _login() {
   try {
     await _fbApp.auth().signInWithEmailAndPassword(email, password);
     log.verbose(LOG_PREFIX, 'Firebase auth succeeded.');
+    _fbRootRef = _fbApp.database().ref();
   } catch (ex) {
     log.exception(LOG_PREFIX, 'Firebase auth failed.', ex);
     await honHelpers.sleep(5 * 1000);
@@ -41,7 +42,6 @@ async function _waitForAuth() {
   if (_initRequired) {
     log.init(LOG_PREFIX, `Initializing Firebase database...`);
     _fbApp = Firebase.initializeApp(Keys.fbConfig);
-    _fbDB = _fbApp.database();
     _initRequired = false;
     _login();
     await honHelpers.sleep(250);
@@ -60,11 +60,12 @@ async function _waitForAuth() {
  * @return {Promise<database.ref>}
  */
 async function _getRef(path) {
-  if (!_fbApp || !_fbApp.currentUser) {
+  if (!_fbRootRef) {
     await _waitForAuth();
   }
   log.verbose(LOG_PREFIX, `Retrieving Firebase database reference...`, path);
-  return _fbDB.ref(path);
+  return _fbRootRef.child(path);
+  // return _fbDB.ref(path);
 }
 
 /**
@@ -99,13 +100,13 @@ async function _set(path, value) {
     log.exception(LOG_PREFIX, `set failed, path missing.`);
     return null;
   }
-  if (!_fbApp || !_fbApp.currentUser) {
+  if (!_fbRootRef) {
     await _waitForAuth();
   }
   if (value === null) {
-    return _fbDB.ref(path).remove();
+    return _fbRootRef.child(path).remove();
   }
-  return _fbDB.ref(path).set(value);
+  return _fbRootRef.child(path).set(value);
 }
 
 /**
@@ -120,10 +121,10 @@ async function _update(path, value) {
     log.exception(LOG_PREFIX, `set failed, path missing.`);
     return null;
   }
-  if (!_fbApp || !_fbApp.currentUser) {
+  if (!_fbRootRef) {
     await _waitForAuth();
   }
-  return _fbDB.ref(path).update(value);
+  return _fbRootRef.child(path).update(value);
 }
 
 /**
@@ -137,10 +138,10 @@ async function _push(path, value) {
     log.exception(LOG_PREFIX, `set failed, path missing.`);
     return null;
   }
-  if (!_fbApp || !_fbApp.currentUser) {
+  if (!_fbRootRef) {
     await _waitForAuth();
   }
-  return _fbDB.ref(path).push(value);
+  return _fbRootRef.child(path).push(value);
 }
 
 exports.set = _set;
