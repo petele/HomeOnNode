@@ -1,15 +1,22 @@
 'use strict';
 
 const log = require('./SystemLog2');
+const FBHelper = require('./FBHelper');
 
 /**
  * Logging API.
  * @constructor
- *
- * @param {Object} fbRef Firebase root to save log to.
 */
-function Logging(fbRef) {
+function Logging() {
   const LOG_PREFIX = 'LOGGING';
+  let _fbRef;
+
+  /**
+   * Initialize the API
+   */
+  async function init() {
+    _fbRef = await FBHelper.getRef('logs/cron');
+  }
 
   /**
    * Creates and saves the current state.
@@ -18,7 +25,7 @@ function Logging(fbRef) {
    */
   this.saveData = function(state) {
     log.debug(LOG_PREFIX, 'saveData');
-    if (!fbRef) {
+    if (!_fbRef) {
       log.error(LOG_PREFIX, 'Firebase root not set.');
       return;
     }
@@ -101,7 +108,7 @@ function Logging(fbRef) {
     }
 
     try {
-      fbRef.push(value, (err) => {
+      _fbRef.push(value, (err) => {
         if (err) {
           log.exception(LOG_PREFIX, 'Error saving to Firebase [1]', err);
           return;
@@ -258,6 +265,8 @@ function Logging(fbRef) {
       return result;
     }
   }
+
+  init();
 }
 
 module.exports = Logging;

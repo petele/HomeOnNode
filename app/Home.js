@@ -4,8 +4,6 @@ const EventEmitter = require('events').EventEmitter;
 const util = require('util');
 
 const Hue = require('./Hue');
-
-const Nest = require('./Nest');
 const LGTV = require('./LGtv');
 const Wemo = require('./Wemo');
 const Tivo = require('./Tivo');
@@ -21,8 +19,8 @@ const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
 const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
+const CronJob = require('cron').CronJob;
 const Bluetooth = require('./Bluetooth');
-const HVACUsage = require('./HVACUsage');
 const PushBullet = require('./PushBullet');
 const AlarmClock = require('./AlarmClock');
 
@@ -40,8 +38,7 @@ function Home() {
   const _self = this;
   _self.state = {};
 
-  let _config; // = initialConfig;
-  let _fb; // = fbRef;
+  let _config;
 
   let alarmClock;
   let appleTV;
@@ -53,8 +50,6 @@ function Home() {
   let lgTV;
   let logging;
   let nanoLeaf;
-  let nest;
-  let hvacUsage;
   let presence;
   let pushBullet;
   let sonos;
@@ -133,19 +128,13 @@ function Home() {
     _initWemo();
     _initLGTV();
     _initAwair();
-
+    _initPresence();
+    _initCron();
+    // _initAutoHumidifier();
     setTimeout(function() {
       _self.emit('ready');
       _playSound(_config.readySound);
     }, 750);
-
-    return;
-
-    _initNest();
-    _initPresence();
-    _initCron();
-    _initAutoHumidifier();
-
   }
 
 
@@ -531,24 +520,6 @@ function Home() {
           });
     }
 
-    // Update HVAC Usage
-    if (action.hasOwnProperty('hvacUsage')) {
-      if (!hvacUsage) {
-        log.error(LOG_PREFIX, 'HVAC Usage unavailable.', action);
-        return _genResult(action, false, 'not_available');
-      }
-
-      const forDay = action.hvacUsage.forDay;
-      return hvacUsage.generateSummaryForDay(forDay)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: hvacUsage failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
     // LG TV
     if (action.hasOwnProperty('lgTV')) {
       if (!lgTV) {
@@ -603,176 +574,6 @@ function Home() {
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: nanoLeaf failed.`, err);
             return _genResult(action, false, err);
-          });
-    }
-
-    // Nest Cam
-    if (action.hasOwnProperty('nestCam')) {
-      if (!nest) {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-
-      return nest.enableCamera(action.nestCam)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: nestCam failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
-    // Nest ETA
-    if (action.hasOwnProperty('nestETA')) {
-      if (!nest) {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-
-      return nest.startETA(action.nestETA)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: nestETA failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
-    // Nest Fan
-    if (action.hasOwnProperty('nestFan')) {
-      if (!nest) {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-
-      const thermostatId = _getThermostatId(action.nestFan);
-      if (!thermostatId) {
-        log.warn(LOG_PREFIX, 'Thermostat or Room ID not found.', action);
-        return _genResult(action, false, 'no_id_provided');
-      }
-      const minutes = action.nestFan.minutes;
-      return nest.runFan(thermostatId, minutes)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: nestFan failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
-    // Nest State
-    if (action.hasOwnProperty('nestState')) {
-      if (!nest) {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-
-      if (action.nestState === 'HOME') {
-        return nest.setHome()
-            .then((result) => {
-              return _genResult(action, true, result);
-            })
-            .catch((err) => {
-              log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
-              return _genResult(action, false, err);
-            });
-      }
-
-      if (action.nestState === 'AWAY') {
-        return nest.setAway()
-            .then((result) => {
-              return _genResult(action, true, result);
-            })
-            .catch((err) => {
-              log.verbose(LOG_PREFIX, `Whoops: nestState failed.`, err);
-              return _genResult(action, false, err);
-            });
-      }
-      log.warn(LOG_PREFIX, `Invalid nestState: ${action.nestState}`);
-      return _genResult(action, false, 'invalid_state');
-    }
-
-    // Nest Thermostat
-    if (action.hasOwnProperty('nestThermostat')) {
-      if (!nest) {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-      const thermostatId = _getThermostatId(action.nestThermostat);
-      if (!thermostatId) {
-        log.warn(LOG_PREFIX, 'Thermostat or Room ID not found.', action);
-        return _genResult(action, false, 'no_id_provided');
-      }
-
-      if (action.nestThermostat.temperature) {
-        const temperature = action.nestThermostat.temperature;
-        return nest.setTemperature(thermostatId, temperature)
-            .then((result) => {
-              return _genResult(action, true, result);
-            })
-            .catch((err) => {
-              log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
-              return _genResult(action, false, err);
-            });
-      }
-
-      if (action.nestThermostat.adjust) {
-        const direction = action.nestThermostat.adjust;
-        return nest.adjustTemperature(thermostatId, direction)
-            .then((result) => {
-              return _genResult(action, true, result);
-            })
-            .catch((err) => {
-              log.verbose(LOG_PREFIX, `Whoops: nestThermostat failed.`, err);
-              return _genResult(action, false, err);
-            });
-      }
-
-      log.warn(LOG_PREFIX, `Invalid nestThermostat command.`, action);
-      return _genResult(action, false, 'invalid_command');
-    }
-
-    // Nest Auto Thermostat
-    if (action.hasOwnProperty('nestThermostatAuto')) {
-      if (!nest) {
-        log.warn(LOG_PREFIX, 'Nest unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-
-      const autoMode = action.nestThermostatAuto;
-      if (!autoMode) {
-        log.warn(LOG_PREFIX, `Nest auto mode '${autoMode}' not found.`);
-        return _genResult(action, false, 'auto_mode_not_found');
-      }
-
-      const rooms = _config.nest.hvacAuto[autoMode];
-      if (typeof rooms !== 'object') {
-        log.warn(LOG_PREFIX, `No rooms provided for nestAutoMode`, action);
-        return _genResult(action, false, 'no_rooms_provided');
-      }
-
-      const results = [];
-      Object.keys(rooms).forEach((roomId) => {
-        const thermostatId = _getThermostatId({roomId: roomId});
-        if (!thermostatId) {
-          log.warn(LOG_PREFIX, 'Thermostat or Room ID not found.', action);
-          result.push(_genResult(action, false, 'no_id_provided'));
-          return;
-        }
-        const temperature = rooms[roomId];
-        const result = nest.setTemperature(thermostatId, temperature)
-            .catch((err) => {
-              log.verbose(LOG_PREFIX, `Oops: nestThermostatAuto failed.`, err);
-              return _genResult(action, false, err);
-            });
-        results.push(result);
-      });
-      return Promise.all(results)
-          .then((result) => {
-            return _genResult(action, true, result);
           });
     }
 
@@ -920,23 +721,23 @@ function Home() {
     StateHelper.writeState(_self.state);
   }
 
-  /**
-   * Get System State value using / notation
-   * @param {String} path Path to value
-   * @return {*} Result of value
-   */
-  function _getStateValue(path) {
-    let result = _self.state;
-    const items = path.split('/');
-    items.forEach((item) => {
-      if (result && result[item]) {
-        result = result[item];
-        return;
-      }
-      result = null;
-    });
-    return result;
-  }
+  // /**
+  //  * Get System State value using / notation
+  //  * @param {String} path Path to value
+  //  * @return {*} Result of value
+  //  */
+  // function _getStateValue(path) {
+  //   let result = _self.state;
+  //   const items = path.split('/');
+  //   items.forEach((item) => {
+  //     if (result && result[item]) {
+  //       result = result[item];
+  //       return;
+  //     }
+  //     result = null;
+  //   });
+  //   return result;
+  // }
 
   /**
    * Push value to Firebase
@@ -1445,8 +1246,6 @@ function Home() {
   function _initAppleTV() {
     _fbSet('state/appleTV', false);
 
-    return;
-
     if (_config.appleTV.disabled === true) {
       log.warn(LOG_PREFIX, 'AppleTV disabled via config.');
       return;
@@ -1458,7 +1257,19 @@ function Home() {
       return;
     }
 
-    appleTV = new AppleTV(credentials);
+    appleTV = new AppleTV();
+    appleTV.on('found', () => {
+      appleTV.connect(credentials);
+    });
+    appleTV.on('nowPlaying', (info) => {
+      _fbSet('state/appleTV/nowPlaying', info);
+    });
+    appleTV.on('playbackQueue', (info) => {
+      _fbSet('state/appleTV/playbackQueue', info);
+    });
+    appleTV.on('supportedCommands', (info) => {
+      _fbSet('state/appleTV/supportedCommands', info);
+    });
   }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -1529,91 +1340,91 @@ function Home() {
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
-  /**
-    * Init the auto humidifier
-    */
-  function _initAutoHumidifier() {
-    setTimeout(() => {
-      log.init(LOG_PREFIX, 'Starting autoHumidifier...');
-      _autoHumidifierTick();
-    }, 90 * 1000);
+  // /**
+  //   * Init the auto humidifier
+  //   */
+  // function _initAutoHumidifier() {
+  //   setTimeout(() => {
+  //     log.init(LOG_PREFIX, 'Starting autoHumidifier...');
+  //     _autoHumidifierTick();
+  //   }, 90 * 1000);
 
-    setInterval(() => {
-      _autoHumidifierTick();
-    }, 5 * 60 * 1000);
-  }
+  //   setInterval(() => {
+  //     _autoHumidifierTick();
+  //   }, 5 * 60 * 1000);
+  // }
 
-  /**
-    *
-    */
-  function _autoHumidifierTick() {
-    // Only run when at home
-    if (_self.state.systemState !== 'HOME') {
-      // log.verbose(LOG_PREFIX, `autoHumidifier: not HOME`);
-      return;
-    }
-    // Only run if enabled
-    if (_config.hvac.autoHumidifier.disabled === true) {
-      // log.verbose(LOG_PREFIX, `autoHumidifier: disabled`);
-      return;
-    }
+  // /**
+  //   *
+  //   */
+  // function _autoHumidifierTick() {
+  //   // Only run when at home
+  //   if (_self.state.systemState !== 'HOME') {
+  //     // log.verbose(LOG_PREFIX, `autoHumidifier: not HOME`);
+  //     return;
+  //   }
+  //   // Only run if enabled
+  //   if (_config.hvac.autoHumidifier.disabled === true) {
+  //     // log.verbose(LOG_PREFIX, `autoHumidifier: disabled`);
+  //     return;
+  //   }
 
-    // Loop through each room
-    _config.hvac.autoHumidifier.rooms.forEach((room) => {
-      try {
-        const msgBase = `autoHumidifier[${room.name}]`;
+  //   // Loop through each room
+  //   _config.hvac.autoHumidifier.rooms.forEach((room) => {
+  //     try {
+  //       const msgBase = `autoHumidifier[${room.name}]`;
 
-        // Get the current humidity
-        const path = room.pathToValue;
-        const humidity = Math.round(parseFloat(_getStateValue(path)));
-        if (Number.isNaN(humidity)) {
-          log.warn(LOG_PREFIX, `${msgBase}: Unable to get humidity`, room);
-          return;
-        }
-        // Check the current Wemo state
-        const currentWemoState = _self.state.wemo[room.wemoId].value == true;
+  //       // Get the current humidity
+  //       const path = room.pathToValue;
+  //       const humidity = Math.round(parseFloat(_getStateValue(path)));
+  //       if (Number.isNaN(humidity)) {
+  //         log.warn(LOG_PREFIX, `${msgBase}: Unable to get humidity`, room);
+  //         return;
+  //       }
+  //       // Check the current Wemo state
+  //       const currentWemoState = _self.state.wemo[room.wemoId].value == true;
 
-        // Setup the action we'll send
-        const action = {};
+  //       // Setup the action we'll send
+  //       const action = {};
 
-        // Check the humidity, turn off if it's above...
-        if (humidity > parseInt(_config.hvac.autoHumidifier.offAbove)) {
-          action.wemo = {on: false};
-          // log.verbose(LOG_PREFIX, `${msgBase}: on:false`);
-        }
-        // Check the humidity, turn off if it's above...
-        if (humidity < parseInt(_config.hvac.autoHumidifier.onBelow)) {
-          action.wemo = {on: true};
-          // log.verbose(LOG_PREFIX, `${msgBase}: on:true`);
-        }
+  //       // Check the humidity, turn off if it's above...
+  //       if (humidity > parseInt(_config.hvac.autoHumidifier.offAbove)) {
+  //         action.wemo = {on: false};
+  //         // log.verbose(LOG_PREFIX, `${msgBase}: on:false`);
+  //       }
+  //       // Check the humidity, turn off if it's above...
+  //       if (humidity < parseInt(_config.hvac.autoHumidifier.onBelow)) {
+  //         action.wemo = {on: true};
+  //         // log.verbose(LOG_PREFIX, `${msgBase}: on:true`);
+  //       }
 
-        // No change to current state
-        if (!action.wemo) {
-          log.verbose(LOG_PREFIX, `${msgBase}: within range, no change`);
-          return;
-        }
+  //       // No change to current state
+  //       if (!action.wemo) {
+  //         log.verbose(LOG_PREFIX, `${msgBase}: within range, no change`);
+  //         return;
+  //       }
 
-        // If the Wemo is already in the expected state, no change required.
-        if (action.wemo.on === currentWemoState) {
-          log.verbose(LOG_PREFIX, `${msgBase}: already on/off`);
-          return;
-        }
+  //       // If the Wemo is already in the expected state, no change required.
+  //       if (action.wemo.on === currentWemoState) {
+  //         log.verbose(LOG_PREFIX, `${msgBase}: already on/off`);
+  //         return;
+  //       }
 
-        // Log details
-        const info = {
-          currentHumidity: humidity,
-          currentWemoState: currentWemoState,
-        };
-        log.log(LOG_PREFIX, `${msgBase} changed to '${action.wemo.on}'`, info);
+  //       // Log details
+  //       const info = {
+  //         currentHumidity: humidity,
+  //         currentWemoState: currentWemoState,
+  //       };
+  //       log.log(LOG_PREFIX, `${msgBase} changed  '${action.wemo.on}'`, info);
 
-        // Turn the humidifier on/off
-        action.wemo.id = room.wemoId;
-        _executeAction(action, 'AutoHumidifier');
-      } catch (ex) {
-        log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
-      }
-    });
-  }
+  //       // Turn the humidifier on/off
+  //       action.wemo.id = room.wemoId;
+  //       _executeAction(action, 'AutoHumidifier');
+  //     } catch (ex) {
+  //       log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
+  //     }
+  //   });
+  // }
 
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -1713,8 +1524,7 @@ function Home() {
     }
 
     try {
-      logging = new Logging(_fb.child('logs/cron'));
-      const CronJob = require('cron').CronJob;
+      logging = new Logging();
       const cronSchedule = '0 0,5,10,15,20,25,30,35,40,45,50,55 * * * *';
       new CronJob(cronSchedule, () => {
         logging.saveData(_self.state);
@@ -1882,8 +1692,44 @@ function Home() {
     }
 
     lgTV = new LGTV(lgConfig.ipAddress, lgConfig.key);
-    lgTV.on('stateUpdated', (state) => {
-      _fbSet('state/lgTV', state);
+    lgTV.on('connected', (val) => {
+      _fbSet('state/lgTV/connected', val);
+    });
+    lgTV.on('ready', (val) => {
+      _fbSet('state/lgTV/ready', val);
+    });
+    lgTV.on('systemInfo', (val) => {
+      _fbSet('state/lgTV/systemInfo', val);
+    });
+    lgTV.on('swInfo', (val) => {
+      _fbSet('state/lgTV/swInfo', val);
+    });
+    lgTV.on('services', (val) => {
+      _fbSet('state/lgTV/services', val);
+    });
+    lgTV.on('launchPoints', (val) => {
+      _fbSet('state/lgTV/launchPoints', val);
+    });
+    lgTV.on('inputs', (val) => {
+      _fbSet('state/lgTV/inputs', val);
+    });
+    lgTV.on('powerState', (val) => {
+      _fbSet('state/lgTV/powerState', val);
+    });
+    lgTV.on('currentAppId', (val) => {
+      _fbSet('state/lgTV/currentAppId', val);
+    });
+    lgTV.on('volume', (val) => {
+      _fbSet('state/lgTV/volume', val);
+    });
+    lgTV.on('muted', (val) => {
+      _fbSet('state/lgTV/muted', val);
+    });
+    lgTV.on('soundOutput', (val) => {
+      _fbSet('state/lgTV/soundOutput', val);
+    });
+    lgTV.on('currentChannel', (val) => {
+      _fbSet('state/lgTV/currentChannel', val);
     });
   }
 
@@ -1934,77 +1780,6 @@ function Home() {
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
-   * Nest API
-   *
-   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Init Nest
-   */
-  function _initNest() {
-    _fbSet('state/nest', false);
-
-    if (_config.nest.disabled === true) {
-      log.warn(LOG_PREFIX, 'Nest disabled via config.');
-      return;
-    }
-
-    const apiKey = _config.nest.key;
-    if (!apiKey) {
-      log.error(LOG_PREFIX, `Nest unavailable, no API key available.`);
-      return;
-    }
-    nest = new Nest.Nest(apiKey);
-    nest.on('change', (data) => {
-      _fbSet('state/nest', data);
-    });
-
-    try {
-      hvacUsage = new HVACUsage(_fb);
-    } catch (ex) {
-      const msg = `Unable to initialize hvacUsage`;
-      log.exception(LOG_PREFIX, msg, ex);
-    }
-
-    nest.on('hvacStateChanged', (data) => {
-      const key = data.date;
-      const startDate = moment(key).format('YYYY-MM-DD');
-      const roomName = _config.nest.thermostats[data.key];
-      const path = `logs/hvacUsage/events/${startDate}/${roomName}/${key}`;
-      _fbSet(path, data.mode);
-      if (hvacUsage) {
-        hvacUsage.generateSummaryForDay();
-      }
-    });
-
-    nest.on('hvacTempChanged', (data) => {
-      const key = data.date;
-      const startDate = moment(key).format('YYYY-MM-DD');
-      const roomName = _config.nest.thermostats[data.key];
-      const path = `logs/hvacUsage/events/${startDate}` +
-                   `/setTemp/${roomName}/${key}`;
-      _fbSet(path, data.temp);
-    });
-  }
-
-  /**
-   * Parses a Nest Action Object and gets the thermostat ID.
-   *
-   * @param {Object} nestAction
-   * @return {!String}
-   */
-  function _getThermostatId(nestAction) {
-    if (nestAction.thermostatId) {
-      return nestAction.thermostatId;
-    }
-    if (nestAction.roomId) {
-      return _config.nest.thermostats[nestAction.roomId];
-    }
-    return null;
-  }
-
-  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
-   *
    * Notification System API
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
@@ -2033,7 +1808,7 @@ function Home() {
   /**
    * Init Presence
    */
-  function _initPresence() {
+  async function _initPresence() {
     _fbSet('state/presence/state', 'NONE');
 
     if (!bluetooth) {
@@ -2045,15 +1820,17 @@ function Home() {
     // Set up the presence detection
     presence.on('change', _presenceChanged);
     const fbPresPath = 'config/HomeOnNode/presence';
-    _fb.child(fbPresPath).on('child_added', function(snapshot) {
+    const fbPresencePeopleRef = await FBHelper.getRef(fbPresPath);
+
+    fbPresencePeopleRef.on('child_added', (snapshot) => {
       const uuid = snapshot.key();
       presence.add(uuid, snapshot.val());
     });
-    _fb.child(fbPresPath).on('child_removed', function(snapshot) {
+    fbPresencePeopleRef.on('child_removed', (snapshot) => {
       const uuid = snapshot.key();
       presence.remove(uuid);
     });
-    _fb.child(fbPresPath).on('child_changed', function(snapshot) {
+    fbPresencePeopleRef.on('child_changed', (snapshot) => {
       const uuid = snapshot.key();
       presence.update(uuid, snapshot.val());
     });
