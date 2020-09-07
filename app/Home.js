@@ -3,7 +3,7 @@
 const EventEmitter = require('events').EventEmitter;
 const util = require('util');
 
-const Hue = require('./Hue');
+const Hue = require('./Hue2');
 const LGTV = require('./LGtv');
 const Wemo = require('./Wemo');
 const Tivo = require('./Tivo');
@@ -114,22 +114,22 @@ function Home() {
 
     gcmPush = new GCMPush();
 
-    _initAlarmClock();
-    _initAppleTV();
-    _initBluetooth();
-    _initNotifications();
+    // _initAlarmClock();
+    // _initAppleTV();
+    // _initBluetooth();
+    // _initNotifications();
     _initHue();
-    _initNanoLeaf();
-    _initSonos();
-    _initHarmony();
-    _initTivo();
-    _initPushBullet();
-    _initWeather();
-    _initWemo();
-    _initLGTV();
-    _initAwair();
-    _initPresence();
-    _initCron();
+    // _initNanoLeaf();
+    // _initSonos();
+    // _initHarmony();
+    // _initTivo();
+    // _initPushBullet();
+    // _initWeather();
+    // _initWemo();
+    // _initLGTV();
+    // _initAwair();
+    // _initPresence();
+    // _initCron();
     // _initAutoHumidifier();
     setTimeout(function() {
       _self.emit('ready');
