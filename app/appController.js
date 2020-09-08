@@ -16,17 +16,16 @@ let _home;
 let _httpServer;
 let _deviceMonitor;
 
-log.setAppName(APP_NAME);
-log.setOptions({firebaseLogLevel: 50, firebasePath: FB_LOG_PATH});
 log.startWSS();
-log.appStart();
+log.setFileLogOpts(50, './logs/system.log');
+log.setFirebaseLogOpts(50, 'logs/server');
 
 
 /**
  * Init
 */
 async function init() {
-  _initLogs();
+  log.appStart(APP_NAME);
 
   _deviceMonitor = new DeviceMonitor(APP_NAME);
   _deviceMonitor.on('restart_request', () => {
@@ -50,21 +49,6 @@ async function init() {
   _initWSServer();
   _initFBCmdListener();
   _initCronTimers();
-}
-
-/**
- * Initialize the logs
- */
-async function _initLogs() {
-  const fbLogRef = FBHelper.getRef(`logs/server`);
-  log.setFirebaseRef(fbLogRef);
-
-  const fbLogConfig = await FBHelper.getRef('config/HomeOnNode/logs');
-  fbLogConfig.on('value', (snapshot) => {
-    const logOpts = snapshot.val();
-    log.setOptions(logOpts);
-    log.debug(APP_NAME, 'Log config updated', logOpts);
-  });
 }
 
 /**
@@ -103,7 +87,8 @@ function _initWSServer() {
  * Setup the Firebase command listener ('commands')
  */
 async function _initFBCmdListener() {
-  const fbCmdRef = await FBHelper.getRef('commands');
+  const fbRootRef = await FBHelper.getRootRefUnlimited();
+  const fbCmdRef = await fbRootRef.child('commands');
   fbCmdRef.on('child_added', (snapshot) => {
     const cmd = snapshot.val();
     const source = cmd.source || 'FB';
