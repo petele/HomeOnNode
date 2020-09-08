@@ -186,7 +186,10 @@ function AlarmClock() {
     _self.emit('alarm_changed', key, alarm.details);
   }
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(AlarmClock, EventEmitter);

@@ -504,7 +504,10 @@ function Sonos() {
     return _adjustVolume('+2');
   }
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(Sonos, EventEmitter);

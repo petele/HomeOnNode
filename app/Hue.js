@@ -604,7 +604,10 @@ function Hue(key, ipAddress) {
     });
   }
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(Hue, EventEmitter);

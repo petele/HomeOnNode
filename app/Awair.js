@@ -420,7 +420,10 @@ function Awair(token) {
     return respBody;
   }
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(Awair, EventEmitter);
