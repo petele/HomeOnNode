@@ -12,47 +12,19 @@ log.setAppName(LOG_PREFIX);
 log.appStart();
 
 /**
- * Gets the config data from Firebase.
- *
- * @param {String} appID The path to the config file.
-*/
-async function _getConfigFromFB(appID) {
-  log.log(LOG_PREFIX, 'Requesting config file...');
-  const fbRef = await FBHelper.getRef(`config/${appID}`);
-  const configSnap = await fbRef.once('value');
-  const config = configSnap.val();
-  return config;
-}
-
-/**
- * Returns a promise that is rejected after 45 seconds.
- *
- * @return {Promise<error>} Promise always rejects after 45 seconds.
- */
-function timeout() {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      reject(new Error('timeout'));
-    }, 45 * 1000);
-  });
-}
-
-/**
  * Main function
  */
 async function go() {
   const appId = process.argv[2] || 'HomeOnNode';
-  const configPromise = _getConfigFromFB(appId);
-  try {
-    await Promise.race([configPromise, timeout()]);
-  } catch (ex) {
-    log.error(LOG_PREFIX, 'Timeout exceeded.', ex);
-    process.exit(1);
-  }
 
-  const config = await configPromise;
-  if (!config) {
-    log.exception(LOG_PREFIX, 'No config data returned.');
+  let config;
+  try {
+    const fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    const fbConfigRef = fbRootRef.child(`config/${appId}`);
+    const fbConfigSnap = await fbConfigRef.once('value');
+    config = fbConfigSnap.val();
+  } catch (ex) {
+    log.error(LOG_PREFIX, 'Unable to get config.', ex);
     process.exit(1);
   }
 

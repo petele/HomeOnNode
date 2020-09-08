@@ -59,8 +59,11 @@ log.appStart();
  * Init
  */
 async function init() {
-  const fbLogRef = FBHelper.getRef(`logs/${APP_NAME}`);
-  log.setFirebaseRef(fbLogRef);
+  // const fbLogRef = FBHelper.getRef(`logs/${APP_NAME}`);
+  // log.setFirebaseRef(fbLogRef);
+
+  const fbRootRef = await FBHelper.getFBRootRef();
+  log.setFirebaseRef(await fbRootRef.child(`logs/${APP_NAME}`));
 
   _deviceMonitor = new DeviceMonitor(APP_NAME);
   _deviceMonitor.on('restart_request', () => {
