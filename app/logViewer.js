@@ -49,12 +49,15 @@ function printLogs(fbRef) {
  */
 async function go() {
   log.log(LOG_PREFIX, `Log path: ${_path}`);
-  const ref = await FBHelper.getRef(_path);
-  if (!ref) {
-    log.fatal(LOG_PREFIX, 'Oops, unable to get FB Ref');
-    return;
+  let fbLogRef;
+  try {
+    const fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    fbLogRef = await fbRootRef.child(_path);
+  } catch (ex) {
+    log.fatal(LOG_PREFIX, 'Unable to connect to Firebase.', ex);
+    process.exit(1);
   }
-  printLogs(ref);
+  printLogs(fbLogRef);
 }
 
 

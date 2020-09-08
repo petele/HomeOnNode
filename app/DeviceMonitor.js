@@ -8,6 +8,7 @@ const log = require('./SystemLog2');
 const version = require('./version');
 const diff = require('deep-diff').diff;
 const FBHelper = require('./FBHelper');
+const honHelpers = require('./HoNHelpers');
 const exec = require('child_process').exec;
 const EventEmitter = require('events').EventEmitter;
 
@@ -41,7 +42,7 @@ function DeviceMonitor(deviceName, isMonitor) {
   async function _init() {
     log.init('DeviceMonitor', 'Starting...');
     const fbPath = isMonitor === true ? 'monitor' : 'devices';
-    const fbRoot = await FBHelper._getRootRefUnlimited();
+    const fbRoot = await FBHelper.getRootRefUnlimited();
     _fbRef = await fbRoot.child(fbPath);
     if (!deviceName) {
       log.error(_deviceName, 'deviceName not provided.');
@@ -68,7 +69,7 @@ function DeviceMonitor(deviceName, isMonitor) {
         platform: os.platform(),
         release: os.release(),
         type: os.type(),
-        hostname: _getHostname(),
+        hostname: honHelpers.getHostname(),
         ipAddress: _getIPAddress(),
       },
       restart: null,
@@ -271,22 +272,6 @@ function DeviceMonitor(deviceName, isMonitor) {
     _fbRef.child(`${_deviceName}/shutdownAt`)
         .onDisconnect()
         .set(FBHelper.getServerTimeStamp());
-  }
-
-  /**
-   * Get's the hostname from the device.
-   *
-   * @return {String} The hostname of the device.
-   */
-  function _getHostname() {
-    try {
-      const hostname = os.hostname();
-      log.debug(_deviceName, `Hostname: ${hostname}`);
-      return hostname;
-    } catch (ex) {
-      log.exception(_deviceName, `Unable to retreive hostname.`, ex);
-      return 'unknown';
-    }
   }
 
   /**

@@ -2,6 +2,8 @@
 
 /* node14_ready */
 
+const os = require('os');
+
 /**
  * Returns after specified seconds, defaults to 30,000.
  *
@@ -39,6 +41,20 @@ function _isValidInt(val, min, max) {
   return val;
 }
 
+/**
+ * Gets the simple hostname
+ *
+ * @return {String} hostname
+ */
+function _getHostname() {
+  const hostname = os.hostname();
+  if (!hostname.includes('.')) {
+    return hostname;
+  }
+  return hostname.substring(0, hostname.indexOf('.'));
+}
+
 
 exports.sleep = _sleep;
+exports.getHostname = _getHostname;
 exports.isValidInt = _isValidInt;

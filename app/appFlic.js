@@ -116,9 +116,9 @@ function init() {
   _initFlic();
 
   // Clean up logs every 24 hours
-  setInterval(function() {
-    log.cleanFile();
-    log.cleanLogs(FB_LOG_PATH, 7);
+  setInterval(async () => {
+    await log.cleanFile();
+    await log.cleanLogs(FB_LOG_PATH, 7);
   }, 60 * 60 * 24 * 1000);
 }
 

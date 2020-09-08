@@ -25,7 +25,7 @@ async function _initFBApp() {
   if (_fbApp) {
     return _fbApp;
   }
-  log.verbose(LOG_PREFIX, 'Creating app...');
+  log.log(LOG_PREFIX, 'Creating Firebase app...');
   _fbApp = await Firebase.initializeApp(Keys.fbConfig);
   return;
 }
@@ -36,7 +36,7 @@ async function _initFBApp() {
  */
 async function _go() {
   _isAuthInProgress = true;
-  log.verbose(LOG_PREFIX, 'Authenticating...');
+  log.log(LOG_PREFIX, 'Authenticating...');
   const email = Keys.fbUser.email;
   const password = Keys.fbUser.password;
   try {
@@ -82,7 +82,7 @@ async function _waitForFBRoot(startedAt, timeout) {
   if (Date.now() - startedAt > timeout) {
     return null;
   }
-  log.verbose(LOG_PREFIX, `Authentication in progress...`);
+  // log.verbose(LOG_PREFIX, `Authentication in progress...`);
   await honHelpers.sleep(750);
   return _waitForFBRoot(startedAt, timeout);
 }
@@ -131,6 +131,5 @@ function _getServerTimeStamp() {
 }
 
 exports.getRootRef = _getFBRootRefWithTimeout;
-exports._getRootRefUnlimited = _getFBRootRefUnlimited;
-
+exports.getRootRefUnlimited = _getFBRootRefUnlimited;
 exports.getServerTimeStamp = _getServerTimeStamp;
