@@ -16,12 +16,12 @@ const LOG_PREFIX = 'GCMPush';
  * @constructor
 */
 function GCMPush() {
-  let _fbBaseRef;
   const _self = this;
   const _options = {
     TTL: 3600,
     headers: {},
   };
+  let _fbConfigRef;
   let _sendReady = false;
   const _subscribers = {};
 
@@ -30,8 +30,9 @@ function GCMPush() {
   */
   async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
-    _fbBaseRef = await FBHelper.getRef('config/GCMPush');
-    const gcmConfigSnap = await _fbBaseRef.once('value');
+    const fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    _fbConfigRef = await fbRootRef.child('config/GCMPush');
+    const gcmConfigSnap = await _fbConfigRef.once('value');
     const gcmConfig = gcmConfigSnap.val();
     _options.vapidDetails = gcmConfig.vapidDetails;
     if (gcmConfig.hasOwnProperty('ttl')) {
@@ -45,7 +46,7 @@ function GCMPush() {
     });
     _sendReady = true;
     _self.emit('ready');
-    const fbSubscribers = _fbBaseRef.child('subscribers');
+    const fbSubscribers = _fbConfigRef.child('subscribers');
     fbSubscribers.on('child_added', (snapshot) => {
       _addSubscriber(snapshot.key, snapshot.val());
     });
@@ -149,7 +150,7 @@ function GCMPush() {
       const promise = webpush.sendNotification(subscriber, payload, options)
           .then((resp) => {
             log.debug(LOG_PREFIX, `Message sent to ${shortKey}`, resp);
-            return _fbBaseRef.child(`${fbSubPath}/lastResult`).set(resp);
+            return _fbConfigRef.child(`${fbSubPath}/lastResult`).set(resp);
           })
           .then(() => {
             return true;
@@ -157,10 +158,10 @@ function GCMPush() {
           .catch((err) => {
             if (err.statusCode === 410 || err.statusCode === 404) {
               log.error(LOG_PREFIX, `Removed: ${shortKey}`, err.body);
-              return _fbBaseRef.child(fbSubPath).remove();
+              return _fbConfigRef.child(fbSubPath).remove();
             }
             log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
-            return _fbBaseRef.child(`${fbSubPath}/lastResult`).set(err);
+            return _fbConfigRef.child(`${fbSubPath}/lastResult`).set(err);
           });
       promises.push(promise);
     });

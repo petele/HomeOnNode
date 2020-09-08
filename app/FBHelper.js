@@ -103,10 +103,10 @@ async function _getFBRootRefUnlimited() {
 /**
  * Get the Firebase root, if timeout is exceeded, fail.
  *
- * @param {Number} timeout
+ * @param {Number} ms Number of ms to wait before failing
  */
-async function _getFBRootRefWithTimeout(timeout) {
-  if (!timeout) {
+async function _getFBRootRefWithTimeout(ms) {
+  if (!ms) {
     throw new RangeError('No timeout provided');
   }
   if (_fbRootRef) {
@@ -114,11 +114,11 @@ async function _getFBRootRefWithTimeout(timeout) {
   }
   if (_isAuthInProgress) {
     return Promise.race([
-      _waitForFBRoot(Date.now(), timeout),
-      _timer(timeout),
+      _waitForFBRoot(Date.now(), ms),
+      _timer(ms),
     ]);
   }
-  return Promise.race([_go(), _timer(timeout)]);
+  return Promise.race([_go(), _timer(ms)]);
 }
 
 /**
