@@ -400,7 +400,10 @@ function HarmonyWS(ipAddress) {
     return _sendCommand(COMMAND_STRINGS.GET_ACTIVITY);
   }
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(HarmonyWS, EventEmitter);

@@ -10,11 +10,12 @@ const FBHelper = require('./FBHelper');
 function Logging() {
   const LOG_PREFIX = 'LOGGING';
   let _fbRef;
+  const _self = this;
 
   /**
    * Initialize the API
    */
-  async function init() {
+  async function _init() {
     _fbRef = await FBHelper.getRef('logs/cron');
   }
 
@@ -266,7 +267,10 @@ function Logging() {
     }
   }
 
-  init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 module.exports = Logging;

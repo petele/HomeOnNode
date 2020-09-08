@@ -168,7 +168,10 @@ function GCMPush() {
     return Promise.all(promises);
   };
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(GCMPush, EventEmitter);

@@ -73,7 +73,7 @@ function Home() {
   /**
    * Initialize the HOME API
    */
-  function _init() {
+  async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
 
     const now = Date.now();
@@ -2101,7 +2101,10 @@ function Home() {
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(Home, EventEmitter);
