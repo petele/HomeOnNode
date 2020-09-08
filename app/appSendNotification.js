@@ -2,26 +2,19 @@
 
 /* node14_ready */
 
-const os = require('os');
 const log = require('./SystemLog2');
 const GCMPush = require('./GCMPush');
+const honHelpers = require('./HoNHelpers');
 
 const LOG_PREFIX = 'SEND_ON_ERROR';
 
-const logOpts = {
-  consoleLogLevel: 20,
-  fileLogLevel: 90,
-  fileFilename: './logs/system.log',
-};
-log.setOptions(logOpts);
+log.setConsoleLogOpts(50);
+log.setFileLogOpts(90, './logs/system.log');
 
-let hostname = os.hostname().toUpperCase();
-if (hostname.indexOf('.') >= 0) {
-  hostname = hostname.substring(0, hostname.indexOf('.'));
-}
+const hostname = honHelpers.getHostname().toUpperCase();
 
 const DEFAULT_MESSAGE = {
-  title: `${hostname} - Error`,
+  title: `${hostname} - Oops`,
   body: 'Something unexpected happened at',
   tag: `HoN-error`,
   uniqueTag: true,

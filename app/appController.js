@@ -1,8 +1,8 @@
 'use strict';
 
-const fs = require('fs');
 const Home = require('./Home');
 const log = require('./SystemLog2');
+const fsProm = require('fs/promises');
 const WSServer = require('./WSServer');
 const FBHelper = require('./FBHelper');
 const HTTPServer = require('./HTTPServer');
@@ -148,32 +148,21 @@ function _initCronTimers() {
  *   Used for the cron job system.
  *
  * @param {String} file The file to load and run.
- * @param {Function} [callback] Callback to run once completed.
+ * @return {Boolean} whether the action completed successfully.
 */
-function _loadAndRunJS(file, callback) {
+async function _loadAndRunJS(file) {
   const msg = `loadAndRunJS('${file}')`;
   log.debug(APP_NAME, msg);
-  fs.readFile(file, function(err, data) {
-    if (err) {
-      log.exception(APP_NAME, `${msg} - Unable to read file.`, err);
-      if (callback) {
-        callback(err, file);
-      }
-      return;
-    }
-    try {
-      eval(data.toString());
-    } catch (ex) {
-      log.exception(APP_NAME, `${msg} - Exception on eval.`, ex);
-      if (callback) {
-        callback(ex, file);
-      }
-      return;
-    }
-    if (callback) {
-      callback(null, file);
-    }
-  });
+
+  let fileContents;
+  try {
+    fileContents = await fsProm.readFile(file);
+    await eval(fileContents.toString());
+    return true;
+  } catch (ex) {
+    log.exception(APP_NAME, `${msg} - Unable to read/run file.`, ex);
+    return false;
+  }
 }
 
 /**

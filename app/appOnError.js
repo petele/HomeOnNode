@@ -25,8 +25,8 @@ async function go() {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify(LIGHT_COMMAND),
   };
-  const r = await fetch(url, fetchOpts);
-  console.log(await r.json());
+  const resp = await fetch(url, fetchOpts);
+  console.log(await resp.json());
 }
 
 go();

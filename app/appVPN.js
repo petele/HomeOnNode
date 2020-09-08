@@ -10,40 +10,47 @@ const log = require('./SystemLog2');
 const FBHelper = require('./FBHelper');
 const DeviceMonitor = require('./DeviceMonitor');
 
-let _myIP;
 let _config;
 let _deviceMonitor;
 
 const APP_NAME = 'VPNMonitor';
 
-// Read config file
-try {
-  // eslint-disable-next-line no-console
-  console.log(`Reading 'config.json'...`);
-  const config = fs.readFileSync('config.json', {encoding: 'utf8'});
-  // eslint-disable-next-line no-console
-  console.log(`Parsing 'config.json'...`);
-  _config = JSON.parse(config);
-} catch (ex) {
-  console.error(`Unable to read or parse 'config.json'`);
-  console.error(ex);
-  process.exit(1);
-}
-
-// Setup logging
-log.setAppName(APP_NAME);
-log.setOptions({
-  firebaseLogLevel: _config.logLevel || 50,
-});
-log.startWSS();
-log.appStart();
-
 /**
  * Init
  */
 async function init() {
-  const fbLogRef = FBHelper.getRef(`logs/${APP_NAME}`);
-  log.setFirebaseRef(fbLogRef);
+  log.startWSS();
+  log.setFileLogOpts(50, './logs/system.log');
+  log.setFirebaseLogOpts(50, `logs/${APP_NAME}`);
+  log.appStart(APP_NAME);
+
+  try {
+    log.log(APP_NAME, 'Reading config from Firebase...');
+    const fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    const fbConfigRef = await fbRootRef.child(`config/${APP_NAME}`);
+    _config = await fbConfigRef.once('value');
+    _config = _config.val();
+  } catch (ex) {
+    log.error(APP_NAME, `Unable to get Firebase reference...`, ex);
+  }
+
+  if (!validateConfig(_config)) {
+    try {
+      log.log(APP_NAME, 'Reading config from local file...');
+      const cfg = await fs.readFile('config.json', {encoding: 'utf8'});
+      _config = JSON.parse(cfg);
+    } catch (ex) {
+      log.fatal(APP_NAME, `Unable to read/parse local config file.`, ex);
+      process.exit(1);
+    }
+  }
+
+  if (!validateConfig(_config)) {
+    const msg = `Invalid config, or missing key properties.`;
+    const cfgType = _config && _config._configType ? _config._configType : null;
+    log.fatal(APP_NAME, msg, cfgType);
+    process.exit(1);
+  }
 
   _deviceMonitor = new DeviceMonitor(APP_NAME);
   _deviceMonitor.on('restart_request', () => {
@@ -56,25 +63,49 @@ async function init() {
     _deviceMonitor.restart('FB', 'connection_timedout', false);
   });
 
-  const fbHoNStateIP = await FBHelper.getRef('state/externalIP');
-  _myIP = new MyIP(_config.googleDNS);
-  _myIP.on('change', (ip) => {
-    fbHoNStateIP.set(ip);
-  });
+  initIPListener();
 
-  const fbLogConfig = await FBHelper.getRef(`config/${APP_NAME}/logLevel`);
-  fbLogConfig.on('value', (snapshot) => {
-    const logLevel = snapshot.val();
-    log.setOptions({
-      firebaseLogLevel: logLevel || 50,
-    });
-    log.log(APP_NAME, `Log level changed to ${logLevel}`);
-  });
-
-  setInterval(() => {
-    log.cleanFile();
-    log.cleanLogs(1);
+  setInterval(async () => {
+    await log.cleanFile();
+    await log.cleanLogs(null, 1);
   }, 60 * 60 * 24 * 1000);
+}
+
+/**
+ *
+ */
+async function initIPListener() {
+  const fbRootRef = await FBHelper.getRootRefUnlimited();
+  const fbStateIP = await fbRootRef.child('state/externalIP');
+  const myIP = new MyIP(_config.googleDNS);
+  myIP.on('change', (ip) => {
+    fbStateIP.set(ip)
+        .then(() => {
+          log.log(APP_NAME, `Updated saved IP address to '${ip}'`);
+        })
+        .catch((err) => {
+          log.error(APP_NAME, 'Unable to update IP address.', err);
+        });
+  });
+}
+
+/**
+ * Validate the config file meets the requirements.
+ *
+ * @param {Object} config
+ * @return {Boolean} true if good.
+ */
+function validateConfig(config) {
+  if (!config) {
+    return false;
+  }
+  if (config._configType !== 'VPN') {
+    return false;
+  }
+  if (!config.hasOwnProperty('googleDNS')) {
+    return false;
+  }
+  return true;
 }
 
 

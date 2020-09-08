@@ -3,50 +3,27 @@
 /* node14_ready */
 
 const fs = require('fs');
-const os = require('os');
 const log = require('./SystemLog2');
-const FBHelper = require('./FBHelper');
+const honHelpers = require('./HoNHelpers');
 const DeviceMonitor = require('./DeviceMonitor');
 
 const LOG_CLEAN_TIMER = 60 * 60 * 24 * 1000;
 
 const LOG_PREFIX = 'MONITOR';
-const HOST_NAME = _getHostname();
+const HOST_NAME = honHelpers.getHostname();
 
 let _deviceMonitor;
 
-const logOpts = {
-  consoleLogLevel: 0,
-  firebaseLogLevel: 45,
-  fileLogLevel: 45,
-  fileFilename: './logs/monitor.log',
-};
-
-log.setAppName(LOG_PREFIX);
-log.setOptions(logOpts);
 log.startWSS(8882);
-log.appStart();
-
-/**
- * Gets the simple hostname
- *
- * @return {String} hostname
- */
-function _getHostname() {
-  const hostname = os.hostname();
-  if (!hostname.includes('.')) {
-    return hostname;
-  }
-  return hostname.substring(0, hostname.indexOf('.'));
-}
+log.setConsoleLogOpts(45);
+log.setFileLogOpts(45, './logs/monitor.log');
+log.setFirebaseLogOpts(45, `logs/monitor/${HOST_NAME}`);
 
 /**
  * Init
  */
 async function go() {
-  const fbRootRef = await FBHelper._getRootRefUnlimited();
-  const fbRef = await fbRootRef.child(`logs/monitor/${HOST_NAME}`);
-  log.setFirebaseRef(fbRef);
+  log.appStart(LOG_PREFIX);
 
   _deviceMonitor = new DeviceMonitor(HOST_NAME, true);
   _deviceMonitor.on('restart_request', () => {
@@ -61,7 +38,7 @@ async function go() {
 
   setInterval(async () => {
     try {
-      await log.cleanLogs(7);
+      await log.cleanLogs(null, 7);
     } catch (err) {
       log.exception(LOG_PREFIX, 'Unable to clean firebase logs.', err);
     }
