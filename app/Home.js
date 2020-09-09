@@ -104,7 +104,6 @@ function Home() {
     }
 
     const now = Date.now();
-
     _self.state = {
       delayedCommands: {},
       doNotDisturb: false,
@@ -136,16 +135,20 @@ function Home() {
 
     gcmPush = await new GCMPush();
 
+
     await _initAlarmClock();
+    await _initHue();
+    await _initNanoLeaf();
+    await _initSonos();
+    await _initHarmony();
 
     return;
     // _initAppleTV();
     // _initBluetooth();
     // _initNotifications();
-    _initHue();
-    _initNanoLeaf();
-    _initSonos();
-    _initHarmony();
+
+
+
     // _initTivo();
     // _initPushBullet();
     // _initWeather();
@@ -1606,8 +1609,8 @@ function Home() {
   /**
    * Init Harmony API
    */
-  function _initHarmony() {
-    _fbSet('state/harmony', false);
+  async function _initHarmony() {
+    await _fbSet('state/harmony', false);
 
     if (_config.harmony.disabled === true) {
       log.warn(LOG_PREFIX, 'Harmony disabled via config.');
@@ -1619,7 +1622,7 @@ function Home() {
       log.error(LOG_PREFIX, `Harmony unavailable, no IP address specified.`);
       return;
     }
-    harmony = new Harmony(ip);
+    harmony = await new Harmony(ip);
     harmony.on('hub_info', (data) => {
       _fbSet('state/harmony/info', data);
     });
@@ -1664,8 +1667,8 @@ function Home() {
   /**
    * Init Hue
    */
-  function _initHue() {
-    _fbSet('state/hue', null);
+  async function _initHue() {
+    await _fbSet('state/hue', null);
 
     if (_config.philipsHue.disabled === true) {
       log.warn(LOG_PREFIX, 'Hue disabled via config.');
@@ -1679,7 +1682,7 @@ function Home() {
       return;
     }
 
-    hue = new Hue(apiKey, hueIP);
+    hue = await new Hue(apiKey, hueIP);
     hue.on('config_changed', (config) => {
       _fbSet('state/hue', config);
     });
@@ -1814,8 +1817,8 @@ function Home() {
   /**
    * Init NanoLeaf
    */
-  function _initNanoLeaf() {
-    // _fbSet('state/nanoLeaf', null);
+  async function _initNanoLeaf() {
+    await _fbSet('state/nanoLeaf', null);
 
     if (_config.nanoLeaf.disabled === true) {
       log.warn(LOG_PREFIX, 'NanoLeaf disabled via config.');
@@ -1988,15 +1991,15 @@ function Home() {
   /**
    * Init Sonos
    */
-  function _initSonos() {
-    _fbSet('state/sonos', false);
+  async function _initSonos() {
+    await _fbSet('state/sonos', false);
 
     if (_config.sonos.disabled === true) {
       log.warn(LOG_PREFIX, 'Sonos disabled via config.');
       return;
     }
 
-    sonos = new Sonos();
+    sonos = await new Sonos();
     sonos.on('player-state', (playerState) => {
       playerState = JSON.parse(JSON.stringify(playerState));
       _fbSet('state/sonos/state', playerState);
