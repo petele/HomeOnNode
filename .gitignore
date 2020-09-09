@@ -2,6 +2,7 @@ node_modules
 bower_components
 .tmp
 .sass-cache
+scratch-*.*
 
 */Dist/
 /temp/
@@ -15,6 +16,8 @@ bower_components
 */logs/*
 /Web/scripts/fbKey.js
 /scratch/
+/app/sounds/
+/app/config-backup/*
 /app/test*.js
 /app/config.json
 /app/state.json

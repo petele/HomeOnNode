@@ -2,17 +2,40 @@
 
 'use strict';
 
-const log = require('./SystemLog2');
-const Keys = require('./Keys').keys;
-const Firebase = require('firebase');
-const inquirer = require('inquirer');
+/* node14_ready */
 
-let commands;
+const inquirer = require('inquirer');
+const FBHelper = require('./FBHelper');
+
+/**
+ * Start the app
+ */
+async function go() {
+  const fbRootRef = await FBHelper.getRootRef(30 * 1000);
+  const commandsRef = fbRootRef.child('config/HomeOnNode/commands');
+  const sendCommandRef = fbRootRef.child('commands');
+
+  const snapshot = await commandsRef.once('value');
+  const cmds = snapshot.val();
+  let keepRunning = true;
+  while (keepRunning) {
+    const cmd = await prompt(cmds);
+    if (cmd.cmdName === '--EXIT--') {
+      keepRunning = false;
+    } else {
+      await sendCommandRef.push({cmdName: cmd.cmdName});
+    }
+  }
+  process.exit(0);
+}
 
 /**
  * Shows the prompt with a list of commands
+ *
+ * @param {Array} commands
+ * @return {Promise<Object>} Response
  */
-function prompt() {
+function prompt(commands) {
   const choices = [];
   choices.push({name: 'Exit', value: '--EXIT--'});
   choices.push({name: 'Manual Entry', value: '--MANUAL--'});
@@ -56,28 +79,8 @@ function prompt() {
       return answers.cmdName === '--MANUAL--';
     },
   };
-  inquirer.prompt([qCommands, qManualInput])
-      .then((answer) => {
-        const cmdName = answer.cmdName;
-        if (cmdName === '--EXIT--') {
-          process.exit(0);
-        }
-        return fb.child('commands').push({cmdName: cmdName});
-      })
-      .then((snapshot) => {
-        prompt();
-      });
+  return inquirer.prompt([qCommands, qManualInput]);
 }
 
-const fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
-fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
-  if (error) {
-    log.exception('FB', 'Firebase auth failed.', error);
-    process.exit(1);
-  } else {
-    fb.child('config/HomeOnNode/commands').on('value', (snapshot) => {
-      commands = snapshot.val();
-      prompt();
-    });
-  }
-});
+
+go();

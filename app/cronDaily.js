@@ -1,74 +1,59 @@
-/* globals log, fs, _fb */
+/* globals log */
 
 'use strict';
 
 const path = require('path');
 const moment = require('moment');
+const fsProm = require('fs/promises');
+const FBHelper = require('./FBHelper');
 
 const LOG_PREFIX = 'CRON_DAILY';
 const CONFIG_BACKUP_PATH = `./config-backup`;
 
-const _cleanLogs = function() {
+const _cleanLogs = async function() {
   log.debug(LOG_PREFIX, 'Starting cleanLogs...');
-  const promises = [];
-  promises.push(log.cleanLogs('logs/cron', 90));
-  promises.push(log.cleanLogs('logs/doors', 30));
-  promises.push(log.cleanLogs('logs/presence', 120));
-  promises.push(log.cleanLogs('logs/systemState', 30));
-  promises.push(log.cleanLogs('logs/generic', 7));
-  promises.push(log.cleanLogs('logs/logs', 7));
-  promises.push(log.cleanLogs('logs/messages', 7));
-  promises.push(log.cleanLogs('logs/pushBullet', 1));
 
-  return Promise.all(promises)
-      .catch((err) => {
-        log.warn(LOG_PREFIX, 'Unable to clean Firebase logs', err);
-      })
-      .then(() => {
-        return log.cleanFile()
-            .catch(() => {
-              // Ignore, we've already logged the error elsewhere.
-            });
-      })
-      .catch((ex) => {
-        log.exception(LOG_PREFIX, 'Unknown error while cleaning logs.', ex);
-      });
+  await log.cleanLogs('logs/cron', 90);
+  await log.cleanLogs('logs/doors', 30);
+  await log.cleanLogs('logs/presence', 120);
+  await log.cleanLogs('logs/systemState', 30);
+  await log.cleanLogs('logs/generic', 7);
+  await log.cleanLogs('logs/logs', 7);
+  await log.cleanLogs('logs/messages', 7);
+  await log.cleanLogs('logs/pushBullet', 1);
+  await log.cleanFile();
 };
 
-const _backupConfig = function() {
+const _backupConfig = async function() {
   log.debug(LOG_PREFIX, 'Backing up config...');
-  return new Promise((resolve, reject) => {
-    _fb.child(`config`).once('value', (snapshot) => {
-      const filename = `config-${moment().format('YYYY-MM-DD')}.json`;
-      if (!fs.existsSync(CONFIG_BACKUP_PATH)) {
-        fs.mkdirSync(CONFIG_BACKUP_PATH);
-      }
-      const file = path.join(CONFIG_BACKUP_PATH, filename);
-      const config = JSON.stringify(snapshot.val(), null, 2);
-      fs.writeFile(file, config, (err) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-        log.debug(LOG_PREFIX, `Config backed up to: ${file}`);
-        resolve(true);
-      });
-    });
-  }).catch((err) => {
-    log.exception(LOG_PREFIX, `Error while backing up config.`, err);
-    return false;
-  });
+  let fbRootRef;
+  try {
+    fbRootRef = await FBHelper.getRootRef(30 * 1000);
+  } catch (ex) {
+    log.exception(LOG_PREFIX, '_backupConfig - unable to get FB ref.', ex);
+    return;
+  }
+  const fbConfigRef = await fbRootRef.child('config');
+  const configSnap = await fbConfigRef.once('value');
+  const config = configSnap.val();
+  const configStr = JSON.stringify(config, null, 2);
+
+  const filename = `config-${moment().format('YYYY-MM-DD')}.json`;
+  fsProm.mkdir(CONFIG_BACKUP_PATH, {recursive: true});
+  const file = path.join(CONFIG_BACKUP_PATH, filename);
+
+  try {
+    fsProm.writeFile(file, configStr);
+    log.debug(LOG_PREFIX, `Config backed up to: ${file}`);
+  } catch (ex) {
+    log.exception(LOG_PREFIX, 'Unable to save config', ex);
+    return;
+  }
 };
 
-const cronJob = function() {
-  return _cleanLogs()
-      .then(() => {
-        return _backupConfig();
-      }).then(() => {
-        log.log(LOG_PREFIX, 'Completed.');
-      }).catch((err) => {
-        log.exception(LOG_PREFIX, 'Cron job failed.', err);
-      });
+const cronJob = async function() {
+  await _cleanLogs();
+  await _backupConfig();
 };
 
 cronJob();

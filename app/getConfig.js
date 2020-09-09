@@ -1,55 +1,41 @@
 'use strict';
 
-const fs = require('fs');
+/* node14_ready */
+
+const fs = require('fs/promises');
 const log = require('./SystemLog2');
-const Firebase = require('firebase');
-const Keys = require('./Keys').keys.firebase;
+const FBHelper = require('./FBHelper');
 
 const LOG_PREFIX = 'GET_CONFIG';
 
-const fb = new Firebase(`https://${Keys.appId}.firebaseio.com/`);
 log.setAppName(LOG_PREFIX);
 log.appStart();
 
 /**
- * Gets the config data from Firebase.
- *
- * @param {String} path The path to the config file.
-*/
-function _getConfigFromFB(path) {
-  fb.authWithCustomToken(Keys.key, function(error, authToken) {
-    if (error) {
-      log.exception(LOG_PREFIX, 'Auth Error', error);
-      process.exit(1);
-    }
-    log.log(LOG_PREFIX, 'Requesting config file...');
-    path = 'config/' + path;
-    fb.child(path).once('value', function(snapshot) {
-      log.log(LOG_PREFIX, 'Config file received.');
-      const config = snapshot.val();
-      if (config) {
-        fs.writeFileSync('config.json', JSON.stringify(config, null, 2));
-        log.log(LOG_PREFIX, 'Config file saved.');
-        process.exit(0);
-      } else {
-        log.error(LOG_PREFIX, 'No config file file found at that location.');
-        process.exit(1);
-      }
-    }, function(err) {
-      log.exception(LOG_PREFIX, 'Error retreiving config file.', err);
-      process.exit(1);
-    });
-  });
+ * Main function
+ */
+async function go() {
+  const appId = process.argv[2] || 'HomeOnNode';
 
-  setTimeout(function() {
-    log.error(LOG_PREFIX, 'Timeout exceeded.');
+  let config;
+  try {
+    const fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    const fbConfigRef = fbRootRef.child(`config/${appId}`);
+    const fbConfigSnap = await fbConfigRef.once('value');
+    config = fbConfigSnap.val();
+  } catch (ex) {
+    log.error(LOG_PREFIX, 'Unable to get config.', ex);
     process.exit(1);
-  }, 30000);
+  }
+
+  try {
+    await fs.writeFile('config.json', JSON.stringify(config, null, 2));
+    log.log(LOG_PREFIX, 'Config file saved to disk.');
+    process.exit(0);
+  } catch (ex) {
+    log.exception(LOG_PREFIX, 'Unable to write config file.', ex);
+    process.exit(1);
+  }
 }
 
-let appId = process.argv[2];
-if (!appId) {
-  log.warn('No app id provided, using HomeOnNode');
-  appId = 'HomeOnNode';
-}
-_getConfigFromFB(appId);
+go();

@@ -1,11 +1,14 @@
 'use strict';
 
+/* node14_ready */
+
 const os = require('os');
 const util = require('util');
 const log = require('./SystemLog2');
 const version = require('./version');
-const Firebase = require('firebase');
 const diff = require('deep-diff').diff;
+const FBHelper = require('./FBHelper');
+const honHelpers = require('./HoNHelpers');
 const exec = require('child_process').exec;
 const EventEmitter = require('events').EventEmitter;
 
@@ -17,33 +20,30 @@ const EventEmitter = require('events').EventEmitter;
  * @fires DeviceMonitor#restart_request
  * @fires DeviceMonitor#shutdown_request
  * @fires DeviceMonitor#connection_timedout
- * @param {Object} fb Firebase Object Reference.
  * @param {String} deviceName Name of the device.
+ * @param {Boolean} isMonitor
 */
-function DeviceMonitor(fb, deviceName) {
+function DeviceMonitor(deviceName, isMonitor) {
   const RESTART_TIMEOUT = 2500;
   const MAX_DISCONNECT = 12 * 60 * 60 * 1000;
-  const _fb = fb;
   const _deviceName = deviceName || 'DEVICE_MONITOR';
   const _self = this;
+  let _fbRef;
   let _heartbeatInterval;
   let _ipAddressInterval;
   let _lastWrite = Date.now();
   let _hasExceededTimeout = false;
   let _firstConnect = true;
-  let _firstAuth = true;
   let _ipAddresses = [];
 
   /**
    * Init the DeviceMonitor
   */
-  function _init() {
+  async function _init() {
     log.init('DeviceMonitor', 'Starting...');
-    if (!_fb) {
-      log.error(_deviceName, 'Firebase reference not provided.');
-      _self.emit('error', 'no_firebase_ref');
-      return;
-    }
+    const fbPath = isMonitor === true ? 'monitor' : 'devices';
+    const fbRoot = await FBHelper.getRootRefUnlimited();
+    _fbRef = await fbRoot.child(fbPath);
     if (!deviceName) {
       log.error(_deviceName, 'deviceName not provided.');
       _self.emit('error', 'no_device_name');
@@ -69,7 +69,7 @@ function DeviceMonitor(fb, deviceName) {
         platform: os.platform(),
         release: os.release(),
         type: os.type(),
-        hostname: _getHostname(),
+        hostname: honHelpers.getHostname(),
         ipAddress: _getIPAddress(),
       },
       restart: null,
@@ -82,11 +82,10 @@ function DeviceMonitor(fb, deviceName) {
     _ipAddresses = deviceData.host.ipAddress;
     log.log(_deviceName, 'Device Settings', deviceData);
     _lastWrite = now;
-    _fb.child(_deviceName).set(deviceData);
-    _fb.root().child(`.info/connected`).on('value', _connectionChanged);
-    _fb.child(`${_deviceName}/restart`).on('value', _restartRequest);
-    _fb.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
-    _fb.root().onAuth(_authChanged);
+    _fbRef.child(_deviceName).set(deviceData);
+    _fbRef.root.child(`.info/connected`).on('value', _connectionChanged);
+    _fbRef.child(`${_deviceName}/restart`).on('value', _restartRequest);
+    _fbRef.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
     _getPiModelInfo();
     _heartbeatInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
     _ipAddressInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
@@ -133,7 +132,7 @@ function DeviceMonitor(fb, deviceName) {
     if (diff(ipAddresses, _ipAddresses)) {
       _ipAddresses = ipAddresses;
       log.verbose(_deviceName, `IP addresses changed`, _ipAddresses);
-      fb.child(`${_deviceName}/host/ipAddress`).set(_ipAddresses);
+      _fbRef.child(`${_deviceName}/host/ipAddress`).set(_ipAddresses);
     }
   }
 
@@ -145,7 +144,7 @@ function DeviceMonitor(fb, deviceName) {
         .then((contents) => {
           if (contents) {
             log.log(_deviceName, 'CPU Model', contents);
-            _fb.child(`${_deviceName}/host/cpuModel`).set(contents);
+            _fbRef.child(`${_deviceName}/host/cpuModel`).set(contents);
           }
         })
         .catch((err) => {});
@@ -194,7 +193,7 @@ function DeviceMonitor(fb, deviceName) {
       uptime: uptime,
       uptime_: uptime_,
     };
-    _fb.child(`${_deviceName}`).update(details, (err) => {
+    _fbRef.child(`${_deviceName}`).update(details, (err) => {
       if (err) {
         log.error(_deviceName, 'Error updating heartbeat info', err);
         return;
@@ -265,47 +264,14 @@ function DeviceMonitor(fb, deviceName) {
       shutdownAt: null,
       exitDetails: null,
     };
-    _fb.child(`${_deviceName}`)
+    _fbRef.child(`${_deviceName}`)
         .update(details);
-    _fb.child(`${_deviceName}/online`)
+    _fbRef.child(`${_deviceName}/online`)
         .onDisconnect()
         .set(false);
-    _fb.child(`${_deviceName}/shutdownAt`)
+    _fbRef.child(`${_deviceName}/shutdownAt`)
         .onDisconnect()
-        .set(Firebase.ServerValue.TIMESTAMP);
-  }
-
-  /**
-   * Handles a Firebase authentication state change.
-   *
-   * @param {Object} authData Firebase authentication data.
-   */
-  function _authChanged(authData) {
-    if (_firstAuth) {
-      _firstAuth = false;
-      return;
-    }
-    if (authData) {
-      log.log(_deviceName, 'Firebase client authenticated.', authData);
-      return;
-    }
-    log.warn(_deviceName, 'Firebase client unauthenticated.');
-  }
-
-  /**
-   * Get's the hostname from the device.
-   *
-   * @return {String} The hostname of the device.
-   */
-  function _getHostname() {
-    try {
-      const hostname = os.hostname();
-      log.debug(_deviceName, `Hostname: ${hostname}`);
-      return hostname;
-    } catch (ex) {
-      log.exception(_deviceName, `Unable to retreive hostname.`, ex);
-      return 'unknown';
-    }
+        .set(FBHelper.getServerTimeStamp());
   }
 
   /**
@@ -357,7 +323,7 @@ function DeviceMonitor(fb, deviceName) {
       shutdownAt: now,
       exitDetails: exitDetails,
     };
-    return _fb.child(`${_deviceName}`).update(details);
+    return _fbRef.child(`${_deviceName}`).update(details);
   }
 
   /**

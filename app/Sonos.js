@@ -1,5 +1,7 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
 const log = require('./SystemLog2');
 const diff = require('deep-diff').diff;
@@ -104,7 +106,7 @@ function Sonos() {
   /**
    * Init
   */
-  function _init() {
+  async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     _sonosSystem = new SonosSystem();
 
@@ -502,7 +504,10 @@ function Sonos() {
     return _adjustVolume('+2');
   }
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(Sonos, EventEmitter);

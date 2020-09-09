@@ -1,9 +1,12 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
 const moment = require('moment');
 const log = require('./SystemLog2');
 const webpush = require('web-push');
+const FBHelper = require('./FBHelper');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'GCMPush';
@@ -11,48 +14,44 @@ const LOG_PREFIX = 'GCMPush';
 /**
  * Sends a GCM message
  * @constructor
- *
- * @param {Object} fb Firebase object.
 */
-function GCMPush(fb) {
-  const _fb = fb;
+function GCMPush() {
   const _self = this;
   const _options = {
     TTL: 3600,
     headers: {},
   };
+  let _fbConfigRef;
   let _sendReady = false;
   const _subscribers = {};
 
   /**
    * Init
   */
-  function _init() {
+  async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
-    _fb.child('config/GCMPush').once('value', (snapshot) => {
-      const config = snapshot.val();
-      _options.vapidDetails = {
-        subject: config.vapidKeys.subject,
-        privateKey: config.vapidKeys.private,
-        publicKey: config.vapidKeys.public,
-      };
-      if (config.hasOwnProperty('ttl')) {
-        _options.TTL = config.ttl;
-      }
-    }).then(() => {
-      const fbPath = 'config/GCMPush/subscribers';
-      _fb.child(fbPath).on('child_added', (snapshot) => {
-        const key = snapshot.key();
-        _addSubscriber(key, snapshot.val());
-      });
-      _fb.child(fbPath).on('child_removed', (snapshot) => {
-        _removeSubscriber(snapshot.key());
-      });
-    }).then(() => {
-      setTimeout(() => {
-        _sendReady = true;
-        _self.emit('ready');
-      }, 1000);
+    const fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    _fbConfigRef = await fbRootRef.child('config/GCMPush');
+    const gcmConfigSnap = await _fbConfigRef.once('value');
+    const gcmConfig = gcmConfigSnap.val();
+    _options.vapidDetails = gcmConfig.vapidDetails;
+    if (gcmConfig.hasOwnProperty('ttl')) {
+      _options.TTL = gcmConfig.ttl;
+    }
+
+    const subscribers = gcmConfig.subscribers;
+    const keys = Object.keys(subscribers);
+    keys.forEach((key) => {
+      _addSubscriber(key, subscribers[key]);
+    });
+    _sendReady = true;
+    _self.emit('ready');
+    const fbSubscribers = _fbConfigRef.child('subscribers');
+    fbSubscribers.on('child_added', (snapshot) => {
+      _addSubscriber(snapshot.key, snapshot.val());
+    });
+    fbSubscribers.on('child_removed', (snapshot) => {
+      _removeSubscriber(snapshot.key);
     });
   }
 
@@ -146,27 +145,33 @@ function GCMPush(fb) {
       }
       const shortKey = _subscribers[key].shortKey;
       const subscriber = _subscribers[key].subscriptionInfo;
-      const fbPath = `config/GCMPush/subscribers/${key}`;
+      const fbSubPath = `subscribers/${key}`;
 
       const promise = webpush.sendNotification(subscriber, payload, options)
           .then((resp) => {
             log.debug(LOG_PREFIX, `Message sent to ${shortKey}`, resp);
-            return _fb.child(`${fbPath}/lastResult`).set(resp);
+            return _fbConfigRef.child(`${fbSubPath}/lastResult`).set(resp);
+          })
+          .then(() => {
+            return true;
           })
           .catch((err) => {
             if (err.statusCode === 410 || err.statusCode === 404) {
               log.error(LOG_PREFIX, `Removed: ${shortKey}`, err.body);
-              return _fb.child(fbPath).remove();
+              return _fbConfigRef.child(fbSubPath).remove();
             }
             log.error(LOG_PREFIX, `${err.message} for ${shortKey}`, err.body);
-            return _fb.child(`${fbPath}/lastResult`).set(err);
+            return _fbConfigRef.child(`${fbSubPath}/lastResult`).set(err);
           });
       promises.push(promise);
     });
     return Promise.all(promises);
   };
 
-  _init();
+  return _init()
+      .then(() => {
+        return _self;
+      });
 }
 
 util.inherits(GCMPush, EventEmitter);
