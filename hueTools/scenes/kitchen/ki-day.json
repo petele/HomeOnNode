@@ -3,6 +3,13 @@
   "roomId": 2,
   "lights": [
     {
+      "lightId": 3,
+      "recipeName": "DEFAULT",
+      "command": {
+        "bri": 254
+      }
+    },
+    {
       "lightId": 4,
       "recipeName": "PEACH",
       "command": {

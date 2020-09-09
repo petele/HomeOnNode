@@ -6,33 +6,33 @@
     "scenes/bathroom/ba-night-high.json",
     "scenes/bedroom/br-off.json",
     "scenes/bedroom/bs-off.json",
-    "scenes/front-hall/fh-night-light.json",
+    "scenes/front-hall/fh-off.json",
     "scenes/kitchen/ki-night-light.json",
     "scenes/kitchen/ki-off.json",
     "scenes/kitchen/ks-off.json",
-    "scenes/living-room/lr-tv-movies.json",
+    "scenes/living-room/lr-off.json",
     "scenes/office/of-off.json"
   ],
   "lights": [
     {
-      "lightId": 30,
-      "recipeName": "ROSE_DEEP",
+      "lightId": 1,
+      "recipeName": "RED",
       "command": {
-        "bri": 128
+        "bri": 10
       }
     },
     {
-      "lightId": 33,
-      "recipeName": "ROSE_DEEP",
+      "lightId": 18,
+      "recipeName": "RED",
       "command": {
         "bri": 64
       }
     },
     {
-      "lightId": 34,
-      "recipeName": "ROSE_DEEP",
+      "lightId": 23,
+      "recipeName": "RED",
       "command": {
-        "bri": 64
+        "bri": 10
       }
     }
   ],

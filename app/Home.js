@@ -28,6 +28,7 @@ const AlarmClock = require('./AlarmClock');
 const deepDiff = require('deep-diff').diff;
 
 const FBHelper = require('./FBHelper');
+const honHelpers = require('./HoNHelpers');
 // const ConfigHelper = require('./ConfigHelper');
 
 const LOG_PREFIX = 'HOME';
@@ -136,28 +137,58 @@ function Home() {
     gcmPush = await new GCMPush();
 
 
-    await _initAlarmClock();
-    await _initHue();
-    await _initNanoLeaf();
-    await _initSonos();
-    await _initHarmony();
+    _initAlarmClock();
+    await honHelpers.sleep(300);
 
-    return;
-    // _initAppleTV();
-    // _initBluetooth();
-    // _initNotifications();
+    _initHue();
+    await honHelpers.sleep(300);
 
+    _initNanoLeaf();
+    await honHelpers.sleep(300);
 
+    _initSonos();
+    await honHelpers.sleep(300);
 
-    // _initTivo();
-    // _initPushBullet();
-    // _initWeather();
-    // _initWemo();
-    // _initLGTV();
-    // _initAwair();
-    // _initPresence();
-    // _initCron();
+    _initHarmony();
+    await honHelpers.sleep(300);
+
+    _initBluetooth();
+    await honHelpers.sleep(300);
+
+    _initNotifications();
+    await honHelpers.sleep(300);
+
+    _initAppleTV();
+    await honHelpers.sleep(300);
+
+    _initTivo();
+    await honHelpers.sleep(300);
+
+    _initPushBullet();
+    await honHelpers.sleep(300);
+
+    _initWeather();
+    await honHelpers.sleep(300);
+
+    _initWemo();
+    await honHelpers.sleep(300);
+
+    _initLGTV();
+    await honHelpers.sleep(300);
+
+    _initAwair();
+    await honHelpers.sleep(300);
+
+    _initPresence();
+    await honHelpers.sleep(300);
+
+    _initCron();
+    await honHelpers.sleep(300);
+
     // _initAutoHumidifier();
+    // await honHelpers.sleep(300);
+
+
     setTimeout(function() {
       _self.emit('ready');
       _playSound(_config.readySound);

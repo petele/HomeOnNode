@@ -4,6 +4,13 @@
   "transitionTime": 30,
   "lights": [
     {
+      "lightId": 3,
+      "recipeName": "PEACH",
+      "command": {
+        "bri": 150
+      }
+    },
+    {
       "lightId": 4,
       "recipeName": "REBECCA_PURPLE",
       "command": {

@@ -15,13 +15,6 @@
       "command": {
         "bri": 254
       }
-    },
-    {
-      "lightId": 3,
-      "recipeName": "DEFAULT",
-      "command": {
-        "bri": 254
-      }
     }
   ],
   "sceneId": "B78Z8Qn4sPuXqF3"

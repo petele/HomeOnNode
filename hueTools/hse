@@ -9,7 +9,7 @@ const chalk = require('chalk');
 const glob = require('globule');
 const commander = require('commander');
 const hseLib = require('./lib/HueSceneEditor');
-const Keys = require('../app/Keys.js').keys;
+const Keys = require('./Keys.js').keys;
 
 console.log(chalk.bold('HomeOnNode Hue Scene Helper'));
 
@@ -33,7 +33,7 @@ const UTIL_OPTS_PRETTY = {
 
 function initHSE() {
   const opts = {
-    key: commander.key || Keys.hueBridge.key,
+    key: commander.key || Keys.hue,
     address: commander.address || '192.168.86.206',
     verbose: commander.verbose,
     secure: !commander.insecure,

@@ -15,13 +15,6 @@
       "command": {
         "bri": 200
       }
-    },
-    {
-      "lightId": 3,
-      "recipeName": "PEACH",
-      "command": {
-        "bri": 200
-      }
     }
   ],
   "sceneId": "PjCwhZS0Bfqs2Hv"

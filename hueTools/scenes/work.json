@@ -7,19 +7,21 @@
     "scenes/bedroom/br-off.json",
     "scenes/bedroom/bs-off.json",
     "scenes/front-hall/fh-off.json",
+    "scenes/kitchen/ks-off.json",
     "scenes/office/of-morning.json"
   ],
   "lights": [
+    {"lightId": 3, "command": {"bri": 64}},
+    {"lightId": 4, "command": {"bri": 64}},
+    {"lightId": 5, "command": {"bri": 64}},
+    {"lightId": 17, "command": {"bri": 64}},
+    {"lightId": 29, "command": {"bri": 64}},
+    {"lightId": 12, "command": {"bri": 128}},
+    {"lightId": 13, "command": {"bri": 128}},
     {"lightId": 11, "recipeName": "OFF"},
-    {"lightId": 12, "recipeName": "OFF"},
-    {"lightId": 13, "recipeName": "OFF"},
-    {"lightId": 17, "recipeName": "OFF"},
+    {"lightId": 14, "recipeName": "OFF"},
     {"lightId": 22, "recipeName": "OFF"},
-    {"lightId": 23, "recipeName": "OFF"},
-    {"lightId": 27, "recipeName": "OFF"},
-    {"lightId": 29, "recipeName": "OFF"},
-    {"lightId": 35, "recipeName": "OFF"},
-    {"lightId": 36, "recipeName": "OFF"}
+    {"lightId": 27, "recipeName": "OFF"}
   ],
   "sceneId": "hgA0idU6BgATKe8"
 }
