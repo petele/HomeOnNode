@@ -32,7 +32,8 @@ function AlarmClock() {
   async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
 
-    _fbRef = await FBHelper.getRef(FB_PATH);
+    const fbRootRef = await FBHelper.getRootRefUnlimited();
+    _fbRef = await fbRootRef.child(FB_PATH);
 
     _fbRef.on('child_added', (snapshot) => {
       const key = snapshot.key;
@@ -186,10 +187,7 @@ function AlarmClock() {
     _self.emit('alarm_changed', key, alarm.details);
   }
 
-  return _init()
-      .then(() => {
-        return _self;
-      });
+  _init();
 }
 
 util.inherits(AlarmClock, EventEmitter);
