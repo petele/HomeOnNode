@@ -61,22 +61,81 @@ function HarmonyWS(ipAddress) {
   let _activitiesById = {};
   let _activityIdByName = {};
 
+  let _connectionStarted = false;
 
-  /**
-   * Init
-   */
-  async function _init() {
-    log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
+
+  this.connect = async function(retry) {
+    if (_wsClient) {
+      return true;
+    }
+    if (_connectionStarted) {
+      log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
+      return false;
+    }
+    _connectionStarted = true;
+    log.init(LOG_PREFIX, 'Connecting...');
+
     try {
       const hubInfo = await _getHubInfo();
       log.verbose(LOG_PREFIX, 'Hub info received', hubInfo);
       _hubId = hubInfo.activeRemoteId;
       _self.emit('hub_info', hubInfo);
-      _connect();
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'Init failed', ex);
+      if (retry) {
+        _retryInitialConnection(retry);
+      } else {
+        _connectionStarted = false;
+      }
+      return false;
     }
+
+    return new Promise((resolve, reject) => {
+      const wsQuery = `domain=svcs.myharmony.com&hubId=${_hubId}`;
+      const wsURL = `ws://${_ipAddress}:${HUB_PORT}/?${wsQuery}`;
+      _wsClient = new WSClient(wsURL, true, 'harmony');
+      _wsClient.on('message', (msg) => {
+        _wsMessageReceived(msg);
+      });
+      _wsClient.on('connect', () => {
+        log.debug(LOG_PREFIX, `Connected.`);
+        _getConfig();
+        _getActivity();
+        _self.emit('ready');
+        resolve(true);
+        setInterval(_getConfig, CONFIG_REFRESH_INTERVAL);
+      });
+    });
+  };
+
+  // /**
+  //  * Init
+  //  */
+  // async function _init() {
+  //   log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
+  //   try {
+  //     const hubInfo = await _getHubInfo();
+  //     log.verbose(LOG_PREFIX, 'Hub info received', hubInfo);
+  //     _hubId = hubInfo.activeRemoteId;
+  //     _self.emit('hub_info', hubInfo);
+  //     _connect();
+  //   } catch (ex) {
+  //     log.exception(LOG_PREFIX, 'Init failed', ex);
+  //   }
+  // }
+
+
+  /**
+   * Retry the initial connection if it didn't succeed.
+   *
+   * @param {Boolean} [retry]
+   */
+  function _retryInitialConnection(retry) {
+    setTimeout(() => {
+      _connectionStarted = false;
+      _self.connect(retry);
+    }, 90 * 1000);
   }
+
 
   /**
    * Start the activity by ID
@@ -205,24 +264,6 @@ function HarmonyWS(ipAddress) {
       return;
     }
     return respBody.data;
-  }
-
-  /**
-   * Open WebSocket port & connect to the Harmony Hub
-   */
-  function _connect() {
-    const wsQuery = `domain=svcs.myharmony.com&hubId=${_hubId}`;
-    const wsURL = `ws://${_ipAddress}:${HUB_PORT}/?${wsQuery}`;
-    _wsClient = new WSClient(wsURL, true, 'harmony');
-    _wsClient.on('message', (msg) => {
-      _wsMessageReceived(msg);
-    });
-    _wsClient.on('connect', () => {
-      log.debug(LOG_PREFIX, `Connected to Harmony Hub.`);
-      _getConfig();
-      _getActivity();
-    });
-    setInterval(_getConfig, CONFIG_REFRESH_INTERVAL);
   }
 
   /**
@@ -399,11 +440,6 @@ function HarmonyWS(ipAddress) {
   function _getActivity() {
     return _sendCommand(COMMAND_STRINGS.GET_ACTIVITY);
   }
-
-  return _init()
-      .then(() => {
-        return _self;
-      });
 }
 
 util.inherits(HarmonyWS, EventEmitter);

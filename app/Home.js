@@ -139,16 +139,11 @@ function Home() {
     await _initHue();
     await _initAlarmClock();
     await _initNanoLeaf();
-
-
-    // _initNanoLeaf();
-    // await honHelpers.sleep(300);
-
-    // _initSonos();
-    // await honHelpers.sleep(300);
-
-    // _initHarmony();
-    // await honHelpers.sleep(300);
+    await _initSonos();
+    await _initHarmony();
+    await _initWeather();
+    await _initWemo();
+    await _initAwair();
 
     // _initBluetooth();
     // await honHelpers.sleep(300);
@@ -165,16 +160,13 @@ function Home() {
     // _initPushBullet();
     // await honHelpers.sleep(300);
 
-    // _initWeather();
-    // await honHelpers.sleep(300);
 
-    // _initWemo();
-    // await honHelpers.sleep(300);
+
 
     // _initLGTV();
     // await honHelpers.sleep(300);
 
-    // _initAwair();
+    //
     // await honHelpers.sleep(300);
 
     // _initPresence();
@@ -1523,37 +1515,16 @@ function Home() {
    * Init the Awair API
    */
   async function _initAwair() {
-    _fbSet('state/awair', false);
+    await _fbSet('state/awair', false);
 
     if (_config.awair.disabled === true) {
       log.warn(LOG_PREFIX, 'Cron disabled via config.');
       return;
     }
 
-    const token = _config.awair.key;
-    if (!token) {
-      log.error(LOG_PREFIX, 'Awair unavailable, no token specified.');
-      return;
-    }
-    awair = new Awair(token);
-    awair.on('device_found', (key, device) => {
-      _fbSet(`state/awair/${key}`, device);
-    });
-    awair.on('settings_changed', (key, settings) => {
-      _fbSet(`state/awair/${key}/settings`, settings);
-    });
-    awair.on('data_changed', (key, data) => {
-      _fbSet(`state/awair/${key}/data`, data);
-    });
+    awair = new Awair();
     awair.on('sensors_changed', (key, data) => {
       _fbSet(`state/awair/local/${key}`, data);
-    });
-    const fbAwairPath = 'config/HomeOnNode/awair/devices';
-    const fbAwairRef = await FBHelper.getRef(fbAwairPath);
-    fbAwairRef.on('child_added', (snapshot) => {
-      const deviceId = snapshot.key;
-      const ipAddress = snapshot.val();
-      awair.monitorLocalDevice(deviceId, ipAddress);
     });
   }
 
@@ -1643,7 +1614,7 @@ function Home() {
       log.error(LOG_PREFIX, `Harmony unavailable, no IP address specified.`);
       return;
     }
-    harmony = await new Harmony(ip);
+    harmony = new Harmony(ip);
     harmony.on('hub_info', (data) => {
       _fbSet('state/harmony/info', data);
     });
@@ -1665,6 +1636,8 @@ function Home() {
     harmony.on('metadata_notify', (data) => {
       _fbSet('state/harmony/meta', data);
     });
+
+    harmony.connect();
   }
 
   /**
@@ -2023,18 +1996,18 @@ function Home() {
       return;
     }
 
-    sonos = await new Sonos();
+    sonos = new Sonos();
+
     sonos.on('player-state', (playerState) => {
       playerState = JSON.parse(JSON.stringify(playerState));
       _fbSet('state/sonos/state', playerState);
     });
+
     sonos.on('favorites-changed', (favorites) => {
       favorites = JSON.parse(JSON.stringify(favorites));
       _fbSet('state/sonos/favorites', favorites);
     });
 
-    // Nothing of interest in storing this data, most of it is covered in
-    // player-state
     sonos.on('transport-state', (state) => {
       try {
         state = JSON.parse(JSON.stringify(state));
@@ -2043,15 +2016,6 @@ function Home() {
         log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
       }
     });
-    // Nothing interesting here either....
-    // sonos.on('topology-changed', (topology) => {
-    //   try {
-    //     topology = JSON.parse(JSON.stringify(topology));
-    //     _fbSet('state/sonos/topology', topology);
-    //   } catch (ex) {
-    //     log.debug(LOG_PREFIX, 'Unable to save Sonos topology', ex);
-    //   }
-    // });
 
     // single vol
     sonos.on('volume-changed', (val) => {
@@ -2059,6 +2023,7 @@ function Home() {
       const vol = val.newVolume;
       _fbSet(`state/sonos/speakerState/${roomName}/volume`, vol);
     });
+
     // group vol
     sonos.on('group-volume', (val) => {
       const vol = val.newVolume;
@@ -2066,12 +2031,14 @@ function Home() {
       _fbSet(`state/sonos/speakerState/_group/volume`, vol);
       _fbSet(`state/sonos/speakerState/_group/controller`, roomName);
     });
+
     // single mute
     sonos.on('mute-changed', (val) => {
       const isMuted = val.newMute;
       const roomName = val.roomName;
       _fbSet(`state/sonos/speakerState/${roomName}/isMuted`, isMuted);
     });
+
     // group mute
     sonos.on('group-mute', (val) => {
       const isMuted = val.newMute;
@@ -2079,6 +2046,8 @@ function Home() {
       _fbSet(`state/sonos/speakerState/_group/isMuted`, isMuted);
       _fbSet(`state/sonos/speakerState/_group/controller`, roomName);
     });
+
+    sonos.connect();
   }
 
 
@@ -2131,8 +2100,8 @@ function Home() {
   /**
    * Init Weather
    */
-  function _initWeather() {
-    _fbSet('state/weather', false);
+  async function _initWeather() {
+    await _fbSet('state/weather', false);
 
     if (_config.forecastIO.disabled === true) {
       log.warn(LOG_PREFIX, 'Weather disabled via config.');
@@ -2160,8 +2129,8 @@ function Home() {
   /**
    * Init Wemo
    */
-  function _initWemo() {
-    _fbSet('state/wemo', false);
+  async function _initWemo() {
+    await _fbSet('state/wemo', false);
 
     if (_config.wemo.disabled === true) {
       log.warn(LOG_PREFIX, 'Wemo disabled via config.');

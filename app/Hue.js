@@ -43,7 +43,7 @@ function Hue(key, ipAddress) {
    */
   this.connect = async function(retry) {
     if (_ready) {
-      return;
+      return true;
     }
     if (_connectionStarted) {
       log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
