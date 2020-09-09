@@ -10,11 +10,13 @@ const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
 const Awair = require('./Awair');
 const moment = require('moment');
+
 const log = require('./SystemLog2');
 const AppleTV = require('./AppleTV');
 const Logging = require('./Logging');
 const honExec = require('./HoNExec');
 const GCMPush = require('./GCMPush');
+const fsProm = require('fs/promises');
 const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
 const NanoLeaf = require('./NanoLeaf');
@@ -23,9 +25,10 @@ const CronJob = require('cron').CronJob;
 const Bluetooth = require('./Bluetooth');
 const PushBullet = require('./PushBullet');
 const AlarmClock = require('./AlarmClock');
+const deepDiff = require('deep-diff').diff;
 
 const FBHelper = require('./FBHelper');
-const ConfigHelper = require('./ConfigHelper');
+// const ConfigHelper = require('./ConfigHelper');
 
 const LOG_PREFIX = 'HOME';
 
@@ -38,6 +41,7 @@ function Home() {
   _self.state = {};
 
   let _config;
+  let _fbRootRef;
 
   let alarmClock;
   let appleTV;
@@ -76,18 +80,30 @@ function Home() {
   async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
 
-    const now = Date.now();
-
-    const configHelper = new ConfigHelper();
-    _config = configHelper.getConfig();
-    if (_config._configType !== 'HoN') {
-      throw new Error(`Invalid Config Type '${_config._configType}'`);
+    try {
+      log.log(LOG_PREFIX, 'Reading config from Firebase...');
+      _fbRootRef = await FBHelper.getRootRef(30 * 1000);
+      const fbConfigRef = await _fbRootRef.child(`config/HomeOnNode`);
+      _config = await fbConfigRef.once('value');
+      _config = _config.val();
+    } catch (ex) {
+      log.error(LOG_PREFIX, `Unable to get config from Firebase...`, ex);
     }
-    configHelper.on('changed', (newConfig) => {
-      _config = newConfig;
-      log.log(LOG_PREFIX, 'Config updated.');
-    });
-    _config = configHelper.getConfig();
+
+    if (!_config || _config._configType !== 'HoN') {
+      log.log(LOG_PREFIX, `Reading config from 'config.json'...`);
+      try {
+        const configFile = 'config.json';
+        const configStr = await fsProm.readFile(configFile, {encoding: 'utf8'});
+        _config = JSON.parse(configStr);
+      } catch (ex) {
+        const msg = `Unable to read config file from disk.`;
+        log.exception(LOG_PREFIX, msg, ex);
+        throw new Error(msg);
+      }
+    }
+
+    const now = Date.now();
 
     _self.state = {
       delayedCommands: {},
@@ -106,19 +122,23 @@ function Home() {
       },
     };
 
-    FBHelper.getRef('state')
-        .then((ref) => {
-          return ref.once('value');
-        })
-        .then((snapshot) => {
-          const val = snapshot.val();
-          _self.state.hasNotification = val.hasNotification;
-          _self.state.systemState = val.systemState;
-        });
+    if (_fbRootRef) {
+      const fbState = await _fbRootRef.child('state');
+      const fbPrevStateSnap = await fbState.once('value');
+      const fbPrevState = await fbPrevStateSnap.val();
+      log.log(LOG_PREFIX, 'Updating state based on previous state.');
+      _self.state.doNotDisturb = fbPrevState.doNotDisturb;
+      _self.state.hasNotification = fbPrevState.hasNotification;
+      _self.state.systemState = fbPrevState.systemState;
+    } else {
+      _waitForFBRef();
+    }
 
-    // gcmPush = new GCMPush();
+    gcmPush = await new GCMPush();
 
-    // _initAlarmClock();
+    await _initAlarmClock();
+
+    return;
     // _initAppleTV();
     // _initBluetooth();
     // _initNotifications();
@@ -139,29 +159,54 @@ function Home() {
       _self.emit('ready');
       _playSound(_config.readySound);
     }, 750);
+
+    _initConfigWatcher();
   }
 
+
+  /**
+   *
+   */
+  async function _initConfigWatcher() {
+    try {
+      const fbRootRef = await FBHelper.getRootRefUnlimited();
+      const fbConfigRef = await fbRootRef.child(`config/HomeOnNode`);
+      fbConfigRef.on('value', (newVal) => {
+        const newConfig = newVal.val();
+        if (deepDiff(_config, newConfig)) {
+          _config = newConfig;
+          log.log(LOG_PREFIX, 'Config updated.');
+          try {
+            fsProm.writeFile('config.json', JSON.stringify(_config));
+            log.verbose(LOG_PREFIX, `Wrote config to 'config.json'.`);
+          } catch (ex) {
+            log.exception(LOG_PREFIX, 'Unable to write config to disk.', ex);
+          }
+        }
+      });
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Error while setting up config watcher', ex);
+    }
+  }
+
+  /**
+   *
+   */
+  async function _waitForFBRef() {
+    try {
+      _fbRootRef = await FBHelper.getRootRefUnlimited();
+      const state = await _fbRootRef.child('state');
+      state.set(_self.state);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to get state object.', ex);
+    }
+  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
    * Public APIs
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Updates the system config.
-   *
-   * @param {Object} config New config data.
-   */
-  this.updateConfig = function(config) {
-    if (config && config._version >= 2) {
-      _config = config;
-      log.log(LOG_PREFIX, 'Config updated.');
-      return;
-    }
-    const msg = 'Config not updated, invalid config provided.';
-    log.error(LOG_PREFIX, msg, config);
-  };
 
   /**
    * Executes the specified named command.
@@ -747,14 +792,19 @@ function Home() {
    *
    * @param {String} path Path to push object to.
    * @param {Object} value The value to push.
+   * @return {any}
    */
   function _fbPush(path, value) {
+    if (!_fbRootRef) {
+      log.error(LOG_PREFIX, `fbPush failed, no fbRootRef`);
+      return;
+    }
     try {
-      FBHelper.push(path, value);
-      fbSetLastUpdated();
+      return _fbRootRef.child(path).push(value);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to push data on path: ' + path, ex);
     }
+    return null;
   }
 
   /**
@@ -762,14 +812,20 @@ function Home() {
    *
    * @param {String} path Path to push object to
    * @param {Object} value The value to push
+   * @return {any}
    */
   function _fbSet(path, value) {
     if (path.indexOf('state/') === 0) {
       _updateLocalState(path, value);
     }
+    if (!_fbRootRef) {
+      log.error(LOG_PREFIX, `fbSet failed, no fbRootRef`);
+      return;
+    }
     try {
-      FBHelper.set(path, value);
+      const result = _fbRootRef.child(path).set(value);
       fbSetLastUpdated();
+      return result;
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to set data on path: ' + path, ex);
     }
@@ -779,12 +835,15 @@ function Home() {
    * Set state last updated.
    */
   function fbSetLastUpdated() {
+    if (!_fbRootRef) {
+      return;
+    }
     const now = Date.now();
     const info = {
       lastUpdated: now,
       lastUpdated_: log.formatTime(now),
     };
-    FBHelper.update('state/time', info);
+    _fbRootRef.child('state/time').set(info);
   }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -2101,10 +2160,7 @@ function Home() {
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
-  return _init()
-      .then(() => {
-        return _self;
-      });
+  _init();
 }
 
 util.inherits(Home, EventEmitter);

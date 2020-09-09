@@ -371,10 +371,7 @@ function DeviceMonitor(deviceName, isMonitor) {
     });
   };
 
-  return _init()
-      .then(() => {
-        return _self;
-      });
+  _init();
 }
 util.inherits(DeviceMonitor, EventEmitter);
 

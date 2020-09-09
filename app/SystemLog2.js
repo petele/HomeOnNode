@@ -328,7 +328,7 @@ function _handleLog(logObj) {
   if (logObj.levelValue <= _logOpts.file.logLevel) {
     _saveLogToFile(stringifiedLogObj);
   }
-  if (logObj.levelValue <= _logOpts.firebase.logLevel) {
+  if (logObj.levelValue <= _logOpts.firebase.level) {
     _saveLogToFirebase(logObj);
   }
   setImmediate(() => {
@@ -379,10 +379,10 @@ function _stringifyLog(logObj) {
  * @return {Promise}
  */
 function _saveLogToFirebase(logObj) {
-  if (_logOpts.firebase.logLevel === -1) {
+  if (_logOpts.firebase.level === -1) {
     return;
   }
-  if (logObj.levelValue > _logOpts.firebase.logLevel) {
+  if (logObj.levelValue > _logOpts.firebase.level) {
     return;
   }
   if (!_fbRef) {
