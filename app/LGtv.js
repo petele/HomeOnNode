@@ -3,6 +3,7 @@
 const net = require('net');
 const util = require('util');
 const log = require('./SystemLog2');
+const honHelpers = require('./HoNHelpers');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'LG_TV';
@@ -60,19 +61,6 @@ const LG_BUTTONS = [
   'ENTER', 'CLICK',
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 ];
-
-/**
- * Returns after specified seconds, defaults to 30.
- *
- * @param {Number} [seconds] Number of seconds to wait (optional).
- * @return {?Promise<undefined>} A promise that resolves after specified time.
- */
-function promiseSleep(seconds) {
-  seconds = seconds || 30;
-  return new Promise((resolve) => {
-    setTimeout(resolve, seconds * 1000);
-  });
-}
 
 /**
  * Pings a device to see if it's alive and the specified port is open.
@@ -203,7 +191,7 @@ function LGTV(ipAddress, credentials) {
           if (alive === true) {
             return true;
           }
-          return promiseSleep().then(_waitForAlive);
+          return honHelpers.sleep(30 * 1000).then(_waitForAlive);
         });
   }
 

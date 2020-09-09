@@ -136,63 +136,61 @@ function Home() {
 
     gcmPush = await new GCMPush();
 
+    await _initHue();
+    await _initAlarmClock();
+    await _initNanoLeaf();
 
-    _initAlarmClock();
-    await honHelpers.sleep(300);
 
-    _initHue();
-    await honHelpers.sleep(300);
+    // _initNanoLeaf();
+    // await honHelpers.sleep(300);
 
-    _initNanoLeaf();
-    await honHelpers.sleep(300);
+    // _initSonos();
+    // await honHelpers.sleep(300);
 
-    _initSonos();
-    await honHelpers.sleep(300);
+    // _initHarmony();
+    // await honHelpers.sleep(300);
 
-    _initHarmony();
-    await honHelpers.sleep(300);
+    // _initBluetooth();
+    // await honHelpers.sleep(300);
 
-    _initBluetooth();
-    await honHelpers.sleep(300);
+    // _initNotifications();
+    // await honHelpers.sleep(300);
 
-    _initNotifications();
-    await honHelpers.sleep(300);
+    // _initAppleTV();
+    // await honHelpers.sleep(300);
 
-    _initAppleTV();
-    await honHelpers.sleep(300);
+    // _initTivo();
+    // await honHelpers.sleep(300);
 
-    _initTivo();
-    await honHelpers.sleep(300);
+    // _initPushBullet();
+    // await honHelpers.sleep(300);
 
-    _initPushBullet();
-    await honHelpers.sleep(300);
+    // _initWeather();
+    // await honHelpers.sleep(300);
 
-    _initWeather();
-    await honHelpers.sleep(300);
+    // _initWemo();
+    // await honHelpers.sleep(300);
 
-    _initWemo();
-    await honHelpers.sleep(300);
+    // _initLGTV();
+    // await honHelpers.sleep(300);
 
-    _initLGTV();
-    await honHelpers.sleep(300);
+    // _initAwair();
+    // await honHelpers.sleep(300);
 
-    _initAwair();
-    await honHelpers.sleep(300);
+    // _initPresence();
+    // await honHelpers.sleep(300);
 
-    _initPresence();
-    await honHelpers.sleep(300);
-
-    _initCron();
-    await honHelpers.sleep(300);
+    // _initCron();
+    // await honHelpers.sleep(300);
 
     // _initAutoHumidifier();
     // await honHelpers.sleep(300);
 
 
-    setTimeout(function() {
-      _self.emit('ready');
-      _playSound(_config.readySound);
-    }, 750);
+    // setTimeout(function() {
+    //   _self.emit('ready');
+    //   _playSound(_config.readySound);
+    // }, 750);
 
     _initConfigWatcher();
   }
@@ -833,12 +831,10 @@ function Home() {
       log.error(LOG_PREFIX, `fbPush failed, no fbRootRef`);
       return;
     }
-    try {
-      return _fbRootRef.child(path).push(value);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to push data on path: ' + path, ex);
-    }
-    return null;
+    return _fbRootRef.child(path).push(value)
+        .catch((err) => {
+          log.error(LOG_PREFIX, `Unable to push fb value to ${path}`, err);
+        });
   }
 
   /**
@@ -849,36 +845,30 @@ function Home() {
    * @return {any}
    */
   function _fbSet(path, value) {
-    if (path.indexOf('state/') === 0) {
+    if (path.startsWith('state/')) {
       _updateLocalState(path, value);
     }
     if (!_fbRootRef) {
       log.error(LOG_PREFIX, `fbSet failed, no fbRootRef`);
       return;
     }
-    try {
-      const result = _fbRootRef.child(path).set(value);
-      fbSetLastUpdated();
-      return result;
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to set data on path: ' + path, ex);
-    }
+    return _fbRootRef.child(path).set(value)
+        .then(() => {
+          const now = Date.now();
+          const lastUpdated = {
+            lastUpdated: now,
+            lastUpdated_: log.formatTime(now),
+          };
+          return _fbRootRef.child('state/time').set(lastUpdated);
+        })
+        .then(() => {
+          log.log(LOG_PREFIX, `Wrote ${path}`, value);
+        })
+        .catch((err) => {
+          log.error(LOG_PREFIX, `Unable to fb value at ${path}`, err);
+        });
   }
 
-  /**
-   * Set state last updated.
-   */
-  function fbSetLastUpdated() {
-    if (!_fbRootRef) {
-      return;
-    }
-    const now = Date.now();
-    const info = {
-      lastUpdated: now,
-      lastUpdated_: log.formatTime(now),
-    };
-    _fbRootRef.child('state/time').set(info);
-  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
@@ -1377,8 +1367,8 @@ function Home() {
   /**
    * Init the Alarm Clock API
    */
-  function _initAlarmClock() {
-    _fbSet('state/alarmClock', false);
+  async function _initAlarmClock() {
+    await _fbSet('state/alarmClock', false);
 
     alarmClock = new AlarmClock();
 
@@ -1699,7 +1689,7 @@ function Home() {
    * Init Hue
    */
   async function _initHue() {
-    await _fbSet('state/hue', null);
+    await _fbSet('state/hue', false);
 
     if (_config.philipsHue.disabled === true) {
       log.warn(LOG_PREFIX, 'Hue disabled via config.');
@@ -1713,7 +1703,7 @@ function Home() {
       return;
     }
 
-    hue = await new Hue(apiKey, hueIP);
+    hue = new Hue(apiKey, hueIP);
     hue.on('config_changed', (config) => {
       _fbSet('state/hue', config);
     });
@@ -1747,6 +1737,7 @@ function Home() {
       };
       _fbPush('logs/messages', msg);
     });
+    hue.connect(true);
   }
 
   /**
@@ -1849,7 +1840,7 @@ function Home() {
    * Init NanoLeaf
    */
   async function _initNanoLeaf() {
-    await _fbSet('state/nanoLeaf', null);
+    await _fbSet('state/nanoLeaf', false);
 
     if (_config.nanoLeaf.disabled === true) {
       log.warn(LOG_PREFIX, 'NanoLeaf disabled via config.');
@@ -1871,6 +1862,8 @@ function Home() {
     nanoLeaf.on('state_changed', (state) => {
       _fbSet('state/nanoLeaf', state);
     });
+
+    nanoLeaf.connect();
   }
 
 

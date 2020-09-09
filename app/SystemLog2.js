@@ -4,6 +4,7 @@
 
 const fs = require('fs');
 const util = require('util');
+const path = require('path');
 const zlib = require('zlib');
 const chalk = require('chalk');
 const moment = require('moment');
@@ -84,9 +85,9 @@ function _getOpts() {
  * @return {Boolean} true if completed successfully.
  */
 async function _setConsoleLogOpts(logLevel) {
-  logLevel = honHelpers.isValidInt(logLevel, 0, 100);
+  logLevel = honHelpers.isValidInt(logLevel, -1, 100);
   if (logLevel === null) {
-    _error(LOG_PREFIX, 'Invalid logLevel, must be 0 <= X <= 100', logLevel);
+    _error(LOG_PREFIX, 'Invalid logLevel, must be -1 <= X <= 100', logLevel);
     return false;
   }
   _logOpts.console.level = logLevel;
@@ -101,16 +102,23 @@ async function _setConsoleLogOpts(logLevel) {
  * @return {Boolean} true if completed successfully.
  */
 async function _setFileLogOpts(logLevel, logFile) {
-  logLevel = honHelpers.isValidInt(logLevel, 0, 100);
+  logLevel = honHelpers.isValidInt(logLevel, -1, 100);
   if (logLevel === null) {
-    _error(LOG_PREFIX, 'Invalid logLevel, must be 0 <= X <= 100', logLevel);
+    _error(LOG_PREFIX, 'Invalid logLevel, must be -1 <= X <= 100', logLevel);
     return false;
   }
   if (!logFile) {
     _error(LOG_PREFIX, 'Must provide a valid log file name.');
     return false;
   }
-  _logOpts.file.logLevel = logLevel;
+  try {
+    const parsedFileName = path.parse(logFile);
+    await fsProm.mkdir(parsedFileName.dir, {recursive: true});
+  } catch (ex) {
+    _error(LOG_PREFIX, `Invalid log file: ${logFile}`, ex);
+    return false;
+  }
+  _logOpts.file.level = logLevel;
   _logOpts.file.logFile;
   return true;
 }
@@ -123,9 +131,9 @@ async function _setFileLogOpts(logLevel, logFile) {
  * @return {Boolean} true if completed successfully.
  */
 async function _setFirebaseLogOpts(logLevel, path) {
-  logLevel = honHelpers.isValidInt(logLevel, 0, 100);
+  logLevel = honHelpers.isValidInt(logLevel, -1, 100);
   if (logLevel === null) {
-    _error(LOG_PREFIX, 'Invalid logLevel, must be 0 <= X <= 100', logLevel);
+    _error(LOG_PREFIX, 'Invalid logLevel, must be -1 <= X <= 100', logLevel);
     return false;
   }
   if (!path.startsWith('logs/')) {
@@ -325,7 +333,7 @@ function _handleLog(logObj) {
     // eslint-disable-next-line no-console
     console.log(stringifiedLogObj);
   }
-  if (logObj.levelValue <= _logOpts.file.logLevel) {
+  if (logObj.levelValue <= _logOpts.file.level) {
     _saveLogToFile(stringifiedLogObj);
   }
   if (logObj.levelValue <= _logOpts.firebase.level) {
@@ -396,7 +404,6 @@ function _saveLogToFirebase(logObj) {
       .catch((err) => {
         const msg = 'Unable to save log item to Firebase';
         _exception(LOG_PREFIX, msg, err);
-        _verbose(LOG_PREFIX, msg, logObj);
       });
 }
 
@@ -407,6 +414,9 @@ function _saveLogToFirebase(logObj) {
  * @return {Promise}
  */
 function _saveLogToFile(stringifiedLogObj) {
+  if (_logOpts.file.level === -1) {
+    return;
+  }
   const lines = stripAnsi(stringifiedLogObj) + '\n';
   return fsProm.appendFile(_logOpts.file.logFile, lines)
       .catch((err) => {

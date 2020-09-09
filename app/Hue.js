@@ -32,11 +32,65 @@ function Hue(key, ipAddress) {
   const _key = key;
 
   const _bridgeIP = ipAddress;
-  // let _httpsAgent;
   let _ready = false;
+  let _connectionStarted = false;
 
   this.dataStore = {};
-  let _capabilities = {};
+
+  /**
+   * Connect to the Hue bridge for the first time.
+   * @param {Boolean} retry
+   */
+  this.connect = async function(retry) {
+    if (_ready) {
+      return;
+    }
+    if (_connectionStarted) {
+      log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
+      return false;
+    }
+    _connectionStarted = true;
+    log.init(LOG_PREFIX, 'Connecting...');
+
+    try {
+      await _updateConfig();
+    } catch (ex) {
+      if (retry) {
+        _retryInitialConnection(retry);
+      } else {
+        _connectionStarted = false;
+      }
+      return false;
+    }
+    _ready = true;
+    log.debug(LOG_PREFIX, 'Connected.');
+    setTimeout(() => {
+      _updateConfigTick();
+    }, CONFIG_REFRESH_INTERVAL);
+    setTimeout(() => {
+      _updateLightsAndGroupsTick();
+    }, LIGHTS_REFRESH_INTERVAL);
+    setTimeout(() => {
+      _updateSensorsTick();
+    }, SENSORS_REFRESH_INTERVAL);
+    setTimeout(() => {
+      _checkBatteriesTick();
+    }, BATTERY_REFRESH_INTERVAL);
+    _self.emit('ready');
+    return true;
+  };
+
+  /**
+   * Retry the initial connection if it didn't succeed.
+   *
+   * @param {Boolean} [retry]
+   */
+  function _retryInitialConnection(retry) {
+    setTimeout(() => {
+      _connectionStarted = false;
+      _self.connect(retry);
+    }, 90 * 1000);
+  }
 
   /**
    * Is API ready?
@@ -167,27 +221,27 @@ function Hue(key, ipAddress) {
         });
   };
 
-  /**
-   * Update all data from the hub.
-   * @return {Promise}
-   */
-  this.updateHub = function() {
-    const msg = `updateHub()`;
-    if (!_self.isReady()) {
-      log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
-      return Promise.reject(new Error('not_ready'));
-    }
-    log.debug(LOG_PREFIX, msg);
-    return _updateConfig()
-        .then(() => {
-          log.verbose(LOG_PREFIX, `${msg} completed.`);
-          return;
-        })
-        .catch((err) => {
-          log.warn(LOG_PREFIX, `${msg} failed.`, err);
-          return;
-        });
-  };
+  // /**
+  //  * Update all data from the hub.
+  //  * @return {Promise}
+  //  */
+  // this.updateHub = function() {
+  //   const msg = `updateHub()`;
+  //   if (!_self.isReady()) {
+  //     log.error(LOG_PREFIX, `${msg} failed. Hue not ready.`);
+  //     return Promise.reject(new Error('not_ready'));
+  //   }
+  //   log.debug(LOG_PREFIX, msg);
+  //   return _updateConfig()
+  //       .then(() => {
+  //         log.verbose(LOG_PREFIX, `${msg} completed.`);
+  //         return;
+  //       })
+  //       .catch((err) => {
+  //         log.warn(LOG_PREFIX, `${msg} failed.`, err);
+  //         return;
+  //       });
+  // };
 
   /**
    * Updates sceneId for the specified rules
@@ -261,102 +315,47 @@ function Hue(key, ipAddress) {
   };
 
   /**
-   * Init the API
-  */
-  async function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
-    // _httpsAgent = new https.Agent({
-    //   rejectUnauthorized: false,
-    //   maxSockets: 6,
-    // });
-    await _updateConfig();
-    _ready = true;
-    log.verbose(LOG_PREFIX, 'Starting interval timers...');
-    setTimeout(() => {
-      _updateConfigTick();
-    }, CONFIG_REFRESH_INTERVAL);
-    setTimeout(() => {
-      _updateLightsAndGroupsTick();
-    }, LIGHTS_REFRESH_INTERVAL);
-    setTimeout(() => {
-      _updateSensorsTick();
-    }, SENSORS_REFRESH_INTERVAL);
-    setTimeout(() => {
-      _checkBatteriesTick();
-    }, BATTERY_REFRESH_INTERVAL);
-    log.debug(LOG_PREFIX, 'Ready.');
-    _self.emit('ready');
-  }
-
-  /**
    * Timer tick for updating config information.
    * @return {Promise}
    */
   async function _updateConfigTick() {
-    return _updateConfig()
-        .then(() => {
-          return honHelpers.sleep(CONFIG_REFRESH_INTERVAL);
-        })
-        .then(() => {
-          _updateConfigTick();
-        });
+    try {
+      await _updateConfig(true);
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Unable to update config.', ex);
+    }
+    await honHelpers.sleep(CONFIG_REFRESH_INTERVAL);
+    return _updateConfigTick();
   }
 
   /**
    * Timer tick for updating lights information.
    * @return {Promise}
    */
-  function _updateLightsAndGroupsTick() {
-    return _updateLightsAndGroups()
-        .then(() => {
-          return honHelpers.sleep(LIGHTS_REFRESH_INTERVAL);
-        })
-        .then(() => {
-          _updateLightsAndGroupsTick();
-        });
+  async function _updateLightsAndGroupsTick() {
+    await _updateLightsAndGroups();
+    await honHelpers.sleep(LIGHTS_REFRESH_INTERVAL);
+    return _updateLightsAndGroupsTick();
   }
 
   /**
    * Timer tick for updating lights information.
    * @return {Promise}
    */
-  function _updateSensorsTick() {
-    return _updateSensors()
-        .then(() => {
-          return honHelpers.sleep(SENSORS_REFRESH_INTERVAL);
-        })
-        .then(() => {
-          _updateSensorsTick();
-        });
+  async function _updateSensorsTick() {
+    await _updateSensors();
+    await honHelpers.sleep(SENSORS_REFRESH_INTERVAL);
+    return _updateSensorsTick();
   }
 
   /**
    * Timer tick for checking the batteries.
    * @return {Promise}
    */
-  function _checkBatteriesTick() {
-    _checkBatteries();
-    return honHelpers.sleep(BATTERY_REFRESH_INTERVAL)
-        .then(() => {
-          _checkBatteriesTick();
-        });
-  }
-
-  /**
-   * Delayed Hue Request
-   * @param {String} requestPath the URL/request path to hit
-   * @param {String} method the HTTP method to use
-   * @param {Object} [body] The body to send along with the request
-   * @param {Boolean} [retry] If the request fails, should it retry
-   * @param {Number} delayMS MS to delay the call
-   * @return {Promise} A promise that resolves with the response
-   */
-  async function _delayedHueRequest(requestPath, method, body, retry, delayMS) {
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(_makeHueRequest(requestPath, method, body, retry));
-      }, delayMS || 30 * 1000);
-    });
+  async function _checkBatteriesTick() {
+    await _checkBatteries();
+    await honHelpers.sleep(BATTERY_REFRESH_INTERVAL);
+    return _checkBatteriesTick();
   }
 
   /**
@@ -390,7 +389,7 @@ function Hue(key, ipAddress) {
         await honHelpers.sleep(250);
         return _makeHueRequest(requestPath, method, body, false);
       }
-      throw new Error('Request Error');
+      throw ex;
     }
 
     if (!resp.ok) {
@@ -446,16 +445,14 @@ function Hue(key, ipAddress) {
    *
    * @return {Promise} True if updated, false if failed.
    */
-  function _updateRules() {
-    const requestPath = '/rules';
-    return _makeHueRequest(requestPath, 'GET', null, false)
-        .then((rules) => {
-          return _hasValueChanged('rules', rules);
-        })
-        .catch((error) => {
-          log.exception(LOG_PREFIX, `Unable to retreive rules`, error);
-          return false;
-        });
+  async function _updateRules() {
+    try {
+      const rules = await _makeHueRequest('/rules', 'GET', null, false);
+      return _hasValueChanged('rules', rules);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Unable to retreive rules`, ex);
+      return false;
+    }
   }
 
   /**
@@ -463,16 +460,14 @@ function Hue(key, ipAddress) {
    *
    * @return {Promise} True if updated, false if failed.
    */
-  function _updateSensors() {
-    const requestPath = '/sensors';
-    return _makeHueRequest(requestPath, 'GET', null, false)
-        .then((sensors) => {
-          return _hasValueChanged('sensors', sensors);
-        })
-        .catch((error) => {
-          log.exception(LOG_PREFIX, `Unable to retreive sensors`, error);
-          return false;
-        });
+  async function _updateSensors() {
+    try {
+      const sensors = await _makeHueRequest('/sensors', 'GET', null, false);
+      return _hasValueChanged('sensors', sensors);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Unable to retreive sensors`, ex);
+      return false;
+    }
   }
 
   /**
@@ -481,19 +476,20 @@ function Hue(key, ipAddress) {
    * @return {Promise}
    */
   async function _updateLightsAndGroups() {
-    const result = {};
-
     try {
       const lights = await _makeHueRequest('/lights', 'GET', null, true);
-      result.lights = _hasValueChanged('lights', lights);
-
-      await honHelpers.sleep(400);
-
-      const groups = await _makeHueRequest('/groups', 'GET', null, true);
-      result.groups = _hasValueChanged('groups', groups);
+      _hasValueChanged('lights', lights);
     } catch (ex) {
-      log.exception(LOG_PREFIX, `Unable to update lights/groups`, ex);
-      return false;
+      log.exception(LOG_PREFIX, `Unable to update lights`, ex);
+    }
+
+    await honHelpers.sleep(600);
+
+    try {
+      const groups = await _makeHueRequest('/groups', 'GET', null, true);
+      _hasValueChanged('groups', groups);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Unable to update groups`, ex);
     }
   }
 
@@ -530,48 +526,27 @@ function Hue(key, ipAddress) {
   /**
    * Updates this.dataStore to the latest state from the hub.
    *
+   * @param {Boolean} retry Should it retry the connection.
    * @return {Promise} True if updated, false if failed.
    */
-  function _updateConfig() {
-    const pDataStore = _makeHueRequest('', 'GET', null, false);
-    const pCapPath = '/capabilities';
-    const pCapabilities = _delayedHueRequest(pCapPath, 'GET', null, false, 500);
-    return Promise.all([pDataStore, pCapabilities])
-        .then((results) => {
-          const newDataStore = results[0];
-          const newCapabilities = results[1];
-          let capabilitiesChanged = false;
-          let configChanged = false;
+  async function _updateConfig(retry) {
+    const dataStore = await _makeHueRequest('', 'GET', null, retry);
+    await honHelpers.sleep(250);
+    const cPath = '/capabilities';
+    const capabilities = await _makeHueRequest(cPath, 'GET', null, retry);
+    await honHelpers.sleep(250);
+    const rLinks = await _makeHueRequest('/resourcelinks', 'GET', null, retry);
 
-          // Verify we have a dataStore to work with.
-          if (!_self.dataStore) {
-            _self.dataStore = {};
-          }
+    dataStore.capabilities = capabilities;
+    dataStore.resourcelinks = rLinks;
 
-          // Has the dataStore changed?
-          if (diff(_self.dataStore, newDataStore)) {
-            _self.dataStore = newDataStore;
-            configChanged = true;
-          }
+    if (diff(_self.dataStore, dataStore)) {
+      _self.dataStore = dataStore;
+      _self.emit('config_changed', _self.dataStore);
+      return true;
+    }
 
-          // Have the capabilities changed?
-          if (diff(_capabilities, newCapabilities)) {
-            _capabilities = newCapabilities;
-            capabilitiesChanged = true;
-          }
-
-          // Has something changed?
-          if (capabilitiesChanged || configChanged) {
-            const config = Object.assign({}, newDataStore);
-            config.capabilities = Object.assign({}, _capabilities);
-            _self.emit('config_changed', config);
-          }
-          return true;
-        })
-        .catch((error) => {
-          log.exception(LOG_PREFIX, 'Unable to get config/capabilities', error);
-          return false;
-        });
+    return false;
   }
 
   /**
@@ -603,11 +578,6 @@ function Hue(key, ipAddress) {
       }
     });
   }
-
-  return _init()
-      .then(() => {
-        return _self;
-      });
 }
 
 util.inherits(Hue, EventEmitter);

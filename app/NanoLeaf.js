@@ -29,6 +29,54 @@ function NanoLeaf(key, ip, port) {
   let _ready = false;
   let _state = {};
   this.state = _state;
+  let _connectionStarted = false;
+
+  /**
+   * Connect to a NanoLeaf light for the first time.
+   *
+   * @param {Boolean} retry
+   */
+  this.connect = async function(retry) {
+    if (_ready) {
+      return true;
+    }
+    if (_connectionStarted) {
+      log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
+      return false;
+    }
+    _connectionStarted = true;
+    log.init(LOG_PREFIX, 'Connecting...');
+
+    try {
+      await _getState();
+    } catch (ex) {
+      if (retry) {
+        _retryInitialConnection(retry);
+      } else {
+        _connectionStarted = false;
+      }
+      return false;
+    }
+    log.debug(LOG_PREFIX, 'Connected.');
+    _ready = true;
+    setInterval(async () => {
+      await _getState();
+    }, REFRESH_INTERVAL);
+    _self.emit('ready');
+    return true;
+  };
+
+  /**
+   * Retry the initial connection if it didn't succeed.
+   *
+   * @param {Boolean} [retry]
+   */
+  function _retryInitialConnection(retry) {
+    setTimeout(() => {
+      _connectionStarted = false;
+      _self.connect(retry);
+    }, 90 * 1000);
+  }
 
   /**
    * Execute a NanoLeaf command.
@@ -79,15 +127,6 @@ function NanoLeaf(key, ip, port) {
   };
 
   /**
-   * Init
-  */
-  function _init() {
-    log.init(LOG_PREFIX, 'Starting...', {ip: ip, port: port});
-    _getState();
-    setInterval(_getState, REFRESH_INTERVAL);
-  }
-
-  /**
    * Checks if system is ready
    *
    * @return {Boolean} true if system is ready, false if not.
@@ -112,37 +151,30 @@ function NanoLeaf(key, ip, port) {
     }
     const fetchOpts = {
       method: method,
+      headers: {},
     };
     if (body) {
       fetchOpts.body = JSON.stringify(body);
-      fetchOpts.headers = {'Content-Type': 'application/json'};
+      fetchOpts.headers['Content-Type'] = 'application/json';
     }
     log.verbose(LOG_PREFIX, msg, body);
-    let resp;
-    let respBody;
-    try {
-      resp = await fetch(url, fetchOpts);
-      if (!resp.ok) {
-        log.exception(LOG_PREFIX, 'Response error', resp);
-        return;
-      }
-      respBody = await resp.text();
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Request error', ex);
-      return;
+    const resp = await fetch(url, fetchOpts);
+
+    if (!resp.ok) {
+      log.error(LOG_PREFIX, `${msg} - Response error`, resp);
+      throw new Error('Response Error');
     }
+
     if (requestPath !== '') {
       _getState();
     }
+
+    const respBody = await resp.text();
     if (respBody.length === 0) {
       return {ok: true};
     }
-    try {
-      return JSON.parse(respBody);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Could not convert response to JSON', ex);
-      return {ok: false, body: respBody};
-    }
+
+    return JSON.parse(respBody);
   }
 
   /**
@@ -158,12 +190,6 @@ function NanoLeaf(key, ip, port) {
     }
     if (diff(_state, state)) {
       _state = state;
-      // If we weren't ready before, change to ready & fire ready event
-      if (_ready === false) {
-        _ready = true;
-        log.debug(LOG_PREFIX, 'Ready.');
-        _self.emit('ready');
-      }
       _self.emit('state_changed', state);
     }
     return _state;
@@ -180,7 +206,10 @@ function NanoLeaf(key, ip, port) {
     const msg = `setPower(${val})`;
     log.debug(LOG_PREFIX, msg);
     const body = {on: {value: val}};
-    return _makeLeafRequest('state', 'PUT', body);
+    return _makeLeafRequest('state', 'PUT', body)
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Unable to set state', err);
+        });
   }
 
   /**
@@ -197,7 +226,10 @@ function NanoLeaf(key, ip, port) {
     }
     log.debug(LOG_PREFIX, msg);
     const body = {select: effectName};
-    return _makeLeafRequest('effects', 'PUT', body);
+    return _makeLeafRequest('effects', 'PUT', body)
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Unable to set effect', err);
+        });
   }
 
   /**
@@ -239,7 +271,10 @@ function NanoLeaf(key, ip, port) {
       return Promise.reject(new RangeError('value_out_of_range'));
     }
     const body = {brightness: {value: level}};
-    return _makeLeafRequest('state', 'PUT', body);
+    return _makeLeafRequest('state', 'PUT', body)
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Unable to set brightness', err);
+        });
   }
 
   /**
@@ -258,7 +293,10 @@ function NanoLeaf(key, ip, port) {
       return Promise.reject(new RangeError('value_out_of_range'));
     }
     const body = {ct: {value: ct}};
-    return _makeLeafRequest('state', 'PUT', body);
+    return _makeLeafRequest('state', 'PUT', body)
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Unable to set color temperature', err);
+        });
   }
 
   /**
@@ -285,8 +323,6 @@ function NanoLeaf(key, ip, port) {
     };
     return _makeLeafRequest('state', 'PUT', body);
   }
-
-  _init();
 }
 
 util.inherits(NanoLeaf, EventEmitter);
