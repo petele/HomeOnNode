@@ -148,16 +148,13 @@ function Home() {
     await _initLGTV();
     await _initAppleTV();
 
-    // _initBluetooth();
-    // await honHelpers.sleep(300);
-
-    // _initPresence();
-    // await honHelpers.sleep(300);
-
+    log.log(LOG_PREFIX, 'TODO: Auto Humidifiers');
     // _initAutoHumidifier();
-    // await honHelpers.sleep(300);
 
+    log.log(LOG_PREFIX, 'TODO: Bluetooth');
+    // _initBluetooth();
 
+    log.log(LOG_PREFIX, 'TODO: Ready Sound');
     // setTimeout(function() {
     //   _self.emit('ready');
     //   _playSound(_config.readySound);
@@ -1524,8 +1521,8 @@ function Home() {
   /**
    * Init the Bluetooth API
    */
-  function _initBluetooth() {
-    _fbSet('state/bluetooth', false);
+  async function _initBluetooth() {
+    await _fbSet('state/bluetooth', false);
 
     if (_config.bluetooth.disabled === true) {
       log.warn(LOG_PREFIX, 'Bluetooth disabled via config.');
@@ -1539,6 +1536,8 @@ function Home() {
     bluetooth.on('adapter_state', (adapterState) => {
       _fbSet('state/bluetooth/adapterState', adapterState);
     });
+
+    // _initPresence();
   }
 
   /**
@@ -1867,7 +1866,7 @@ function Home() {
    * Init Presence
    */
   async function _initPresence() {
-    _fbSet('state/presence/state', 'NONE');
+    await _fbSet('state/presence/state', 'NONE');
 
     if (!bluetooth) {
       log.warn(LOG_PREFIX, 'Presence disabled, no bluetooth available.');
