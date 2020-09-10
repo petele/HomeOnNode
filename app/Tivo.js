@@ -43,11 +43,48 @@ function Tivo(ipAddress) {
   let _reconnecting = false;
 
   /**
-   * Init
-  */
-  function _init() {
-    log.init(LOG_PREFIX, 'Starting...', {ip: _host});
-    _connectToTivo();
+   * Connect to the TiVo device.
+   *
+   * @return {Boolean} connection result
+   */
+  this.connect = function() {
+    if (_ready) {
+      return true;
+    }
+    if (_tivo) {
+      log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
+      return false;
+    }
+    log.init(LOG_PREFIX, 'Connecting...');
+    _reconnecting = false;
+
+    return new Promise((resolve, reject) => {
+      _tivo = net.connect({host: _host, port: 31339});
+      _initListeners();
+      _tivo.on('ready', () => {
+        _ready = true;
+        _self.emit('ready');
+        resolve(true);
+      });
+    });
+  };
+
+  /**
+   *
+   */
+  function _initListeners() {
+    _tivo.on('connect', () => {
+      _self.emit('connect');
+    });
+    _tivo.on('data', (data) => {
+      _handleData(data);
+    });
+    _tivo.on('error', (data) => {
+      _handleError(data);
+    });
+    _tivo.on('close', (data) => {
+      _handleClose(data);
+    });
   }
 
   /**
@@ -89,32 +126,6 @@ function Tivo(ipAddress) {
   this.KEYS = COMMANDS;
 
   /**
-   * Connect to the Tivo.
-   */
-  function _connectToTivo() {
-    log.verbose(LOG_PREFIX, 'Connecting to the Tivo...');
-    _reconnecting = false;
-    _tivo = net.connect({host: _host, port: 31339});
-    _tivo.on('connect', () => {
-      _ready = true;
-      log.verbose(LOG_PREFIX, `Connected`);
-    });
-    _tivo.on('ready', () => {
-      _ready = true;
-      log.debug(LOG_PREFIX, `Ready`);
-    });
-    _tivo.on('data', (data) => {
-      _handleData(data);
-    });
-    _tivo.on('error', (data) => {
-      _handleError(data);
-    });
-    _tivo.on('close', (data) => {
-      _handleClose(data);
-    });
-  }
-
-  /**
    * Reconnect to the Tivo.
    */
   function _reconnect() {
@@ -123,9 +134,12 @@ function Tivo(ipAddress) {
       return;
     }
     _reconnecting = true;
+    _tivo = null;
+    _ready = false;
     log.debug(LOG_PREFIX, `Reconnecting in 3 second...`);
     setTimeout(() => {
-      _connectToTivo();
+      _self.connect();
+      // _connectToTivo();
     }, 3000);
   }
 
@@ -205,8 +219,6 @@ function Tivo(ipAddress) {
     log.error(LOG_PREFIX, 'Tivo not ready.');
     return false;
   }
-
-  _init();
 }
 
 util.inherits(Tivo, EventEmitter);

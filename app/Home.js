@@ -144,6 +144,7 @@ function Home() {
     await _initWeather();
     await _initWemo();
     await _initAwair();
+    await _initTivo();
 
     // _initBluetooth();
     // await honHelpers.sleep(300);
@@ -2060,8 +2061,8 @@ function Home() {
   /**
    * Init TiVo
    */
-  function _initTivo() {
-    _fbSet('state/tivo', false);
+  async function _initTivo() {
+    await _fbSet('state/tivo', false);
 
     if (_config.tivo.disabled === true) {
       log.warn(LOG_PREFIX, 'TiVo disabled via config.');
@@ -2077,6 +2078,8 @@ function Home() {
     tivo.on('data', (data) => {
       _fbSet('state/tivo/data', data);
     });
+
+    tivo.connect();
   }
 
   /**
