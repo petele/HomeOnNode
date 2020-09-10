@@ -23,12 +23,11 @@ const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
 const CronJob = require('cron').CronJob;
 const Bluetooth = require('./Bluetooth');
-const PushBullet = require('./PushBullet');
 const AlarmClock = require('./AlarmClock');
 const deepDiff = require('deep-diff').diff;
 
 const FBHelper = require('./FBHelper');
-const honHelpers = require('./HoNHelpers');
+// const honHelpers = require('./HoNHelpers');
 // const ConfigHelper = require('./ConfigHelper');
 
 const LOG_PREFIX = 'HOME';
@@ -55,7 +54,6 @@ function Home() {
   let logging;
   let nanoLeaf;
   let presence;
-  let pushBullet;
   let sonos;
   let tivo;
   let weather;
@@ -147,24 +145,18 @@ function Home() {
     await _initAwair();
     await _initTivo();
 
+    await _initCron();
+
     // _initBluetooth();
     // await honHelpers.sleep(300);
 
     // _initAppleTV();
     // await honHelpers.sleep(300);
 
-
-
-    // _initPushBullet();
-    // await honHelpers.sleep(300);
-
     // _initLGTV();
     // await honHelpers.sleep(300)
 
     // _initPresence();
-    // await honHelpers.sleep(300);
-
-    // _initCron();
     // await honHelpers.sleep(300);
 
     // _initAutoHumidifier();
@@ -326,7 +318,6 @@ function Home() {
     log.log(LOG_PREFIX, 'Shutting down...');
     _shutdownBluetooth();
     _shutdownHarmony();
-    _shutdownPushBullet();
     _shutdownTivo();
     _shutdownLGTV();
   };
@@ -1921,61 +1912,6 @@ function Home() {
     }
     _fbSet('state/presence/state', presenceState);
     _self.executeCommandByName(`PRESENCE_${presenceState}`, 'PRESENCE');
-  }
-
-
-  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
-   *
-   * PushBullet API
-   *
-   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Init Push Bullet
-   */
-  function _initPushBullet() {
-    if (_config.pushBullet.disabled === true) {
-      log.warn(LOG_PREFIX, 'PushBullet disabled via config.');
-      return;
-    }
-
-    const apiKey = _config.pushBullet.key;
-    if (!apiKey) {
-      log.error(LOG_PREFIX, `PushBullet unavailable, no API key available.`);
-      return;
-    }
-    pushBullet = new PushBullet(apiKey);
-    pushBullet.on('notification', _receivedPushBulletNotification);
-  }
-
-  /**
-   * Handle incoming PushBullet notification
-   *
-   * @param {Object} msg Incoming message
-   */
-  function _receivedPushBulletNotification(msg) {
-    if (!_config.pushBullet.notificationTypes) {
-      log.warn(LOG_PREFIX, `No notification types defined.`, msg);
-      return;
-    }
-    const msgAppName = msg.application_name;
-    if (!msgAppName) {
-      return;
-    }
-    const cmdName = _config.pushBullet.notificationTypes[msgAppName];
-    if (cmdName) {
-      _self.executeCommandByName(cmdName, 'PushBullet');
-    }
-  }
-
-  /**
-   * Shutdown PushBullet
-   */
-  function _shutdownPushBullet() {
-    if (pushBullet) {
-      pushBullet.shutdown();
-    }
-    pushBullet = null;
   }
 
 

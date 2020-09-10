@@ -10,13 +10,18 @@ const FBHelper = require('./FBHelper');
 function Logging() {
   const LOG_PREFIX = 'LOGGING';
   let _fbRef;
-  const _self = this;
 
   /**
    * Initialize the API
    */
-  async function _init() {
-    _fbRef = await FBHelper.getRef('logs/cron');
+  function _init() {
+    FBHelper.getRootRefUnlimited()
+        .then((fbRootRef) => {
+          return fbRootRef.child('logs/cron');
+        })
+        .then((fbRef) => {
+          _fbRef = fbRef;
+        });
   }
 
   /**
@@ -75,10 +80,9 @@ function Logging() {
     }
 
     // Store Awair data.
-    if (state.awair) {
-      const br = _getAwairData(state.awair, 'awair-r2', '11438');
-      // const lr = null;
-      const lr = _getAwairData(state.awair, 'awair-element', '3635');
+    if (state.awair && state.awair.local) {
+      const br = _getAwairData(state.awair.local.BR);
+      const lr = _getAwairData(state.awair.local.LR);
       if (br || lr) {
         value.awair = {};
         if (br) {
@@ -124,25 +128,35 @@ function Logging() {
   /**
    * Gets the Awair data for the specified device.
    *
-   * @param {Object} awairData State data for Awair
-   * @param {String} kind Type of Awair Device
-   * @param {String} deviceId Device ID
+   * @param {Object} data State data for Awair
    * @return {Object}
    */
-  function _getAwairData(awairData, kind, deviceId) {
+  function _getAwairData(data) {
     try {
-      if (awairData[kind] && awairData[kind][deviceId]) {
-        const result = awairData[kind][deviceId];
-        if (result.data) {
-          return result.data;
-        }
+      const result = {
+        score: data.score,
+        sensors: {},
+        timestamp: data.timestamp,
+      };
+      if (data.co2) {
+        result.sensors.co2 = {value: data.co2};
       }
+      if (data.humid) {
+        result.sensors.humid = {value: data.humid};
+      }
+      if (data.pm25) {
+        result.sensors.pm25 = {value: data.pm25};
+      }
+      if (data.temp) {
+        result.sensors.temp = {value: data.temp};
+      }
+      if (data.voc) {
+        result.sensors.voc = {value: data.voc};
+      }
+      return result;
     } catch (ex) {
-      const msg = `Unable to get Awair Data for [${kind}][${deviceId}]`;
-      log.exception(LOG_PREFIX, msg, ex);
-      log.error(LOG_PREFIX, msg, awairData);
+      return null;
     }
-    return null;
   }
 
   /**
@@ -267,10 +281,7 @@ function Logging() {
     }
   }
 
-  return _init()
-      .then(() => {
-        return _self;
-      });
+  _init();
 }
 
 module.exports = Logging;
