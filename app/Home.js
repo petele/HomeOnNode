@@ -134,6 +134,7 @@ function Home() {
       _waitForFBRef();
     }
 
+    _initNotifications();
     gcmPush = await new GCMPush();
 
     await _initHue();
@@ -149,26 +150,16 @@ function Home() {
     // _initBluetooth();
     // await honHelpers.sleep(300);
 
-    // _initNotifications();
-    // await honHelpers.sleep(300);
-
     // _initAppleTV();
     // await honHelpers.sleep(300);
 
-    // _initTivo();
-    // await honHelpers.sleep(300);
+
 
     // _initPushBullet();
     // await honHelpers.sleep(300);
 
-
-
-
     // _initLGTV();
-    // await honHelpers.sleep(300);
-
-    //
-    // await honHelpers.sleep(300);
+    // await honHelpers.sleep(300)
 
     // _initPresence();
     // await honHelpers.sleep(300);
@@ -1850,15 +1841,23 @@ function Home() {
   /**
    * Initialize the Notification System
    */
-  async function _initNotifications() {
-    const fbNotRef = await FBHelper.getRef('state/hasNotification');
-    fbNotRef.on('value', (snapshot) => {
-      if (snapshot.val()) {
-        _self.executeCommandByName('NEW_NOTIFICATION', 'HOME');
-        log.log(LOG_PREFIX, 'New notification received.');
-        snapshot.ref.set(false);
-      }
-    });
+  function _initNotifications() {
+    FBHelper.getRootRefUnlimited()
+        .then((fbRootRef) => {
+          return fbRootRef.child('state/hasNotifications');
+        })
+        .then((child) => {
+          child.on('value', (snapshot) => {
+            if (snapshot.val()) {
+              _self.executeCommandByName('NEW_NOTIFICATION', 'HOME');
+              log.log(LOG_PREFIX, 'New notification received.');
+              return snapshot.ref.set(false);
+            }
+          });
+        })
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Error in initNotifications.', err);
+        });
   }
 
 
