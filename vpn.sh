@@ -2,8 +2,9 @@
 
 cd ~/HomeOnNode/app
 
-echo "Getting config..."
-node getConfig.js VPNMonitor
+echo "Configuring Node..."
+. ~/.nvm/nvm.sh
+nvm use
 echo ""
 echo ""
 
