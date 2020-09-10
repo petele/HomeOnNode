@@ -2,10 +2,9 @@
 
 cd ~/HomeOnNode/app
 
-echo "Getting config..."
-node getConfig.js HomeOnNode
-echo ""
-echo ""
+echo "Configuring Node..."
+. ~/.nvm/nvm.sh
+nvm use
 
 echo "Starting app..."
 node appController.js
