@@ -136,7 +136,7 @@ function Logging() {
       const result = {
         score: data.score,
         sensors: {},
-        timestamp: data.timestamp,
+        timeStamp: data.timestamp,
       };
       if (data.co2) {
         result.sensors.co2 = {value: data.co2};
