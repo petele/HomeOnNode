@@ -99,6 +99,7 @@ function DeviceMonitor(deviceName, isMonitor) {
    */
   function _initUncaught() {
     process.on('uncaughtException', (err) => {
+      console.log(err);
       log.fatal(_deviceName, 'A fatal exception occured.', err);
       setTimeout(() => {
         process.exit(1);
@@ -111,6 +112,7 @@ function DeviceMonitor(deviceName, isMonitor) {
    */
   function _initUnRejected() {
     process.on('unhandledRejection', (reason, p) => {
+      console.log(reason);
       log.warn(_deviceName, 'An unhandled promise rejection occured.', reason);
     });
   }
