@@ -55,7 +55,7 @@ function AlarmClock() {
     });
 
     _fbRef.on('child_changed', (snapshot) => {
-      const key = snapshot.key();
+      const key = snapshot.key;
       const details = snapshot.val();
       log.debug(LOG_PREFIX, `updateAlarm('${key}', {...})`, details);
       _alarms[key].details = details;

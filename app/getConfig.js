@@ -8,9 +8,6 @@ const FBHelper = require('./FBHelper');
 
 const LOG_PREFIX = 'GET_CONFIG';
 
-log.setAppName(LOG_PREFIX);
-log.appStart();
-
 /**
  * Main function
  */
