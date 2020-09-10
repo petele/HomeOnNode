@@ -144,17 +144,12 @@ function Home() {
     await _initWemo();
     await _initAwair();
     await _initTivo();
-
     await _initCron();
+    await _initLGTV();
+    await _initAppleTV();
 
     // _initBluetooth();
     // await honHelpers.sleep(300);
-
-    // _initAppleTV();
-    // await honHelpers.sleep(300);
-
-    // _initLGTV();
-    // await honHelpers.sleep(300)
 
     // _initPresence();
     // await honHelpers.sleep(300);
@@ -1304,8 +1299,8 @@ function Home() {
   /**
    * Init the AppleTV API
    */
-  function _initAppleTV() {
-    _fbSet('state/appleTV', false);
+  async function _initAppleTV() {
+    await _fbSet('state/appleTV', false);
 
     if (_config.appleTV.disabled === true) {
       log.warn(LOG_PREFIX, 'AppleTV disabled via config.');
@@ -1319,8 +1314,8 @@ function Home() {
     }
 
     appleTV = new AppleTV();
-    appleTV.on('found', () => {
-      appleTV.connect(credentials);
+    appleTV.on('found', (deviceInfo) => {
+      _fbSet('state/appleTV/deviceInfo', deviceInfo);
     });
     appleTV.on('nowPlaying', (info) => {
       _fbSet('state/appleTV/nowPlaying', info);
@@ -1331,6 +1326,14 @@ function Home() {
     appleTV.on('supportedCommands', (info) => {
       _fbSet('state/appleTV/supportedCommands', info);
     });
+    appleTV.on('ready', () => {
+      _fbSet('state/appleTV/ready', true);
+    });
+    appleTV.on('closed', () => {
+      _fbSet('state/appleTV/ready', false);
+    });
+
+    appleTV.connect(credentials);
   }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -1720,8 +1723,8 @@ function Home() {
   /**
    * Init the LG TV API
    */
-  function _initLGTV() {
-    _fbSet('state/lgTV', false);
+  async function _initLGTV() {
+    await _fbSet('state/lgTV', false);
 
     const lgConfig = _config.lgTV;
     if (lgConfig.disabled === true) {
@@ -1774,6 +1777,8 @@ function Home() {
     lgTV.on('currentChannel', (val) => {
       _fbSet('state/lgTV/currentChannel', val);
     });
+
+    lgTV.connect();
   }
 
   /**

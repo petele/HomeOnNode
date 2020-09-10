@@ -21,17 +21,33 @@ function AppleTV() {
   let _pairCallback;
   const _self = this;
 
-  /**
-   * Init
-   */
-  async function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
+  // /**
+  //  * Init
+  //  */
+  // async function _init() {
+  //   log.init(LOG_PREFIX, 'Starting...');
 
-    await _findAppleTV();
-    if (!_appleTV) {
-      log.error(LOG_PREFIX, 'Aborting, unable to find AppleTV');
-      return;
+  //   await _findAppleTV();
+  //   if (!_appleTV) {
+  //     log.error(LOG_PREFIX, 'Aborting, unable to find AppleTV');
+  //     return;
+  //   }
+  //   _appleTV.on('close', _onClose);
+  //   _appleTV.on('connect', _onConnect);
+  //   _appleTV.on('error', _onError);
+  //   _appleTV.on('message', _onMessage);
+  //   _appleTV.on('nowPlaying', _onNowPlaying);
+  //   _appleTV.on('playbackqueue', _onPlaybackQueue);
+  //   _appleTV.on('supportedCommands', _onSupportedCommands);
+  //   _self.emit('found');
+  // }
+
+  this.connect = async function(credentials) {
+    if (_appleTV) {
+      return true;
     }
+    log.init(LOG_PREFIX, 'Searching...');
+    await _findAppleTV();
     _appleTV.on('close', _onClose);
     _appleTV.on('connect', _onConnect);
     _appleTV.on('error', _onError);
@@ -39,7 +55,34 @@ function AppleTV() {
     _appleTV.on('nowPlaying', _onNowPlaying);
     _appleTV.on('playbackqueue', _onPlaybackQueue);
     _appleTV.on('supportedCommands', _onSupportedCommands);
-    _self.emit('found');
+    log.log(LOG_PREFIX, 'Connecting...');
+    try {
+      const credObj = appleTV.parseCredentials(credentials);
+      await _appleTV.openConnection(credObj);
+      return true;
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Error trying to connect', ex);
+    }
+    return false;
+  };
+
+  /**
+   * Finds an Apple TV
+   */
+  async function _findAppleTV() {
+    log.verbose(LOG_PREFIX, 'Searching for AppleTV...');
+    try {
+      const devices = await appleTV.scan();
+      if (devices && devices.length >= 1) {
+        _appleTV = devices[0];
+        log.verbose(LOG_PREFIX, 'Found Apple TV', _appleTV.service.txt);
+        _self.emit('found', _appleTV.service.txt);
+        return;
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Error trying to find AppleTV', ex);
+    }
+    return _findAppleTV();
   }
 
   /**
@@ -104,22 +147,6 @@ function AppleTV() {
   }
 
   /**
-   * Finds an Apple TV
-   */
-  async function _findAppleTV() {
-    log.verbose(LOG_PREFIX, 'Searching for AppleTV...');
-    try {
-      const devices = await appleTV.scan();
-      if (devices && devices.length >= 1) {
-        _appleTV = devices[0];
-        log.verbose(LOG_PREFIX, 'Found Apple TV', _appleTV.service.txt);
-      }
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Error trying to find AppleTV', ex);
-    }
-  }
-
-  /**
    * Executes an AppleTV command
    *
    * @param {Object} command Command to execute.
@@ -130,22 +157,6 @@ function AppleTV() {
       return {success: false};
     }
     return {success: false, ready: false};
-  };
-
-  this.connect = async function(credentials) {
-    if (!_appleTV) {
-      log.error(LOG_PREFIX, 'No AppleTV found...');
-      return false;
-    }
-    log.log(LOG_PREFIX, 'Connecting...');
-    try {
-      const credObj = appleTV.parseCredentials(credentials);
-      await _appleTV.openConnection(credObj);
-      return true;
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Error trying to connect', ex);
-    }
-    return false;
   };
 
   this.pairBegin = async function() {
@@ -180,10 +191,10 @@ function AppleTV() {
     }
   };
 
-  return _init()
-      .then(() => {
-        return _self;
-      });
+  // return _init()
+  //     .then(() => {
+  //       return _self;
+  //     });
 }
 
 util.inherits(AppleTV, EventEmitter);

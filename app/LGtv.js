@@ -1,6 +1,5 @@
 'use strict';
 
-const net = require('net');
 const util = require('util');
 const log = require('./SystemLog2');
 const honHelpers = require('./HoNHelpers');
@@ -63,31 +62,6 @@ const LG_BUTTONS = [
 ];
 
 /**
- * Pings a device to see if it's alive and the specified port is open.
- *
- * @param {String} ipAddress
- * @param {Number} port
- * @return {Promise<Boolean>} Is the server alive.
- */
-function isAlive(ipAddress, port) {
-  return new Promise((resolve) => {
-    const s = new net.Socket();
-    s.connect(port, ipAddress, () => {
-      s.destroy();
-      resolve(true);
-    });
-    s.on('error', (err) => {
-      s.destroy();
-      resolve(false);
-    });
-    s.setTimeout(750, () => {
-      s.destroy();
-      resolve(false);
-    });
-  });
-}
-
-/**
  * LG TV API.
  * @constructor
  *
@@ -125,6 +99,7 @@ function LGTV(ipAddress, credentials) {
   //  LGTV & Pointer Input Socket
   let _lgtv;
   let _pointerInputSocket;
+  let _connectionStarted = false;
 
   // LG TV State Info
   this.state = {
@@ -150,50 +125,25 @@ function LGTV(ipAddress, credentials) {
 
   const _self = this;
 
-  /**
-   * Init
-   */
-  function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
-    if (!ipAddress) {
-      log.error(LOG_PREFIX, 'No IP Address provided, aborting...');
-      return;
+  this.connect = async function() {
+    if (_lgtv) {
+      return true;
     }
-    if (!_connectionOptions.clientKey) {
-      log.error(LOG_PREFIX, 'No credentials provided, aborting...');
-      return;
+    if (_connectionStarted) {
+      log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
+      return false;
     }
-    _waitForAlive()
-        .then(() => {
-          _lgtv = require('lgtv2')(_connectionOptions);
-          _lgtv.on('error', _onError);
-          _lgtv.on('prompt', _onPrompt);
-          _lgtv.on('connect', _onConnect);
-          _lgtv.on('connecting', _onConnecting);
-          _lgtv.on('close', _onClose);
-          // setInterval(() => {
-          //   _checkConnectionStateTick();
-          // }, RECONNECT_DELAY);
-        })
-        .catch((err) => {
-          log.exception(LOG_PREFIX, 'Failed: Unable to initialize LG TV.', err);
-        });
-  }
+    _connectionStarted = true;
+    log.init(LOG_PREFIX, 'Connecting...');
+    await honHelpers.waitForAlive(_ipAddress, _port);
+    _lgtv = require('lgtv2')(_connectionOptions);
+    _lgtv.on('error', _onError);
+    _lgtv.on('prompt', _onPrompt);
+    _lgtv.on('connect', _onConnect);
+    _lgtv.on('connecting', _onConnecting);
+    _lgtv.on('close', _onClose);
+  };
 
-  /**
-   * Waits for the TV to come to life on startup.
-   *
-   * @return {Promise<undefined>}
-   */
-  function _waitForAlive() {
-    return isAlive(_ipAddress, _port)
-        .then((alive) => {
-          if (alive === true) {
-            return true;
-          }
-          return honHelpers.sleep(30 * 1000).then(_waitForAlive);
-        });
-  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    * Public methods
@@ -204,7 +154,6 @@ function LGTV(ipAddress, credentials) {
    */
   this.shutdown = function() {
     _setState('ready', false);
-    // _reconnect = false;
     if (_lgtv) {
       _lgtv.disconnect();
     }
@@ -754,7 +703,7 @@ function LGTV(ipAddress, credentials) {
     return true;
   }
 
-  _init();
+  // _init();
 }
 
 util.inherits(LGTV, EventEmitter);
