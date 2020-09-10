@@ -829,7 +829,7 @@ function Home() {
           return _fbRootRef.child('state/time').set(lastUpdated);
         })
         .then(() => {
-          log.log(LOG_PREFIX, `Wrote ${path}`, value);
+          log.verbose(LOG_PREFIX, `Wrote ${path}`, value);
         })
         .catch((err) => {
           log.error(LOG_PREFIX, `Unable to fb value at ${path}`, err);
