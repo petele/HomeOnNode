@@ -38,7 +38,7 @@ async function init() {
   });
 
   try {
-    _home = new Home();
+    _home = await new Home();
   } catch (ex) {
     const msg = `Error initializing 'home' module.`;
     log.exception(APP_NAME, msg, ex);
