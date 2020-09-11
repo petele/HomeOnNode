@@ -102,6 +102,7 @@ function DeviceMonitor(deviceName, isMonitor) {
       console.log(err);
       log.fatal(_deviceName, 'A fatal exception occured.', err);
       setTimeout(() => {
+        console.log('--FORCED EXIT--');
         process.exit(1);
       }, RESTART_TIMEOUT);
     });
