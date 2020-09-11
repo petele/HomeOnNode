@@ -171,6 +171,10 @@ function GCMPush() {
   return _init()
       .then(() => {
         return _self;
+      })
+      .catch((err) => {
+        log.exception(LOG_PREFIX, 'Unable to create GCMPush.', err);
+        return null;
       });
 }
 

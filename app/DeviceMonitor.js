@@ -142,6 +142,7 @@ function DeviceMonitor(deviceName, isMonitor) {
    *
    */
   function _getPiModelInfo() {
+    log.todo(_deviceName, 'Change getPiModelInfo and readFile');
     _readFile('/proc/device-tree/model')
         .then((contents) => {
           if (contents) {

@@ -12,8 +12,8 @@ const FBHelper = require('./FBHelper');
  */
 async function go() {
   const fbRootRef = await FBHelper.getRootRef(30 * 1000);
-  const commandsRef = fbRootRef.child('config/HomeOnNode/commands');
-  const sendCommandRef = fbRootRef.child('commands');
+  const commandsRef = await fbRootRef.child('config/HomeOnNode/commands');
+  const sendCommandRef = await fbRootRef.child('commands');
 
   const snapshot = await commandsRef.once('value');
   const cmds = snapshot.val();

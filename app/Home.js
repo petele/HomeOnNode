@@ -148,13 +148,13 @@ function Home() {
     await _initLGTV();
     await _initAppleTV();
 
-    log.log(LOG_PREFIX, 'TODO: Auto Humidifiers');
+    log.todo(LOG_PREFIX, 'TODO: Auto Humidifiers');
     // _initAutoHumidifier();
 
-    log.log(LOG_PREFIX, 'TODO: Bluetooth');
+    log.todo(LOG_PREFIX, 'TODO: Bluetooth');
     // _initBluetooth();
 
-    log.log(LOG_PREFIX, 'TODO: Ready Sound');
+    log.todo(LOG_PREFIX, 'TODO: Ready Sound');
     // setTimeout(function() {
     //   _self.emit('ready');
     //   _playSound(_config.readySound);
@@ -2098,7 +2098,9 @@ function Home() {
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
-  _init();
+  return _init().then(() => {
+    return _self;
+  });
 }
 
 util.inherits(Home, EventEmitter);

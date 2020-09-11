@@ -23,8 +23,8 @@ commander
     .parse(process.argv);
 commander.level = parseInt(commander.level);
 
-const logOpts = {consoleLogLevel: commander.level};
-log.setOptions(logOpts);
+// const logOpts = {consoleLogLevel: commander.level};
+// log.setOptions(logOpts);
 
 /**
  * Prints a log message.
