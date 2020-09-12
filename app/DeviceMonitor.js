@@ -136,7 +136,10 @@ function DeviceMonitor(deviceName, isMonitor) {
     if (diff(ipAddresses, _ipAddresses)) {
       _ipAddresses = ipAddresses;
       log.verbose(_deviceName, `IP addresses changed`, _ipAddresses);
-      _fbRef.child(`${_deviceName}/host/ipAddress`).set(_ipAddresses);
+      _fbRef.child(`${_deviceName}/host/ipAddress`).set(_ipAddresses)
+          .catch((err) => {
+            log.error(_deviceName, 'Unable to store IP address.', err);
+          });
     }
   }
 
@@ -149,7 +152,7 @@ function DeviceMonitor(deviceName, isMonitor) {
         .then((contents) => {
           if (contents) {
             log.log(_deviceName, 'CPU Model', contents);
-            _fbRef.child(`${_deviceName}/host/cpuModel`).set(contents);
+            return _fbRef.child(`${_deviceName}/host/cpuModel`).set(contents);
           }
         })
         .catch((err) => {});
@@ -198,6 +201,10 @@ function DeviceMonitor(deviceName, isMonitor) {
       uptime: uptime,
       uptime_: uptime_,
     };
+    if (!_fbRef) {
+      log.error(_deviceName, 'No Firebase ref...');
+      return;
+    }
     _fbRef.child(`${_deviceName}`).update(details, (err) => {
       if (err) {
         log.error(_deviceName, 'Error updating heartbeat info', err);
@@ -227,7 +234,7 @@ function DeviceMonitor(deviceName, isMonitor) {
   function _restartRequest(snapshot) {
     if (snapshot.val() === true) {
       log.verbose(_deviceName, 'Restart requested via FB.');
-      snapshot.ref().remove();
+      snapshot.ref.remove();
       _self.emit('restart_request', RESTART_TIMEOUT);
     }
   }
@@ -240,7 +247,7 @@ function DeviceMonitor(deviceName, isMonitor) {
   function _shutdownRequest(snapshot) {
     if (snapshot.val() === true) {
       log.verbose(_deviceName, 'Shutdown requested via FB.');
-      snapshot.ref().remove();
+      snapshot.ref.remove();
       _self.emit('shutdown_request');
     }
   }

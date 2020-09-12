@@ -15,7 +15,7 @@ const HOST_NAME = honHelpers.getHostname();
 let _deviceMonitor;
 
 log.startWSS(8882);
-log.setConsoleLogOpts(45);
+log.setConsoleLogOpts(90);
 log.setFileLogOpts(45, './logs/monitor.log');
 log.setFirebaseLogOpts(45, `logs/monitor/${HOST_NAME}`);
 
