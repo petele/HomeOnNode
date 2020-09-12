@@ -108,6 +108,9 @@ async function _initConfigListeners() {
   const fbConfig = await fbRoot.child(`config/${APP_NAME}`);
   fbConfig.on('value', async (snapshot) => {
     const newConfig = snapshot.val();
+    const diff = deepDiff(_config, newConfig);
+    console.log('diff', diff);
+    return;
     if (!deepDiff(_config, newConfig)) {
       return;
     }
