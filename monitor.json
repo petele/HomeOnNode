@@ -1,5 +1,6 @@
 {
   "uid": "monitor",
+  "pidFile": "/home/pi/HomeOnNode/monitor.pid",
   "append": true,
   "sourceDir": "/home/pi/HomeOnNode/app/",
   "workingDir": "/home/pi/HomeOnNode/app/",
