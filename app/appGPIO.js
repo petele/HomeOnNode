@@ -2,149 +2,136 @@
 
 'use strict';
 
-const fs = require('fs');
+const fs = require('fs/promises');
 const log = require('./SystemLog2');
-const Keys = require('./Keys').keys;
 const GCMPush = require('./GCMPush');
-const Firebase = require('firebase');
+const FBHelper = require('./FBHelper');
 const WSClient = require('./WSClient');
 const DeviceMonitor = require('./DeviceMonitor');
 
-let GPIO;
+const LOG_PREFIX = 'APP_REMOTE';
+const LOG_FILE = './logs/gpio.log';
+const CONFIG_FILE = 'config-gpio.json';
 
-let _fb;
+const APP_NAME = process.argv[2];
+
+let GPIO;
+let _fbRootRef;
+let _fbConfigRef;
 let _config;
-let _gcmPush;
-let _wsClient;
 let _deviceMonitor;
-let _hasReadFBConfig = false;
+let _wsClient;
+let _gcmPush;
 
 const EDGES = ['none', 'rising', 'falling', 'both'];
 
-// Read config file
-try {
-  // eslint-disable-next-line no-console
-  console.log(`Reading 'config.json'...`);
-  const config = fs.readFileSync('config.json', {encoding: 'utf8'});
-  // eslint-disable-next-line no-console
-  console.log(`Parsing 'config.json'...`);
-  _config = JSON.parse(config);
-} catch (ex) {
-  console.error(`Unable to read or parse 'config.json'`);
-  console.error(ex);
-  process.exit(1);
-}
-
-// Verify config has appName
-if (!_config.appName) {
-  console.error(`'appName' not set in config.`);
-  process.exit(1);
-}
-const APP_NAME = _config.appName;
-const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
-
-// Setup logging
-log.setAppName(APP_NAME);
-log.setOptions({
-  firebaseLogLevel: _config.logLevel || 50,
-  firebasePath: FB_LOG_PATH,
-});
-log.startWSS();
-log.appStart();
 
 /**
  * Init
  */
-function init() {
-  _fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
-  _fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
-    if (error) {
-      log.exception(APP_NAME, 'Firebase auth failed.', error);
-    } else {
-      log.log(APP_NAME, 'Firebase auth success.');
+async function init() {
+  log.startWSS();
+  log.setFileLogOpts(50, LOG_FILE);
+  log.setFirebaseLogOpts(50, `logs/${APP_NAME.toLowerCase()}`);
+
+  log.appStart(APP_NAME);
+
+  try {
+    log.log(LOG_PREFIX, 'Reading config from Firebase...');
+    _fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    _fbConfigRef = await _fbRootRef.child(`config/${APP_NAME}`);
+    _config = await _fbConfigRef.once('value');
+    _config = _config.val();
+  } catch (ex) {
+    log.error(LOG_PREFIX, `Unable to get Firebase reference...`, ex);
+  }
+
+  if (!validateConfig(_config)) {
+    try {
+      log.log(LOG_PREFIX, 'Reading config from local file...');
+      const cfg = await fs.readFile(CONFIG_FILE, {encoding: 'utf8'});
+      _config = JSON.parse(cfg);
+    } catch (ex) {
+      log.fatal(LOG_PREFIX, `Unable to read/parse '${CONFIG_FILE}'.`, ex);
+      process.exit(1);
     }
-  });
-  log.setFirebaseRef(_fb);
-  _deviceMonitor = new DeviceMonitor(_fb.child('devices'), APP_NAME);
+  }
+
+  if (!validateConfig(_config)) {
+    const msg = `Invalid config, or missing key properties.`;
+    log.fatal(LOG_PREFIX, msg, _config);
+    process.exit(1);
+  }
+
+  _deviceMonitor = new DeviceMonitor(APP_NAME);
   _deviceMonitor.on('restart_request', () => {
     _close();
     _deviceMonitor.restart('FB', 'restart_request', false);
   });
   _deviceMonitor.on('shutdown_request', () => {
     _close();
-    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
+    _deviceMonitor.shutdown('FB', 'shutdown_request', false);
   });
 
-  // Load GPIO
-  if (_loadGPIO() !== true) {
-    _close();
-    _deviceMonitor.shutdown(APP_NAME, 'GPIO unavailable', 1);
-    return;
+  // Initialize GPIO
+  try {
+    GPIO = require('onoff').Gpio;
+  } catch (ex) {
+    log.fatal(APP_NAME, `Node module 'onoff' is not available.`, ex);
+    process.exit(1);
   }
 
   // Connect to the web socket server
   if (_config.wsServer) {
     _wsClient = new WSClient(_config.wsServer, true, 'server');
   }
-
-  // Initialize the GCM client
-  if (_config.disableGCM !== true) {
-    _gcmPush = new GCMPush(_fb);
-  }
+  // Initialize GCMPush
+  _gcmPush = await new GCMPush();
 
   // Register listeners on each pin
   _config.pins.forEach(_registerPin);
 
-  // Listen for changes to config
-  _fb.child(`config/${APP_NAME}/pins`).on('value', (snapshot) => {
-    if (_hasReadFBConfig === false) {
-      _hasReadFBConfig = true;
-      return;
-    }
-    const config = JSON.stringify(snapshot.val(), null, 2);
-    fs.writeFileSync('config.json', config, {encoding: 'utf8'});
-    log.log(APP_NAME, 'Config updated, restart required.');
-    _close();
-    _deviceMonitor.restart(APP_NAME, 'Config changed', false);
-  });
+  _initConfigListeners();
 
-  // Listen for changes to disabled
-  _fb.child(`config/${APP_NAME}/disabled`).on('value', function(snapshot) {
-    _config.disabled = snapshot.val();
-    log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
-  });
-
-  // Listen for changes to log level
-  _fb.child(`config/${APP_NAME}/logLevel`).on('value', (snapshot) => {
-    const logLevel = snapshot.val();
-    log.setOptions({
-      firebaseLogLevel: logLevel || 50,
-      firebasePath: FB_LOG_PATH,
-    });
-    log.log(APP_NAME, `Log level changed to ${logLevel}`);
-  });
-
-  // Clean up logs every 24 hours
   setInterval(async () => {
-    await log.cleanFile();
-    await log.cleanLogs(FB_LOG_PATH, 7);
+    await log.cleanFile(LOG_FILE);
+    await log.cleanLogs(null, 7);
   }, 60 * 60 * 24 * 1000);
 }
 
+
 /**
- * Loads the GPIO components
- *
- * @return {Boolean} true if loaded, false if not.
+ * Set up the Firebase config listeners...
  */
-function _loadGPIO() {
-  try {
-    GPIO = require('onoff').Gpio;
-    return true;
-  } catch (ex) {
-    log.exception(APP_NAME, `Node module 'onoff' is not available.`, ex);
+async function _initConfigListeners() {
+  const fbRoot = await FBHelper.getRootRefUnlimited();
+  const fbConfig = await fbRoot.child(`config/${APP_NAME}`);
+  fbConfig.child('disabled').on('value', (snapshot) => {
+    _config.disabled = snapshot.val();
+    log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
+  });
+}
+
+
+/**
+ * Validate the config file meets the requirements.
+ *
+ * @param {Object} config
+ * @return {Boolean} true if good.
+ */
+function validateConfig(config) {
+  if (!config) {
     return false;
   }
+  if (config._configType !== 'gpio') {
+    return false;
+  }
+  if (!config.hasOwnProperty('wsServer')) {
+    return false;
+  }
+  return true;
 }
+
 
 /**
  * Event handler to register a pin.
@@ -245,12 +232,6 @@ function _pinChanged(pin, err, value) {
 */
 function _close() {
   log.log(APP_NAME, 'Preparing to exit, closing all connections...');
-  // if (GPIO) {
-  //   log.debug(APP_NAME, 'Unwatching pins');
-  //   GPIO.unwatchAll();
-  //   log.debug(APP_NAME, 'Unexporting GPIO');
-  //   GPIO.unexport();
-  // }
   if (_wsClient) {
     _wsClient.shutdown();
   }
@@ -262,4 +243,8 @@ process.on('SIGINT', function() {
   _deviceMonitor.shutdown('SIGINT', 'shutdown_request', 0);
 });
 
-init();
+if (APP_NAME) {
+  return init();
+} else {
+  log.fatal(LOG_PREFIX, 'No app name provided.');
+}

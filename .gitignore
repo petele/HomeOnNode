@@ -20,6 +20,7 @@ scratch-*.*
 /app/config-backup/*
 /app/test*.js
 /app/config.json
+/app/config-*.json
 /app/state.json
 /app/zwconfig/
 /open-zwave/

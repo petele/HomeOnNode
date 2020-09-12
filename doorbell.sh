@@ -9,6 +9,6 @@ echo ""
 echo ""
 
 echo "Starting app..."
-node appGPIO.js
+node appGPIO.js DoorBell
 
 node appOnError.js >> ./logs/system.log

@@ -54,8 +54,7 @@ async function init() {
 
   if (!validateConfig(_config)) {
     const msg = `Invalid config, or missing key properties.`;
-    const cfgType = _config && _config._configType ? _config._configType : null;
-    log.fatal(LOG_PREFIX, msg, cfgType);
+    log.fatal(LOG_PREFIX, msg, _config);
     process.exit(1);
   }
 
