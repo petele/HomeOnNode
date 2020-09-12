@@ -3,8 +3,6 @@
 echo "Starting Vancouver..."
 echo ""
 
-export NODE_NO_WARNINGS=1
-
 cd ~/HomeOnNode/app
 
 echo "Configuring Node..."
