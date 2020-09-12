@@ -45,7 +45,6 @@ function GCMPush() {
       _addSubscriber(key, subscribers[key]);
     });
     _sendReady = true;
-    _self.emit('ready');
     const fbSubscribers = _fbConfigRef.child('subscribers');
     fbSubscribers.on('child_added', (snapshot) => {
       _addSubscriber(snapshot.key, snapshot.val());

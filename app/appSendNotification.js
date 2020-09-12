@@ -11,6 +11,7 @@ const LOG_PREFIX = 'SEND_ON_ERROR';
 log.setConsoleLogOpts(50);
 log.setFileLogOpts(90, './logs/system.log');
 
+let gcmPush;
 const hostname = honHelpers.getHostname().toUpperCase();
 
 const DEFAULT_MESSAGE = {
@@ -38,6 +39,14 @@ async function _sendMessage() {
   }
 }
 
-const gcmPush = new GCMPush();
-gcmPush.on('ready', _sendMessage);
+/**
+ * Main App
+ */
+async function go() {
+  gcmPush = await new GCMPush();
+  if (gcmPush) {
+    _sendMessage();
+  }
+}
 
+go();
