@@ -74,6 +74,11 @@ function WSClient(host, retry, serverName) {
   }
 
   /**
+  * NoOp function for ping/pong.
+  */
+  function _noop() {}
+
+  /**
    * Handles the open event
    */
   function _wsOpen() {
@@ -81,7 +86,7 @@ function WSClient(host, retry, serverName) {
     log.verbose(_logPrefix, 'WebSocket opened.');
     _self.emit('connect');
     _interval = setInterval(() => {
-      _ws.ping('', false, true);
+      _ws.ping(_noop);
     }, PING_INTERVAL);
   }
 

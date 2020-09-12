@@ -93,6 +93,11 @@ function WSServer(name, port) {
   }
 
   /**
+   * NoOp function for ping/pong.
+   */
+  function _noop() {}
+
+  /**
    * Pings the connected clients to ensure they're still connected
    */
   function _pingClients() {
@@ -101,7 +106,8 @@ function WSServer(name, port) {
         return ws.terminate();
       }
       ws.isAlive = false;
-      ws.ping('', false, true);
+      // ws.ping('', false, true);
+      ws.ping(_noop);
     });
   }
 
