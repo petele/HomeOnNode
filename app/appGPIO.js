@@ -7,7 +7,6 @@ const log = require('./SystemLog2');
 const GCMPush = require('./GCMPush');
 const FBHelper = require('./FBHelper');
 const WSClient = require('./WSClient');
-const deepDiff = require('deep-diff').diff;
 const DeviceMonitor = require('./DeviceMonitor');
 
 const LOG_PREFIX = 'APP_REMOTE';
@@ -23,6 +22,7 @@ let _config;
 let _deviceMonitor;
 let _wsClient;
 let _gcmPush;
+let _hasReadFBConfig = false;
 
 const EDGES = ['none', 'rising', 'falling', 'both'];
 
@@ -107,13 +107,11 @@ async function _initConfigListeners() {
   const fbRoot = await FBHelper.getRootRefUnlimited();
   const fbConfig = await fbRoot.child(`config/${APP_NAME}`);
   fbConfig.on('value', async (snapshot) => {
-    const newConfig = snapshot.val();
-    const diff = deepDiff(_config, newConfig);
-    console.log('diff', diff);
-    return;
-    if (!deepDiff(_config, newConfig)) {
+    if (_hasReadFBConfig === false) {
+      _hasReadFBConfig = true;
       return;
     }
+    const newConfig = snapshot.val();
     try {
       await fs.writeFile(CONFIG_FILE, JSON.stringify(newConfig));
       log.verbose(LOG_PREFIX, `Wrote config to '${CONFIG_FILE}'.`);
