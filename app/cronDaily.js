@@ -39,7 +39,12 @@ const _backupConfig = async function() {
   const configStr = JSON.stringify(config, null, 2);
 
   const filename = `config-${moment().format('YYYY-MM-DD')}.json`;
-  fsProm.mkdir(CONFIG_BACKUP_PATH, {recursive: true});
+  try {
+    fsProm.mkdir(CONFIG_BACKUP_PATH, {recursive: true});
+  } catch (ex) {
+    log.error(LOG_PREFIX, `Unable to create '${CONFIG_BACKUP_PATH}'`, ex);
+    return false;
+  }
   const file = path.join(CONFIG_BACKUP_PATH, filename);
 
   try {
