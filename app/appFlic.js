@@ -19,6 +19,8 @@ const MODE = process.argv[2] === 'scan' ? 'SCAN' : 'LISTEN';
 const APP_NAME = 'FlicController';
 const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
 
+// https://ethitter.com/2016/12/flic-buttons-and-home-assistant/
+
 let _fb;
 let _config;
 let _wsClient;
