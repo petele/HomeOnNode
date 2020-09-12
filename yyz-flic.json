@@ -5,7 +5,5 @@
   "sourceDir": "/home/pi/HomeOnNode/app/",
   "workingDir": "/home/pi/HomeOnNode/app/",
   "logFile": "/home/pi/HomeOnNode/app/logs/forever-flic.log",
-  "script": "appFlic.js",
-  "minUptime": 1000,
-  "spinSleepTime": 1000
+  "script": "appFlic.js"
 }

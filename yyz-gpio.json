@@ -6,7 +6,5 @@
   "workingDir": "/home/pi/HomeOnNode/app/",
   "logFile": "/home/pi/HomeOnNode/app/logs/forever-gpio.log",
   "script": "appGPIO.js",
-  "args": ["DoorBell"],
-  "minUptime": 1000,
-  "spinSleepTime": 1000
+  "args": ["DoorBell"]
 }
