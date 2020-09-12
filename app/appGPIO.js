@@ -12,7 +12,6 @@ const DeviceMonitor = require('./DeviceMonitor');
 const LOG_PREFIX = 'APP_REMOTE';
 const LOG_FILE = './logs/gpio.log';
 const CONFIG_FILE = 'config-gpio.json';
-
 const APP_NAME = process.argv[2];
 
 let GPIO;
@@ -38,6 +37,7 @@ async function init() {
 
   try {
     log.log(LOG_PREFIX, 'Reading config from Firebase...');
+    // GLOBAL? NO.
     _fbRootRef = await FBHelper.getRootRef(30 * 1000);
     _fbConfigRef = await _fbRootRef.child(`config/${APP_NAME}`);
     _config = await _fbConfigRef.once('value');
@@ -48,7 +48,7 @@ async function init() {
 
   if (!validateConfig(_config)) {
     try {
-      log.log(LOG_PREFIX, 'Reading config from local file...');
+      log.log(LOG_PREFIX, `Reading config from '${CONFIG_FILE}'`);
       const cfg = await fs.readFile(CONFIG_FILE, {encoding: 'utf8'});
       _config = JSON.parse(cfg);
     } catch (ex) {
@@ -63,15 +63,7 @@ async function init() {
     process.exit(1);
   }
 
-  _deviceMonitor = new DeviceMonitor(APP_NAME);
-  _deviceMonitor.on('restart_request', () => {
-    _close();
-    _deviceMonitor.restart('FB', 'restart_request', false);
-  });
-  _deviceMonitor.on('shutdown_request', () => {
-    _close();
-    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
-  });
+  _initDeviceMonitor();
 
   // Initialize GPIO
   try {
@@ -82,9 +74,8 @@ async function init() {
   }
 
   // Connect to the web socket server
-  if (_config.wsServer) {
-    _wsClient = new WSClient(_config.wsServer, true, 'server');
-  }
+  _wsClient = new WSClient(_config.wsServer, true, 'server');
+
   // Initialize GCMPush
   _gcmPush = await new GCMPush();
 
@@ -113,8 +104,8 @@ async function _initConfigListeners() {
     }
     const newConfig = snapshot.val();
     try {
+      log.log(LOG_PREFIX, `Writing updated config to '${CONFIG_FILE}'.`);
       await fs.writeFile(CONFIG_FILE, JSON.stringify(newConfig));
-      log.verbose(LOG_PREFIX, `Wrote config to '${CONFIG_FILE}'.`);
       _close();
       _deviceMonitor.restart('config', 'config_changed', 0);
     } catch (ex) {
@@ -124,6 +115,21 @@ async function _initConfigListeners() {
   fbConfig.child('disabled').on('value', (snapshot) => {
     _config.disabled = snapshot.val();
     log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
+  });
+}
+
+/**
+ * Init Device Monitor
+ */
+function _initDeviceMonitor() {
+  _deviceMonitor = new DeviceMonitor(APP_NAME);
+  _deviceMonitor.on('restart_request', () => {
+    _close();
+    _deviceMonitor.restart('FB', 'restart_request', false);
+  });
+  _deviceMonitor.on('shutdown_request', () => {
+    _close();
+    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
   });
 }
 
@@ -259,7 +265,9 @@ process.on('SIGINT', function() {
 });
 
 if (APP_NAME) {
-  return init();
+  return init().catch((err) => {
+    log.fatal(LOG_PREFIX, 'Init error', err);
+  });
 } else {
   log.fatal(LOG_PREFIX, 'No app name provided.');
 }
