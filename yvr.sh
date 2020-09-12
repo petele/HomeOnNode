@@ -12,11 +12,5 @@ echo "Configuring Node..."
 nvm use
 echo ""
 
-cd ~/HomeOnNode/
-
-if [ ! -f ./remote.pid ]; then
-  echo "Starting Remote..."
-  forever start --minUptime 1000 --spinSleepTime 1000 yvr-remote.json
-else
-  echo "Remote already running..."
-fi
+echo "Starting app..."
+node appRemote.js Bedside
