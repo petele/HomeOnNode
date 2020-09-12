@@ -12,6 +12,8 @@ echo "Configuring Node..."
 nvm use
 echo ""
 
+cd ~/HomeOnNode/
+
 if [ ! -f ./flic.pid ]; then
   echo "Starting Flic..."
   forever start yyz-flic.json
