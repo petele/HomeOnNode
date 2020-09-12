@@ -15,8 +15,6 @@ const CONFIG_FILE = 'config-gpio.json';
 const APP_NAME = process.argv[2];
 
 let GPIO;
-let _fbRootRef;
-let _fbConfigRef;
 let _config;
 let _deviceMonitor;
 let _wsClient;
@@ -37,10 +35,9 @@ async function init() {
 
   try {
     log.log(LOG_PREFIX, 'Reading config from Firebase...');
-    // GLOBAL? NO.
-    _fbRootRef = await FBHelper.getRootRef(30 * 1000);
-    _fbConfigRef = await _fbRootRef.child(`config/${APP_NAME}`);
-    _config = await _fbConfigRef.once('value');
+    const fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    const fbConfigRef = await fbRootRef.child(`config/${APP_NAME}`);
+    _config = await fbConfigRef.once('value');
     _config = _config.val();
   } catch (ex) {
     log.error(LOG_PREFIX, `Unable to get Firebase reference...`, ex);
