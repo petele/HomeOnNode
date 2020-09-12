@@ -1,0 +1,12 @@
+{
+  "uid": "gpio",
+  "pidFile": "/home/pi/HomeOnNode/gpio.pid",
+  "append": true,
+  "sourceDir": "/home/pi/HomeOnNode/app/",
+  "workingDir": "/home/pi/HomeOnNode/app/",
+  "logFile": "/home/pi/HomeOnNode/app/logs/forever-gpio.log",
+  "script": "appGPIO.js",
+  "args": ["DoorBell"],
+  "minUptime": 1000,
+  "spinSleepTime": 1000
+}
