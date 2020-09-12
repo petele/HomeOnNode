@@ -70,7 +70,7 @@ async function init() {
   });
   _deviceMonitor.on('shutdown_request', () => {
     _close();
-    _deviceMonitor.shutdown('FB', 'shutdown_request', false);
+    _deviceMonitor.shutdown('FB', 'shutdown_request', 0);
   });
 
   // Initialize GPIO
@@ -106,6 +106,17 @@ async function init() {
 async function _initConfigListeners() {
   const fbRoot = await FBHelper.getRootRefUnlimited();
   const fbConfig = await fbRoot.child(`config/${APP_NAME}`);
+  fbConfig.on('value', async (snapshot) => {
+    const newConfig = snapshot.val();
+    try {
+      await fs.writeFile(CONFIG_FILE, JSON.stringify(newConfig));
+      log.verbose(LOG_PREFIX, `Wrote config to '${CONFIG_FILE}'.`);
+      _close();
+      _deviceMonitor.shutdown('config', 'config_changed', 0);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to write config to disk.', ex);
+    }
+  });
   fbConfig.child('disabled').on('value', (snapshot) => {
     _config.disabled = snapshot.val();
     log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
