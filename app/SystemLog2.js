@@ -119,7 +119,7 @@ async function _setFileLogOpts(logLevel, logFile) {
     return false;
   }
   _logOpts.file.level = logLevel;
-  _logOpts.file.logFile;
+  _logOpts.file.logFile = logFile;
   return true;
 }
 
