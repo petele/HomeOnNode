@@ -153,7 +153,7 @@ function DeviceMonitor(deviceName, isMonitor) {
   async function _getPiModelInfo() {
     try {
       const fileName = '/proc/device-tree/model';
-      const model = await fs.readFile(fileName, {encoding: 'utf8'});
+      const model = await fs.readFile(fileName);
       return model.trim();
     } catch (ex) {
       return 'N/A';
@@ -167,8 +167,8 @@ function DeviceMonitor(deviceName, isMonitor) {
   async function _getCPUTemperature() {
     try {
       const fileName = '/sys/class/thermal/thermal_zone0/temp';
-      const val = await fs.readFile(fileName, {encoding: 'utf8'});
-      const temp = parseInt(val, 10) / 1000;
+      const val = await fs.readFile(fileName);
+      const temp = parseInt(val.trim(), 10) / 1000;
       return temp;
     } catch (ex) {
       return null;
