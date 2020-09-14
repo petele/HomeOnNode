@@ -153,7 +153,8 @@ function DeviceMonitor(deviceName, isMonitor) {
   async function _getPiModelInfo() {
     try {
       const fileName = '/proc/device-tree/model';
-      return await fs.readFile(fileName, {encoding: 'utf8'});
+      const model = await fs.readFile(fileName, {encoding: 'utf8'});
+      return model.trim();
     } catch (ex) {
       return 'N/A';
     }
