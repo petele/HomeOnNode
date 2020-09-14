@@ -260,9 +260,6 @@ function LGTV(ipAddress, credentials) {
    */
   function _onError(err) {
     const msg = `Error: ${err.name}`;
-    // console.log('1', err.name);
-    // console.log('2', err.message);
-    // console.log('3', typeof err);
     log.error(LOG_PREFIX, msg, err);
   }
 
@@ -273,7 +270,6 @@ function LGTV(ipAddress, credentials) {
     log.log(LOG_PREFIX, 'Please authorize on TV');
     _setState('connected', false);
     _setState('ready', false);
-    // _connecting = false;
   }
 
   /**
@@ -298,8 +294,6 @@ function LGTV(ipAddress, credentials) {
    * Called when trying to establish a connection.
    */
   function _onConnecting() {
-    // _connecting = true;
-    // log.debug(LOG_PREFIX, 'Connecting to TV...');
     _setState('connected', false);
     _setState('ready', false);
   }
@@ -312,7 +306,6 @@ function LGTV(ipAddress, credentials) {
     _setState('connected', false);
     _setState('ready', false);
     _pointerInputSocket = null;
-    // _connecting = false;
   }
 
 
@@ -501,7 +494,7 @@ function LGTV(ipAddress, credentials) {
    * @param {Function} callback
    */
   function _saveKey(key, callback) {
-    log.log(LOG_PREFIX, 'saveKey()', key);
+    log.debug(LOG_PREFIX, 'saveKey()', key);
     if (callback) {
       callback();
     }
@@ -556,7 +549,6 @@ function LGTV(ipAddress, credentials) {
     if (!inputId) {
       return Promise.reject(new Error('No inputId provided'));
     }
-    // TODO: Validate the input
     return _sendRequest(LG_URLS.switchInput, {inputId});
   }
 
@@ -702,8 +694,6 @@ function LGTV(ipAddress, credentials) {
     }
     return true;
   }
-
-  // _init();
 }
 
 util.inherits(LGTV, EventEmitter);

@@ -154,11 +154,10 @@ function Home() {
     log.todo(LOG_PREFIX, 'TODO: Bluetooth');
     // _initBluetooth();
 
-    log.todo(LOG_PREFIX, 'TODO: Ready Sound');
-    // setTimeout(function() {
-    //   _self.emit('ready');
-    //   _playSound(_config.readySound);
-    // }, 750);
+    _self.emit('ready');
+    if (_config.readySound) {
+      _playSound(_config.readySound);
+    }
 
     _initConfigWatcher();
   }
@@ -995,7 +994,10 @@ function Home() {
   function _playSoundLocal(file) {
     const title = `playSoundLocal('${file}')`;
     const cmd = `mplayer ${file}`;
-    return honExec.run(title, cmd, '.', true);
+    return honExec.run(title, cmd, '.', true)
+        .catch((err) => {
+          log.error(LOG_PREFIX, `Unable to play sound file '${file}'`, err);
+        });
   }
 
   /**
@@ -1538,8 +1540,6 @@ function Home() {
     bluetooth.on('adapter_state', (adapterState) => {
       _fbSet('state/bluetooth/adapterState', adapterState);
     });
-
-    // _initPresence();
   }
 
   /**

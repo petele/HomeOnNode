@@ -124,7 +124,7 @@ function AppleTV() {
    * @param {Object} nowPlaying
    */
   function _onNowPlaying(nowPlaying) {
-    log.log(LOG_PREFIX, 'Now Playing', nowPlaying);
+    log.debug(LOG_PREFIX, 'Now Playing', nowPlaying);
     _self.emit('nowPlaying', nowPlaying);
   }
 
@@ -133,7 +133,7 @@ function AppleTV() {
    * @param {Object} playbackQueue
    */
   function _onPlaybackQueue(playbackQueue) {
-    log.log(LOG_PREFIX, 'Playback Queue', playbackQueue);
+    log.debug(LOG_PREFIX, 'Playback Queue', playbackQueue);
     _self.emit('playbackQueue', playbackQueue);
   }
 
@@ -142,7 +142,7 @@ function AppleTV() {
    * @param {Object} commands
    */
   function _onSupportedCommands(commands) {
-    log.log(LOG_PREFIX, 'Supported Commands', commands);
+    log.debug(LOG_PREFIX, 'Supported Commands', commands);
     _self.emit('supportedCommands', commands);
   }
 
