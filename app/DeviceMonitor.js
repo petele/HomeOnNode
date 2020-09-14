@@ -262,12 +262,16 @@ function DeviceMonitor(deviceName, isMonitor) {
     log.log(_deviceName, 'Connected to Firebase.');
     _disconnectedAt = null;
     const now = Date.now();
+    const uptime = process.uptime();
+    const uptime_ = log.humanizeDuration(uptime);
     const details = {
       heartbeat: now,
       heartbeat_: log.formatTime(now),
       online: true,
       shutdownAt: null,
       exitDetails: null,
+      uptime: uptime,
+      uptime_: uptime_,
     };
     _fbRef.child(`${_deviceName}`).update(details);
     _fbRef.child(`${_deviceName}/online`)
