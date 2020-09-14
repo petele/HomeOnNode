@@ -177,7 +177,7 @@ function DeviceMonitor(deviceName, isMonitor) {
   /**
    * Heartbeat Tick
    */
-  async function _tickHeartbeat() {
+  function _tickHeartbeat() {
     if (!_fbRef) {
       log.error(_deviceName, 'No Firebase ref...');
       return;
@@ -195,17 +195,18 @@ function DeviceMonitor(deviceName, isMonitor) {
       uptime: uptime,
       uptime_: uptime_,
     };
-    const cpuTemp = await _getCPUTemperature();
-    if (cpuTemp) {
-      details.host = {
-        cpuTemp: cpuTemp,
-      };
-    }
-    try {
-      await _fbRef.child(_deviceName).update(details);
-    } catch (ex) {
-      log.error(_deviceName, 'Error updating heartbeat info', ex);
-    }
+    _fbRef.child(_deviceName).update(details)
+        .then(() => {
+          return _getCPUTemperature();
+        })
+        .then((cpuTemp) => {
+          if (cpuTemp) {
+            return _fbRef.child(`${deviceName}/host/cpuTemp`).set(cpuTemp);
+          }
+        })
+        .catch((err) => {
+          log.error(_deviceName, 'Error updating heartbeat info', err);
+        });
   }
 
   /**
