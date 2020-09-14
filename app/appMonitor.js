@@ -7,6 +7,7 @@ const log = require('./SystemLog2');
 const honHelpers = require('./HoNHelpers');
 const DeviceMonitor = require('./DeviceMonitor');
 
+const OFFLINE_TIMEOUT = 12 * 60 * 1000;
 const LOG_CLEAN_TIMER = 60 * 60 * 24 * 1000;
 
 const LOG_PREFIX = 'MONITOR';
@@ -32,8 +33,15 @@ async function go() {
   _deviceMonitor.on('shutdown_request', () => {
     _deviceMonitor.shutdown('FB', 'shutdown_request', false);
   });
-  _deviceMonitor.on('connection_timedout', () => {
-    _deviceMonitor.restart('FB', 'connection_timedout', false);
+  _deviceMonitor.on('offline', (offlineFor) => {
+    if (offlineFor > OFFLINE_TIMEOUT) {
+      const info = {
+        offlineFor: offlineFor,
+        offlineTimeout: OFFLINE_TIMEOUT,
+      };
+      log.error(LOG_PREFIX, `Offline timeout exceeded, rebooting.`, info);
+      _deviceMonitor.restart('OFFLINE', 'restart_request', false);
+    }
   });
 
   setInterval(async () => {
