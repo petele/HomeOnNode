@@ -155,6 +155,7 @@ function Home() {
     // _initBluetooth();
 
     _self.emit('ready');
+    log.log(LOG_PREFIX, 'Ready');
     if (_config.readySound) {
       _playSound(_config.readySound);
     }
