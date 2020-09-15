@@ -16,7 +16,7 @@ const AppleTV = require('./AppleTV');
 const Logging = require('./Logging');
 const honExec = require('./HoNExec');
 const GCMPush = require('./GCMPush');
-const HueSync = require('./HueSync');
+// const HueSync = require('./HueSync');
 const fsProm = require('fs/promises');
 const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
@@ -49,7 +49,7 @@ function Home() {
   let gcmPush;
   let harmony;
   let hue;
-  let hueSync;
+  // let hueSync;
   let lgTV;
   let logging;
   let nanoLeaf;
@@ -140,7 +140,7 @@ function Home() {
     await _initHue();
     await _initAlarmClock();
     await _initNanoLeaf();
-    await _initHueSync();
+    // await _initHueSync();
     await _initSonos();
     await _initHarmony();
     await _initWeather();
@@ -154,7 +154,6 @@ function Home() {
 
     _initCron();
     _initAutoHumidifier();
-
 
     _self.emit('ready');
     log.log(LOG_PREFIX, 'Ready');
@@ -573,22 +572,22 @@ function Home() {
           });
     }
 
-    // Hue Sync
-    if (action.hasOwnProperty('hueSync')) {
-      if (!hueSync || !hueSync.isReady()) {
-        log.error(LOG_PREFIX, 'HueSync unavailable', action);
-        return _genResult(action, false, 'not_available');
-      }
+    // // Hue Sync
+    // if (action.hasOwnProperty('hueSync')) {
+    //   if (!hueSync || !hueSync.isReady()) {
+    //     log.error(LOG_PREFIX, 'HueSync unavailable', action);
+    //     return _genResult(action, false, 'not_available');
+    //   }
 
-      return hueSync.executeCommand(action.hueSync)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: hueSync command failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
+    //   return hueSync.executeCommand(action.hueSync)
+    //       .then((result) => {
+    //         return _genResult(action, true, result);
+    //       })
+    //       .catch((err) => {
+    //         log.verbose(LOG_PREFIX, `Whoops: hueSync command failed.`, err);
+    //         return _genResult(action, false, err);
+    //       });
+    // }
 
     // LG TV
     if (action.hasOwnProperty('lgTV')) {
@@ -1741,28 +1740,28 @@ function Home() {
   /**
    * Init Hue Sync
    */
-  async function _initHueSync() {
-    await _fbSet('state/hueSync', false);
+  // async function _initHueSync() {
+  //   await _fbSet('state/hueSync', false);
 
-    if (!_config.hueSync || _config.hueSync.disabled === true) {
-      log.warn(LOG_PREFIX, 'HueSync disabled via config.');
-      return;
-    }
+  //   if (!_config.hueSync || _config.hueSync.disabled === true) {
+  //     log.warn(LOG_PREFIX, 'HueSync disabled via config.');
+  //     return;
+  //   }
 
-    const ipAddress = _config.hueSync.ipAddress;
-    const token = _config.hueSync.token;
+  //   const ipAddress = _config.hueSync.ipAddress;
+  //   const token = _config.hueSync.token;
 
-    if (!ipAddress || !token) {
-      log.error(LOG_PREFIX, `HueSync unavailable, no IP or token available.`);
-      return;
-    }
+  //   if (!ipAddress || !token) {
+  //     log.error(LOG_PREFIX, `HueSync unavailable, no IP or token available.`);
+  //     return;
+  //   }
 
-    hueSync = new HueSync(ipAddress, token);
-    hueSync.on('config_changed', (config) => {
-      _fbSet('state/hueSync', config);
-    });
-    // hueSync.connect(true);
-  }
+  //   hueSync = new HueSync(ipAddress, token);
+  //   hueSync.on('config_changed', (config) => {
+  //     _fbSet('state/hueSync', config);
+  //   });
+  //   // hueSync.connect(true);
+  // }
 
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
