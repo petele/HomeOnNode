@@ -295,7 +295,6 @@ function HueSync(ipAddress, bearerToken) {
       headers: {
         Authorization: `Bearer ${_bearerToken}`,
       },
-      agent: _getAgent(),
     };
     if (body) {
       fetchOpts.body = JSON.stringify(body);
