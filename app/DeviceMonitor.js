@@ -348,16 +348,19 @@ function DeviceMonitor(deviceName, isMonitor) {
    * @param {String} reason The reason the device is being shutdown.
    * @param {Number} exitCode The exit code to exit with.
    */
-  this.shutdown = function(sender, reason, exitCode) {
+  this.shutdown = async function(sender, reason, exitCode) {
     const exitDetails = {
       shutdown: true,
       sender: sender,
       reason: reason,
       exitCode: exitCode,
     };
-    _beforeExit(exitDetails).then(() => {
-      process.exit(exitCode);
-    });
+    const withTimeout = [
+      _beforeExit(exitDetails),
+      honHelpers.sleep(30 * 1000),
+    ];
+    await Promise.race(withTimeout);
+    process.exit(exitCode);
   };
 
   /**
@@ -367,23 +370,23 @@ function DeviceMonitor(deviceName, isMonitor) {
    * @param {String} reason The reason the device is being shutdown.
    * @param {Boolean} immediate if the reboot should happen immediately.
    */
-  this.restart = function(sender, reason, immediate) {
+  this.restart = async function(sender, reason, immediate) {
     const exitDetails = {
       restart: true,
       sender: sender,
       reason: reason,
       immediate: immediate,
     };
-    _beforeExit(exitDetails).then(() => {
-      let timeout = 0;
-      if (immediate !== true) {
-        timeout = RESTART_TIMEOUT;
-        log.debug(_deviceName, `Will reboot in ${timeout} ms...`);
-      }
-      setTimeout(() => {
-        exec('sudo reboot', function(error, stdout, stderr) {});
-      }, timeout);
-    });
+    const withTimeout = [
+      _beforeExit(exitDetails),
+      honHelpers.sleep(30 * 1000),
+    ];
+    await Promise.race(withTimeout);
+    const timeout = immediate ? 1 : RESTART_TIMEOUT;
+    log.debug(_deviceName, `Will reboot in ${timeout} ms...`);
+    setTimeout(() => {
+      exec('sudo reboot', function(error, stdout, stderr) {});
+    }, timeout);
   };
 
   _init();
