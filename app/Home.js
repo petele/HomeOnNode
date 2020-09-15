@@ -21,15 +21,13 @@ const fsProm = require('fs/promises');
 const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
 const NanoLeaf = require('./NanoLeaf');
-const Presence = require('./Presence');
+// const Presence = require('./Presence');
 const CronJob = require('cron').CronJob;
 const Bluetooth = require('./Bluetooth');
 const AlarmClock = require('./AlarmClock');
 const deepDiff = require('deep-diff').diff;
 
 const FBHelper = require('./FBHelper');
-// const honHelpers = require('./HoNHelpers');
-// const ConfigHelper = require('./ConfigHelper');
 
 const LOG_PREFIX = 'HOME';
 
@@ -55,7 +53,7 @@ function Home() {
   let lgTV;
   let logging;
   let nanoLeaf;
-  let presence;
+  // let presence;
   let sonos;
   let tivo;
   let weather;
@@ -131,7 +129,9 @@ function Home() {
       _self.state.hasNotification = fbPrevState.hasNotification;
       _self.state.systemState = fbPrevState.systemState;
     } else {
-      _waitForFBRef();
+      log.error(LOG_PREFIX, `No fbRootRef, can't get prev state`);
+      // TODO FIX
+      // _waitForFBRef();
     }
 
     _initNotifications();
@@ -147,15 +147,14 @@ function Home() {
     await _initWemo();
     await _initAwair();
     await _initTivo();
-    await _initCron();
     await _initLGTV();
     await _initAppleTV();
+    await _initBluetooth();
+    await _initPresence();
 
-    log.todo(LOG_PREFIX, 'TODO: Auto Humidifiers');
-    // _initAutoHumidifier();
+    _initCron();
+    _initAutoHumidifier();
 
-    log.todo(LOG_PREFIX, 'TODO: Bluetooth');
-    // _initBluetooth();
 
     _self.emit('ready');
     log.log(LOG_PREFIX, 'Ready');
@@ -192,18 +191,19 @@ function Home() {
     }
   }
 
-  /**
-   *
-   */
-  async function _waitForFBRef() {
-    try {
-      _fbRootRef = await FBHelper.getRootRefUnlimited();
-      const state = await _fbRootRef.child('state');
-      state.set(_self.state);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, 'Unable to get state object.', ex);
-    }
-  }
+  // /**
+  //  *
+  //  */
+  // async function _waitForFBRef() {
+  //   // TODO FIX THIS
+  //   try {
+  //     _fbRootRef = await FBHelper.getRootRefUnlimited();
+  //     const state = await _fbRootRef.child('state');
+  //     state.set(_self.state);
+  //   } catch (ex) {
+  //     log.exception(LOG_PREFIX, 'Unable to get state object.', ex);
+  //   }
+  // }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
@@ -790,23 +790,23 @@ function Home() {
     currentObj[keys[len]] = value;
   }
 
-  // /**
-  //  * Get System State value using / notation
-  //  * @param {String} path Path to value
-  //  * @return {*} Result of value
-  //  */
-  // function _getStateValue(path) {
-  //   let result = _self.state;
-  //   const items = path.split('/');
-  //   items.forEach((item) => {
-  //     if (result && result[item]) {
-  //       result = result[item];
-  //       return;
-  //     }
-  //     result = null;
-  //   });
-  //   return result;
-  // }
+  /**
+   * Get System State value using / notation
+   * @param {String} path Path to value
+   * @return {*} Result of value
+   */
+  function _getStateValue(path) {
+    let result = _self.state;
+    const items = path.split('/');
+    items.forEach((item) => {
+      if (result && result[item]) {
+        result = result[item];
+        return;
+      }
+      result = null;
+    });
+    return result;
+  }
 
   /**
    * Push value to Firebase
@@ -1426,91 +1426,85 @@ function Home() {
    *
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
-  // /**
-  //   * Init the auto humidifier
-  //   */
-  // function _initAutoHumidifier() {
-  //   setTimeout(() => {
-  //     log.init(LOG_PREFIX, 'Starting autoHumidifier...');
-  //     _autoHumidifierTick();
-  //   }, 90 * 1000);
+  /**
+    * Init the auto humidifier
+    */
+  function _initAutoHumidifier() {
+    setTimeout(() => {
+      log.init(LOG_PREFIX, 'Starting autoHumidifier...');
+      _autoHumidifierTick();
+    }, 90 * 1000);
 
-  //   setInterval(() => {
-  //     _autoHumidifierTick();
-  //   }, 5 * 60 * 1000);
-  // }
+    setInterval(() => {
+      _autoHumidifierTick();
+    }, 5 * 60 * 1000);
+  }
 
-  // /**
-  //   *
-  //   */
-  // function _autoHumidifierTick() {
-  //   // Only run when at home
-  //   if (_self.state.systemState !== 'HOME') {
-  //     // log.verbose(LOG_PREFIX, `autoHumidifier: not HOME`);
-  //     return;
-  //   }
-  //   // Only run if enabled
-  //   if (_config.hvac.autoHumidifier.disabled === true) {
-  //     // log.verbose(LOG_PREFIX, `autoHumidifier: disabled`);
-  //     return;
-  //   }
+  /**
+   * AutoHumidifier Tick
+   */
+  function _autoHumidifierTick() {
+    // Only run when at home
+    if (_self.state.systemState !== 'HOME') {
+      return;
+    }
+    // Only run if enabled
+    if (_config.hvac.autoHumidifier.disabled === true) {
+      return;
+    }
 
-  //   // Loop through each room
-  //   _config.hvac.autoHumidifier.rooms.forEach((room) => {
-  //     try {
-  //       const msgBase = `autoHumidifier[${room.name}]`;
+    // Loop through each room
+    _config.hvac.autoHumidifier.rooms.forEach((room) => {
+      try {
+        const msgBase = `autoHumidifier[${room.name}]`;
 
-  //       // Get the current humidity
-  //       const path = room.pathToValue;
-  //       const humidity = Math.round(parseFloat(_getStateValue(path)));
-  //       if (Number.isNaN(humidity)) {
-  //         log.warn(LOG_PREFIX, `${msgBase}: Unable to get humidity`, room);
-  //         return;
-  //       }
-  //       // Check the current Wemo state
-  //       const currentWemoState = _self.state.wemo[room.wemoId].value == true;
+        // Get the current humidity
+        const path = room.pathToValue;
+        const humidity = Math.round(parseFloat(_getStateValue(path)));
+        if (Number.isNaN(humidity)) {
+          log.warn(LOG_PREFIX, `${msgBase}: Unable to get humidity`, room);
+          return;
+        }
+        // Check the current Wemo state
+        const currentWemoState = _self.state.wemo[room.wemoId].value == true;
 
-  //       // Setup the action we'll send
-  //       const action = {};
+        // Setup the action we'll send
+        const action = {};
 
-  //       // Check the humidity, turn off if it's above...
-  //       if (humidity > parseInt(_config.hvac.autoHumidifier.offAbove)) {
-  //         action.wemo = {on: false};
-  //         // log.verbose(LOG_PREFIX, `${msgBase}: on:false`);
-  //       }
-  //       // Check the humidity, turn off if it's above...
-  //       if (humidity < parseInt(_config.hvac.autoHumidifier.onBelow)) {
-  //         action.wemo = {on: true};
-  //         // log.verbose(LOG_PREFIX, `${msgBase}: on:true`);
-  //       }
+        // Check the humidity, turn off if it's above...
+        if (humidity > parseInt(_config.hvac.autoHumidifier.offAbove)) {
+          action.wemo = {on: false};
+        }
+        // Check the humidity, turn off if it's above...
+        if (humidity < parseInt(_config.hvac.autoHumidifier.onBelow)) {
+          action.wemo = {on: true};
+        }
 
-  //       // No change to current state
-  //       if (!action.wemo) {
-  //         log.verbose(LOG_PREFIX, `${msgBase}: within range, no change`);
-  //         return;
-  //       }
+        // No change to current state
+        if (!action.wemo) {
+          return;
+        }
 
-  //       // If the Wemo is already in the expected state, no change required.
-  //       if (action.wemo.on === currentWemoState) {
-  //         log.verbose(LOG_PREFIX, `${msgBase}: already on/off`);
-  //         return;
-  //       }
+        // If the Wemo is already in the expected state, no change required.
+        if (action.wemo.on === currentWemoState) {
+          return;
+        }
 
-  //       // Log details
-  //       const info = {
-  //         currentHumidity: humidity,
-  //         currentWemoState: currentWemoState,
-  //       };
-  //       log.log(LOG_PREFIX, `${msgBase} changed  '${action.wemo.on}'`, info);
+        // Log details
+        const info = {
+          currentHumidity: humidity,
+          currentWemoState: currentWemoState,
+        };
+        log.log(LOG_PREFIX, `${msgBase} changed '${action.wemo.on}'`, info);
 
-  //       // Turn the humidifier on/off
-  //       action.wemo.id = room.wemoId;
-  //       _executeAction(action, 'AutoHumidifier');
-  //     } catch (ex) {
-  //       log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
-  //     }
-  //   });
-  // }
+        // Turn the humidifier on/off
+        action.wemo.id = room.wemoId;
+        _executeAction(action, 'AutoHumidifier');
+      } catch (ex) {
+        log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
+      }
+    });
+  }
 
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
@@ -1931,50 +1925,51 @@ function Home() {
       return;
     }
 
-    presence = new Presence(bluetooth);
-    // Set up the presence detection
-    presence.on('change', _presenceChanged);
-    const fbPresPath = 'config/HomeOnNode/presence';
-    const fbPresencePeopleRef = await FBHelper.getRef(fbPresPath);
+    // presence = new Presence(bluetooth);
+    // // Set up the presence detection
+    // presence.on('change', _presenceChanged);
+    // const fbPresPath = 'config/HomeOnNode/presence';
+    // const fbPresencePeopleRef = FBHelper.
+    // // const fbPresencePeopleRef = await FBHelper.getRef(fbPresPath);
 
-    fbPresencePeopleRef.on('child_added', (snapshot) => {
-      const uuid = snapshot.key;
-      presence.add(uuid, snapshot.val());
-    });
-    fbPresencePeopleRef.on('child_removed', (snapshot) => {
-      const uuid = snapshot.key;
-      presence.remove(uuid);
-    });
-    fbPresencePeopleRef.on('child_changed', (snapshot) => {
-      const uuid = snapshot.key;
-      presence.update(uuid, snapshot.val());
-    });
+    // fbPresencePeopleRef.on('child_added', (snapshot) => {
+    //   const uuid = snapshot.key;
+    //   presence.add(uuid, snapshot.val());
+    // });
+    // fbPresencePeopleRef.on('child_removed', (snapshot) => {
+    //   const uuid = snapshot.key;
+    //   presence.remove(uuid);
+    // });
+    // fbPresencePeopleRef.on('child_changed', (snapshot) => {
+    //   const uuid = snapshot.key;
+    //   presence.update(uuid, snapshot.val());
+    // });
   }
 
-  /**
-   * Presence Changed
-   *
-   * @param {Object} person The person who's presence changed.
-   * @param {Number} numPresent The number of people present.
-   * @param {Object} who The list of who is present
-   */
-  function _presenceChanged(person, numPresent, who) {
-    const presenceLog = {
-      level: 'INFO',
-      message: person.name + ' is ' + person.state,
-      name: person.name,
-      state: person.state,
-      date: person.lastSeen,
-    };
-    _fbPush('logs/presence', presenceLog);
-    _fbSet('state/presence/people', who);
-    let presenceState = 'SOME';
-    if (numPresent === 0) {
-      presenceState = 'NONE';
-    }
-    _fbSet('state/presence/state', presenceState);
-    _self.executeCommandByName(`PRESENCE_${presenceState}`, 'PRESENCE');
-  }
+  // /**
+  //  * Presence Changed
+  //  *
+  //  * @param {Object} person The person who's presence changed.
+  //  * @param {Number} numPresent The number of people present.
+  //  * @param {Object} who The list of who is present
+  //  */
+  // function _presenceChanged(person, numPresent, who) {
+  //   const presenceLog = {
+  //     level: 'INFO',
+  //     message: person.name + ' is ' + person.state,
+  //     name: person.name,
+  //     state: person.state,
+  //     date: person.lastSeen,
+  //   };
+  //   _fbPush('logs/presence', presenceLog);
+  //   _fbSet('state/presence/people', who);
+  //   let presenceState = 'SOME';
+  //   if (numPresent === 0) {
+  //     presenceState = 'NONE';
+  //   }
+  //   _fbSet('state/presence/state', presenceState);
+  //   _self.executeCommandByName(`PRESENCE_${presenceState}`, 'PRESENCE');
+  // }
 
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **

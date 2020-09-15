@@ -10,6 +10,11 @@ const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'HUE_SYNC';
 
+const ENUM_INTENSITY = ['subtle', 'moderate', 'high', 'intense'];
+const ENUM_MODES = [
+  'powersave', 'passthrough', 'video', 'game', 'music', 'ambient',
+];
+
 /**
  * Philips Hue Sync API.
  * @constructor
@@ -59,10 +64,57 @@ function HueSync(ipAddress, bearerToken) {
       _updateConfigTick();
     }, CONFIG_REFRESH_INTERVAL);
     _ready = true;
+    const defaultOpts = {
+      intensityValues: ENUM_INTENSITY.slice(),
+      modeValues: ENUM_MODES.slice(),
+    };
+    _self.emit('ready', defaultOpts);
     return true;
   };
 
-  this.executeCommand = async function(command) {};
+  this.isReady = function() {
+    return _ready;
+  };
+
+  this.executeCommand = async function(command) {
+    if (!_ready) {
+      throw new Error('not_ready');
+    }
+    const promises = [];
+    if (command.hasOwnProperty('syncActive')) {
+      promises.push(_setSyncActive(command.syncActive));
+    }
+    if (command.hasOwnProperty('hdmiActive')) {
+      promises.push(_setHDMIActive(command.hdmiActive));
+    }
+    if (command.hasOwnProperty('mode')) {
+      promises.push(_setMode(command.mode));
+    }
+    if (command.hasOwnProperty('hdmiSource')) {
+      promises.push(_setHDMISource(command.hdmiSource));
+    }
+    if (command.hasOwnProperty('intensity')) {
+      promises.push(_setIntensity(command.intensity));
+    }
+    if (command.hasOwnProperty('brightness')) {
+      promises.push(_setBrightness(command.brightness));
+    }
+    if (command.hasOwnProperty('refresh')) {
+      promises.push(Promise.resolve());
+    }
+    if (promises.length === 0) {
+      log.error(LOG_PREFIX, 'Unrecognized command', command);
+      throw new Error('Unrecognized command');
+    }
+    try {
+      const results = await Promise.all(promises);
+      await _updateConfig();
+      return results;
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Error in execCommand', ex);
+      throw ex;
+    }
+  };
 
   /**
    * Retry the initial connection if it didn't succeed.
@@ -84,7 +136,6 @@ function HueSync(ipAddress, bearerToken) {
    */
   async function _updateConfig(retry) {
     const deviceInfo = await _makeRequest('', 'GET', null, retry);
-
     if (diff(_self.deviceInfo, deviceInfo)) {
       _self.deviceInfo = deviceInfo;
       _self.emit('config_changed', _self.deviceInfo);
@@ -106,45 +157,109 @@ function HueSync(ipAddress, bearerToken) {
     return _updateConfigTick();
   }
 
-  this.isReady = function() {
-    return _ready;
-  };
-
-  this.getConfig = async function() {
+  /**
+   * Enables or disables the Hue Sync
+   * @param {Boolean} enabled
+   */
+  async function _setSyncActive(enabled) {
     if (!_ready) {
       log.error(LOG_PREFIX, `Not ready.`);
       return null;
     }
-    return _updateConfig(false);
-  };
+    const path = '/execution';
+    const body = {syncActive: !!enabled};
+    return _makeRequest(path, 'PUT', body, true);
+  }
 
-  this.setSyncActive = async function(enabled) {
+  /**
+   * Set PowerSave or Passthrough mode.
+   * @param {Boolean} enabled True for Passthrough
+   */
+  async function _setHDMIActive(enabled) {
     if (!_ready) {
       log.error(LOG_PREFIX, `Not ready.`);
       return null;
     }
-  };
+    const path = '/execution';
+    const body = {hdmiActive: !!enabled};
+    return _makeRequest(path, 'PUT', body, true);
+  }
 
-  this.setHDMIActive = async function(enabled) {
+  /**
+   * Sets the mode of the device.
+   * @param {String} mode
+   */
+  async function _setMode(mode) {
     if (!_ready) {
       log.error(LOG_PREFIX, `Not ready.`);
       return null;
     }
-  };
+    if (!ENUM_MODES.includes(mode)) {
+      log.error(LOG_PREFIX, 'Invalid mode value', mode);
+      throw new Error('Invalid input');
+    }
+    const path = '/execution';
+    const body = {mode: mode};
+    return _makeRequest(path, 'PUT', body, true);
+  }
 
-  this.setMode = async function(mode) {
+  /**
+   * Set the HDMI input.
+   * @param {Number} input 1 to 4
+   */
+  async function _setHDMISource(input) {
     if (!_ready) {
       log.error(LOG_PREFIX, `Not ready.`);
       return null;
     }
-  };
+    const val = honHelpers.isValidInt(input, 1, 4);
+    if (val === null) {
+      log.error(LOG_PREFIX, 'HDMI input must be between 1 and 4', input);
+      throw new Error('Invalid input');
+    }
+    const path = '/execution';
+    const body = {hdmiSource: `input${val}`};
+    return _makeRequest(path, 'PUT', body, true);
+  }
 
-  this.setHDMISource = async function(input) {
+  /**
+   * Set the intensity of the display
+   *
+   * @param {String} intensity (subtle, moderate, high, intense)
+   */
+  async function _setIntensity(intensity) {
     if (!_ready) {
       log.error(LOG_PREFIX, `Not ready.`);
       return null;
     }
-  };
+    if (!ENUM_INTENSITY.includes(intensity) || !intensity) {
+      log.error(LOG_PREFIX, 'Invalid intensity value', intensity);
+      throw new Error('Invalid input');
+    }
+    const path = '/execution';
+    const body = {intensity: intensity};
+    return _makeRequest(path, 'PUT', body, true);
+  }
+
+  /**
+   * Set the brightness
+   *
+   * @param {Number} bri 0-200
+   */
+  async function _setBrightness(bri) {
+    if (!_ready) {
+      log.error(LOG_PREFIX, `Not ready.`);
+      return null;
+    }
+    const val = honHelpers.isValidInt(bri, 0, 200);
+    if (val === null) {
+      log.error(LOG_PREFIX, 'Invalid brightness value', bri);
+      throw new Error('Invalid input');
+    }
+    const path = '/execution';
+    const body = {brightness: bri};
+    return _makeRequest(path, 'PUT', body, true);
+  }
 
   /**
    * Gets the HTTP Agent.
