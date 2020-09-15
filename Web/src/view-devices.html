@@ -126,7 +126,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <template is="dom-if" if="[[item.host]]">
             <div>
               <span class="label">Hostname</span>
-              <span>[[item.host.hostname]]</span>
+              <span>
+                <a href="[[getHostURL(item)]]">[[item.host.hostname]]</a>
+              </span>
             </div>
           </template>
           <template is="dom-if" if="[[item.startedAt]]">
@@ -228,6 +230,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return 'hon-icons:cloud';
         }
         return 'hon-icons:cloud-disconnected';
+      }
+
+      getHostURL(item) {
+        // https://console.firebase.google.com/project/petele-at-home/database/petele-at-home/data/monitor/rpi-ottawa
+        try {
+          return `https://console.firebase.google.com/project/`
+              + `petele-at-home/database/petele-at-home/data/monitor/`
+              + `${item.host.hostname}`;
+        } catch (ex) {
+          console.log('oops', ex);
+        }
       }
 
       formatDate(val) {
