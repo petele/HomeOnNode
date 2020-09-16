@@ -1,7 +1,7 @@
 'use strict';
 
 const util = require('util');
-// const https = require('https');
+const https = require('https');
 const fetch = require('node-fetch');
 const log = require('./SystemLog2');
 const diff = require('deep-diff').diff;
@@ -28,12 +28,23 @@ function Hue(key, ipAddress) {
   const CONFIG_REFRESH_INTERVAL = (10 * 60 * 1000) + 23;
   const LIGHTS_REFRESH_INTERVAL = 29 * 1000;
   const SENSORS_REFRESH_INTERVAL = 97 * 1000;
+  const AGENT_OPTS = {
+    rejectUnauthorized: false,
+    maxSockets: 4,
+    port: 443,
+    host: ipAddress,
+    keepAlive: true,
+  };
+
   const _self = this;
   const _key = key;
 
   const _bridgeIP = ipAddress;
+  const _httpAgent = new https.Agent(AGENT_OPTS);
+
   let _ready = false;
   let _connectionStarted = false;
+
 
   this.dataStore = {};
 
@@ -368,12 +379,13 @@ function Hue(key, ipAddress) {
    * @return {Promise} A promise that resolves with the response
   */
   async function _makeHueRequest(requestPath, method, body, retry) {
-    const url = `http://${_bridgeIP}/api/${_key}${requestPath}`;
+    const url = `https://${_bridgeIP}/api/${_key}${requestPath}`;
     const msg = `makeHueRequest('${method}', '${requestPath}', ${retry})`;
     const fetchOpts = {
       method: method || 'GET',
       timeout: REQUEST_TIMEOUT,
       headers: {},
+      agent: _httpAgent,
     };
     if (body) {
       fetchOpts.body = JSON.stringify(body);
