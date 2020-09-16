@@ -38,15 +38,14 @@ function Hue(key, ipAddress) {
 
   const _self = this;
   const _key = key;
-
   const _bridgeIP = ipAddress;
   const _httpAgent = new https.Agent(AGENT_OPTS);
 
   let _ready = false;
   let _connectionStarted = false;
 
-
   this.dataStore = {};
+
 
   /**
    * Connect to the Hue bridge for the first time.

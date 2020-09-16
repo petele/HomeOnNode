@@ -1761,7 +1761,7 @@ function Home() {
     hueSync.on('config_changed', (config) => {
       _fbSet('state/hueSync', config);
     });
-    // hueSync.connect(true);
+    hueSync.connect(true);
   }
 
 

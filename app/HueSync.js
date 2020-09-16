@@ -25,16 +25,24 @@ const ENUM_MODES = [
 function HueSync(ipAddress, bearerToken) {
   const REQUEST_TIMEOUT = 15 * 1000;
   const CONFIG_REFRESH_INTERVAL = 3 * 60 * 1000;
-  const _self = this;
+  const AGENT_OPTS = {
+    rejectUnauthorized: false,
+    maxSockets: 4,
+    port: 443,
+    host: ipAddress,
+    keepAlive: true,
+  };
 
-  const _ipAddress = ipAddress;
+  const _self = this;
   const _bearerToken = bearerToken;
-  let _httpAgent;
+  const _ipAddress = ipAddress;
+  const _httpAgent = new https.Agent(AGENT_OPTS);
 
   let _ready = false;
   let _connectionStarted = false;
 
   this.deviceInfo = {};
+
 
   /**
    * Connect to the Hue bridge for the first time.
@@ -262,22 +270,6 @@ function HueSync(ipAddress, bearerToken) {
   }
 
   /**
-   * Gets the HTTP Agent.
-   *
-   * @return {Agent} HTTP Agent
-   */
-  function _getAgent() {
-    if (_httpAgent) {
-      return _httpAgent;
-    }
-    const agentOpts = {
-      rejectUnauthorized: false,
-    };
-    _httpAgent = new https.Agent(agentOpts);
-    return _httpAgent;
-  }
-
-  /**
    * Helper function to make a Hue request
    *
    * @param {String} requestPath the URL/request path to hit
@@ -295,7 +287,7 @@ function HueSync(ipAddress, bearerToken) {
       headers: {
         Authorization: `Bearer ${_bearerToken}`,
       },
-      agent: _getAgent(),
+      agent: _httpAgent,
     };
     if (body) {
       fetchOpts.body = JSON.stringify(body);
