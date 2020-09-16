@@ -130,8 +130,8 @@ function Home() {
       _self.state.systemState = fbPrevState.systemState;
     } else {
       log.error(LOG_PREFIX, `No fbRootRef, can't get prev state`);
-      // TODO FIX
-      // _waitForFBRef();
+      // When FB ref is available, write current state to Firebase.
+      _updateFBState();
     }
 
     _initNotifications();
@@ -190,19 +190,20 @@ function Home() {
     }
   }
 
-  // /**
-  //  *
-  //  */
-  // async function _waitForFBRef() {
-  //   // TODO FIX THIS
-  //   try {
-  //     _fbRootRef = await FBHelper.getRootRefUnlimited();
-  //     const state = await _fbRootRef.child('state');
-  //     state.set(_self.state);
-  //   } catch (ex) {
-  //     log.exception(LOG_PREFIX, 'Unable to get state object.', ex);
-  //   }
-  // }
+
+  /**
+   * Called when _fbRef isn't available, it waits for Firebase ref to
+   * become available, then writes current state to Firebase.
+   */
+  async function _updateFBState() {
+    try {
+      _fbRootRef = await FBHelper.getRootRefUnlimited();
+      const state = await _fbRootRef.child('state');
+      await state.set(_self.state);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Failed to write state to Firebase.', ex);
+    }
+  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
@@ -1919,10 +1920,10 @@ function Home() {
   async function _initPresence() {
     await _fbSet('state/presence/state', 'NONE');
 
-    if (!bluetooth) {
-      log.warn(LOG_PREFIX, 'Presence disabled, no bluetooth available.');
-      return;
-    }
+    // if (!bluetooth) {
+    //   log.warn(LOG_PREFIX, 'Presence disabled, no bluetooth available.');
+    //   return;
+    // }
 
     // presence = new Presence(bluetooth);
     // // Set up the presence detection
