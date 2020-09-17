@@ -48,7 +48,7 @@ function _isValidInt(val, min, max) {
  * @return {String} hostname
  */
 function _getHostname() {
-  const hostname = os.hostname();
+  const hostname = os.hostname().toLowerCase();
   if (!hostname.includes('.')) {
     return hostname;
   }

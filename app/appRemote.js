@@ -27,7 +27,7 @@ let _fbConfigRef;
 async function init() {
   log.startWSS();
   log.setFileLogOpts(50, './logs/system.log');
-  log.setFirebaseLogOpts(50, `logs/${APP_NAME}`);
+  log.setFirebaseLogOpts(50, `logs/apps/${APP_NAME}`);
 
   log.appStart(APP_NAME);
 

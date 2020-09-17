@@ -33,7 +33,7 @@ const _flicButtons = {};
 async function init() {
   log.startWSS(8883);
   log.setFileLogOpts(50, LOG_FILE);
-  log.setFirebaseLogOpts(50, `logs/${APP_NAME.toLowerCase()}`);
+  log.setFirebaseLogOpts(50, `logs/apps/${APP_NAME}`);
 
   log.appStart(APP_NAME);
 
