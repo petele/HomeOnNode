@@ -122,6 +122,8 @@ function Home() {
 
     if (_fbRootRef) {
       const fbState = await _fbRootRef.child('state');
+      const fbStateTime = await fbState.child('time');
+      await fbStateTime.set(_self.state.time);
       const fbPrevStateSnap = await fbState.once('value');
       const fbPrevState = await fbPrevStateSnap.val();
       log.log(LOG_PREFIX, 'Updating state based on previous state.');
