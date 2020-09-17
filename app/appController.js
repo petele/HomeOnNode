@@ -18,7 +18,7 @@ let _deviceMonitor;
 
 log.startWSS();
 log.setFileLogOpts(50, './logs/system.log');
-log.setFirebaseLogOpts(50, 'logs/server');
+log.setFirebaseLogOpts(50, 'logs/apps/server');
 
 
 /**

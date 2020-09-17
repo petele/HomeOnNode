@@ -17,7 +17,7 @@ function Logging() {
   function _init() {
     FBHelper.getRootRefUnlimited()
         .then((fbRootRef) => {
-          return fbRootRef.child('logs/cron');
+          return fbRootRef.child('logs/history/cron');
         })
         .then((fbRef) => {
           _fbRef = fbRef;

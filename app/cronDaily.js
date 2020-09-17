@@ -13,14 +13,11 @@ const CONFIG_BACKUP_PATH = `./config-backup`;
 const _cleanLogs = async function() {
   log.debug(LOG_PREFIX, 'Starting cleanLogs...');
 
-  await log.cleanLogs('logs/cron', 90);
-  await log.cleanLogs('logs/doors', 30);
-  await log.cleanLogs('logs/presence', 120);
-  await log.cleanLogs('logs/systemState', 30);
-  await log.cleanLogs('logs/generic', 7);
-  await log.cleanLogs('logs/logs', 7);
-  await log.cleanLogs('logs/messages', 7);
-  await log.cleanLogs('logs/pushBullet', 1);
+  await log.cleanLogs('logs/history/cron', 90);
+  await log.cleanLogs('logs/history/doors', 30);
+  await log.cleanLogs('logs/history/presence', 120);
+  await log.cleanLogs('logs/history/systemState', 30);
+  await log.cleanLogs('logs/history/messages', 7);
   await log.cleanFile();
 };
 

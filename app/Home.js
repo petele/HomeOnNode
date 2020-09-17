@@ -946,7 +946,7 @@ function Home() {
       date: now,
       date_: nowPretty,
     };
-    _fbPush('logs/doors', doorLogObj);
+    _fbPush('logs/history/doors', doorLogObj);
     log.debug(LOG_PREFIX, msg);
     return Promise.resolve(doorLogObj);
   }
@@ -1132,7 +1132,7 @@ function Home() {
       date: now,
       date_: log.formatTime(now),
     };
-    _fbPush('logs/systemState', stateLog);
+    _fbPush('logs/history/systemState', stateLog);
     _self.executeCommandByName(`RUN_ON_${newState}`, 'SET_STATE');
     return Promise.resolve(newState);
   }
@@ -1704,7 +1704,7 @@ function Home() {
         extra: sensor,
       };
       log.todo(LOG_PREFIX, 'Hue Sensor Unreach');
-      _fbPush('logs/messages', msg);
+      _fbPush('logs/history/messages', msg);
     });
     hue.on('sensor_low_battery', (sensor) => {
       const msg = {
@@ -1714,7 +1714,7 @@ function Home() {
         extra: sensor,
       };
       log.todo(LOG_PREFIX, 'Hue Low Batt');
-      _fbPush('logs/messages', msg);
+      _fbPush('logs/history/messages', msg);
     });
     hue.connect(true);
   }
@@ -1963,7 +1963,7 @@ function Home() {
   //     state: person.state,
   //     date: person.lastSeen,
   //   };
-  //   _fbPush('logs/presence', presenceLog);
+  //   _fbPush('logs/history/presence', presenceLog);
   //   _fbSet('state/presence/people', who);
   //   let presenceState = 'SOME';
   //   if (numPresent === 0) {
