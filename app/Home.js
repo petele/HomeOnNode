@@ -848,7 +848,7 @@ function Home() {
             lastUpdated: now,
             lastUpdated_: log.formatTime(now),
           };
-          return _fbRootRef.child('state/time').set(lastUpdated);
+          return _fbRootRef.child('state/time').update(lastUpdated);
         })
         .then(() => {
           log.verbose(LOG_PREFIX, `Wrote ${path}`, value);
