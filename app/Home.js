@@ -573,22 +573,22 @@ function Home() {
           });
     }
 
-    // // Hue Sync
-    // if (action.hasOwnProperty('hueSync')) {
-    //   if (!hueSync || !hueSync.isReady()) {
-    //     log.error(LOG_PREFIX, 'HueSync unavailable', action);
-    //     return _genResult(action, false, 'not_available');
-    //   }
+    // Hue Sync
+    if (action.hasOwnProperty('hueSync')) {
+      if (!hueSync || !hueSync.isReady()) {
+        log.error(LOG_PREFIX, 'HueSync unavailable', action);
+        return _genResult(action, false, 'not_available');
+      }
 
-    //   return hueSync.executeCommand(action.hueSync)
-    //       .then((result) => {
-    //         return _genResult(action, true, result);
-    //       })
-    //       .catch((err) => {
-    //         log.verbose(LOG_PREFIX, `Whoops: hueSync command failed.`, err);
-    //         return _genResult(action, false, err);
-    //       });
-    // }
+      return hueSync.executeCommand(action.hueSync)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: hueSync command failed.`, err);
+            return _genResult(action, false, err);
+          });
+    }
 
     // LG TV
     if (action.hasOwnProperty('lgTV')) {
