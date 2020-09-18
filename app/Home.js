@@ -122,10 +122,9 @@ function Home() {
 
     if (_fbRootRef) {
       const fbState = await _fbRootRef.child('state');
-      const fbStateTime = await fbState.child('time');
-      await fbStateTime.set(_self.state.time);
+      await fbState.child('time').set(_self.state.time);
       const fbPrevStateSnap = await fbState.once('value');
-      const fbPrevState = await fbPrevStateSnap.val();
+      const fbPrevState = fbPrevStateSnap.val();
       log.log(LOG_PREFIX, 'Updating state based on previous state.');
       _self.state.doNotDisturb = fbPrevState.doNotDisturb;
       _self.state.hasNotification = fbPrevState.hasNotification;

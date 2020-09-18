@@ -20,7 +20,7 @@ const LOG_PREFIX = 'AWAIR';
 */
 function Awair() {
   const _self = this;
-  const REFRESH_INTERVAL_LOCAL_SENSORS = 2 * 60 * 1000;
+  const REFRESH_INTERVAL_LOCAL_SENSORS = 1 * 60 * 1000;
 
   this.localSensors = {};
 
