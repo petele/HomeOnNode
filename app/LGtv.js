@@ -2,6 +2,7 @@
 
 const util = require('util');
 const log = require('./SystemLog2');
+const diff = require('deep-diff').diff;
 const honHelpers = require('./HoNHelpers');
 const EventEmitter = require('events').EventEmitter;
 
@@ -480,6 +481,9 @@ function LGTV(ipAddress, credentials) {
       delete value['returnValue'];
     }
     if (_self.state[apiName] === value) {
+      return;
+    }
+    if (!diff(_self.state[apiName], value)) {
       return;
     }
     log.verbose(LOG_PREFIX, msg, value);
