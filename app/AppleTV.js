@@ -2,7 +2,7 @@
 
 const util = require('util');
 const log = require('./SystemLog2');
-// const diff = require('deep-diff').diff;
+const diff = require('deep-diff').diff;
 const EventEmitter = require('events').EventEmitter;
 const appleTV = require('node-appletv-x');
 
@@ -19,28 +19,10 @@ function AppleTV() {
   let _appleTV;
   let _ready = false;
   let _pairCallback;
+  let _nowPlaying;
+  let _playbackQueue;
+  let _supportedCommands;
   const _self = this;
-
-  // /**
-  //  * Init
-  //  */
-  // async function _init() {
-  //   log.init(LOG_PREFIX, 'Starting...');
-
-  //   await _findAppleTV();
-  //   if (!_appleTV) {
-  //     log.error(LOG_PREFIX, 'Aborting, unable to find AppleTV');
-  //     return;
-  //   }
-  //   _appleTV.on('close', _onClose);
-  //   _appleTV.on('connect', _onConnect);
-  //   _appleTV.on('error', _onError);
-  //   _appleTV.on('message', _onMessage);
-  //   _appleTV.on('nowPlaying', _onNowPlaying);
-  //   _appleTV.on('playbackqueue', _onPlaybackQueue);
-  //   _appleTV.on('supportedCommands', _onSupportedCommands);
-  //   _self.emit('found');
-  // }
 
   this.connect = async function(credentials) {
     if (_appleTV) {
@@ -116,7 +98,7 @@ function AppleTV() {
    * @param {Object} message
    */
   function _onMessage(message) {
-    // log.log(LOG_PREFIX, 'Message', message);
+    log.verbose(LOG_PREFIX, 'Message', message);
   }
 
   /**
@@ -124,8 +106,11 @@ function AppleTV() {
    * @param {Object} nowPlaying
    */
   function _onNowPlaying(nowPlaying) {
-    log.debug(LOG_PREFIX, 'Now Playing', nowPlaying);
-    _self.emit('nowPlaying', nowPlaying);
+    if (diff(_nowPlaying, nowPlaying)) {
+      log.debug(LOG_PREFIX, 'Now Playing', nowPlaying);
+      _nowPlaying = nowPlaying;
+      _self.emit('nowPlaying', nowPlaying);
+    }
   }
 
   /**
@@ -133,8 +118,11 @@ function AppleTV() {
    * @param {Object} playbackQueue
    */
   function _onPlaybackQueue(playbackQueue) {
-    log.debug(LOG_PREFIX, 'Playback Queue', playbackQueue);
-    _self.emit('playbackQueue', playbackQueue);
+    if (diff(_playbackQueue, playbackQueue)) {
+      log.debug(LOG_PREFIX, 'Playback Queue', playbackQueue);
+      _playbackQueue = playbackQueue;
+      _self.emit('playbackQueue', playbackQueue);
+    }
   }
 
   /**
@@ -142,8 +130,11 @@ function AppleTV() {
    * @param {Object} commands
    */
   function _onSupportedCommands(commands) {
-    log.debug(LOG_PREFIX, 'Supported Commands', commands);
-    _self.emit('supportedCommands', commands);
+    if (diff(_supportedCommands, commands)) {
+      log.debug(LOG_PREFIX, 'Supported Commands', commands);
+      _supportedCommands = commands;
+      _self.emit('supportedCommands', commands);
+    }
   }
 
   /**
@@ -190,11 +181,6 @@ function AppleTV() {
       _appleTV.closeConnection();
     }
   };
-
-  // return _init()
-  //     .then(() => {
-  //       return _self;
-  //     });
 }
 
 util.inherits(AppleTV, EventEmitter);
