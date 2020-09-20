@@ -392,7 +392,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription TV Power Status failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- powerState`, resp);
       _setState('powerState', resp);
     });
 
@@ -402,7 +401,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription foregroundAppInfo failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- foregroundAppInfo`, resp);
       _setState('currentAppId', resp.appId);
     });
 
@@ -412,7 +410,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription volumeStatus failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- volStatus`, resp);
       _setState('volume', resp.volume);
       _setState('muted', resp.mute);
     });
@@ -423,7 +420,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription soundOutput failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- soundOutput`, resp);
       _setState('soundOutput', resp.soundOutput);
     });
 
@@ -433,7 +429,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription currentChannel failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- channelNumber`, resp);
       _setState('currentChannel', resp.channelNumber);
     });
   }
