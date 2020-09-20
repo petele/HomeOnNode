@@ -768,22 +768,15 @@ async function _cleanLogs(path, maxAgeDays) {
     _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
   }
   _verbose(LOG_PREFIX, `${msg} - found ${numChildren} items`);
-  for await (let item of itemsSnap) {
-    try {
-      await item.ref.remove();
-    } catch (ex) {
-      log.error(LOG_PREFIX, 'Unable to remove an item', ex);
-    }
+  const promises = [];
+  itemsSnap.forEach((item) => {
+    promises.push(item.ref.remove());
+  });
+  try {
+    await Promise.all(promises);
+  } catch (ex) {
+    _exception(LOG_PREFIX, `${msg} - failed to remove some items.`);
   }
-  // const promises = [];
-  // itemsSnap.forEach((item) => {
-  //   promises.push(item.ref.remove());
-  // });
-  // try {
-  //   await Promise.all(promises);
-  // } catch (ex) {
-  //   _exception(LOG_PREFIX, `${msg} - failed to remove some items.`);
-  // }
   _debug(LOG_PREFIX, `${msg} - completed, removed ${numChildren} items.`);
   return {path: path, count: numChildren};
 }
