@@ -98,7 +98,7 @@ function AppleTV() {
    * @param {Object} message
    */
   function _onMessage(message) {
-    log.verbose(LOG_PREFIX, 'Message', message);
+    // log.verbose(LOG_PREFIX, 'Message', message);
   }
 
   /**
