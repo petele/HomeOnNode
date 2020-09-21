@@ -21,7 +21,7 @@ const fsProm = require('fs/promises');
 const Harmony = require('./HarmonyWS');
 const Weather = require('./Weather');
 const NanoLeaf = require('./NanoLeaf');
-// const Presence = require('./Presence');
+const Presence = require('./Presence');
 const CronJob = require('cron').CronJob;
 const Bluetooth = require('./Bluetooth');
 const AlarmClock = require('./AlarmClock');
@@ -53,7 +53,7 @@ function Home() {
   let lgTV;
   let logging;
   let nanoLeaf;
-  // let presence;
+  let presence;
   let sonos;
   let tivo;
   let weather;
@@ -1921,56 +1921,36 @@ function Home() {
   async function _initPresence() {
     await _fbSet('state/presence/state', 'NONE');
 
-    // if (!bluetooth) {
-    //   log.warn(LOG_PREFIX, 'Presence disabled, no bluetooth available.');
-    //   return;
-    // }
+    if (!bluetooth) {
+      log.warn(LOG_PREFIX, 'Presence disabled, no bluetooth available.');
+      return;
+    }
 
-    // presence = new Presence(bluetooth);
-    // // Set up the presence detection
-    // presence.on('change', _presenceChanged);
-    // const fbPresPath = 'config/HomeOnNode/presence';
-    // const fbPresencePeopleRef = FBHelper.
-    // // const fbPresencePeopleRef = await FBHelper.getRef(fbPresPath);
-
-    // fbPresencePeopleRef.on('child_added', (snapshot) => {
-    //   const uuid = snapshot.key;
-    //   presence.add(uuid, snapshot.val());
-    // });
-    // fbPresencePeopleRef.on('child_removed', (snapshot) => {
-    //   const uuid = snapshot.key;
-    //   presence.remove(uuid);
-    // });
-    // fbPresencePeopleRef.on('child_changed', (snapshot) => {
-    //   const uuid = snapshot.key;
-    //   presence.update(uuid, snapshot.val());
-    // });
+    presence = new Presence(bluetooth, _config.presence);
+    presence.on('change', _presenceChanged);
   }
 
-  // /**
-  //  * Presence Changed
-  //  *
-  //  * @param {Object} person The person who's presence changed.
-  //  * @param {Number} numPresent The number of people present.
-  //  * @param {Object} who The list of who is present
-  //  */
-  // function _presenceChanged(person, numPresent, who) {
-  //   const presenceLog = {
-  //     level: 'INFO',
-  //     message: person.name + ' is ' + person.state,
-  //     name: person.name,
-  //     state: person.state,
-  //     date: person.lastSeen,
-  //   };
-  //   _fbPush('logs/history/presence', presenceLog);
-  //   _fbSet('state/presence/people', who);
-  //   let presenceState = 'SOME';
-  //   if (numPresent === 0) {
-  //     presenceState = 'NONE';
-  //   }
-  //   _fbSet('state/presence/state', presenceState);
-  //   _self.executeCommandByName(`PRESENCE_${presenceState}`, 'PRESENCE');
-  // }
+  /**
+   * Presence Changed
+   *
+   * @param {Object} person The person who's presence changed.
+   * @param {Number} numPresent The number of people present.
+   * @param {Object} who The list of who is present
+   */
+  function _presenceChanged(person, numPresent, who) {
+    const presenceLog = {
+      level: 'INFO',
+      message: person.name + ' is ' + person.state,
+      name: person.name,
+      state: person.state,
+      date: person.lastSeen,
+    };
+    const presenceState = numPresent === 0 ? 'NONE' : 'SOME';
+    _fbPush('logs/history/presence', presenceLog);
+    _fbSet('state/presence/people', who);
+    _fbSet('state/presence/state', presenceState);
+    _self.executeCommandByName(`PRESENCE_${presenceState}`, 'PRESENCE');
+  }
 
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **

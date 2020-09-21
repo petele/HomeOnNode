@@ -2,6 +2,7 @@
 
 const util = require('util');
 const log = require('./SystemLog2');
+const FBHelper = require('./FBHelper');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'PRESENCE';
@@ -12,8 +13,9 @@ const LOG_PREFIX = 'PRESENCE';
  *
  * @fires Presence#change
  * @param {Object} bt Bluetooth object
+ * @param {Object} people Inital list of people to watch
 */
-function Presence(bt) {
+function Presence(bt, people) {
   const USER_STATES = {
     AWAY: 'AWAY',
     PRESENT: 'PRESENT',
@@ -26,13 +28,20 @@ function Presence(bt) {
   let _numPresent = 0;
 
   /**
-   * Init the Flic monitor
+   * Init the Presence monitor
   */
   function _init() {
     log.init(LOG_PREFIX, 'Starting...');
     if (!_bluetooth) {
       log.error(LOG_PREFIX, 'Bluetooth not available.');
       return;
+    }
+    if (people) {
+      const uuids = Object.keys(people);
+      uuids.forEach((uuid) => {
+        const person = people[uuid];
+        _addPerson(uuid, person);
+      });
     }
     _bluetooth.on('discover', (peripheral) => {
       const uuid = peripheral.uuid.toLowerCase();
@@ -41,7 +50,31 @@ function Presence(bt) {
         _sawPerson(person, peripheral);
       }
     });
+    _initFirebase();
     setInterval(_awayTimerTick, AWAY_REFRESH_INTERVAL);
+  }
+
+  /**
+   *
+   */
+  async function _initFirebase() {
+    const fbRootRef = await FBHelper.getRootRefUnlimited();
+    const fbPeopleRef = await fbRootRef.child('config/HomeOnNode/presence');
+
+    fbPeopleRef.on('child_added', (snapshot) => {
+      const uuid = snapshot.key;
+      const person = snapshot.val();
+      _addPerson(uuid, person);
+    });
+    fbPeopleRef.on('child_removed', (snapshot) => {
+      const uuid = snapshot.key;
+      _removePerson(uuid);
+    });
+    fbPeopleRef.on('child_changed', (snapshot) => {
+      const uuid = snapshot.key;
+      const person = snapshot.val();
+      _updatePerson(uuid, person);
+    });
   }
 
   /**
@@ -50,22 +83,25 @@ function Presence(bt) {
    * @param {String} uuid The UUID of the person to track
    * @param {Object} person The person object to add
   */
-  this.add = function(uuid, person) {
+  function _addPerson(uuid, person) {
     uuid = uuid.toLowerCase();
+    if (_people[uuid]) {
+      return;
+    }
     const msg = `add('${uuid}')`;
     person.lastSeen = 0;
     person.state = USER_STATES.AWAY;
     _people[uuid] = person;
     log.debug(LOG_PREFIX, msg, person);
     _emitChange(person);
-  };
+  }
 
   /**
    * Removes a person from the tracking list
    *
    * @param {String} uuid The UUID of the person to remove
   */
-  this.remove = function(uuid) {
+  function _removePerson(uuid) {
     uuid = uuid.toLowerCase();
     const msg = `remove('${uuid}')`;
     const person = _people[uuid];
@@ -79,7 +115,7 @@ function Presence(bt) {
     }
     _emitChange(person);
     _people[uuid] = null;
-  };
+  }
 
   /**
    * Updates a person in the tracking list.
@@ -87,7 +123,7 @@ function Presence(bt) {
    * @param {Object} uuid The UUID of the person to update
    * @param {Object} newInfo The info to update.
   */
-  this.update = function(uuid, newInfo) {
+  function _updatePerson(uuid, newInfo) {
     uuid = uuid.toLowerCase();
     const msg = `update('${uuid}')`;
     const person = _people[uuid];
@@ -103,7 +139,7 @@ function Presence(bt) {
     }
     _emitChange(person);
     log.debug(LOG_PREFIX, msg, person);
-  };
+  }
 
   /**
    * Handles a Noble event when a 'person' was last seen
@@ -159,6 +195,7 @@ function Presence(bt) {
       }
     });
   }
+
   _init();
 }
 util.inherits(Presence, EventEmitter);
