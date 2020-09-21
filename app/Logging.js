@@ -243,7 +243,11 @@ function Logging() {
   function _getPresence(people) {
     const results = {};
     Object.keys(people).forEach((k) => {
-      results[k] = people[k].state;
+      try {
+        results[k] = people[k].state;
+      } catch (ex) {
+        log.error(LOG_PREFIX, 'Error saving presence info', ex);
+      }
     });
     return results;
   }
