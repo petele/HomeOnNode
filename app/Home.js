@@ -337,7 +337,12 @@ function Home() {
       return _genResult(action, false, 'invalid_param');
     }
 
-    // Logging
+    // No operation
+    if (action.hasOwnProperty('noop')) {
+      return _genResult(action, true, 'noop');
+    }
+
+    // Verify there is only one action per action.
     const k = Object.keys(action);
     if (k.length === 1) {
       log.log(LOG_PREFIX, `executeAction('${k[0]}', '${source}')`, action);
@@ -345,11 +350,6 @@ function Home() {
       const keys = k.join(', ');
       log.error(LOG_PREFIX, `executeAction([${keys}], '${source}')`, action);
       return _genResult(action, false, 'num_param_exceeded');
-    }
-
-    // No operation
-    if (action.hasOwnProperty('noop')) {
-      return _genResult(action, true, 'noop');
     }
 
     // Cancel a delayed timer
