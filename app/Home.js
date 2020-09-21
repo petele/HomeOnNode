@@ -994,7 +994,7 @@ function Home() {
       return Promise.reject(new Error('no_file'));
     }
     const now = Date.now();
-    if (now - _lastSoundPlayedAt < (20 * 1000) && opts.force !== true) {
+    if (now - _lastSoundPlayedAt < (12 * 1000) && opts.force !== true) {
       log.verbose(LOG_PREFIX, 'playSound skipped, too soon.');
       return Promise.reject(new Error('too_soon'));
     }
@@ -1015,7 +1015,7 @@ function Home() {
    */
   function _playSoundLocal(file) {
     const title = `playSoundLocal('${file}')`;
-    const cmd = `mplayer ${file}`;
+    const cmd = `mplayer -really-quiet ${file}`;
     return honExec.run(title, cmd, '.', true)
         .catch((err) => {
           log.error(LOG_PREFIX, `Unable to play sound file '${file}'`, err);
