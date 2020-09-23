@@ -1639,7 +1639,7 @@ function Home() {
     googDeviceAccess.on('device_changed', (device) => {
       const type = device.type.short;
       const inRoom = device.inRoom;
-      const path = `googDeviceAccess/${type}/${inRoom}`;
+      const path = `state/googDeviceAccess/${type}/${inRoom}`;
       _fbSet(path, device);
     });
     googDeviceAccess.on('structure_changed', (struct) => {
