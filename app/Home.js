@@ -1637,10 +1637,10 @@ function Home() {
       _fbSet('state/googDeviceAccess/ready', true);
     });
     googDeviceAccess.on('devices_changed', (devices) => {
-      _fbSet('state/googDeviceAccess/devices', devices);
+      // _fbSet('state/googDeviceAccess/devices', devices);
     });
     googDeviceAccess.on('structure_changed', (struct) => {
-      _fbSet('state/googDeviceAccess/structure', struct);
+      // _fbSet('state/googDeviceAccess/structure', struct);
     });
   }
 
