@@ -46,15 +46,16 @@ function Awair() {
    * @param {String} ipAddress
    */
   async function _monitorLocalDevice(deviceId, ipAddress) {
+    const msg = `monitorLocalDevice('${deviceId}', '${ipAddress}')`;
     const path = `http://${ipAddress}/air-data/latest`;
     try {
+      log.debug(LOG_PREFIX, msg);
       const resp = await fetch(path);
       const newVal = await resp.json();
-      log.verbose(LOG_PREFIX, `localData for '${deviceId}' updated`, newVal);
+      log.verbose(LOG_PREFIX, `${msg} - updated`, newVal);
       _self.emit('sensors_changed', deviceId, newVal);
     } catch (ex) {
-      const msg = `monitorLocalDevice for ${deviceId} at ${ipAddress} failed.`;
-      log.exception(LOG_PREFIX, msg, ex);
+      log.exception(LOG_PREFIX, `${msg} - failed`, ex);
     }
     setTimeout(() => {
       _monitorLocalDevice(deviceId, ipAddress);

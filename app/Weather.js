@@ -18,7 +18,7 @@ const LOG_PREFIX = 'WEATHER';
  * @param {String} key Forecast.io API Key.
 */
 function Weather(latLon, key) {
-  const REFRESH_INTERVAL = 5 * 60 * 1000;
+  const REFRESH_INTERVAL = 7 * 60 * 1000;
   const _weatherURL = `https://api.forecast.io/forecast/${key}/${latLon}`;
   const _self = this;
 
@@ -37,6 +37,7 @@ function Weather(latLon, key) {
   */
   async function _getWeather() {
     let weatherForecast;
+    log.debug(LOG_PREFIX, 'Updating weather forecast...');
     try {
       const resp = await fetch(_weatherURL);
       if (!resp.ok) {
