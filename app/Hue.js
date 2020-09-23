@@ -390,13 +390,13 @@ function Hue(key, ipAddress) {
       fetchOpts.body = JSON.stringify(body);
       fetchOpts.headers['Content-Type'] = 'application/json';
     }
+    log.debug(LOG_PREFIX, `${msg}`, body);
     let resp;
     try {
-      log.verbose(LOG_PREFIX, `${msg}`, body);
       resp = await fetch(url, fetchOpts);
     } catch (ex) {
       if (retry) {
-        log.verbose(LOG_PREFIX, `${msg} - Request error (will retry)`, ex);
+        log.verbose(LOG_PREFIX, `${msg} - Request error`, ex);
         await honHelpers.sleep(250);
         return _makeHueRequest(requestPath, method, body, false);
       }
@@ -405,11 +405,12 @@ function Hue(key, ipAddress) {
     }
 
     if (!resp.ok) {
-      log.error(LOG_PREFIX, `${msg} - Response error`, resp);
       if (retry) {
+        log.verbose(LOG_PREFIX, `${msg} - Response error`, resp);
         await honHelpers.sleep(250);
         return _makeHueRequest(requestPath, method, body, false);
       }
+      log.error(LOG_PREFIX, `${msg} - Response error`, resp);
       throw new Error('Response Error');
     }
 
@@ -417,38 +418,36 @@ function Hue(key, ipAddress) {
     try {
       respBody = await resp.json();
     } catch (ex) {
-      log.error(LOG_PREFIX, `${msg} - JSON error`, ex);
       if (retry) {
+        log.verbose(LOG_PREFIX, `${msg} - JSON error`, ex);
         await honHelpers.sleep(250);
         return _makeHueRequest(requestPath, method, body, false);
       }
+      log.error(LOG_PREFIX, `${msg} - JSON error`, ex);
       throw new Error('JSON Conversion Error');
     }
 
     const errors = [];
     if (respBody.error) {
-      log.verbose(LOG_PREFIX, `${msg} Response error: body.`, respBody);
       errors.push(respBody);
     } else if (Array.isArray(respBody)) {
       respBody.forEach((item) => {
         if (item.error) {
-          log.verbose(LOG_PREFIX, `${msg} Response error: item.`, item);
           errors.push(item);
         }
       });
     }
-
     if (errors.length === 0) {
       return respBody;
     }
 
     if (retry) {
-      log.warn(LOG_PREFIX, `${msg} - will retry.`, errors);
+      log.verbose(LOG_PREFIX, `${msg} - Body error(s).`, errors);
       await honHelpers.sleep(250);
       return _makeHueRequest(requestPath, method, body, false);
     }
 
-    log.error(LOG_PREFIX, `${msg} - will retry.`, errors);
+    log.error(LOG_PREFIX, `${msg} - Body error(s)`, errors);
     throw new Error('Failed');
   }
 

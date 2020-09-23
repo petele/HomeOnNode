@@ -7,7 +7,7 @@ const Keys = require('./Keys').keys;
 const diff = require('deep-diff').diff;
 const FBHelper = require('./FBHelper');
 const honHelpers = require('./HoNHelpers');
-// const {PubSub} = require('@google-cloud/pubsub');
+const {PubSub} = require('@google-cloud/pubsub');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'G_DEVICE_ACCESS';
@@ -20,11 +20,14 @@ const VALID_MODES = ['HEAT', 'COOL', 'OFF'];
  *
  * @see https://developers.google.com/nest/device-access/
  *
+ * After adding a new device to your Nest collection, visit
+ * https://nestservices.google.com/partnerconnections
+ *
  */
 function GDeviceAccess() {
   const REQUEST_TIMEOUT = 15 * 1000;
-  const DEVICE_REFRESH_INTERVAL = 67 * 1000;
-  const STRUCTURE_REFRESH_INTERVAL = 4 * 60 * 1000;
+  const DEVICE_REFRESH_INTERVAL = 30 * 60 * 1001;
+  const STRUCTURE_REFRESH_INTERVAL = 45 * 60 * 1003;
 
   let _ready = false;
   const _self = this;
@@ -100,7 +103,9 @@ function GDeviceAccess() {
     await _getHomeInfo();
     await _getDeviceInfo();
 
-    // _initPubSub();
+    const pubSubClient = new PubSub({projectId: 'petele-home-automation'});
+    const subscription = pubSubClient.subscription('hon-events');
+    subscription.on('message', _handlePubSubMessage);
 
     setInterval(() => {
       _getDeviceInfo();
@@ -110,24 +115,29 @@ function GDeviceAccess() {
     }, STRUCTURE_REFRESH_INTERVAL);
   }
 
-  // /**
-  //  *
-  //  */
-  // async function _initPubSub() {
-  //   console.log(1);
-  //   const subscriptionName = 'hon-events';
-  //   const pubSubClient = new PubSub({projectId: 'petele-home-automation'});
-  //   const subscription = pubSubClient.subscription(subscriptionName);
-
-  //   // const subscription = pubSubClient.subscription(subscriptionName);
-  //   // console.log(2);
-  //   subscription.on('message', (message) => {
-  //     console.log(`Received message ${message.id}:`);
-  //     console.log(`\tData: ${message.data}`);
-  //     console.log(`\tAttributes: ${message.attributes}`);
-  //     message.ack();
-  //   });
-  // }
+  /**
+   * Handle incoming PubSub message about changes to devices...
+   *
+   * @param {PubSub.message} message
+   */
+  async function _handlePubSubMessage(message) {
+    const data = JSON.parse(message.data.toString());
+    message.ack();
+    if (data.resourceUpdate) {
+      try {
+        const deviceName = data.resourceUpdate.name;
+        const deviceId = deviceName.substring(deviceName.lastIndexOf('/') + 1);
+        log.verbose(LOG_PREFIX, 'PubSub: Device change notification', data);
+        const reqPath = `devices/${deviceId}`;
+        const device = await _sendRequest(reqPath, 'GET', null, true);
+        return _parseDevice(device);
+      } catch (ex) {
+        log.error(LOG_PREFIX, 'Unable to update device after PubSubNot', ex);
+        return;
+      }
+    }
+    log.warn(LOG_PREFIX, 'PubSub: Unknown data type', data);
+  }
 
   /**
    * Refreshes the details of the connected devices.
@@ -139,6 +149,7 @@ function GDeviceAccess() {
       await honHelpers.sleep(delay);
     }
     try {
+      log.debug(LOG_PREFIX, 'Updating structure info...');
       const structures = await _sendRequest('structures', 'GET', null, true);
       _parseStructure(structures.structures[0]);
     } catch (ex) {
@@ -156,6 +167,7 @@ function GDeviceAccess() {
       await honHelpers.sleep(delay);
     }
     try {
+      log.debug(LOG_PREFIX, 'Updating devices...');
       const devices = await _sendRequest('devices', 'GET', null, true);
       devices.devices.forEach((device) => {
         _parseDevice(device);
@@ -255,7 +267,7 @@ function GDeviceAccess() {
 
     const reqPathExec = `${reqPath}:executeCommand`;
     const result = await _sendRequest(reqPathExec, 'POST', body, true);
-    _getDeviceInfo(250);
+    // _getDeviceInfo(250);
     return result;
   }
 
@@ -290,7 +302,7 @@ function GDeviceAccess() {
       },
     };
     const result = await _sendRequest(reqPath, 'POST', body, true);
-    _getDeviceInfo(250);
+    // _getDeviceInfo(250);
     return result;
   }
 
@@ -303,7 +315,6 @@ function GDeviceAccess() {
   function _convertFtoC(val) {
     return (val - 32) * 5 / 9;
   }
-
 
   /**
    * Parse and create a structure item.
@@ -335,25 +346,29 @@ function GDeviceAccess() {
     const shortType = fullType
         .substring(fullType.lastIndexOf('.') + 1)
         .toLowerCase();
-    const inRoom = device.parentRelations[0].displayName;
+    const room = _getRoomInfo(device.parentRelations[0]);
     const result = {
       id,
       type: {
         full: fullType,
         short: shortType,
       },
-      inRoom,
+      room,
       traits: {},
     };
     Object.keys(device.traits).forEach((key) => {
       try {
-        const traitName = _getTraitName(key);
+        const traitName = _getShortTraitName(key);
         result.traits[traitName] = device.traits[key];
       } catch (ex) {
         const extra = device.traits[key];
         log.error(LOG_PREFIX, `Unable to set trait for '${key}'`, extra);
       }
     });
+    const niceName = result.traits?.info?.customName;
+    if (niceName) {
+      result.niceName = niceName;
+    }
     if (diff(_state.devices[id], result)) {
       _state.devices[id] = result;
       _self.emit('device_changed', result);
@@ -366,10 +381,27 @@ function GDeviceAccess() {
    * @param {String} traitName Trait name from API
    * @return {String}
    */
-  function _getTraitName(traitName) {
+  function _getShortTraitName(traitName) {
     const startAt = traitName.lastIndexOf('.') + 1;
     const result = traitName.substring(startAt + 1);
     return traitName.substring(startAt, startAt + 1).toLowerCase() + result;
+  }
+
+  /**
+   * Parse a room object and return something easier to consume
+   *
+   * @param {Object} room
+   * @return {Object}
+   */
+  function _getRoomInfo(room) {
+    try {
+      const key = room.parent.substring(room.parent.lastIndexOf('/') + 1);
+      const name = room.displayName;
+      return {key, name};
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Error parsing room info', ex);
+      return {name: 'Unknown'};
+    }
   }
 
   /**
@@ -388,12 +420,13 @@ function GDeviceAccess() {
         `refresh_token=${_refreshToken}&` +
         `grant_type=refresh_token`;
     try {
-      log.log(LOG_PREFIX, 'Getting new access token...', _accessToken);
+      log.debug(LOG_PREFIX, 'Getting new access token...');
       const resp = await fetch(url, {method: 'POST'});
       if (resp.ok) {
         const body = await resp.json();
         _accessToken = body.access_token;
         _accessTokenExpiresAt = now + (body.expires_in * 1000);
+        log.verbose(LOG_PREFIX, 'Access token refreshed.');
         return _accessToken;
       }
     } catch (ex) {
@@ -430,13 +463,13 @@ function GDeviceAccess() {
       fetchOpts.body = JSON.stringify(body);
       fetchOpts.headers['Content-Type'] = 'application/json';
     }
+    log.debug(LOG_PREFIX, `${msg}`, body);
     let resp;
     try {
-      log.verbose(LOG_PREFIX, `${msg}`, body);
       resp = await fetch(url, fetchOpts);
     } catch (ex) {
       if (retry) {
-        log.verbose(LOG_PREFIX, `${msg} - Request error (will retry)`, ex);
+        log.verbose(LOG_PREFIX, `${msg} - Request error`, ex);
         await honHelpers.sleep(250);
         return _sendRequest(requestPath, method, body, false);
       }
@@ -454,11 +487,12 @@ function GDeviceAccess() {
       } catch (ex) {
         // Do nothing.
       }
-      log.error(LOG_PREFIX, `${msg} - Response error`, extra);
       if (retry) {
+        log.verbose(LOG_PREFIX, `${msg} - Response error`, extra);
         await honHelpers.sleep(250);
         return _sendRequest(requestPath, method, body, false);
       }
+      log.error(LOG_PREFIX, `${msg} - Response error`, extra);
       throw new Error('Response Error');
     }
 
@@ -466,21 +500,22 @@ function GDeviceAccess() {
     try {
       respBody = await resp.json();
     } catch (ex) {
-      log.error(LOG_PREFIX, `${msg} - JSON error`, ex);
       if (retry) {
+        log.verbose(LOG_PREFIX, `${msg} - JSON error`, ex);
         await honHelpers.sleep(250);
         return _sendRequest(requestPath, method, body, false);
       }
+      log.error(LOG_PREFIX, `${msg} - JSON error`, ex);
       throw new Error('JSON Conversion Error');
     }
 
     if (respBody.error) {
-      log.verbose(LOG_PREFIX, `${msg} Response error: body.`, respBody);
       if (retry) {
-        log.warn(LOG_PREFIX, `${msg} - will retry.`, respBody.error);
+        log.verbose(LOG_PREFIX, `${msg} - Body error`, respBody);
         await honHelpers.sleep(250);
         return _sendRequest(requestPath, method, body, false);
       }
+      log.warn(LOG_PREFIX, `${msg} - Body error`, respBody);
       throw new Error('Failed');
     }
 

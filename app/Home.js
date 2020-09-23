@@ -1633,13 +1633,10 @@ function Home() {
     }
 
     googDeviceAccess = new GoogDeviceAccess();
-    googDeviceAccess.on('ready', () => {
-      _fbSet('state/googDeviceAccess/ready', true);
-    });
     googDeviceAccess.on('device_changed', (device) => {
       const type = device.type.short;
-      const inRoom = device.inRoom;
-      const path = `state/googDeviceAccess/${type}/${inRoom}`;
+      const roomName = device.room.name;
+      const path = `state/googDeviceAccess/${roomName}/${type}`;
       _fbSet(path, device);
     });
     googDeviceAccess.on('structure_changed', (struct) => {
