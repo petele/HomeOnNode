@@ -8,7 +8,7 @@ const log = require('./SystemLog2');
 const WSClient = require('./WSClient');
 const commander = require('commander');
 
-const DEFAULT_HOST = `rpi-server:8881`;
+const DEFAULT_HOST = `rpi-ottawa:8881`;
 
 let _host;
 

@@ -395,11 +395,12 @@ function Hue(key, ipAddress) {
       log.verbose(LOG_PREFIX, `${msg}`, body);
       resp = await fetch(url, fetchOpts);
     } catch (ex) {
-      log.error(LOG_PREFIX, `${msg} - Request error`, ex);
       if (retry) {
+        log.verbose(LOG_PREFIX, `${msg} - Request error (will retry)`, ex);
         await honHelpers.sleep(250);
         return _makeHueRequest(requestPath, method, body, false);
       }
+      log.error(LOG_PREFIX, `${msg} - Request error`, ex);
       throw ex;
     }
 
@@ -458,7 +459,7 @@ function Hue(key, ipAddress) {
    */
   async function _updateRules() {
     try {
-      const rules = await _makeHueRequest('/rules', 'GET', null, false);
+      const rules = await _makeHueRequest('/rules', 'GET', null, true);
       return _hasValueChanged('rules', rules);
     } catch (ex) {
       log.exception(LOG_PREFIX, `Unable to retreive rules`, ex);
@@ -473,7 +474,7 @@ function Hue(key, ipAddress) {
    */
   async function _updateSensors() {
     try {
-      const sensors = await _makeHueRequest('/sensors', 'GET', null, false);
+      const sensors = await _makeHueRequest('/sensors', 'GET', null, true);
       return _hasValueChanged('sensors', sensors);
     } catch (ex) {
       log.exception(LOG_PREFIX, `Unable to retreive sensors`, ex);

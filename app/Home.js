@@ -25,6 +25,8 @@ const Presence = require('./Presence');
 const CronJob = require('cron').CronJob;
 const Bluetooth = require('./Bluetooth');
 const AlarmClock = require('./AlarmClock');
+const GoogDeviceAccess = require('./GDevAccess');
+
 const deepDiff = require('deep-diff').diff;
 
 const FBHelper = require('./FBHelper');
@@ -50,6 +52,7 @@ function Home() {
   let harmony;
   let hue;
   let hueSync;
+  let googDeviceAccess;
   let lgTV;
   let logging;
   let nanoLeaf;
@@ -152,6 +155,7 @@ function Home() {
     await _initAppleTV();
     await _initBluetooth();
     await _initPresence();
+    await _initGoogDeviceAccess();
 
     _initCron();
     _initAutoHumidifier();
@@ -587,6 +591,23 @@ function Home() {
           })
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: hueSync command failed.`, err);
+            return _genResult(action, false, err);
+          });
+    }
+
+    // Google Device Access
+    if (action.hasOwnProperty('googDevice')) {
+      if (!googDeviceAccess) {
+        log.error(LOG_PREFIX, 'Google Device Access unavailable', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      return googDeviceAccess.executeCommand(action.googDevice)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: googDev command failed.`, err);
             return _genResult(action, false, err);
           });
     }
@@ -1592,6 +1613,35 @@ function Home() {
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to initialize Cron', ex);
     }
+  }
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Google Device Access API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the Google Device Access API
+   */
+  async function _initGoogDeviceAccess() {
+    await _fbSet('state/googDevices', false);
+
+    if (_config.googleDeviceAccess.disabled === true) {
+      log.warn(LOG_PREFIX, 'Google Device Access disabled via config.');
+      return;
+    }
+
+    googDeviceAccess = new GoogDeviceAccess();
+    googDeviceAccess.on('ready', () => {
+      _fbSet('state/googDeviceAccess/ready', true);
+    });
+    googDeviceAccess.on('devices_changed', (devices) => {
+      _fbSet('state/googDeviceAccess/devices', devices);
+    });
+    googDeviceAccess.on('structure_changed', (struct) => {
+      _fbSet('state/googDeviceAccess/structure', struct);
+    });
   }
 
 
