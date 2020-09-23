@@ -1636,11 +1636,12 @@ function Home() {
     googDeviceAccess.on('ready', () => {
       _fbSet('state/googDeviceAccess/ready', true);
     });
-    googDeviceAccess.on('devices_changed', (devices) => {
-      // _fbSet('state/googDeviceAccess/devices', devices);
+    googDeviceAccess.on('thermostat_changed', (thermostat) => {
+      const displayName = thermostat.displayName;
+      _fbSet(`state/googDeviceAccess/thermostat/${displayName}`, thermostat);
     });
     googDeviceAccess.on('structure_changed', (struct) => {
-      // _fbSet('state/googDeviceAccess/structure', struct);
+      _fbSet('state/googDeviceAccess/structure', struct);
     });
   }
 

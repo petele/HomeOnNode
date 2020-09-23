@@ -35,8 +35,10 @@ function GDeviceAccess() {
 
   let _ready = false;
 
-  const _state = {};
-  const _roomLookUp = {};
+  const _state = {
+    thermostats: {},
+  };
+  const _thermostatLookUp = {};
 
   let _accessToken;
   let _accessTokenExpiresAt = 0;
@@ -61,8 +63,9 @@ function GDeviceAccess() {
     const rooms = config.val();
     Object.keys(rooms).forEach((roomId) => {
       const deviceId = rooms[roomId];
-      _roomLookUp[roomId] = deviceId;
-      _roomLookUp[deviceId] = roomId;
+      _thermostatLookUp[roomId] = deviceId;
+      _thermostatLookUp[deviceId] = roomId;
+      _state.thermostats[roomId] = null;
     });
 
     await _getAccessToken();
@@ -90,10 +93,7 @@ function GDeviceAccess() {
       await honHelpers.sleep(delay);
     }
     const structures = await _sendRequest('structures', 'GET', null, true);
-    if (diff(_state.structure, structures.structures[0])) {
-      _state.structure = structures.structures[0];
-      _self.emit('structure_changed', structures.structures[0]);
-    }
+    _parseStructure(structures.structures[0]);
   }
 
   /**
@@ -106,12 +106,14 @@ function GDeviceAccess() {
       await honHelpers.sleep(delay);
     }
     const devices = await _sendRequest('devices', 'GET', null, true);
-    if (diff(_state.devices, devices)) {
-      _state.devices = devices;
-      _self.emit('devices_changed', devices);
-    }
+    devices.devices.forEach((device) => {
+      if (device.type === 'sdm.devices.types.THERMOSTAT') {
+        _parseThermostat(device);
+      } else if (device.type === 'sdm.devices.types.CAMERA') {
+        // _parseCamera(device);
+      }
+    });
   }
-
 
   /**
    * Executes a Device Access command
@@ -158,7 +160,7 @@ function GDeviceAccess() {
    * @return {Promise}
    */
   async function _setTemperature(roomId, temperature) {
-    const deviceId = _roomLookUp[roomId];
+    const deviceId = _thermostatLookUp[roomId];
 
     if (!deviceId) {
       log.error(LOG_PREFIX, 'Unable to find matching device ID', roomId);
@@ -198,7 +200,7 @@ function GDeviceAccess() {
    * @return {Promise}
    */
   async function _setHVACMode(roomId, mode) {
-    const deviceId = _roomLookUp[roomId];
+    const deviceId = _thermostatLookUp[roomId];
 
     if (!deviceId) {
       log.error(LOG_PREFIX, 'Unable to find matching device ID', roomId);
@@ -230,6 +232,64 @@ function GDeviceAccess() {
    */
   function _convertFtoC(val) {
     return (val - 32) * 5 / 9;
+  }
+
+
+  /**
+   * Parse and create a structure item.
+   *
+   * @param {Object} structure Structure object from Device Access API
+   */
+  function _parseStructure(structure) {
+    try {
+      const id = structure.name.substring(structure.name.lastIndexOf('/') + 1);
+      const name = structure.traits['sdm.structures.traits.Info'].customName;
+      const parsedStruct = {id, name};
+      if (diff(_state.structure, parsedStruct)) {
+        _state.structure = parsedStruct;
+        _self.emit('structure_changed', parsedStruct);
+      }
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Unable to parse structure object', ex);
+    }
+  }
+
+  /**
+   * Parse and create a thermostat item.
+   *
+   * @param {Object} thermostat Thermostat object from Device Access API
+   */
+  function _parseThermostat(thermostat) {
+    const id = thermostat.name.substring(thermostat.name.lastIndexOf('/') + 1);
+    const roomID = _thermostatLookUp[id];
+    const type = thermostat.type;
+    const displayName = thermostat.parentRelations[0].displayName;
+    const result = {id, roomID, type, displayName, traits: {}};
+    Object.keys(thermostat.traits).forEach((key) => {
+      try {
+        const traitName = _getTraitName(key);
+        result.traits[traitName] = thermostat.traits[key];
+      } catch (ex) {
+        const extra = thermostat.traits[key];
+        log.error(LOG_PREFIX, `Unable to set trait for '${key}'`, extra);
+      }
+    });
+    if (diff(_state.thermostats[roomID], result)) {
+      _state.thermostats[roomID] = result;
+      _self.emit('thermostat_changed', result);
+    }
+  }
+
+  /**
+   * Simplify and camel case the trait name.
+   *
+   * @param {String} traitName Trait name from API
+   * @return {String}
+   */
+  function _getTraitName(traitName) {
+    const startAt = traitName.lastIndexOf('.') + 1
+    const result = traitName.substring(startAt + 1);
+    return traitName.substring(startAt, startAt + 1).toLowerCase() + result;
   }
 
   /**
