@@ -157,7 +157,7 @@ function NanoLeaf(key, ip, port) {
       fetchOpts.body = JSON.stringify(body);
       fetchOpts.headers['Content-Type'] = 'application/json';
     }
-    log.verbose(LOG_PREFIX, msg, body);
+    log.debug(LOG_PREFIX, msg, body);
     const resp = await fetch(url, fetchOpts);
 
     if (!resp.ok) {

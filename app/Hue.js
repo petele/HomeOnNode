@@ -390,7 +390,7 @@ function Hue(key, ipAddress) {
       fetchOpts.body = JSON.stringify(body);
       fetchOpts.headers['Content-Type'] = 'application/json';
     }
-    log.debug(LOG_PREFIX, `${msg}`, body);
+    log.debug(LOG_PREFIX, msg, body);
     let resp;
     try {
       resp = await fetch(url, fetchOpts);

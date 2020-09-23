@@ -293,25 +293,27 @@ function HueSync(ipAddress, bearerToken) {
       fetchOpts.body = JSON.stringify(body);
       fetchOpts.headers['Content-Type'] = 'application/json';
     }
+    log.debug(LOG_PREFIX, `${msg}`, body);
     let resp;
     try {
-      log.verbose(LOG_PREFIX, `${msg}`, body);
       resp = await fetch(url, fetchOpts);
     } catch (ex) {
-      log.error(LOG_PREFIX, `${msg} - Request error`, ex);
       if (retry) {
+        log.verbose(LOG_PREFIX, `${msg} - Request error`, ex);
         await honHelpers.sleep(250);
         return _makeRequest(requestPath, method, body, false);
       }
+      log.error(LOG_PREFIX, `${msg} - Request error`, ex);
       throw ex;
     }
 
     if (!resp.ok) {
-      log.error(LOG_PREFIX, `${msg} - Response error`, resp);
       if (retry) {
+        log.verbose(LOG_PREFIX, `${msg} - Response error`, resp);
         await honHelpers.sleep(250);
         return _makeRequest(requestPath, method, body, false);
       }
+      log.error(LOG_PREFIX, `${msg} - Response error`, resp);
       throw new Error('Response Error');
     }
 
@@ -319,22 +321,21 @@ function HueSync(ipAddress, bearerToken) {
     try {
       respBody = await resp.json();
     } catch (ex) {
-      log.error(LOG_PREFIX, `${msg} - JSON error`, ex);
       if (retry) {
+        log.verbose(LOG_PREFIX, `${msg} - JSON error`, ex);
         await honHelpers.sleep(250);
         return _makeRequest(requestPath, method, body, false);
       }
+      log.error(LOG_PREFIX, `${msg} - JSON error`, ex);
       throw new Error('JSON Conversion Error');
     }
 
     const errors = [];
     if (respBody.error) {
-      log.verbose(LOG_PREFIX, `${msg} Response error: body.`, respBody);
       errors.push(respBody);
     } else if (Array.isArray(respBody)) {
       respBody.forEach((item) => {
         if (item.error) {
-          log.verbose(LOG_PREFIX, `${msg} Response error: item.`, item);
           errors.push(item);
         }
       });
@@ -345,7 +346,7 @@ function HueSync(ipAddress, bearerToken) {
     }
 
     if (retry) {
-      log.warn(LOG_PREFIX, `${msg} - will retry.`, errors);
+      log.verbose(LOG_PREFIX, `${msg} - Body error(s).`, errors);
       await honHelpers.sleep(250);
       return _makeRequest(requestPath, method, body, false);
     }
