@@ -1625,7 +1625,7 @@ function Home() {
    * Init the Google Device Access API
    */
   async function _initGoogDeviceAccess() {
-    await _fbSet('state/googDevices', false);
+    await _fbSet('state/googDeviceAccess', false);
 
     if (_config.googleDeviceAccess.disabled === true) {
       log.warn(LOG_PREFIX, 'Google Device Access disabled via config.');
