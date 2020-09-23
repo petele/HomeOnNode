@@ -7,6 +7,7 @@ const Keys = require('./Keys').keys;
 const diff = require('deep-diff').diff;
 const FBHelper = require('./FBHelper');
 const honHelpers = require('./HoNHelpers');
+// const {PubSub} = require('@google-cloud/pubsub');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'G_DEVICE_ACCESS';
@@ -36,6 +37,7 @@ function GDeviceAccess() {
 
   const _state = {
     defaultHVACMode: 'OFF',
+    devices: {},
   };
   const _thermostatLookUp = {};
 
@@ -98,6 +100,8 @@ function GDeviceAccess() {
     await _getHomeInfo();
     await _getDeviceInfo();
 
+    // _initPubSub();
+
     setInterval(() => {
       _getDeviceInfo();
     }, DEVICE_REFRESH_INTERVAL);
@@ -105,6 +109,25 @@ function GDeviceAccess() {
       _getHomeInfo();
     }, STRUCTURE_REFRESH_INTERVAL);
   }
+
+  // /**
+  //  *
+  //  */
+  // async function _initPubSub() {
+  //   console.log(1);
+  //   const subscriptionName = 'hon-events';
+  //   const pubSubClient = new PubSub({projectId: 'petele-home-automation'});
+  //   const subscription = pubSubClient.subscription(subscriptionName);
+
+  //   // const subscription = pubSubClient.subscription(subscriptionName);
+  //   // console.log(2);
+  //   subscription.on('message', (message) => {
+  //     console.log(`Received message ${message.id}:`);
+  //     console.log(`\tData: ${message.data}`);
+  //     console.log(`\tAttributes: ${message.attributes}`);
+  //     message.ack();
+  //   });
+  // }
 
   /**
    * Refreshes the details of the connected devices.
@@ -331,11 +354,8 @@ function GDeviceAccess() {
         log.error(LOG_PREFIX, `Unable to set trait for '${key}'`, extra);
       }
     });
-    if (!_state[shortType]) {
-      _state[shortType] = {};
-    }
-    if (diff(_state[shortType][inRoom], result)) {
-      _state[shortType][inRoom] = result;
+    if (diff(_state.devices[id], result)) {
+      _state.devices[id] = result;
       _self.emit('device_changed', result);
     }
   }

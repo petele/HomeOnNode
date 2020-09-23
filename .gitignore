@@ -11,8 +11,8 @@ scratch-*.*
 
 */**/.AppleDouble
 */**/package-lock.json
-*/**/keys.js
-*/**/Keys.js
+*/**/keys*.*
+*/**/Keys*.*
 */**/*.log
 */logs/*
 /Web/scripts/fbKey.js
