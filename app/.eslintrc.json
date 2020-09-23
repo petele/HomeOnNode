@@ -2,7 +2,8 @@
   "extends": ["eslint:recommended", "google"],
   "env": {
     "node": true,
-    "es2017": true
+    "es2017": true,
+    "es2020": true
   },
   "rules": {
     "no-prototype-builtins": 0

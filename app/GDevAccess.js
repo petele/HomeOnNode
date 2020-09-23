@@ -19,13 +19,14 @@ const VALID_MODES = ['HEAT', 'COOL', 'OFF'];
  *
  * @see https://developers.google.com/nest/device-access/
  *
- * @param {Object} credentials
- *
-*/
+ */
 function GDeviceAccess() {
   const REQUEST_TIMEOUT = 15 * 1000;
-  const DEVICE_REFRESH_INTERVAL = 90 * 1000;
+  const DEVICE_REFRESH_INTERVAL = 67 * 1000;
   const STRUCTURE_REFRESH_INTERVAL = 4 * 60 * 1000;
+
+  let _ready = false;
+  const _self = this;
   const _projectID = Keys.gDeviceAccess?.projectID;
   const _clientID = Keys.gDeviceAccess?.clientID;
   const _clientSecret = Keys.gDeviceAccess?.clientSecret;
@@ -33,20 +34,17 @@ function GDeviceAccess() {
   const _basePath = `https://smartdevicemanagement.googleapis.com/` +
       `v1/enterprises/${_projectID}`;
 
-  let _ready = false;
-
   const _state = {
-    thermostats: {},
+    defaultHVACMode: 'OFF',
   };
   const _thermostatLookUp = {};
 
   let _accessToken;
   let _accessTokenExpiresAt = 0;
 
-  const _self = this;
 
   /**
-   *
+   * Basic init
    */
   async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
@@ -56,19 +54,44 @@ function GDeviceAccess() {
       return;
     }
 
+    const fbConfigBase = `config/HomeOnNode/googleDeviceAccess`;
     const fbRootRef = await FBHelper.getRootRefUnlimited();
-    const configPath = 'config/HomeOnNode/googleDeviceAccess/thermostats';
-    const fbConfig = await fbRootRef.child(configPath);
-    const config = await fbConfig.once('value');
-    const rooms = config.val();
-    Object.keys(rooms).forEach((roomId) => {
-      const deviceId = rooms[roomId];
-      _thermostatLookUp[roomId] = deviceId;
-      _thermostatLookUp[deviceId] = roomId;
-      _state.thermostats[roomId] = null;
+
+    // Get the default HVAC mode
+    const fbThermDefModePath = `${fbConfigBase}/defaultHVACMode`;
+    const fbThermDefaultModeRef = await fbRootRef.child(fbThermDefModePath);
+    fbThermDefaultModeRef.on('value', (snapshot) => {
+      let value = snapshot.val();
+      value = value.toUpperCase();
+      log.log(LOG_PREFIX, `Default HVAC mode set to '${value}'`);
+      _state.defaultHVACMode = value;
     });
 
-    await _getAccessToken();
+    // Get the thermostat key mapping
+    const cfgThermoKeyMapPath = `${fbConfigBase}/thermostats`;
+    const fbThermKeyMapPath = await fbRootRef.child(cfgThermoKeyMapPath);
+    const thermKeyMapRef = await fbThermKeyMapPath.once('value');
+    const thermKeyMap = thermKeyMapRef.val();
+    Object.keys(thermKeyMap).forEach((roomId) => {
+      const deviceId = thermKeyMap[roomId];
+      _thermostatLookUp[roomId] = deviceId;
+      _thermostatLookUp[deviceId] = roomId;
+    });
+
+    // Attempt to connect to Google Servers
+    _connect();
+  }
+
+  /**
+   * Connect to Google servers...
+   */
+  async function _connect() {
+    const token = await _getAccessToken();
+    if (!token) {
+      await honHelpers.sleep(30 * 1000);
+      return _connect();
+    }
+
     _ready = true;
     _self.emit('ready');
 
@@ -92,8 +115,12 @@ function GDeviceAccess() {
     if (delay) {
       await honHelpers.sleep(delay);
     }
-    const structures = await _sendRequest('structures', 'GET', null, true);
-    _parseStructure(structures.structures[0]);
+    try {
+      const structures = await _sendRequest('structures', 'GET', null, true);
+      _parseStructure(structures.structures[0]);
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Unable to update home info', ex);
+    }
   }
 
   /**
@@ -105,14 +132,14 @@ function GDeviceAccess() {
     if (delay) {
       await honHelpers.sleep(delay);
     }
-    const devices = await _sendRequest('devices', 'GET', null, true);
-    devices.devices.forEach((device) => {
-      if (device.type === 'sdm.devices.types.THERMOSTAT') {
-        _parseThermostat(device);
-      } else if (device.type === 'sdm.devices.types.CAMERA') {
-        // _parseCamera(device);
-      }
-    });
+    try {
+      const devices = await _sendRequest('devices', 'GET', null, true);
+      devices.devices.forEach((device) => {
+        _parseDevice(device);
+      });
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Unable to update device info', ex);
+    }
   }
 
   /**
@@ -136,15 +163,11 @@ function GDeviceAccess() {
       return Promise.reject(new Error(`No 'action' provided.`));
     }
 
-    log.verbose(LOG_PREFIX, `executeCommand('${action}')`, command);
-
     // Run the commands
     if (action === 'setTemperature') {
-      log.log(LOG_PREFIX, `Set the ${room} temperature to ${value}.`);
       return _setTemperature(room, value);
     }
     if (action === 'setHVACMode') {
-      log.log(LOG_PREFIX, `Set the ${room} thermostat to ${value}.`);
       return _setHVACMode(room, value);
     }
 
@@ -160,16 +183,37 @@ function GDeviceAccess() {
    * @return {Promise}
    */
   async function _setTemperature(roomId, temperature) {
+    const msg = `setTemperature('${roomId}', ${temperature})`;
+    log.log(LOG_PREFIX, msg);
+
     const deviceId = _thermostatLookUp[roomId];
 
     if (!deviceId) {
-      log.error(LOG_PREFIX, 'Unable to find matching device ID', roomId);
-      throw new Error('Invalid room ID');
+      log.error(LOG_PREFIX, `${msg} - failed, unable to find deviceId`);
+      throw new Error(`Unknown roomID: '${roomId}'`);
     }
 
     const reqPath = `devices/${deviceId}`;
     const current = await _sendRequest(reqPath, 'GET', null, true);
-    const cMode = current.traits['sdm.devices.traits.ThermostatMode'].mode;
+    let cMode = current.traits['sdm.devices.traits.ThermostatMode'].mode;
+
+    if (cMode === 'OFF' && _state.defaultHVACMode === 'OFF') {
+      log.warn(LOG_PREFIX, `${msg} - failed, mode is 'OFF'`);
+      throw new Error(`HVAC mode is 'OFF'`);
+    }
+
+    if (cMode === 'OFF') {
+      const newVal = _state.defaultHVACMode;
+      const msgChgMode = `HVAC in '${roomId}' is off, changing to '${newVal}'`;
+      try {
+        log.debug(LOG_PREFIX, msgChgMode);
+        await _setHVACMode(roomId, newVal);
+        cMode = newVal;
+      } catch (ex) {
+        log.warn(LOG_PREFIX, `${msgChgMode} - failed.`, ex);
+        throw new Error('Could Not Change Mode');
+      }
+    }
 
     const body = {
       command: 'sdm.devices.commands.ThermostatTemperatureSetpoint',
@@ -183,7 +227,7 @@ function GDeviceAccess() {
       body.command += '.SetCool';
       body.params.coolCelsius = _convertFtoC(temperature);
     } else {
-      throw new Error('Invalid Mode');
+      throw new Error(`Unknown Mode: '${cMode}'`);
     }
 
     const reqPathExec = `${reqPath}:executeCommand`;
@@ -200,16 +244,19 @@ function GDeviceAccess() {
    * @return {Promise}
    */
   async function _setHVACMode(roomId, mode) {
+    const msg = `setHVACMode('${roomId}', '${mode}')`;
+    log.log(LOG_PREFIX, msg);
+
     const deviceId = _thermostatLookUp[roomId];
 
     if (!deviceId) {
-      log.error(LOG_PREFIX, 'Unable to find matching device ID', roomId);
-      throw new Error('Invalid room ID');
+      log.error(LOG_PREFIX, `${msg} - failed, deviceID not found: '${roomId}'`);
+      throw new Error(`Unknown roomID: '${roomId}'`);
     }
 
     if (!VALID_MODES.includes(mode)) {
-      log.error(LOG_PREFIX, 'Invalid HVAC mode', mode);
-      throw new Error('Invalid Mode');
+      log.error(LOG_PREFIX, `${msg} - failed, unknown HVAC mode: '${mode}'`);
+      throw new Error(`Unknown Mode: '${mode}'`);
     }
 
     const reqPath = `devices/${deviceId}:executeCommand`;
@@ -255,28 +302,41 @@ function GDeviceAccess() {
   }
 
   /**
-   * Parse and create a thermostat item.
+   * Parse and create a device item.
    *
-   * @param {Object} thermostat Thermostat object from Device Access API
+   * @param {Object} device Object from Device Access API
    */
-  function _parseThermostat(thermostat) {
-    const id = thermostat.name.substring(thermostat.name.lastIndexOf('/') + 1);
-    const roomID = _thermostatLookUp[id];
-    const type = thermostat.type;
-    const displayName = thermostat.parentRelations[0].displayName;
-    const result = {id, roomID, type, displayName, traits: {}};
-    Object.keys(thermostat.traits).forEach((key) => {
+  function _parseDevice(device) {
+    const id = device.name.substring(device.name.lastIndexOf('/') + 1);
+    const fullType = device.type;
+    const shortType = fullType
+        .substring(fullType.lastIndexOf('.') + 1)
+        .toLowerCase();
+    const inRoom = device.parentRelations[0].displayName;
+    const result = {
+      id,
+      type: {
+        full: fullType,
+        short: shortType,
+      },
+      inRoom,
+      traits: {},
+    };
+    Object.keys(device.traits).forEach((key) => {
       try {
         const traitName = _getTraitName(key);
-        result.traits[traitName] = thermostat.traits[key];
+        result.traits[traitName] = device.traits[key];
       } catch (ex) {
-        const extra = thermostat.traits[key];
+        const extra = device.traits[key];
         log.error(LOG_PREFIX, `Unable to set trait for '${key}'`, extra);
       }
     });
-    if (diff(_state.thermostats[roomID], result)) {
-      _state.thermostats[roomID] = result;
-      _self.emit('thermostat_changed', result);
+    if (!_state[shortType]) {
+      _state[shortType] = {};
+    }
+    if (diff(_state[shortType][inRoom], result)) {
+      _state[shortType][inRoom] = result;
+      _self.emit('device_changed', result);
     }
   }
 
@@ -287,7 +347,7 @@ function GDeviceAccess() {
    * @return {String}
    */
   function _getTraitName(traitName) {
-    const startAt = traitName.lastIndexOf('.') + 1
+    const startAt = traitName.lastIndexOf('.') + 1;
     const result = traitName.substring(startAt + 1);
     return traitName.substring(startAt, startAt + 1).toLowerCase() + result;
   }
@@ -318,8 +378,8 @@ function GDeviceAccess() {
       }
     } catch (ex) {
       log.error(LOG_PREFIX, 'Unable to get access token', ex);
-      return null;
     }
+    return null;
   }
 
   /**
@@ -365,7 +425,16 @@ function GDeviceAccess() {
     }
 
     if (!resp.ok) {
-      log.error(LOG_PREFIX, `${msg} - Response error`, resp);
+      const extra = {
+        statusCode: resp.status,
+      };
+      try {
+        extra.body = await resp.text();
+        extra.body = JSON.parse(extra.body);
+      } catch (ex) {
+        // Do nothing.
+      }
+      log.error(LOG_PREFIX, `${msg} - Response error`, extra);
       if (retry) {
         await honHelpers.sleep(250);
         return _sendRequest(requestPath, method, body, false);
@@ -385,31 +454,17 @@ function GDeviceAccess() {
       throw new Error('JSON Conversion Error');
     }
 
-    const errors = [];
     if (respBody.error) {
       log.verbose(LOG_PREFIX, `${msg} Response error: body.`, respBody);
-      errors.push(respBody);
-    } else if (Array.isArray(respBody)) {
-      respBody.forEach((item) => {
-        if (item.error) {
-          log.verbose(LOG_PREFIX, `${msg} Response error: item.`, item);
-          errors.push(item);
-        }
-      });
+      if (retry) {
+        log.warn(LOG_PREFIX, `${msg} - will retry.`, respBody.error);
+        await honHelpers.sleep(250);
+        return _sendRequest(requestPath, method, body, false);
+      }
+      throw new Error('Failed');
     }
 
-    if (errors.length === 0) {
-      return respBody;
-    }
-
-    if (retry) {
-      log.warn(LOG_PREFIX, `${msg} - will retry.`, errors);
-      await honHelpers.sleep(250);
-      return _sendRequest(requestPath, method, body, false);
-    }
-
-    log.error(LOG_PREFIX, `${msg} - will retry.`, errors);
-    throw new Error('Failed');
+    return respBody;
   }
 
   _init();

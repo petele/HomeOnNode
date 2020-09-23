@@ -455,6 +455,23 @@ function Home() {
           });
     }
 
+    // Google Device Access
+    if (action.hasOwnProperty('googDevice')) {
+      if (!googDeviceAccess) {
+        log.error(LOG_PREFIX, 'Google Device Access unavailable', action);
+        return _genResult(action, false, 'not_available');
+      }
+
+      return googDeviceAccess.executeCommand(action.googDevice)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: googDev command failed.`, err);
+            return _genResult(action, false, err);
+          });
+    }
+
     // Harmony activity
     if (action.hasOwnProperty('harmonyActivity')) {
       if (!harmony) {
@@ -591,23 +608,6 @@ function Home() {
           })
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: hueSync command failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
-    // Google Device Access
-    if (action.hasOwnProperty('googDevice')) {
-      if (!googDeviceAccess) {
-        log.error(LOG_PREFIX, 'Google Device Access unavailable', action);
-        return _genResult(action, false, 'not_available');
-      }
-
-      return googDeviceAccess.executeCommand(action.googDevice)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: googDev command failed.`, err);
             return _genResult(action, false, err);
           });
     }
@@ -1636,9 +1636,11 @@ function Home() {
     googDeviceAccess.on('ready', () => {
       _fbSet('state/googDeviceAccess/ready', true);
     });
-    googDeviceAccess.on('thermostat_changed', (thermostat) => {
-      const displayName = thermostat.displayName;
-      _fbSet(`state/googDeviceAccess/thermostat/${displayName}`, thermostat);
+    googDeviceAccess.on('device_changed', (device) => {
+      const type = device.type.short;
+      const inRoom = device.inRoom;
+      const path = `googDeviceAccess/${type}/${inRoom}`;
+      _fbSet(path, device);
     });
     googDeviceAccess.on('structure_changed', (struct) => {
       _fbSet('state/googDeviceAccess/structure', struct);
