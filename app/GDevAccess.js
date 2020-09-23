@@ -188,7 +188,7 @@ function GDeviceAccess() {
 
     const reqPathExec = `${reqPath}:executeCommand`;
     const result = await _sendRequest(reqPathExec, 'POST', body, true);
-    _getHomeInfo(250);
+    _getDeviceInfo(250);
     return result;
   }
 
@@ -220,7 +220,7 @@ function GDeviceAccess() {
       },
     };
     const result = await _sendRequest(reqPath, 'POST', body, true);
-    _getHomeInfo(250);
+    _getDeviceInfo(250);
     return result;
   }
 
