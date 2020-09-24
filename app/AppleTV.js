@@ -52,12 +52,12 @@ function AppleTV() {
    * Finds an Apple TV
    */
   async function _findAppleTV() {
-    log.verbose(LOG_PREFIX, 'Searching for AppleTV...');
+    log.debug(LOG_PREFIX, 'Searching for AppleTV...');
     try {
       const devices = await appleTV.scan();
       if (devices && devices.length >= 1) {
         _appleTV = devices[0];
-        log.verbose(LOG_PREFIX, 'Found Apple TV', _appleTV.service.txt);
+        log.debug(LOG_PREFIX, 'Found Apple TV', _appleTV.service.txt);
         _self.emit('found', _appleTV.service.txt);
         return;
       }
@@ -107,7 +107,7 @@ function AppleTV() {
    */
   function _onNowPlaying(nowPlaying) {
     if (diff(_nowPlaying, nowPlaying)) {
-      log.debug(LOG_PREFIX, 'Now Playing', nowPlaying);
+      log.verbose(LOG_PREFIX, 'Now Playing', nowPlaying);
       _nowPlaying = nowPlaying;
       _self.emit('nowPlaying', nowPlaying);
     }
@@ -119,7 +119,7 @@ function AppleTV() {
    */
   function _onPlaybackQueue(playbackQueue) {
     if (diff(_playbackQueue, playbackQueue)) {
-      log.debug(LOG_PREFIX, 'Playback Queue', playbackQueue);
+      log.verbose(LOG_PREFIX, 'Playback Queue', playbackQueue);
       _playbackQueue = playbackQueue;
       _self.emit('playbackQueue', playbackQueue);
     }
@@ -131,7 +131,7 @@ function AppleTV() {
    */
   function _onSupportedCommands(commands) {
     if (diff(_supportedCommands, commands)) {
-      log.debug(LOG_PREFIX, 'Supported Commands', commands);
+      log.verbose(LOG_PREFIX, 'Supported Commands', commands);
       _supportedCommands = commands;
       _self.emit('supportedCommands', commands);
     }
