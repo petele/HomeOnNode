@@ -1678,12 +1678,12 @@ function Home() {
     for await (const deviceName of devices) {
       const tempVal = settings[deviceName];
       const msg = `setDefaultTemperature('${deviceName}', ${tempVal})`;
-      log.verbose(LOG_PREFIX, msg, cmd);
       const cmd = {
         action: 'setTemperature',
         deviceName: deviceName,
         value: tempVal,
       };
+      log.verbose(LOG_PREFIX, msg, cmd);
       try {
         const result = await googDeviceAccess.executeCommand(cmd);
         results.push(result);
