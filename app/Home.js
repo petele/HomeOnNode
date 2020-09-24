@@ -414,6 +414,10 @@ function Home() {
         log.error(LOG_PREFIX, 'Google Device Access unavailable.');
         return _genResult(action, false, 'not_available');
       }
+      if (_config.hvac?.defaultMode === 'OFF') {
+        log.debug(LOG_PREFIX, `defaultTemperature skipped, mode is OFF`);
+        return _genResult(action, false, 'mode_is_off');
+      }
       const value = action.defaultTemperature;
       const settings = _config.hvac?.temperaturePresets?.[value];
       if (!settings) {
