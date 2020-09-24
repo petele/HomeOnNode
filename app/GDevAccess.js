@@ -51,6 +51,12 @@ function GDeviceAccess() {
   async function _init() {
     log.init(LOG_PREFIX, 'Starting...');
 
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      const msg = `Missing 'GOOGLE_APPLICATION_CREDENTIALS'`;
+      log.warn(LOG_PREFIX, `${msg}, using default settings.`);
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = 'KeysPubSub.json';
+    }
+
     if (!_projectID || !_clientID || !_clientSecret || !_refreshToken) {
       log.error(LOG_PREFIX, 'Missing key info', Keys.gDeviceAccess);
       return;
@@ -123,7 +129,7 @@ function GDeviceAccess() {
       try {
         const deviceName = data.resourceUpdate.name;
         const deviceId = deviceName.substring(deviceName.lastIndexOf('/') + 1);
-        log.verbose(LOG_PREFIX, 'PubSub: Device change notification', data);
+        log.debug(LOG_PREFIX, 'PubSub: Device change notification', data);
         const reqPath = `devices/${deviceId}`;
         const device = await _sendRequest(reqPath, 'GET', null, true);
         return _parseDevice(device);
