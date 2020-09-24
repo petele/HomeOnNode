@@ -63,10 +63,10 @@ function GDeviceAccess() {
     }
 
     const fbRootRef = await FBHelper.getRootRefUnlimited();
-    const fbConfigBase = `config/HomeOnNode/googleDeviceAccess`;
+    const fbConfigBase = `config/HomeOnNode`;
 
     // Get the default HVAC mode
-    const fbThermDefModePath = `${fbConfigBase}/defaultHVACMode`;
+    const fbThermDefModePath = `${fbConfigBase}/hvac/defaultMode`;
     const fbThermDefaultModeRef = await fbRootRef.child(fbThermDefModePath);
     fbThermDefaultModeRef.on('value', (snapshot) => {
       const value = snapshot.val();
@@ -75,7 +75,7 @@ function GDeviceAccess() {
     });
 
     // Get the thermostat key mapping
-    const deviceKeyMapPath = `${fbConfigBase}/deviceKeyMap`;
+    const deviceKeyMapPath = `${fbConfigBase}/googleDeviceAccess/deviceKeyMap`;
     const deviceKeyMapFBRef = await fbRootRef.child(deviceKeyMapPath);
     const deviceKeyMapFBSnap = await deviceKeyMapFBRef.once('value');
     const deviceKeyMap = deviceKeyMapFBSnap.val();
@@ -185,7 +185,7 @@ function GDeviceAccess() {
    * @param {Object} command Command to execute.
    * @return {Object} result of executed command
    */
-  this.executeCommand = function(command) {
+  this.executeCommand = async function(command) {
     // Ensure we're connected
     if (_ready !== true) {
       log.error(LOG_PREFIX, `Not ready`);
@@ -194,7 +194,7 @@ function GDeviceAccess() {
 
     // Get & validate the action & value
     const action = command.action;
-    const room = command.room;
+    const deviceName = command.deviceName;
     const value = command.value;
     if (!action) {
       return Promise.reject(new Error(`No 'action' provided.`));
@@ -202,10 +202,10 @@ function GDeviceAccess() {
 
     // Run the commands
     if (action === 'setTemperature') {
-      return _setTemperature(room, value);
+      return _setTemperature(deviceName, value);
     }
     if (action === 'setHVACMode') {
-      return _setHVACMode(room, value);
+      return _setHVACMode(deviceName, value);
     }
 
     return Promise.reject(new Error(`Unknown command: '${action}'`));
@@ -215,18 +215,18 @@ function GDeviceAccess() {
   /**
    * Set the temperature in a room.
    *
-   * @param {String} roomId LR/BR
+   * @param {String} deviceName LR/BR
    * @param {Number} temperature Temperature in F
    * @return {Promise}
    */
-  async function _setTemperature(roomId, temperature) {
-    const msg = `setTemperature('${roomId}', ${temperature})`;
+  async function _setTemperature(deviceName, temperature) {
+    const msg = `setTemperature('${deviceName}', ${temperature})`;
     log.log(LOG_PREFIX, msg);
 
-    const deviceId = _deviceLookup.get(roomId);
+    const deviceId = _deviceLookup.get(deviceName);
     if (!deviceId) {
       log.error(LOG_PREFIX, `${msg} - failed, unable to find deviceId`);
-      throw new Error(`Unknown roomID: '${roomId}'`);
+      throw new Error(`Unknown roomID: '${deviceName}'`);
     }
 
     const reqPath = `devices/${deviceId}`;
@@ -234,16 +234,17 @@ function GDeviceAccess() {
     let cMode = current.traits['sdm.devices.traits.ThermostatMode'].mode;
 
     if (cMode === 'OFF' && _defaultHVACMode === 'OFF') {
-      log.warn(LOG_PREFIX, `${msg} - failed, mode is 'OFF'`);
+      log.warn(LOG_PREFIX, `${msg} - failed, default mode is 'OFF'`);
       throw new Error(`HVAC mode is 'OFF'`);
     }
 
     if (cMode === 'OFF') {
       const newVal = _defaultHVACMode;
-      const msgChgMode = `HVAC in '${roomId}' is off, changing to '${newVal}'`;
+      const msgChgMode = `HVAC '${deviceName}' is off, changing to '${newVal}'`;
       try {
         log.debug(LOG_PREFIX, msgChgMode);
-        await _setHVACMode(roomId, newVal);
+        await _setHVACMode(deviceName, newVal);
+        await honHelpers.sleep(5000);
         cMode = newVal;
       } catch (ex) {
         log.warn(LOG_PREFIX, `${msgChgMode} - failed.`, ex);
@@ -275,18 +276,22 @@ function GDeviceAccess() {
   /**
    * Set the HVAC mode for a thermostat to a specific mode.
    *
-   * @param {String} roomId LR/BR
+   * @param {String} deviceName LR/BR
    * @param {String} mode HEAT/COOL/OFF
    * @return {Promise}
    */
-  async function _setHVACMode(roomId, mode) {
-    const msg = `setHVACMode('${roomId}', '${mode}')`;
+  async function _setHVACMode(deviceName, mode) {
+    const msg = `setHVACMode('${deviceName}', '${mode}')`;
     log.log(LOG_PREFIX, msg);
 
-    const deviceId = _deviceLookup.get(roomId);
+    const deviceId = _deviceLookup.get(deviceName);
     if (!deviceId) {
-      log.error(LOG_PREFIX, `${msg} - failed, deviceID not found: '${roomId}'`);
-      throw new Error(`Unknown roomID: '${roomId}'`);
+      log.error(LOG_PREFIX, `${msg} - failed, '${deviceName}' not found.`);
+      throw new Error(`Unknown roomID: '${deviceName}'`);
+    }
+
+    if (mode.toUpperCase() === 'ON') {
+      mode = _defaultHVACMode;
     }
 
     if (!VALID_MODES.includes(mode)) {

@@ -408,6 +408,28 @@ function Home() {
       //     });
     }
 
+    // Default Temperature
+    if (action.hasOwnProperty('defaultTemperature')) {
+      if (!googDeviceAccess) {
+        log.error(LOG_PREFIX, 'Google Device Access unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      const value = action.defaultTemperature;
+      const settings = _config.hvac?.temperaturePresets?.[value];
+      if (!settings) {
+        const msg = 'Unable to find specified temperature preset';
+        log.warn(LOG_PREFIX, msg, value);
+        return _genResult(action, false, 'invalid_temperature_preset');
+      }
+      return _setDefaultTemperature(settings)
+          .then((result) => {
+            return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            return _genResult(action, false, err);
+          });
+    }
+
     // Do not disturb
     if (action.hasOwnProperty('doNotDisturb')) {
       return _setDoNotDisturb(action.doNotDisturb)
@@ -1643,6 +1665,33 @@ function Home() {
     googDeviceAccess.on('structure_changed', (struct) => {
       _fbSet('state/googleDeviceAccess/structure', struct);
     });
+  }
+
+  /**
+   * Set the temperature based on the predefined values.
+   *
+   * @param {Object} settings Settings {key: value}
+   */
+  async function _setDefaultTemperature(settings) {
+    const results = [];
+    const devices = Object.keys(settings);
+    for await (const deviceName of devices) {
+      const tempVal = settings[deviceName];
+      const msg = `setDefaultTemperature('${deviceName}', ${tempVal})`;
+      log.verbose(LOG_PREFIX, msg, cmd);
+      const cmd = {
+        action: 'setTemperature',
+        deviceName: deviceName,
+        value: tempVal,
+      };
+      try {
+        const result = await googDeviceAccess.executeCommand(cmd);
+        results.push(result);
+      } catch (ex) {
+        log.error(LOG_PREFIX, `${msg} - failed`, ex);
+      }
+    }
+    return results;
   }
 
 
