@@ -180,19 +180,22 @@ function NanoLeaf(key, ip, port) {
   /**
    * Get current leaf state
    *
-   * @return {Promise} A promise that resolves to the current leaf state
+   * @return {Promise} Empty promise once completed.
   */
   async function _getState() {
-    const state = await _makeLeafRequest('', 'GET');
-    if (!state) {
-      log.error(LOG_PREFIX, 'No state available.');
-      return;
+    try {
+      const state = await _makeLeafRequest('', 'GET');
+      if (!state) {
+        log.error(LOG_PREFIX, 'No state available.');
+        return;
+      }
+      if (diff(_state, state)) {
+        _state = state;
+        _self.emit('state_changed', state);
+      }
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Unable to get state', ex);
     }
-    if (diff(_state, state)) {
-      _state = state;
-      _self.emit('state_changed', state);
-    }
-    return _state;
   }
 
   /**
