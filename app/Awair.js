@@ -22,8 +22,6 @@ function Awair() {
   const _self = this;
   const REFRESH_INTERVAL_LOCAL_SENSORS = 1 * 60 * 1000;
 
-  this.localSensors = {};
-
   /**
    * Init
    */
@@ -35,7 +33,7 @@ function Awair() {
       const deviceId = snapshot.key;
       const ipAddress = snapshot.val();
       log.debug(LOG_PREFIX, `Found Awair device at ${ipAddress}`);
-      _monitorLocalDevice(deviceId, ipAddress);
+      _monitorAwairDevice(deviceId, ipAddress);
     });
   }
 
@@ -45,8 +43,8 @@ function Awair() {
    * @param {String} deviceId
    * @param {String} ipAddress
    */
-  async function _monitorLocalDevice(deviceId, ipAddress) {
-    const msg = `monitorLocalDevice('${deviceId}', '${ipAddress}')`;
+  async function _monitorAwairDevice(deviceId, ipAddress) {
+    const msg = `monitorAwairDevice('${deviceId}', '${ipAddress}')`;
     const path = `http://${ipAddress}/air-data/latest`;
     try {
       log.debug(LOG_PREFIX, msg);
@@ -58,7 +56,7 @@ function Awair() {
       log.exception(LOG_PREFIX, `${msg} - failed`, ex);
     }
     setTimeout(() => {
-      _monitorLocalDevice(deviceId, ipAddress);
+      _monitorAwairDevice(deviceId, ipAddress);
     }, REFRESH_INTERVAL_LOCAL_SENSORS);
   }
 

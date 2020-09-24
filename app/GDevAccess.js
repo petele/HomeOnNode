@@ -38,15 +38,12 @@ function GDeviceAccess() {
   const _basePath = `https://smartdevicemanagement.googleapis.com/` +
       `v1/enterprises/${_projectID}`;
 
-  const _state = {
-    defaultHVACMode: 'OFF',
-    devices: {},
-  };
-  const _thermostatLookUp = {};
+  const _deviceState = {};
+  let _defaultHVACMode = 'OFF';
+  const _deviceLookup = new Map();
 
   let _accessToken;
   let _accessTokenExpiresAt = 0;
-
 
   /**
    * Basic init
@@ -59,28 +56,27 @@ function GDeviceAccess() {
       return;
     }
 
-    const fbConfigBase = `config/HomeOnNode/googleDeviceAccess`;
     const fbRootRef = await FBHelper.getRootRefUnlimited();
+    const fbConfigBase = `config/HomeOnNode/googleDeviceAccess`;
 
     // Get the default HVAC mode
     const fbThermDefModePath = `${fbConfigBase}/defaultHVACMode`;
     const fbThermDefaultModeRef = await fbRootRef.child(fbThermDefModePath);
     fbThermDefaultModeRef.on('value', (snapshot) => {
-      let value = snapshot.val();
-      value = value.toUpperCase();
-      log.log(LOG_PREFIX, `Default HVAC mode set to '${value}'`);
-      _state.defaultHVACMode = value;
+      const value = snapshot.val();
+      _defaultHVACMode = value.toUpperCase();
+      log.log(LOG_PREFIX, `Default HVAC mode set to '${_defaultHVACMode}'`);
     });
 
     // Get the thermostat key mapping
-    const cfgThermoKeyMapPath = `${fbConfigBase}/thermostats`;
-    const fbThermKeyMapPath = await fbRootRef.child(cfgThermoKeyMapPath);
-    const thermKeyMapRef = await fbThermKeyMapPath.once('value');
-    const thermKeyMap = thermKeyMapRef.val();
-    Object.keys(thermKeyMap).forEach((roomId) => {
-      const deviceId = thermKeyMap[roomId];
-      _thermostatLookUp[roomId] = deviceId;
-      _thermostatLookUp[deviceId] = roomId;
+    const deviceKeyMapPath = `${fbConfigBase}/deviceKeyMap`;
+    const deviceKeyMapFBRef = await fbRootRef.child(deviceKeyMapPath);
+    const deviceKeyMapFBSnap = await deviceKeyMapFBRef.once('value');
+    const deviceKeyMap = deviceKeyMapFBSnap.val();
+    Object.keys(deviceKeyMap).forEach((roomId) => {
+      const deviceId = deviceKeyMap[roomId];
+      _deviceLookup.set(roomId, deviceId);
+      _deviceLookup.set(deviceId, roomId);
     });
 
     // Attempt to connect to Google Servers
@@ -221,8 +217,7 @@ function GDeviceAccess() {
     const msg = `setTemperature('${roomId}', ${temperature})`;
     log.log(LOG_PREFIX, msg);
 
-    const deviceId = _thermostatLookUp[roomId];
-
+    const deviceId = _deviceLookup.get(roomId);
     if (!deviceId) {
       log.error(LOG_PREFIX, `${msg} - failed, unable to find deviceId`);
       throw new Error(`Unknown roomID: '${roomId}'`);
@@ -232,13 +227,13 @@ function GDeviceAccess() {
     const current = await _sendRequest(reqPath, 'GET', null, true);
     let cMode = current.traits['sdm.devices.traits.ThermostatMode'].mode;
 
-    if (cMode === 'OFF' && _state.defaultHVACMode === 'OFF') {
+    if (cMode === 'OFF' && _defaultHVACMode === 'OFF') {
       log.warn(LOG_PREFIX, `${msg} - failed, mode is 'OFF'`);
       throw new Error(`HVAC mode is 'OFF'`);
     }
 
     if (cMode === 'OFF') {
-      const newVal = _state.defaultHVACMode;
+      const newVal = _defaultHVACMode;
       const msgChgMode = `HVAC in '${roomId}' is off, changing to '${newVal}'`;
       try {
         log.debug(LOG_PREFIX, msgChgMode);
@@ -282,8 +277,7 @@ function GDeviceAccess() {
     const msg = `setHVACMode('${roomId}', '${mode}')`;
     log.log(LOG_PREFIX, msg);
 
-    const deviceId = _thermostatLookUp[roomId];
-
+    const deviceId = _deviceLookup.get(roomId);
     if (!deviceId) {
       log.error(LOG_PREFIX, `${msg} - failed, deviceID not found: '${roomId}'`);
       throw new Error(`Unknown roomID: '${roomId}'`);
@@ -326,8 +320,8 @@ function GDeviceAccess() {
       const id = structure.name.substring(structure.name.lastIndexOf('/') + 1);
       const name = structure.traits['sdm.structures.traits.Info'].customName;
       const parsedStruct = {id, name};
-      if (diff(_state.structure, parsedStruct)) {
-        _state.structure = parsedStruct;
+      if (diff(_deviceState[id], parsedStruct)) {
+        _deviceState[id] = parsedStruct;
         _self.emit('structure_changed', parsedStruct);
       }
     } catch (ex) {
@@ -342,18 +336,16 @@ function GDeviceAccess() {
    */
   function _parseDevice(device) {
     const id = device.name.substring(device.name.lastIndexOf('/') + 1);
-    const fullType = device.type;
-    const shortType = fullType
-        .substring(fullType.lastIndexOf('.') + 1)
+    const shortType = device.type
+        .substring(device.type.lastIndexOf('.') + 1)
         .toLowerCase();
-    const room = _getRoomInfo(device.parentRelations[0]);
+    const roomInfo = _parseRoomInfo(device.parentRelations[0]);
     const result = {
       id,
-      type: {
-        full: fullType,
-        short: shortType,
-      },
-      room,
+      type: device.type,
+      typeShort: shortType,
+      roomId: roomInfo.id,
+      roomName: roomInfo.name,
       traits: {},
     };
     Object.keys(device.traits).forEach((key) => {
@@ -365,12 +357,14 @@ function GDeviceAccess() {
         log.error(LOG_PREFIX, `Unable to set trait for '${key}'`, extra);
       }
     });
-    const niceName = result.traits?.info?.customName;
-    if (niceName) {
-      result.niceName = niceName;
+    const customName = result.traits?.info?.customName;
+    if (customName) {
+      result.customName = customName;
+      delete result.traits.info.customName;
+      // result.traits.info.customName = null;
     }
-    if (diff(_state.devices[id], result)) {
-      _state.devices[id] = result;
+    if (diff(_deviceState[id], result)) {
+      _deviceState[id] = result;
       _self.emit('device_changed', result);
     }
   }
@@ -393,11 +387,11 @@ function GDeviceAccess() {
    * @param {Object} room
    * @return {Object}
    */
-  function _getRoomInfo(room) {
+  function _parseRoomInfo(room) {
     try {
-      const key = room.parent.substring(room.parent.lastIndexOf('/') + 1);
+      const id = room.parent.substring(room.parent.lastIndexOf('/') + 1);
       const name = room.displayName;
-      return {key, name};
+      return {id, name};
     } catch (ex) {
       log.error(LOG_PREFIX, 'Error parsing room info', ex);
       return {name: 'Unknown'};

@@ -1625,7 +1625,7 @@ function Home() {
    * Init the Google Device Access API
    */
   async function _initGoogDeviceAccess() {
-    await _fbSet('state/googDeviceAccess', false);
+    await _fbSet('state/googleDeviceAccess', false);
 
     if (_config.googleDeviceAccess.disabled === true) {
       log.warn(LOG_PREFIX, 'Google Device Access disabled via config.');
@@ -1634,13 +1634,14 @@ function Home() {
 
     googDeviceAccess = new GoogDeviceAccess();
     googDeviceAccess.on('device_changed', (device) => {
-      const type = device.type.short;
-      const roomName = device.room.name;
-      const path = `state/googDeviceAccess/${roomName}/${type}`;
-      _fbSet(path, device);
+      const type = device.typeShort;
+      const shortName = device.id.substring(device.id.length - 8);
+      const name = device.customName ? device.customName : shortName;
+      const path = `${type}-${name}`.replace(/ /g, '_');
+      _fbSet(`state/googleDeviceAccess/${path}`, device);
     });
     googDeviceAccess.on('structure_changed', (struct) => {
-      _fbSet('state/googDeviceAccess/structure', struct);
+      _fbSet('state/googleDeviceAccess/structure', struct);
     });
   }
 
