@@ -129,6 +129,10 @@ function Sonos() {
       _self.emit('found', newVal);
       log.verbose(LOG_PREFIX, 'Found', newVal);
     });
+
+    _sonosSystem.on('error', (err) => {
+      log.exception(LOG_PREFIX, 'Sonos System Error', err);
+    });
   }
 
   /**
