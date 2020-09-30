@@ -1,6 +1,7 @@
 'use strict';
 
 const util = require('util');
+const https = require('https');
 const log = require('./SystemLog2');
 const fetch = require('node-fetch');
 const Keys = require('./Keys').keys;
@@ -44,6 +45,12 @@ function GDeviceAccess() {
 
   let _accessToken;
   let _accessTokenExpiresAt = 0;
+
+  const AGENT_OPTS = {
+    maxSockets: 2,
+    keepAlive: true,
+  };
+  const _httpAgent = new https.Agent(AGENT_OPTS);
 
   /**
    * Basic init
@@ -463,6 +470,7 @@ function GDeviceAccess() {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
       },
+      agent: _httpAgent,
     };
     if (body) {
       fetchOpts.body = JSON.stringify(body);
