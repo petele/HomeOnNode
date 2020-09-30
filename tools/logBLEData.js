@@ -1,6 +1,6 @@
 'use strict';
 
-var noble = require('../app/node_modules/noble');
+var noble = require('../app/node_modules/@abandonware/noble');
 var fs = require('fs');
 var readline = require('readline');
 var mac;
