@@ -130,22 +130,30 @@ function GDeviceAccess() {
    * @param {PubSub.message} message
    */
   async function _handlePubSubMessage(message) {
+    const msgBase = `PubSub Notification:`;
     const data = JSON.parse(message.data.toString());
     message.ack();
-    if (data.resourceUpdate) {
-      try {
-        const deviceName = data.resourceUpdate.name;
-        const deviceId = deviceName.substring(deviceName.lastIndexOf('/') + 1);
-        log.debug(LOG_PREFIX, 'PubSub: Device change notification', data);
-        const reqPath = `devices/${deviceId}`;
-        const device = await _sendRequest(reqPath, 'GET', null, true);
-        return _parseDevice(device);
-      } catch (ex) {
-        log.error(LOG_PREFIX, 'Unable to update device after PubSubNot', ex);
-        return;
-      }
+    if (!data.hasOwnProperty('resourceUpdate')) {
+      // If it doesn't have a resourceUpdate attribute, ignore it.
+      log.warn(LOG_PREFIX, `${msgBase} 'unknown' (ignored)`, data);
+      return;
     }
-    log.warn(LOG_PREFIX, 'PubSub: Unknown data type', data);
+    const msgType = data.resourceUpdate.traits ? 'trait' : 'event';
+    if (msgType === 'event') {
+      // If it's an event, typically from a camera, ignore it.
+      log.debug(LOG_PREFIX, `${msgBase} '${msgType}' (ignored)`, data);
+      return;
+    }
+    try {
+      const deviceName = data.resourceUpdate.name;
+      const deviceId = deviceName.substring(deviceName.lastIndexOf('/') + 1);
+      log.debug(LOG_PREFIX, `${msgBase} '${msgType}'`, data);
+      const reqPath = `devices/${deviceId}`;
+      const device = await _sendRequest(reqPath, 'GET', null, true);
+      return _parseDevice(device);
+    } catch (ex) {
+      log.error(LOG_PREFIX, `${msgBase} '${msgType}' (FAILED)`, ex);
+    }
   }
 
   /**
