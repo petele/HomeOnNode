@@ -392,7 +392,7 @@ function HarmonyWS(ipAddress) {
    * @param {Object} config
   */
   function _configChanged(config) {
-    if (!config.activity) {
+    if (!config || !config.activity) {
       // Config doesn't have activities, it's prob not a config obj
       const msg = `configChanged failed, config object missing 'activity'.`;
       log.error(LOG_PREFIX, msg, config);
