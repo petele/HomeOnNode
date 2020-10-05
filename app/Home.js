@@ -1660,10 +1660,7 @@ function Home() {
 
     googDeviceAccess = new GoogDeviceAccess();
     googDeviceAccess.on('device_changed', (device) => {
-      const type = device.typeShort;
-      const shortName = device.id.substring(device.id.length - 8);
-      const name = device.customName ? device.customName : shortName;
-      const path = `${type}-${name}`.replace(/ /g, '_');
+      const path = `${device.typeShort}/${device.id}`;
       _fbSet(`state/googleDeviceAccess/${path}`, device);
     });
     googDeviceAccess.on('structure_changed', (struct) => {
