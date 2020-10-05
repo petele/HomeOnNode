@@ -246,14 +246,12 @@ function HueSync(ipAddress, bearerToken) {
       throw new Error('Response Error');
     }
 
-    let respBody;
+    let respBody = await resp.text();
     try {
-      respBody = await resp.json();
+      respBody = JSON.parse(respBody);
     } catch (ex) {
       if (retry) {
-        const respText = await resp.text();
-        log.verbose(LOG_PREFIX, `${msg} - JSON error`, ex);
-        log.verbose(LOG_PREFIX, `${msg} - response was`, respText);
+        log.verbose(LOG_PREFIX, `${msg} - JSON error`, respBody);
         await honHelpers.sleep(250);
         return _makeRequest(requestPath, method, body, false);
       }
