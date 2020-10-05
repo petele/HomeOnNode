@@ -88,34 +88,67 @@ function HueSync(ipAddress, bearerToken) {
     if (!_ready) {
       throw new Error('not_ready');
     }
-    const promises = [];
-    if (command.hasOwnProperty('syncActive')) {
-      promises.push(_setSyncActive(command.syncActive));
-    }
-    if (command.hasOwnProperty('hdmiActive')) {
-      promises.push(_setHDMIActive(command.hdmiActive));
-    }
-    if (command.hasOwnProperty('mode')) {
-      promises.push(_setMode(command.mode));
-    }
-    if (command.hasOwnProperty('hdmiSource')) {
-      promises.push(_setHDMISource(command.hdmiSource));
-    }
-    if (command.hasOwnProperty('intensity')) {
-      promises.push(_setIntensity(command.intensity));
-    }
-    if (command.hasOwnProperty('brightness')) {
-      promises.push(_setBrightness(command.brightness));
+    if (typeof command !== 'object') {
+      throw new Error('invalid_param');
     }
     if (command.hasOwnProperty('refresh')) {
-      promises.push(Promise.resolve());
+      const results = await _updateConfig();
+      return results;
     }
-    if (promises.length === 0) {
+    const cmdToSend = {};
+    if (command.hasOwnProperty('syncActive')) {
+      cmdToSend.syncActive = !!command.syncActive;
+    }
+    if (command.hasOwnProperty('hdmiActive')) {
+      cmdToSend.hdmiActive = !!command.hdmiActive;
+    }
+    if (command.hasOwnProperty('mode')) {
+      if (!ENUM_MODES.includes(command.mode)) {
+        log.error(LOG_PREFIX, 'Invalid mode value', command);
+        throw new Error('Invalid input');
+      }
+      cmdToSend.mode = command.mode;
+    }
+    if (command.hasOwnProperty('hdmiSource')) {
+      const val = honHelpers.isValidInt(command.hdmiSource, 1, 4);
+      if (val === null) {
+        log.error(LOG_PREFIX, 'HDMI input must be between 1 and 4', command);
+        throw new Error('Invalid input');
+      }
+      cmdToSend.hdmiSource = `input${val}`;
+    }
+    if (command.hasOwnProperty('intensity')) {
+      const intensity = command.intensity;
+      if (!intensity || !ENUM_INTENSITY.includes(intensity)) {
+        log.error(LOG_PREFIX, 'Invalid intensity value', command);
+        throw new Error('Invalid input');
+      }
+      cmdToSend.intensity = intensity;
+    }
+    if (command.hasOwnProperty('setBrightness')) {
+      const val = honHelpers.isValidInt(command.setBrightness, 0, 200);
+      if (val === null) {
+        log.error(LOG_PREFIX, 'Invalid brightness value', command);
+        throw new Error('Invalid input');
+      }
+      cmdToSend.brightness = val;
+    }
+    if (command.hasOwnProperty('adjustBrightness')) {
+      const val = honHelpers.isValidInt(command.adjustBrightness, -200, 200);
+      if (val === null) {
+        log.error(LOG_PREFIX, 'Invalid brightness value', command);
+        throw new Error('Invalid input');
+      }
+      cmdToSend.incrementBrightness = val;
+    }
+    if (Object.keys(cmdToSend).length === 0) {
       log.error(LOG_PREFIX, 'Unrecognized command', command);
       throw new Error('Unrecognized command');
     }
     try {
-      const results = await Promise.all(promises);
+      const path = '/execution';
+      const results = await _makeRequest(path, 'PUT', cmdToSend, true);
+      console.verbose(LOG_PREFIX, 'Response from command', results);
       await _updateConfig();
       return results;
     } catch (ex) {
@@ -163,110 +196,6 @@ function HueSync(ipAddress, bearerToken) {
     }
     await honHelpers.sleep(CONFIG_REFRESH_INTERVAL);
     return _updateConfigTick();
-  }
-
-  /**
-   * Enables or disables the Hue Sync
-   * @param {Boolean} enabled
-   */
-  async function _setSyncActive(enabled) {
-    if (!_ready) {
-      log.error(LOG_PREFIX, `Not ready.`);
-      return null;
-    }
-    const path = '/execution';
-    const body = {syncActive: !!enabled};
-    return _makeRequest(path, 'PUT', body, true);
-  }
-
-  /**
-   * Set PowerSave or Passthrough mode.
-   * @param {Boolean} enabled True for Passthrough
-   */
-  async function _setHDMIActive(enabled) {
-    if (!_ready) {
-      log.error(LOG_PREFIX, `Not ready.`);
-      return null;
-    }
-    const path = '/execution';
-    const body = {hdmiActive: !!enabled};
-    return _makeRequest(path, 'PUT', body, true);
-  }
-
-  /**
-   * Sets the mode of the device.
-   * @param {String} mode
-   */
-  async function _setMode(mode) {
-    if (!_ready) {
-      log.error(LOG_PREFIX, `Not ready.`);
-      return null;
-    }
-    if (!ENUM_MODES.includes(mode)) {
-      log.error(LOG_PREFIX, 'Invalid mode value', mode);
-      throw new Error('Invalid input');
-    }
-    const path = '/execution';
-    const body = {mode: mode};
-    return _makeRequest(path, 'PUT', body, true);
-  }
-
-  /**
-   * Set the HDMI input.
-   * @param {Number} input 1 to 4
-   */
-  async function _setHDMISource(input) {
-    if (!_ready) {
-      log.error(LOG_PREFIX, `Not ready.`);
-      return null;
-    }
-    const val = honHelpers.isValidInt(input, 1, 4);
-    if (val === null) {
-      log.error(LOG_PREFIX, 'HDMI input must be between 1 and 4', input);
-      throw new Error('Invalid input');
-    }
-    const path = '/execution';
-    const body = {hdmiSource: `input${val}`};
-    return _makeRequest(path, 'PUT', body, true);
-  }
-
-  /**
-   * Set the intensity of the display
-   *
-   * @param {String} intensity (subtle, moderate, high, intense)
-   */
-  async function _setIntensity(intensity) {
-    if (!_ready) {
-      log.error(LOG_PREFIX, `Not ready.`);
-      return null;
-    }
-    if (!ENUM_INTENSITY.includes(intensity) || !intensity) {
-      log.error(LOG_PREFIX, 'Invalid intensity value', intensity);
-      throw new Error('Invalid input');
-    }
-    const path = '/execution';
-    const body = {intensity: intensity};
-    return _makeRequest(path, 'PUT', body, true);
-  }
-
-  /**
-   * Set the brightness
-   *
-   * @param {Number} bri 0-200
-   */
-  async function _setBrightness(bri) {
-    if (!_ready) {
-      log.error(LOG_PREFIX, `Not ready.`);
-      return null;
-    }
-    const val = honHelpers.isValidInt(bri, 0, 200);
-    if (val === null) {
-      log.error(LOG_PREFIX, 'Invalid brightness value', bri);
-      throw new Error('Invalid input');
-    }
-    const path = '/execution';
-    const body = {brightness: bri};
-    return _makeRequest(path, 'PUT', body, true);
   }
 
   /**
