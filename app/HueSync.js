@@ -251,7 +251,9 @@ function HueSync(ipAddress, bearerToken) {
       respBody = await resp.json();
     } catch (ex) {
       if (retry) {
+        const respText = await resp.text();
         log.verbose(LOG_PREFIX, `${msg} - JSON error`, ex);
+        log.verbose(LOG_PREFIX, `${msg} - response was`, respText);
         await honHelpers.sleep(250);
         return _makeRequest(requestPath, method, body, false);
       }
