@@ -148,7 +148,7 @@ function HueSync(ipAddress, bearerToken) {
     try {
       const path = '/execution';
       const results = await _makeRequest(path, 'PUT', cmdToSend, true);
-      console.verbose(LOG_PREFIX, 'Response from command', results);
+      log.verbose(LOG_PREFIX, 'Response from command', results);
       await _updateConfig();
       return results;
     } catch (ex) {
