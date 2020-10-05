@@ -1,5 +1,3 @@
-application: petele-home-automation
-version: polymer2-@@VERSION@@
 runtime: python27
 threadsafe: yes
 api_version: 1
@@ -79,22 +77,11 @@ handlers:
   login: admin
   secure: always
 
-# - url: /robots.txt
-#   static_files: robots.txt
-#   upload: robots.txt
-#   secure: always
-
-# - url: /cache-config.json
-#   static_files: cache-config.json
-#   upload: cache-config.json
-#   secure: always
 
 skip_files:
 - ^bower_components/(.*/)?.*\.md$
 - ^bower_components/(.*/)?.*\.test$
 - ^bower_components/(.*/)?test/.*
-# - ^bower_components/(.*)+/test/.*$
-# - ^bower_components/(.*)+/tests/.*$
 - ^bower_components/(.*/)?Makefile$
 - ^bower_components/(.*/)?LICENSE$
 - ^bower_components/(.*/)?COPYING$

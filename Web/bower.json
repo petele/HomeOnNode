@@ -38,7 +38,9 @@
     "moment": "^2.18.1",
     "polymerfire": "firebase/polymerfire#^2.0.0",
     "web-animations-js": "^2.3.1",
-    "chart.js": "^2.8.0"
+    "chart.js": "^2.8.0",
+    "paper-dialog-scrollable": "PolymerElements/paper-dialog-scrollable#^2.0.0",
+    "paper-toggle-button": "PolymerElements/paper-toggle-button#^2.0.0"
   },
   "devDependencies": {
     "web-component-tester": "^6.0.0"

@@ -20,7 +20,8 @@
     "lint": "eslint . --ext html --ignore-path .gitignore && polymer lint",
     "test": "npm run lint && polymer test",
     "serve": "gulp serve",
-    "deploy": "gulp deploy"
+    "deploy": "gulp deploy",
+    "build": "gulp build"
   },
   "dependencies": {}
 }
