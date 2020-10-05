@@ -19,6 +19,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="fb-query.html">
 <link rel="import" href="send-command.html">
 <link rel="import" href="media-controller.html">
+<link rel="import" href="card-actions.html">
 
 <dom-module id="view-media">
   <template>
@@ -28,6 +29,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       }
       .hidden {
         display: none !important;
+      }
+      .card h2 {
+        margin: 0;
       }
     </style>
 
@@ -64,9 +68,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
+    <fb-document path="state/hueSync/execution/mode" data="{{hueSyncState}}">
+    </fb-document>
+    <card-actions id="cardHueSync" kind="hue-sync" title="Hue Sync" class="hidden"></card-actions>
+
     <fb-query path="state/sonos/favorites" data="{{sonosFavorites}}">
     </fb-query>
     <div class="card">
+      <h2>Stations</h2>
       <div class="app-grid grid-medium">
         <template is="dom-repeat" items="[[sonosFavorites]]">
           <paper-button class="button" on-tap="tapSonosFav">
@@ -75,6 +84,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </template>
       </div>
     </div>
+
+    <card-actions kind="volume-preset" title="Volume Presets"></card-actions>
 
   </template>
 
@@ -92,7 +103,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get observers() {
         return [
           'mediaControllerVisibleChanged(mediaControllerVisible)',
+          'hueSyncStateChanged(hueSyncState)',
         ];
+      }
+
+      hueSyncStateChanged(newVal) {
+        const hide = newVal === 'powersave';
+        this.$.cardHueSync.classList.toggle('hidden', hide);
       }
 
       mediaControllerVisibleChanged(show) {

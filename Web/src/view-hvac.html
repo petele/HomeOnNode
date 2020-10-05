@@ -24,6 +24,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="send-command.html">
 <link rel="import" href="hon-icons.html">
 <link rel="import" href="hvac-usage.html">
+<link rel="import" href="card-thermostats.html">
+<link rel="import" href="card-actions.html">
 
 <dom-module id="view-hvac">
   <template>
@@ -43,7 +45,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         list-style: none;
         cursor: pointer;
         display: inline-block;
-        float: right;
       }
       summary::-webkit-details-marker {
         display: none;
@@ -56,47 +57,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         height: 2em;
         outline: none;
       }
+      .hidden {
+        display: none !important;
+      }
     </style>
 
     <send-command id="sendCommand"></send-command>
 
-    <fb-query path="state/nest/devices/thermostats" data="{{nestThermostats}}">
-    </fb-query>
+    <card-thermostats class="hidden"></card-thermostats>
 
-    <fb-document
-      path="state/nest/structures/yzfxfqLcIvayvKiyjaAh82QUV2Uun0rbTYbmTYi356_a2tI5SqP3rA/away"
-      data="{{nestState}}">
-    </fb-document>
+    <card-actions kind="hvac"></card-actions>
 
     <firebase-document
       path="config/HomeOnNode/hvac/autoHumidifier"
       data="{{autoHumidifier}}">
     </firebase-document>
-
-    <fb-query path="config/HomeOnNode/nest/hvacAuto" data="{{nestHVACAuto}}">
-    </fb-query>
-
-    <firebase-query
-      id="query"
-      data="{{hvacData}}"
-      path="logs/hvacState"
-      limit-to-last="[[MAX_ITEMS]]">
-    </firebase-query>
-
-    <div class="card">
-      <div class="layout horizontal">
-        <h2 class="flex">
-          Nest Away
-        </h2>
-        <paper-toggle-button id="ptAway" checked="{{nestAway}}" on-change="toggleEnabled">
-        </paper-toggle-button>
-      </div>
-      <!-- <details on-toggle="userInteraction">
-        <summary>
-        </summary>
-      </details> -->
-    </div>
-
     <div class="card">
       <div class="layout horizontal">
         <h2 class="flex">
@@ -105,8 +80,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <paper-toggle-button checked="{{autoHumidifier.enabled}}">
         </paper-toggle-button>
       </div>
-      <details on-toggle="userInteraction">
-        <summary>
+      <details open on-toggle="userInteraction">
+        <summary class="hidden">
           <div class="layout horizontal">
             <div class="flex">
               &nbsp;
@@ -139,19 +114,32 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </details>
     </div>
 
+    <fb-document path="config/HomeOnNode/hvac/defaultMode" data="{{defaultHVACMode}}">
+    </fb-document>
     <div class="card">
-      <!-- <div class="layout horizontal">
-        <h2 class="flex">
-          Preset Temperatures
-        </h2>
-      </div> -->
-      <details on-toggle="userInteraction">
+      <paper-dropdown-menu label="Default HVAC Mode">
+        <paper-listbox
+          slot="dropdown-content"
+          class="dropdown-content"
+          attr-for-selected="value"
+          selected="{{defaultHVACMode}}">
+          <paper-item value="HEAT">Heat</paper-item>
+          <paper-item value="COOL">Cool</paper-item>
+          <paper-item value="OFF">Off</paper-item>
+        </paper-listbox>
+      </paper-dropdown-menu>
+    </div>
+
+    <fb-query path="config/HomeOnNode/hvac/temperaturePresets" data="{{nestHVACAuto}}">
+    </fb-query>
+    <div class="card">
+      <details open on-toggle="userInteraction">
         <summary>
           <div class="layout horizontal">
             <h2 class="flex">
               Preset Temperatures
             </h2>
-            <div>expand</div>
+            <div class="hidden">expand</div>
           </div>
         </summary>
         <template is="dom-repeat" items="{{nestHVACAuto}}">
@@ -162,8 +150,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               type="number"
               required
               min="60" max="80"
-              value="[[item.LR]]"
-              data-key="LR"
+              value="[[item.LR_THERM]]"
+              data-key="LR_THERM"
               on-value-changed="autoTempChanged">
             </paper-input>
             <paper-input
@@ -171,61 +159,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               type="number"
               required
               min="60" max="80"
-              value="[[item.BR]]"
-              data-key="BR"
+              value="[[item.BR_THERM]]"
+              data-key="BR_THERM"
               on-value-changed="autoTempChanged">
             </paper-input>
           </div>
         </template>
       </details>
     </div>
-
-
-
-    <!-- <div class="card">
-      <div class="app-grid grid-two">
-        <template is="dom-repeat" items="{{nestThermostats}}">
-          <paper-dropdown-menu disabled label="[[item.name]]">
-            <paper-listbox
-              on-selected-changed="hvacModeChanged"
-              slot="dropdown-content"
-              class="dropdown-content"
-              attr-for-selected="value"
-              selected="[[item.hvac_mode]]">
-              <paper-item value="heat">Heat</paper-item>
-              <paper-item value="cool">Cool</paper-item>
-              <paper-item value="off">Off</paper-item>
-            </paper-listbox>
-          </paper-dropdown-menu>
-        </template>
-      </div>
-      <template is="dom-repeat" items="{{nestHVACAuto}}">
-        <div class="app-grid grid-three">
-          <div>[[item.$key]]</div>
-          <paper-input
-            label="Living Room"
-            type="number"
-            required
-            min="60" max="80"
-            value="[[item.LR]]"
-            data-key="LR"
-            on-value-changed="autoTempChanged">
-          </paper-input>
-          <paper-input
-            label="Bedroom"
-            type="number"
-            required
-            min="60" max="80"
-            value="[[item.BR]]"
-            data-key="BR"
-            on-value-changed="autoTempChanged">
-          </paper-input>
-        </div>
-      </template>
-    </div> -->
-
-    <hvac-usage>
-    </hvac-usage>
 
   </template>
 
@@ -248,13 +189,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           },
         };
       }
-
-      hvacModeChanged(evt, newVal) {
-        // TODO: Not yet implemented.
-        // eslint-disable-next-line no-console
-        console.warn('NYI: Changing HVAC mode to...', newVal.value);
-      }
-
 
       validateAutoHumidEntry(evt, newVal) {
         window.lastUserInput = Date.now();
@@ -282,15 +216,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       userInteraction() {
         window.lastUserInput = Date.now();
       }
-
-      awayChanged(e) {
-        if (this.$.ptAway.checked === true) {
-          this.$.sendCommand.send({nestState: 'AWAY'});
-        } else if (this.$.ptAway.checked === false) {
-          this.$.sendCommand.send({nestState: 'HOME'});
-        }
-      }
-
 
     }
 

@@ -16,6 +16,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="fb-query.html">
 <link rel="import" href="send-command.html">
 <link rel="import" href="hon-icons.html">
+<link rel="import" href="card-actions.html">
+<link rel="import" href="card-wemo.html">
 
 <dom-module id="view-actions">
   <template>
@@ -23,236 +25,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
-      .targetTemp {
-        color: var(--secondary-text-color);
-      }
-      .small-text {
-        font-size: smaller;
-      }
-      .nest-heating {
-        color: var(--paper-red-500);
-      }
-      .nest-cooling {
-        color: var(--paper-blue-500);
+      .hidden {
+        display: none !important;
       }
     </style>
 
-    <send-command id="sendCommand"></send-command>
-    <fb-query path="config/HomeOnNode/commands" data="{{commandsObj}}">
-    </fb-query>
-    <fb-query path="state/wemo" data="{{wemoObjs}}">
-    </fb-query>
-    <fb-query path="state/nest/devices/thermostats" data="{{thermostats}}">
-    </fb-query>
+    <card-wemo></card-wemo>
 
-    <div class="card">
+    <card-actions kind="action"></card-actions>
 
-      <div class="app-grid grid-four">
-        <template
-          is="dom-repeat"
-          items="[[thermostats]]"
-          sort="sortNest">
-            <span>
-              [[item.name]]
-              <br>
-              <span class="small-text">
-                <span class$="[[nestStateIconClass(item.hvac_state)]]">
-                  [[item.ambient_temperature_f]][[item.temperature_scale]]&thinsp;
-                </span>
-                <template is="dom-if" if="[[nestActive(item.hvac_mode)]]">
-                  <span class="targetTemp">
-                    ([[item.target_temperature_f]][[item.temperature_scale]])&thinsp;
-                  </span>
-                </template>
-              </span>
-            </span>
-            <paper-button class="button" disabled="[[!nestActive(item.hvac_mode)]]" on-tap="tapNestDown">
-              Down
-            </paper-button>
-            <paper-button class$="[[getNestFanClass(item.fan_timer_active)]]" on-tap="tapNestFan">
-              Fan
-            </paper-button>
-            <paper-button class="button" on-tap="tapNestUp" disabled="[[!nestActive(item.hvac_mode)]]">
-              Up
-            </paper-button>
-        </template>
-      </div>
-      <div class="app-grid grid-wide">
-        <template
-          is="dom-repeat"
-          items="[[wemoObjs]]"
-          sort="sortWemo">
-            <paper-button class$="[[getWemoClass(item.value)]]" on-tap="tapWemo">
-              [[item.friendlyName]]
-            </paper-button>
-        </template>
-      </div>
-      <div class="app-grid grid-wide">
-        <template
-          is="dom-repeat"
-          items="[[commandsObj]]"
-          filter="isAction"
-          sort="sortAction"
-          observe="kind">
-            <paper-button class="button" on-tap="tapAction">
-              [[item.label]]
-            </paper-button>
-        </template>
-      </div>
-
-      <div class="app-grid grid-wide">
-        <template
-          is="dom-repeat"
-          items="[[commandsObj]]"
-          filter="isTestAction"
-          sort="sortAction"
-          observe="kind">
-            <paper-button class="button" on-tap="tapAction">
-              [[item.label]]
-            </paper-button>
-        </template>
-      </div>
-    </div>
+    <card-actions kind="test"></card-actions>
 
   </template>
 
   <script>
     class ActionsView extends Polymer.Element {
       static get is() { return 'view-actions'; }
-
-      isAction(item) {
-        if (item.hidden === true) {
-          return false;
-        }
-        return item.kind === 'action';
-      }
-
-      isTestAction(item) {
-        if (item.hidden === true) {
-          return false;
-        }
-        return item.kind === 'test-action';
-      }
-
-      getWemoClass(isOn) {
-        if (isOn == true) {
-          return 'button toggle-on';
-        }
-        return 'button';
-      }
-
-      getNestFanClass(isOn) {
-        if (isOn === true) {
-          return 'button toggle-on';
-        }
-        return 'button';
-      }
-
-      nestStateIconClass(item) {
-        return `nest-${item}`;
-      }
-
-      nestStateIcon(item) {
-        if (item === 'eco') {
-          return 'hvac-leaf';
-        }
-        return `hvac-${item}`;
-      }
-
-      nestActive(mode) {
-        const onModes = ['xxeco', 'heat', 'cool', 'heat-cool'];
-        return onModes.includes(mode);
-      }
-
-      sort(a, b) {
-        if (a > b) {
-          return 1;
-        }
-        if (a < b) {
-          return -1;
-        }
-        return 0;
-      }
-
-      sortAction(val1, val2) {
-        const a = val1.label.toLowerCase();
-        const b = val2.label.toLowerCase();
-        return this.sort(a, b);
-      }
-
-      sortNest(val1, val2) {
-        const a = val1.where_name.toLowerCase();
-        const b = val2.where_name.toLowerCase();
-        return this.sort(a, b);
-      }
-
-      sortWemo(val1, val2) {
-        const a = val1.friendlyName.toLowerCase();
-        const b = val2.friendlyName.toLowerCase();
-        return this.sort(a, b);
-      }
-
-      tapAction(event) {
-        const command = event.model.item;
-        this.$.sendCommand.send({cmdName: command.$key});
-      }
-
-      tapNestUp(event) {
-        const item = event.model.item;
-        this.nestTempAdjust(item.$key, 'UP');
-      }
-
-      tapNestDown(event) {
-        const item = event.model.item;
-        this.nestTempAdjust(item.$key, 'DOWN');
-      }
-
-      nestTempAdjust(key, dir) {
-        const cmd = {
-          nestThermostat: {
-            thermostatId: key,
-            adjust: dir,
-          },
-        };
-        this.$.sendCommand.send(cmd);
-      }
-
-      tapNestFan(event) {
-        const item = event.model.item;
-        const cmd = {
-          nestFan: {
-            thermostatId: item.$key,
-          },
-        };
-        if (item.fan_timer_active) {
-          cmd.nestFan.minutes = 0;
-        } else {
-          cmd.nestFan.minutes = 60;
-        }
-        this.$.sendCommand.send(cmd);
-        this.startIndterminate(event.target);
-      }
-
-      tapWemo(event) {
-        const item = event.model.item;
-        const currentVal = item.value == true;
-        const cmd = {
-          wemo: {
-            id: item.$key,
-            on: !currentVal,
-          },
-        };
-        this.$.sendCommand.send(cmd);
-        this.startIndterminate(event.target);
-      }
-
-      startIndterminate(button) {
-        button.classList.add('toggle-ind');
-        setTimeout(() => {
-          button.classList.remove('toggle-ind');
-        }, 15000);
-      }
-
     }
 
     window.customElements.define(ActionsView.is, ActionsView);

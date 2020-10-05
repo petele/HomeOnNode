@@ -129,6 +129,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               <span>[[item.host.hostname]]</span>
             </div>
           </template>
+          <template is="dom-if" if="[[item.host.cpuTemp]]">
+            <div>
+              <span class="label">CPU Temperature</span>
+              <span>[[formatRound(item.host.cpuTemp)]]&deg;C</span>
+            </div>
+          </template>
           <template is="dom-if" if="[[item.startedAt]]">
             <div>
               <span class="label">Started</span>
@@ -232,6 +238,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       formatDate(val) {
         return moment(val).format('M/D/YY, h:mm:ss a');
+      }
+
+      formatRound(val) {
+        return Math.round(val);
       }
 
       isStale(val) {

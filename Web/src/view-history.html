@@ -60,7 +60,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <firebase-query
       id="query"
       data="{{fbData}}"
-      path="logs/cron"
+      path="logs/history/cron"
       limit-to-last="432">
     </firebase-query>
 
@@ -90,9 +90,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             class="dropdown-content"
             attr-for-selected="value"
             selected="{{rooms.bedroom.view}}">
-              <paper-item value="tempAwair">Temperature (Awair)</paper-item>
+              <paper-item value="tempAwair">Temperature</paper-item>
               <!-- <paper-item value="temperature">Temperature</paper-item> -->
-              <paper-item value="tempNest">Temperature (Nest)</paper-item>
+              <!-- <paper-item value="tempNest">Temperature (Nest)</paper-item> -->
               <paper-item value="humidity">Humidity</paper-item>
               <paper-item value="lightlevel">Light level</paper-item>
               <paper-item value="awairScore">Air quality</paper-item>
@@ -114,8 +114,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             class="dropdown-content"
             attr-for-selected="value"
             selected="{{rooms.livingroom.view}}">
-            <paper-item value="tempAwair">Temperature (Awair)</paper-item>
-            <paper-item value="tempNest">Temperature (Nest)</paper-item>
+            <paper-item value="tempAwair">Temperature</paper-item>
+            <!-- <paper-item value="tempNest">Temperature (Nest)</paper-item> -->
             <paper-item value="humidity">Humidity</paper-item>
             <paper-item value="lightlevel">Light level</paper-item>
             <paper-item value="awairScore">Air quality</paper-item>

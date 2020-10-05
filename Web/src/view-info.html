@@ -33,13 +33,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         margin-bottom: .25em;
         margin-top: .25em;
       }
-      .is-true {
-        /* font-weight: bold; */
-      }
       .is-false {
         display: none;
-        /* font-weight: 100;
-        color: var(--secondary-text-color); */
       }
       .hidden {
         display: none;
@@ -48,7 +43,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         list-style: none;
         cursor: pointer;
         display: inline-block;
-        float: right;
       }
       summary::-webkit-details-marker {
         display: none;
@@ -66,7 +60,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <firebase-query
       id="query"
       data="{{fbData}}"
-      path="logs/cron"
+      path="logs/history/cron"
       limit-to-last="1">
     </firebase-query>
 
