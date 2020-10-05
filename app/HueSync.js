@@ -246,24 +246,30 @@ function HueSync(ipAddress, bearerToken) {
       throw new Error('Response Error');
     }
 
-    let respBody = await resp.text();
+    const respText = await resp.text();
+    if (respText.trim().length === 0) {
+      return;
+    }
+
+    let respJSON;
     try {
-      respBody = JSON.parse(respBody);
+      respJSON = JSON.parse(respText);
     } catch (ex) {
       if (retry) {
-        log.verbose(LOG_PREFIX, `${msg} - JSON error`, respBody);
+        log.verbose(LOG_PREFIX, `${msg} - JSON error`, ex);
         await honHelpers.sleep(250);
         return _makeRequest(requestPath, method, body, false);
       }
       log.error(LOG_PREFIX, `${msg} - JSON error`, ex);
+      log.verbose(LOG_PREFIX, `${msg} - Response was`, respText);
       throw new Error('JSON Conversion Error');
     }
 
     const errors = [];
-    if (respBody.error) {
-      errors.push(respBody);
-    } else if (Array.isArray(respBody)) {
-      respBody.forEach((item) => {
+    if (respJSON.error) {
+      errors.push(respJSON);
+    } else if (Array.isArray(respJSON)) {
+      respJSON.forEach((item) => {
         if (item.error) {
           errors.push(item);
         }
@@ -271,7 +277,7 @@ function HueSync(ipAddress, bearerToken) {
     }
 
     if (errors.length === 0) {
-      return respBody;
+      return respJSON;
     }
 
     if (retry) {
