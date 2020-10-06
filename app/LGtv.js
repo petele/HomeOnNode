@@ -89,7 +89,7 @@ function LGTV(ipAddress, credentials) {
   // IP Address, Port & Connection Options
   const _port = 3000;
   const _ipAddress = ipAddress;
-  const RECONNECT_DELAY = 45 * 1000;
+  const RECONNECT_DELAY = 37 * 1000;
   const _connectionOptions = {
     url: `ws://${_ipAddress}:${_port}`,
     saveKey: _saveKey,
@@ -169,20 +169,23 @@ function LGTV(ipAddress, credentials) {
    * @return {Promise} The promise that will be resolved on completion.
   */
   this.executeCommand = function(command) {
-    // Ensure we're connected
-    if (_self.state.connected !== true) {
-      log.error(LOG_PREFIX, `Not connected`);
-      return Promise.reject(new Error('Not Connected'));
-    }
-
-    // Get & validate the action & value
     const action = command.action;
     const value = command.value;
+    const msg = `executeCommand('${action}')`;
+
+    // Validate the action & value
     if (!action) {
+      log.error(LOG_PREFIX, `${msg} failed: no 'action' provided`, command);
       return Promise.reject(new Error(`No 'action' provided.`));
     }
 
-    log.verbose(LOG_PREFIX, `executeCommand('${action}')`, value);
+    // Ensure we're connected
+    if (_self.state.connected !== true) {
+      log.error(LOG_PREFIX, `${msg} failed: not connected.`);
+      return Promise.reject(new Error('Not Connected'));
+    }
+
+    log.verbose(LOG_PREFIX, msg, value);
 
     // Run the commands
     if (action === 'powerOff') {
@@ -225,6 +228,7 @@ function LGTV(ipAddress, credentials) {
       return _sendMediaCommand(value);
     }
 
+    log.error(LOG_PREFIX, `${msg} failed: unknown 'action'`, command);
     return Promise.reject(new Error(`Unknown command: '${action}'`));
   };
 
