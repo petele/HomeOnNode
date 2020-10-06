@@ -68,10 +68,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
-    <fb-document path="state/hueSync/execution/mode" data="{{hueSyncState}}">
-    </fb-document>
-    <card-actions id="cardHueSync" kind="hue-sync" title="Hue Sync" class="hidden"></card-actions>
-
     <fb-query path="state/sonos/favorites" data="{{sonosFavorites}}">
     </fb-query>
     <div class="card">
@@ -103,13 +99,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get observers() {
         return [
           'mediaControllerVisibleChanged(mediaControllerVisible)',
-          'hueSyncStateChanged(hueSyncState)',
         ];
-      }
-
-      hueSyncStateChanged(newVal) {
-        const hide = newVal === 'powersave';
-        this.$.cardHueSync.classList.toggle('hidden', hide);
       }
 
       mediaControllerVisibleChanged(show) {
