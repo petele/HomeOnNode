@@ -30,28 +30,27 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
 
-
     <fb-document path="state/hueSync/execution" data="{{hueSyncState}}">
     </fb-document>
 
     <div class="card">
       <div class="app-grid grid-two">
-        <paper-dropdown-menu  disabled id="pdmMode" label="Mode">
+        <paper-dropdown-menu  id="pdmMode" label="Mode">
           <paper-listbox
             id="pdmModeLB"
             slot="dropdown-content"
             attr-for-selected="value"
-            selected="[[hueSyncState.mode]]">
-              <paper-item></paper-item>
+            selected="[[hueSyncState.mode]]"
+            on-selected-changed="_modeChanged">
               <paper-item value="powersave">Off</paper-item>
               <paper-item value="passthrough">Pass Through</paper-item>
               <paper-item value="video">Video</paper-item>
               <paper-item value="music">Music</paper-item>
-              <paper-item value="game">game</paper-item>
+              <paper-item value="game">Game</paper-item>
           </paper-listbox>
         </paper-dropdown-menu>
 
-        <paper-dropdown-menu disabled id="pdmLevel" label="Level">
+        <paper-dropdown-menu disabled$="[[disabled]]" id="pdmLevel" label="Level">
           <paper-listbox
             id="pmdLevelLB"
             slot="dropdown-content"
@@ -75,7 +74,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
     </div>
 
-    <card-actions kind="hue-sync" title="Presets">
+    <card-actions disabled$="[[disabled]]" kind="hue-sync" title="Presets">
     </card-actions>
 
   </template>
@@ -107,14 +106,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ];
       }
 
-      _brightnessChanged(a, b, c) {
+      _modeChanged(e, newVal) {
+        const cmd = {
+          hueSync: {
+            mode: newVal.value
+          }
+        };
+        this.$.sendCommand.send(cmd);
+      }
+
+      _brightnessChanged() {
         const val = this.$.sliderBri.value;
         const cmd = {
           hueSync: {
             setBrightness: val,
           },
         };
-        console.log(cmd);
         this.$.sendCommand.send(cmd);
       }
 
@@ -131,7 +138,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (this.intensity === val) {
           return;
         }
-        console.log('intensity', val);
         this.set('intensity', val);
       }
 

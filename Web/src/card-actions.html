@@ -43,7 +43,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           filter="isRightKind"
           sort="sortAction"
           observe="kind">
-          <paper-button class="button" on-tap="tapAction">
+          <paper-button disabled$="[[disabled]]" class="button" on-tap="tapAction">
             [[item.label]]
           </paper-button>
         </template>
@@ -70,6 +70,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             notify: true,
             reflectToAttribute: true,
             value: null,
+          },
+          disabled: {
+            type: Boolean,
+            notify: true,
+            reflectToAttribute: true,
+            value: false,
           },
         };
       }
