@@ -185,6 +185,9 @@ function LGTV(ipAddress, credentials) {
     log.verbose(LOG_PREFIX, `executeCommand('${action}')`, value);
 
     // Run the commands
+    if (action === 'powerOff') {
+      return _powerOff();
+    }
     if (action === 'showToast') {
       return _showToast(value);
     }
@@ -503,6 +506,15 @@ function LGTV(ipAddress, credentials) {
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    * Command handlers
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+  /**
+   * Turns the TV off
+   *
+   * @return {Promise}
+   */
+  function _powerOff() {
+    return _sendRequest(LG_URLS.power.off);
+  }
 
   /**
    * Shows a toast
