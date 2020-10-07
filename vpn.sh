@@ -10,3 +10,4 @@ echo ""
 
 echo "Starting VPN Monitor..."
 node appVPN.js
+node appSendNotification.js
