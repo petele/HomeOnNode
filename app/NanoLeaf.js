@@ -1,9 +1,12 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
-const request = require('request');
 const log = require('./SystemLog2');
+const fetch = require('node-fetch');
 const diff = require('deep-diff').diff;
+const honHelpers = require('./HoNHelpers');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'NANOLEAF';
@@ -26,6 +29,54 @@ function NanoLeaf(key, ip, port) {
   let _ready = false;
   let _state = {};
   this.state = _state;
+  let _connectionStarted = false;
+
+  /**
+   * Connect to a NanoLeaf light for the first time.
+   *
+   * @param {Boolean} retry
+   */
+  this.connect = async function(retry) {
+    if (_ready) {
+      return true;
+    }
+    if (_connectionStarted) {
+      log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
+      return false;
+    }
+    _connectionStarted = true;
+    log.init(LOG_PREFIX, 'Connecting...');
+
+    try {
+      await _getState();
+    } catch (ex) {
+      if (retry) {
+        _retryInitialConnection(retry);
+      } else {
+        _connectionStarted = false;
+      }
+      return false;
+    }
+    log.debug(LOG_PREFIX, 'Connected.');
+    _ready = true;
+    setInterval(async () => {
+      await _getState();
+    }, REFRESH_INTERVAL);
+    _self.emit('ready');
+    return true;
+  };
+
+  /**
+   * Retry the initial connection if it didn't succeed.
+   *
+   * @param {Boolean} [retry]
+   */
+  function _retryInitialConnection(retry) {
+    setTimeout(() => {
+      _connectionStarted = false;
+      _self.connect(retry);
+    }, 90 * 1000);
+  }
 
   /**
    * Execute a NanoLeaf command.
@@ -76,15 +127,6 @@ function NanoLeaf(key, ip, port) {
   };
 
   /**
-   * Init
-  */
-  function _init() {
-    log.init(LOG_PREFIX, 'Starting...', {ip: ip, port: port});
-    _getState();
-    setInterval(_getState, REFRESH_INTERVAL);
-  }
-
-  /**
    * Checks if system is ready
    *
    * @return {Boolean} true if system is ready, false if not.
@@ -101,119 +143,59 @@ function NanoLeaf(key, ip, port) {
    * @param {Object} body The body of the request.
    * @return {Promise} A promise that resolves to the response.
   */
-  function _makeLeafRequest(requestPath, method, body) {
-    return new Promise(function(resolve, reject) {
-      const msg = `makeLeafRequest('${method}', '${requestPath}')`;
-      const requestOptions = {
-        uri: _hubAddress + requestPath,
-        method: method,
-        agent: false,
-        json: true,
-      };
-      if (requestPath === 'new') {
-        requestOptions.uri = `http://${ip}:${port}/api/v1/new`;
-      }
-      if (body) {
-        requestOptions.body = body;
-      }
-      log.verbose(LOG_PREFIX, msg, body);
-      request(requestOptions, (error, response, respBody) => {
-        // Error with HTTP request
-        if (error) {
-          log.error(LOG_PREFIX, 'Request error', error);
-          reject(error);
-          return;
-        }
-        // No response returned, this should "never" happen!
-        if (!response) {
-          log.error(LOG_PREFIX, 'No response available!');
-          reject(new Error('no_response'));
-          return;
-        }
-        // log.verbose(LOG_PREFIX, `${msg}: ${response.statusCode}`);
-        // Good response received (200 or 204)
-        if (response.statusCode === 200 || response.statusCode === 204) {
-          if (respBody && respBody.error) {
-            log.error(LOG_PREFIX, `NanoLeaf Error`, respBody);
-            reject(new Error('response_error'));
-            return;
-          }
-          if (requestPath !== '') {
-            _getState();
-          }
-          resolve({statusCode: response.statusCode, body: respBody});
-          return;
-        }
-        // An error occured with our request.
-        const m = `Request failed (${response.statusCode})`;
-        const extra = {
-          msg: msg,
-          requestOpts: requestOptions,
-          statusCode: response.statusCode,
-        };
-        if (respBody) {
-          extra.respBody = respBody;
-        }
-        log.error(LOG_PREFIX, m, extra);
-        reject(new Error(`status_${response.statusCode}`));
-        return;
-      });
-    });
-  }
-
-  /**
-   * Validates an integer input.
-   *
-   * @param {Number} value The value to validate.
-   * @param {Number} min The minimum value for the value.
-   * @param {Number} max The maximum value for the value.
-   * @return {Number} The validated integer or null if it failed.
-  */
-  function _validateInput(value, min, max) {
-    try {
-      const val = parseInt(value, 10);
-      if (val < min || val > max) {
-        return null;
-      }
-      return val;
-    } catch (ex) {
-      return null;
+  async function _makeLeafRequest(requestPath, method, body) {
+    const msg = `makeLeafRequest('${method}', '${requestPath}')`;
+    let url = _hubAddress + requestPath;
+    if (requestPath === 'new') {
+      url = `http://${ip}:${port}/api/v1/new`;
     }
+    const fetchOpts = {
+      method: method,
+      headers: {},
+    };
+    if (body) {
+      fetchOpts.body = JSON.stringify(body);
+      fetchOpts.headers['Content-Type'] = 'application/json';
+    }
+    log.debug(LOG_PREFIX, msg, body);
+    const resp = await fetch(url, fetchOpts);
+
+    if (!resp.ok) {
+      log.error(LOG_PREFIX, `${msg} - Response error`, resp);
+      throw new Error('Response Error');
+    }
+
+    if (requestPath !== '') {
+      _getState();
+    }
+
+    const respBody = await resp.text();
+    if (respBody.length === 0) {
+      return {ok: true};
+    }
+
+    return JSON.parse(respBody);
   }
 
   /**
    * Get current leaf state
    *
-   * @return {Promise} A promise that resolves to the current leaf state
+   * @return {Promise} Empty promise once completed.
   */
-  function _getState() {
-    return _makeLeafRequest('', 'GET', null)
-        .catch(function(err) {
-          log.error(LOG_PREFIX, err.message);
-          return {error: err};
-        })
-        .then((resp) => {
-          if (resp.error) {
-            // Bail, we've already logged the error above.
-            return;
-          }
-          const state = resp.body;
-          // Has the state changed since last time?
-          if (diff(_state, state)) {
-            _state = state;
-            // If we weren't ready before, change to ready & fire ready event
-            if (_ready === false) {
-              log.debug(LOG_PREFIX, 'Ready.');
-              _ready = true;
-            }
-            /**
-             * State has changed
-             * @event NanoLeaf#state_changed
-             */
-            _self.emit('state_changed', state);
-          }
-          return resp;
-        });
+  async function _getState() {
+    try {
+      const state = await _makeLeafRequest('', 'GET');
+      if (!state) {
+        log.error(LOG_PREFIX, 'No state available.');
+        return;
+      }
+      if (diff(_state, state)) {
+        _state = state;
+        _self.emit('state_changed', state);
+      }
+    } catch (ex) {
+      log.error(LOG_PREFIX, 'Unable to get state', ex);
+    }
   }
 
   /**
@@ -227,7 +209,10 @@ function NanoLeaf(key, ip, port) {
     const msg = `setPower(${val})`;
     log.debug(LOG_PREFIX, msg);
     const body = {on: {value: val}};
-    return _makeLeafRequest('state', 'PUT', body);
+    return _makeLeafRequest('state', 'PUT', body)
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Unable to set state', err);
+        });
   }
 
   /**
@@ -244,7 +229,10 @@ function NanoLeaf(key, ip, port) {
     }
     log.debug(LOG_PREFIX, msg);
     const body = {select: effectName};
-    return _makeLeafRequest('effects', 'PUT', body);
+    return _makeLeafRequest('effects', 'PUT', body)
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Unable to set effect', err);
+        });
   }
 
   /**
@@ -280,13 +268,16 @@ function NanoLeaf(key, ip, port) {
   function _setBrightness(level) {
     const msg = `setBrightness(${level})`;
     log.debug(LOG_PREFIX, msg);
-    level = _validateInput(level, 0, 100);
+    level = honHelpers.isValidInt(level, 0, 100);
     if (level === null) {
       log.error(LOG_PREFIX, `${msg} failed, value out of range`);
       return Promise.reject(new RangeError('value_out_of_range'));
     }
     const body = {brightness: {value: level}};
-    return _makeLeafRequest('state', 'PUT', body);
+    return _makeLeafRequest('state', 'PUT', body)
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Unable to set brightness', err);
+        });
   }
 
   /**
@@ -299,13 +290,16 @@ function NanoLeaf(key, ip, port) {
   function _setColorTemperature(ct) {
     const msg = `setColorTemperature(${ct})`;
     log.debug(LOG_PREFIX, msg);
-    ct = _validateInput(ct, 1200, 6500);
+    ct = honHelpers.isValidInt(ct, 1200, 6500);
     if (ct === null) {
       log.error(LOG_PREFIX, `${msg} failed, value out of range`);
       return Promise.reject(new RangeError('value_out_of_range'));
     }
     const body = {ct: {value: ct}};
-    return _makeLeafRequest('state', 'PUT', body);
+    return _makeLeafRequest('state', 'PUT', body)
+        .catch((err) => {
+          log.error(LOG_PREFIX, 'Unable to set color temperature', err);
+        });
   }
 
   /**
@@ -320,8 +314,8 @@ function NanoLeaf(key, ip, port) {
   function _setHueAndSat(hue, sat) {
     const msg = `setHueAndSat(${hue}, ${sat})`;
     log.debug(LOG_PREFIX, msg);
-    hue = _validateInput(hue, 0, 359);
-    sat = _validateInput(sat, 0, 100);
+    hue = honHelpers.isValidInt(hue, 0, 359);
+    sat = honHelpers.isValidInt(sat, 0, 100);
     if (hue === null || sat === null) {
       log.error(LOG_PREFIX, `${msg} failed, value out of range`);
       return Promise.reject(new RangeError('value_out_of_range'));
@@ -332,8 +326,6 @@ function NanoLeaf(key, ip, port) {
     };
     return _makeLeafRequest('state', 'PUT', body);
   }
-
-  _init();
 }
 
 util.inherits(NanoLeaf, EventEmitter);

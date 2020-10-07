@@ -2,6 +2,8 @@ node_modules
 bower_components
 .tmp
 .sass-cache
+scratch-*.*
+*.pid
 
 */Dist/
 /temp/
@@ -9,14 +11,17 @@ bower_components
 
 */**/.AppleDouble
 */**/package-lock.json
-*/**/keys.js
-*/**/Keys.js
+*/**/keys*.*
+*/**/Keys*.*
 */**/*.log
 */logs/*
 /Web/scripts/fbKey.js
 /scratch/
+/app/sounds/
+/app/config-backup/*
 /app/test*.js
 /app/config.json
+/app/config-*.json
 /app/state.json
 /app/zwconfig/
 /open-zwave/

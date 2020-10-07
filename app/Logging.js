@@ -1,15 +1,28 @@
 'use strict';
 
 const log = require('./SystemLog2');
+const FBHelper = require('./FBHelper');
 
 /**
  * Logging API.
  * @constructor
- *
- * @param {Object} fbRef Firebase root to save log to.
 */
-function Logging(fbRef) {
+function Logging() {
   const LOG_PREFIX = 'LOGGING';
+  let _fbRef;
+
+  /**
+   * Initialize the API
+   */
+  function _init() {
+    FBHelper.getRootRefUnlimited()
+        .then((fbRootRef) => {
+          return fbRootRef.child('logs/history/cron');
+        })
+        .then((fbRef) => {
+          _fbRef = fbRef;
+        });
+  }
 
   /**
    * Creates and saves the current state.
@@ -18,7 +31,7 @@ function Logging(fbRef) {
    */
   this.saveData = function(state) {
     log.debug(LOG_PREFIX, 'saveData');
-    if (!fbRef) {
+    if (!_fbRef) {
       log.error(LOG_PREFIX, 'Firebase root not set.');
       return;
     }
@@ -67,10 +80,9 @@ function Logging(fbRef) {
     }
 
     // Store Awair data.
-    if (state.awair) {
-      const br = _getAwairData(state.awair, 'awair-r2', '11438');
-      // const lr = null;
-      const lr = _getAwairData(state.awair, 'awair-element', '3635');
+    if (state.awair && state.awair.local) {
+      const br = _getAwairData(state.awair.local.BR);
+      const lr = _getAwairData(state.awair.local.LR);
       if (br || lr) {
         value.awair = {};
         if (br) {
@@ -101,7 +113,7 @@ function Logging(fbRef) {
     }
 
     try {
-      fbRef.push(value, (err) => {
+      _fbRef.push(value, (err) => {
         if (err) {
           log.exception(LOG_PREFIX, 'Error saving to Firebase [1]', err);
           return;
@@ -116,25 +128,35 @@ function Logging(fbRef) {
   /**
    * Gets the Awair data for the specified device.
    *
-   * @param {Object} awairData State data for Awair
-   * @param {String} kind Type of Awair Device
-   * @param {String} deviceId Device ID
+   * @param {Object} data State data for Awair
    * @return {Object}
    */
-  function _getAwairData(awairData, kind, deviceId) {
+  function _getAwairData(data) {
     try {
-      if (awairData[kind] && awairData[kind][deviceId]) {
-        const result = awairData[kind][deviceId];
-        if (result.data) {
-          return result.data;
-        }
+      const result = {
+        score: data.score,
+        sensors: {},
+        timeStamp: data.timestamp,
+      };
+      if (data.co2) {
+        result.sensors.co2 = {value: data.co2};
       }
+      if (data.humid) {
+        result.sensors.humid = {value: data.humid};
+      }
+      if (data.pm25) {
+        result.sensors.pm25 = {value: data.pm25};
+      }
+      if (data.temp) {
+        result.sensors.temp = {value: data.temp};
+      }
+      if (data.voc) {
+        result.sensors.voc = {value: data.voc};
+      }
+      return result;
     } catch (ex) {
-      const msg = `Unable to get Awair Data for [${kind}][${deviceId}]`;
-      log.exception(LOG_PREFIX, msg, ex);
-      log.error(LOG_PREFIX, msg, awairData);
+      return null;
     }
-    return null;
   }
 
   /**
@@ -221,7 +243,11 @@ function Logging(fbRef) {
   function _getPresence(people) {
     const results = {};
     Object.keys(people).forEach((k) => {
-      results[k] = people[k].state;
+      try {
+        results[k] = people[k].state;
+      } catch (ex) {
+        log.error(LOG_PREFIX, 'Error saving presence info', ex);
+      }
     });
     return results;
   }
@@ -258,6 +284,8 @@ function Logging(fbRef) {
       return result;
     }
   }
+
+  _init();
 }
 
 module.exports = Logging;

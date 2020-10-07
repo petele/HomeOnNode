@@ -1,6 +1,9 @@
 #!/bin/bash
 
+echo ""
+echo ""
 echo "Starting APP_NAME in 5 seconds"
+echo ""
 sleep 5
 
 echo "Updating code..."
@@ -14,6 +17,7 @@ forever start monitor.json
 echo ""
 echo ""
 
+# TODO SETUP HERE
 # ./remote.sh Bedside
 
 cd app

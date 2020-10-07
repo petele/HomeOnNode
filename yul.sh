@@ -8,5 +8,4 @@ nvm use
 echo ""
 echo ""
 
-echo "Starting VPN Monitor..."
-node appVPN.js
+node appGPIO.js FrontDoor

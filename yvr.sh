@@ -1,10 +1,13 @@
 #!/bin/bash
 
+echo "Starting Vancouver..."
+echo ""
+
 cd ~/HomeOnNode/app
 
-echo "Getting config..."
-node getConfig.js Bedside
-echo ""
+echo "Configuring Node..."
+. ~/.nvm/nvm.sh
+nvm use
 echo ""
 
 echo "Starting app..."

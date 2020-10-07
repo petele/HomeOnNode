@@ -1,0 +1,9 @@
+{
+  "uid": "flic",
+  "pidFile": "/home/pi/HomeOnNode/flic.pid",
+  "append": true,
+  "sourceDir": "/home/pi/HomeOnNode/app/",
+  "workingDir": "/home/pi/HomeOnNode/app/",
+  "logFile": "/home/pi/HomeOnNode/app/logs/forever-flic.log",
+  "script": "appFlic.js"
+}

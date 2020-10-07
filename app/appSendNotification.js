@@ -1,27 +1,21 @@
 'use strict';
 
-const os = require('os');
+/* node14_ready */
+
 const log = require('./SystemLog2');
-const Keys = require('./Keys').keys;
 const GCMPush = require('./GCMPush');
-const Firebase = require('firebase');
+const honHelpers = require('./HoNHelpers');
 
 const LOG_PREFIX = 'SEND_ON_ERROR';
 
-const logOpts = {
-  consoleLogLevel: 20,
-  fileLogLevel: 90,
-  fileFilename: './logs/system.log',
-};
-log.setOptions(logOpts);
+log.setConsoleLogOpts(50);
+log.setFileLogOpts(90, './logs/system.log');
 
-let hostname = os.hostname().toUpperCase();
-if (hostname.indexOf('.') >= 0) {
-  hostname = hostname.substring(0, hostname.indexOf('.'));
-}
+let gcmPush;
+const hostname = honHelpers.getHostname().toUpperCase();
 
 const DEFAULT_MESSAGE = {
-  title: `${hostname} - Error`,
+  title: `${hostname} - Oops`,
   body: 'Something unexpected happened at',
   tag: `HoN-error`,
   uniqueTag: true,
@@ -34,26 +28,25 @@ const DEFAULT_MESSAGE = {
 /**
  * Send default message to all users
  */
-function _sendMessage() {
-  const fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com`);
-  fb.authWithCustomToken(Keys.firebase.key, function(error) {
-    if (error) {
-      log.exception(LOG_PREFIX, 'Authentication error', error);
-      process.exit(1);
-    } else {
-      const gcmPush = new GCMPush(fb);
-      gcmPush.on('ready', function() {
-        gcmPush.sendMessage(DEFAULT_MESSAGE)
-            .catch((ex) => {
-              log.exception(LOG_PREFIX, 'Unable to send message', ex);
-            })
-            .then(() => {
-              log.custom('STOP', LOG_PREFIX, 'Sent messages...');
-              process.exit(0);
-            });
-      });
-    }
-  });
+async function _sendMessage() {
+  try {
+    await gcmPush.sendMessage(DEFAULT_MESSAGE);
+    log.log(LOG_PREFIX, LOG_PREFIX, 'Sent messages...');
+    process.exit(0);
+  } catch (ex) {
+    log.exception(LOG_PREFIX, 'Unable to send messsages.', ex);
+    process.exit(1);
+  }
 }
 
-_sendMessage();
+/**
+ * Main App
+ */
+async function go() {
+  gcmPush = await new GCMPush();
+  if (gcmPush) {
+    _sendMessage();
+  }
+}
+
+go();

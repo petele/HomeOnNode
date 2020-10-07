@@ -2,71 +2,65 @@
 
 'use strict';
 
-const fs = require('fs');
+/* node14_ready */
+
+const fs = require('fs/promises');
 const Keypad = require('./Keypad');
 const log = require('./SystemLog2');
-const Keys = require('./Keys').keys;
-const Firebase = require('firebase');
+const FBHelper = require('./FBHelper');
 const WSClient = require('./WSClient');
 const DeviceMonitor = require('./DeviceMonitor');
 
-let _fb;
+const LOG_PREFIX = 'APP_REMOTE';
+const APP_NAME = process.argv[2];
+
 let _config;
 let _wsClient;
 let _deviceMonitor;
+let _fbRootRef;
+let _fbConfigRef;
 
-// Read config file
-try {
-  // eslint-disable-next-line no-console
-  console.log(`Reading 'config.json'...`);
-  const config = fs.readFileSync('config.json', {encoding: 'utf8'});
-  // eslint-disable-next-line no-console
-  console.log(`Parsing 'config.json'...`);
-  _config = JSON.parse(config);
-} catch (ex) {
-  console.error(`Unable to read or parse 'config.json'`);
-  console.error(ex);
-  process.exit(1);
-}
-
-// Verify config has appName
-if (!_config.appName) {
-  console.error(`'appName' not set in config.`);
-  process.exit(1);
-}
-const APP_NAME = _config.appName;
-const FB_LOG_PATH = `logs/${APP_NAME.toLowerCase()}`;
-
-// Verify config has wsServer
-if (!_config.wsServer) {
-  console.error(`'wsServer' not set in config.`);
-  process.exit(1);
-}
-
-
-// Setup logging
-log.setAppName(APP_NAME);
-log.setOptions({
-  firebaseLogLevel: _config.logLevel || 50,
-  firebasePath: FB_LOG_PATH,
-});
-log.startWSS();
-log.appStart();
 
 /**
  * Init
  */
-function init() {
-  _fb = new Firebase(`https://${Keys.firebase.appId}.firebaseio.com/`);
-  _fb.authWithCustomToken(Keys.firebase.key, function(error, authToken) {
-    if (error) {
-      log.exception(APP_NAME, 'Firebase auth failed.', error);
-    } else {
-      log.log(APP_NAME, 'Firebase auth success.');
+async function init() {
+  log.startWSS();
+  log.setFileLogOpts(50, './logs/system.log');
+  log.setFirebaseLogOpts(50, `logs/apps/${APP_NAME}`);
+
+  log.appStart(APP_NAME);
+
+  try {
+    log.log(LOG_PREFIX, 'Reading config from Firebase...');
+    _fbRootRef = await FBHelper.getRootRef(30 * 1000);
+    _fbConfigRef = await _fbRootRef.child(`config/${APP_NAME}`);
+    _config = await _fbConfigRef.once('value');
+    _config = _config.val();
+  } catch (ex) {
+    log.error(LOG_PREFIX, `Unable to get Firebase reference...`, ex);
+  }
+
+  if (!validateConfig(_config)) {
+    try {
+      log.log(LOG_PREFIX, 'Reading config from local file...');
+      const cfg = await fs.readFile('config.json', {encoding: 'utf8'});
+      _config = JSON.parse(cfg);
+    } catch (ex) {
+      log.fatal(LOG_PREFIX, `Unable to read/parse local config file.`, ex);
+      process.exit(1);
     }
-  });
-  log.setFirebaseRef(_fb);
-  _deviceMonitor = new DeviceMonitor(_fb.child('devices'), APP_NAME);
+  }
+
+  if (!validateConfig(_config)) {
+    const msg = `Invalid config, or missing key properties.`;
+    log.fatal(LOG_PREFIX, msg, _config);
+    process.exit(1);
+  }
+
+  _initConfigListeners();
+
+  _deviceMonitor = new DeviceMonitor(APP_NAME);
   _deviceMonitor.on('restart_request', () => {
     _close();
     _deviceMonitor.restart('FB', 'restart_request', false);
@@ -76,34 +70,56 @@ function init() {
     _deviceMonitor.shutdown('FB', 'shutdown_request', false);
   });
 
-  _fb.child(`config/${APP_NAME}/logLevel`).on('value', (snapshot) => {
-    const logLevel = snapshot.val();
-    log.setOptions({
-      firebaseLogLevel: logLevel || 50,
-      firebasePath: `logs/${APP_NAME.toLowerCase()}`,
-    });
-    log.log(APP_NAME, `Log level changed to ${logLevel}`);
-  });
-
   _wsClient = new WSClient(_config.wsServer, true, 'server');
+  Keypad.listen(_config.keypad.modifiers, _handleKeyPress);
 
-  _fb.child(`config/${APP_NAME}/keypad`).on('value', function(snapshot) {
-    _config.keypad = snapshot.val();
-    log.log(APP_NAME, 'Keypad settings updated.');
+  setInterval(async () => {
+    await log.cleanFile();
+    await log.cleanLogs(null, 7);
+  }, 60 * 60 * 24 * 1000);
+}
+
+/**
+ * Set up the Firebase config listeners...
+ */
+async function _initConfigListeners() {
+  const fbRoot = await FBHelper.getRootRefUnlimited();
+  const fbConfig = await fbRoot.child(`config/${APP_NAME}`);
+  fbConfig.on('value', async (snapshot) => {
+    const newConfig = snapshot.val();
+    if (!validateConfig(newConfig)) {
+      log.error(LOG_PREFIX, 'New config is invalid.', newConfig);
+      return;
+    }
+    _config = newConfig;
+    await fs.writeFile('config.json', JSON.stringify(_config, null, 2));
+    log.log(LOG_PREFIX, 'Config updated, written to disk...');
   });
-
-  _fb.child(`config/${APP_NAME}/disabled`).on('value', function(snapshot) {
+  fbConfig.child('disabled').on('value', (snapshot) => {
     _config.disabled = snapshot.val();
     log.log(APP_NAME, `'disabled' changed to '${_config.disabled}'`);
   });
-
-  Keypad.listen(_config.keypad.modifiers, _handleKeyPress);
-
-  setInterval(function() {
-    log.cleanFile();
-    log.cleanLogs(FB_LOG_PATH, 7);
-  }, 60 * 60 * 24 * 1000);
 }
+
+/**
+ * Validate the config file meets the requirements.
+ *
+ * @param {Object} config
+ * @return {Boolean} true if good.
+ */
+function validateConfig(config) {
+  if (!config) {
+    return false;
+  }
+  if (config._configType !== 'remote') {
+    return false;
+  }
+  if (!config.hasOwnProperty('wsServer')) {
+    return false;
+  }
+  return true;
+}
+
 
 /**
  * Send a command
@@ -168,4 +184,9 @@ process.on('SIGINT', function() {
   _deviceMonitor.shutdown('SIGINT', 'shutdown_request', 0);
 });
 
-init();
+
+if (APP_NAME) {
+  return init();
+} else {
+  log.fatal(LOG_PREFIX, 'No app name provided.');
+}

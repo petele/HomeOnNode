@@ -106,6 +106,10 @@ Follow instructions at <https://github.com/creationix/nvm> or:
 1. ``sudo setcap cap_net_raw+eip $(eval readlink -f `which node`)``
 
 
+### Setup Flic
+
+Follow instructions at <https://community.home-assistant.io/t/install-flic/16969/4>
+
 ### Clone Repo
 
 1. `git clone https://github.com/petele/HomeOnNode.git`

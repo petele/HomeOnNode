@@ -1,8 +1,9 @@
 'use strict';
 
-const net = require('net');
 const util = require('util');
 const log = require('./SystemLog2');
+const diff = require('deep-diff').diff;
+const honHelpers = require('./HoNHelpers');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'LG_TV';
@@ -62,44 +63,6 @@ const LG_BUTTONS = [
 ];
 
 /**
- * Returns after specified seconds, defaults to 30.
- *
- * @param {Number} [seconds] Number of seconds to wait (optional).
- * @return {?Promise<undefined>} A promise that resolves after specified time.
- */
-function promiseSleep(seconds) {
-  seconds = seconds || 30;
-  return new Promise((resolve) => {
-    setTimeout(resolve, seconds * 1000);
-  });
-}
-
-/**
- * Pings a device to see if it's alive and the specified port is open.
- *
- * @param {String} ipAddress
- * @param {Number} port
- * @return {Promise<Boolean>} Is the server alive.
- */
-function isAlive(ipAddress, port) {
-  return new Promise((resolve) => {
-    const s = new net.Socket();
-    s.connect(port, ipAddress, () => {
-      s.destroy();
-      resolve(true);
-    });
-    s.on('error', (err) => {
-      s.destroy();
-      resolve(false);
-    });
-    s.setTimeout(750, () => {
-      s.destroy();
-      resolve(false);
-    });
-  });
-}
-
-/**
  * LG TV API.
  * @constructor
  *
@@ -126,7 +89,7 @@ function LGTV(ipAddress, credentials) {
   // IP Address, Port & Connection Options
   const _port = 3000;
   const _ipAddress = ipAddress;
-  const RECONNECT_DELAY = 45 * 1000;
+  const RECONNECT_DELAY = 37 * 1000;
   const _connectionOptions = {
     url: `ws://${_ipAddress}:${_port}`,
     saveKey: _saveKey,
@@ -137,10 +100,7 @@ function LGTV(ipAddress, credentials) {
   //  LGTV & Pointer Input Socket
   let _lgtv;
   let _pointerInputSocket;
-
-  // // Reconnection settings
-  // let _reconnect = true;
-  // let _connecting = false;
+  let _connectionStarted = false;
 
   // LG TV State Info
   this.state = {
@@ -166,50 +126,25 @@ function LGTV(ipAddress, credentials) {
 
   const _self = this;
 
-  /**
-   * Init
-   */
-  function _init() {
-    log.init(LOG_PREFIX, 'Starting...');
-    if (!ipAddress) {
-      log.error(LOG_PREFIX, 'No IP Address provided, aborting...');
-      return;
+  this.connect = async function() {
+    if (_lgtv) {
+      return true;
     }
-    if (!_connectionOptions.clientKey) {
-      log.error(LOG_PREFIX, 'No credentials provided, aborting...');
-      return;
+    if (_connectionStarted) {
+      log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
+      return false;
     }
-    _waitForAlive()
-        .then(() => {
-          _lgtv = require('lgtv2')(_connectionOptions);
-          _lgtv.on('error', _onError);
-          _lgtv.on('prompt', _onPrompt);
-          _lgtv.on('connect', _onConnect);
-          _lgtv.on('connecting', _onConnecting);
-          _lgtv.on('close', _onClose);
-          // setInterval(() => {
-          //   _checkConnectionStateTick();
-          // }, RECONNECT_DELAY);
-        })
-        .catch((err) => {
-          log.exception(LOG_PREFIX, 'Failed: Unable to initialize LG TV.', err);
-        });
-  }
+    _connectionStarted = true;
+    log.init(LOG_PREFIX, 'Connecting...');
+    await honHelpers.waitForAlive(_ipAddress, _port);
+    _lgtv = require('lgtv2')(_connectionOptions);
+    _lgtv.on('error', _onError);
+    _lgtv.on('prompt', _onPrompt);
+    _lgtv.on('connect', _onConnect);
+    _lgtv.on('connecting', _onConnecting);
+    _lgtv.on('close', _onClose);
+  };
 
-  /**
-   * Waits for the TV to come to life on startup.
-   *
-   * @return {Promise<undefined>}
-   */
-  function _waitForAlive() {
-    return isAlive(_ipAddress, _port)
-        .then((alive) => {
-          if (alive === true) {
-            return true;
-          }
-          return promiseSleep().then(_waitForAlive);
-        });
-  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    * Public methods
@@ -220,7 +155,6 @@ function LGTV(ipAddress, credentials) {
    */
   this.shutdown = function() {
     _setState('ready', false);
-    // _reconnect = false;
     if (_lgtv) {
       _lgtv.disconnect();
     }
@@ -235,22 +169,28 @@ function LGTV(ipAddress, credentials) {
    * @return {Promise} The promise that will be resolved on completion.
   */
   this.executeCommand = function(command) {
-    // Ensure we're connected
-    if (_self.state.connected !== true) {
-      log.error(LOG_PREFIX, `Not connected`);
-      return Promise.reject(new Error('Not Connected'));
-    }
-
-    // Get & validate the action & value
     const action = command.action;
     const value = command.value;
+    const msg = `executeCommand('${action}')`;
+
+    // Validate the action & value
     if (!action) {
+      log.error(LOG_PREFIX, `${msg} failed: no 'action' provided`, command);
       return Promise.reject(new Error(`No 'action' provided.`));
     }
 
-    log.verbose(LOG_PREFIX, `executeCommand('${action}')`, value);
+    // Ensure we're connected
+    if (_self.state.connected !== true) {
+      log.error(LOG_PREFIX, `${msg} failed: not connected.`);
+      return Promise.reject(new Error('Not Connected'));
+    }
+
+    log.verbose(LOG_PREFIX, msg, value);
 
     // Run the commands
+    if (action === 'powerOff') {
+      return _powerOff();
+    }
     if (action === 'showToast') {
       return _showToast(value);
     }
@@ -288,6 +228,7 @@ function LGTV(ipAddress, credentials) {
       return _sendMediaCommand(value);
     }
 
+    log.error(LOG_PREFIX, `${msg} failed: unknown 'action'`, command);
     return Promise.reject(new Error(`Unknown command: '${action}'`));
   };
 
@@ -327,9 +268,6 @@ function LGTV(ipAddress, credentials) {
    */
   function _onError(err) {
     const msg = `Error: ${err.name}`;
-    // console.log('1', err.name);
-    // console.log('2', err.message);
-    // console.log('3', typeof err);
     log.error(LOG_PREFIX, msg, err);
   }
 
@@ -340,7 +278,6 @@ function LGTV(ipAddress, credentials) {
     log.log(LOG_PREFIX, 'Please authorize on TV');
     _setState('connected', false);
     _setState('ready', false);
-    // _connecting = false;
   }
 
   /**
@@ -359,17 +296,12 @@ function LGTV(ipAddress, credentials) {
           _setState('connected', false);
           _setState('ready', false);
         });
-        // .then(() => {
-        //   _connecting = false;
-        // });
   }
 
   /**
    * Called when trying to establish a connection.
    */
   function _onConnecting() {
-    // _connecting = true;
-    // log.debug(LOG_PREFIX, 'Connecting to TV...');
     _setState('connected', false);
     _setState('ready', false);
   }
@@ -382,7 +314,6 @@ function LGTV(ipAddress, credentials) {
     _setState('connected', false);
     _setState('ready', false);
     _pointerInputSocket = null;
-    // _connecting = false;
   }
 
 
@@ -468,7 +399,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription TV Power Status failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- powerState`, resp);
       _setState('powerState', resp);
     });
 
@@ -478,7 +408,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription foregroundAppInfo failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- foregroundAppInfo`, resp);
       _setState('currentAppId', resp.appId);
     });
 
@@ -488,7 +417,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription volumeStatus failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- volStatus`, resp);
       _setState('volume', resp.volume);
       _setState('muted', resp.mute);
     });
@@ -499,7 +427,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription soundOutput failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- soundOutput`, resp);
       _setState('soundOutput', resp.soundOutput);
     });
 
@@ -509,7 +436,6 @@ function LGTV(ipAddress, credentials) {
         log.error(LOG_PREFIX, 'Subscription currentChannel failed', obj);
         return;
       }
-      log.verbose(LOG_PREFIX, `-SUB- channelNumber`, resp);
       _setState('currentChannel', resp.channelNumber);
     });
   }
@@ -559,6 +485,9 @@ function LGTV(ipAddress, credentials) {
     if (_self.state[apiName] === value) {
       return;
     }
+    if (!diff(_self.state[apiName], value)) {
+      return;
+    }
     log.verbose(LOG_PREFIX, msg, value);
     _self.state[apiName] = value;
     _self.emit(apiName, value);
@@ -571,7 +500,7 @@ function LGTV(ipAddress, credentials) {
    * @param {Function} callback
    */
   function _saveKey(key, callback) {
-    log.log(LOG_PREFIX, 'saveKey()', key);
+    log.debug(LOG_PREFIX, 'saveKey()', key);
     if (callback) {
       callback();
     }
@@ -581,6 +510,15 @@ function LGTV(ipAddress, credentials) {
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    * Command handlers
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** */
+
+  /**
+   * Turns the TV off
+   *
+   * @return {Promise}
+   */
+  function _powerOff() {
+    return _sendRequest(LG_URLS.power.off);
+  }
 
   /**
    * Shows a toast
@@ -626,7 +564,6 @@ function LGTV(ipAddress, credentials) {
     if (!inputId) {
       return Promise.reject(new Error('No inputId provided'));
     }
-    // TODO: Validate the input
     return _sendRequest(LG_URLS.switchInput, {inputId});
   }
 
@@ -772,8 +709,6 @@ function LGTV(ipAddress, credentials) {
     }
     return true;
   }
-
-  _init();
 }
 
 util.inherits(LGTV, EventEmitter);

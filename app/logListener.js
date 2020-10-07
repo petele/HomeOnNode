@@ -2,25 +2,29 @@
 
 'use strict';
 
+/* node14_ready */
+
 const log = require('./SystemLog2');
 const WSClient = require('./WSClient');
 const commander = require('commander');
 
-let _host = 'rpi-server:8881';
+const DEFAULT_HOST = `rpi-ottawa:8881`;
+
+let _host;
 
 commander
     .version('0.2.0')
     .option('-l, --level <value>', 'Max log level to show', 100)
     .option('-r, --retry', 'Retry the connection', false)
-    .arguments('<host:port>')
+    .arguments('[host:port]')
     .action((host) => {
-      _host = host;
+      _host = host || DEFAULT_HOST;
     })
     .parse(process.argv);
 commander.level = parseInt(commander.level);
 
-const logOpts = {consoleLogLevel: commander.level};
-log.setOptions(logOpts);
+// const logOpts = {consoleLogLevel: commander.level};
+// log.setOptions(logOpts);
 
 /**
  * Prints a log message.

@@ -1,7 +1,10 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
 const log = require('./SystemLog2');
+const FBHelper = require('./FBHelper');
 const schedule = require('node-schedule');
 const EventEmitter = require('events').EventEmitter;
 
@@ -14,33 +17,26 @@ const LOG_PREFIX = 'ALARM_CLOCK';
  * @fires AlarmClock#alarm
  * @fires AlarmClock#alarm_changed
  * @fires AlarmClock#alarm_removed
- * @param {Object} fbRef Firebase reference to alarms config
 */
-function AlarmClock(fbRef) {
+function AlarmClock() {
   const _self = this;
-  const _fbRef = fbRef;
   const _alarms = {};
+  let _fbRef;
 
-  const FB_REF_KEY = 'alarmClock';
+  const FB_PATH = `config/HomeOnNode/alarmClock`;
   const RE_PARSE_TIME = /(\d{1,2}):(\d{2})\s?([a-z]*)/i;
 
   /**
    * Init
    */
-  function _init() {
-    const fbRefKey = _fbRef.key();
-    log.init(LOG_PREFIX, 'Starting...', {key: fbRefKey});
-    if (fbRefKey !== FB_REF_KEY) {
-      const details = {
-        actual: fbRefKey,
-        expected: FB_REF_KEY,
-      };
-      log.error(LOG_PREFIX, 'Invalid Firebase reference passed', details);
-      return;
-    }
+  async function _init() {
+    log.init(LOG_PREFIX, 'Starting...');
+
+    const fbRootRef = await FBHelper.getRootRefUnlimited();
+    _fbRef = await fbRootRef.child(FB_PATH);
 
     _fbRef.on('child_added', (snapshot) => {
-      const key = snapshot.key();
+      const key = snapshot.key;
       const details = snapshot.val();
       log.debug(LOG_PREFIX, `addAlarm('${key}', {...})`, details);
       _alarms[key] = {
@@ -51,7 +47,7 @@ function AlarmClock(fbRef) {
     });
 
     _fbRef.on('child_removed', (snapshot) => {
-      const key = snapshot.key();
+      const key = snapshot.key;
       log.debug(LOG_PREFIX, `removeAlarm('${key}')`);
       _cancelJob(key);
       delete _alarms[key];
@@ -59,7 +55,7 @@ function AlarmClock(fbRef) {
     });
 
     _fbRef.on('child_changed', (snapshot) => {
-      const key = snapshot.key();
+      const key = snapshot.key;
       const details = snapshot.val();
       log.debug(LOG_PREFIX, `updateAlarm('${key}', {...})`, details);
       _alarms[key].details = details;

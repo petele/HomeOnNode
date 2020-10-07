@@ -2,24 +2,19 @@
 
 /** @module */
 
-const os = require('os');
 const fs = require('fs');
 const util = require('util');
+const path = require('path');
 const zlib = require('zlib');
 const chalk = require('chalk');
 const moment = require('moment');
 const gitHead = require('./version');
+const fsProm = require('fs/promises');
+const FBHelper = require('./FBHelper');
 const WSServer = require('./WSServer');
 const stripAnsi = require('strip-ansi');
+const honHelpers = require('./HoNHelpers');
 
-const HOSTNAME = os.hostname();
-const DEFAULT_OPTIONS = {
-  fileLogLevel: 50,
-  fileFilename: './logs/system.log',
-  consoleLogLevel: 90,
-  firebaseLogLevel: -1,
-  firebasePath: 'logs/generic',
-};
 const LOG_LEVELS = {
   /* eslint-disable no-multi-spaces */
   START: {level: 0, color: chalk.hex('#388e3c')},  // green 700
@@ -35,14 +30,25 @@ const LOG_LEVELS = {
   EXTRA: {level: 70, color: chalk.hex('#546e7a')}, // bluegray 600
   /* eslint-enable */
 };
+const HOSTNAME = honHelpers.getHostname();
 const LOG_PREFIX = 'LOGGER';
 
+const _logOpts = {
+  console: {
+    level: 100,
+  },
+  file: {
+    level: -1,
+    logFile: './logs/system.log',
+  },
+  firebase: {
+    level: -1,
+    fbPath: null,
+  },
+};
 let _appName = null;
 let _fbRef = null;
 const _fbLogCache = [];
-let _fbErrorCount = 0;
-let _fbLastError = 0;
-let _opts = DEFAULT_OPTIONS;
 let _wss;
 
 
@@ -64,58 +70,89 @@ function _startWSS(port) {
 }
 
 /**
- * Sets the system wide app name.
+ * Get the current log options.
  *
- * @function setAppName
- * @static
- * @param {String} appName - The name of the app
+ * @return {Object} Log options.
  */
-function _setAppName(appName) {
-  if (!appName) {
-    throw new Error('`appName` is a required parameter.');
-  }
-  if (_appName) {
-    throw new Error('`appName` is already set.');
-  }
-  _appName = appName;
+function _getOpts() {
+  return _logOpts;
 }
 
 /**
- * Sets or updates the options for the logger
+ * Set the Console log options.
  *
- * @function setOptions
- * @static
- * @param {Object} options The options to set
+ * @param {Number} logLevel Log level.
+ * @return {Boolean} true if completed successfully.
  */
-function _setOptions(options) {
-  if (!options) {
-    return;
+async function _setConsoleLogOpts(logLevel) {
+  logLevel = honHelpers.isValidInt(logLevel, -1, 100);
+  if (logLevel === null) {
+    _error(LOG_PREFIX, 'Invalid logLevel, must be -1 <= X <= 100', logLevel);
+    return false;
   }
-  const newOpts = {};
-  const keys = Object.keys(DEFAULT_OPTIONS);
-  keys.forEach(function(key) {
-    newOpts[key] = options[key] || DEFAULT_OPTIONS[key];
-  });
-  _opts = newOpts;
-  _log(LOG_PREFIX, `setOptions(...)`, options);
+  _logOpts.console.level = logLevel;
+  return true;
 }
 
 /**
- * Sets Firebase reference
+ * Set the File log options.
  *
- * @function setFirebaseRef
- * @static
- * @param {Object} fbRef A Firebase reference
+ * @param {Number} logLevel Log level.
+ * @param {String} logFile File to log details to.
+ * @return {Boolean} true if completed successfully.
  */
-function _setFirebaseRef(fbRef) {
-  if (fbRef) {
-    let logObj = _fbLogCache.shift();
-    while (logObj) {
-      fbRef.child(_opts.firebasePath).push(logObj);
-      logObj = _fbLogCache.shift();
-    }
+async function _setFileLogOpts(logLevel, logFile) {
+  logLevel = honHelpers.isValidInt(logLevel, -1, 100);
+  if (logLevel === null) {
+    _error(LOG_PREFIX, 'Invalid logLevel, must be -1 <= X <= 100', logLevel);
+    return false;
+  }
+  if (!logFile) {
+    _error(LOG_PREFIX, 'Must provide a valid log file name.');
+    return false;
+  }
+  try {
+    const parsedFileName = path.parse(logFile);
+    await fsProm.mkdir(parsedFileName.dir, {recursive: true});
+  } catch (ex) {
+    _error(LOG_PREFIX, `Invalid log file: ${logFile}`, ex);
+    return false;
+  }
+  _logOpts.file.level = logLevel;
+  _logOpts.file.logFile = logFile;
+  return true;
+}
+
+/**
+ * Set the Firebase log options.
+ *
+ * @param {Number} logLevel Log level.
+ * @param {String} path Path to log results at.
+ * @return {Boolean} true if completed successfully.
+ */
+async function _setFirebaseLogOpts(logLevel, path) {
+  logLevel = honHelpers.isValidInt(logLevel, -1, 100);
+  if (logLevel === null) {
+    _error(LOG_PREFIX, 'Invalid logLevel, must be -1 <= X <= 100', logLevel);
+    return false;
+  }
+  if (!path.startsWith('logs/')) {
+    _error(LOG_PREFIX, `Firebase log path must start with 'logs/'`, path);
+    return false;
+  }
+  _logOpts.firebase.level = logLevel;
+  _logOpts.firebase.fbPath = path;
+
+  const fbRootRef = await FBHelper.getRootRefUnlimited();
+  const fbRef = await fbRootRef.child(path);
+
+  let logObj = _fbLogCache.shift();
+  while (logObj) {
+    fbRef.push(logObj);
+    logObj = _fbLogCache.shift();
   }
   _fbRef = fbRef;
+  return true;
 }
 
 /**
@@ -250,14 +287,6 @@ function _generateLog(level, prefix, message, extra) {
       result.extra = extra;
     } else {
       result.extra = _removeCircularRefs(extra);
-      // try {
-      //   result.extra = JSON.parse(JSON.stringify(extra));
-      // } catch (ex) {
-      //   result.extra = {circular: true};
-      //   _exception(LOG_PREFIX, 'generateLog() circular exception', ex);
-      //   // eslint-disable-next-line no-console
-      //   console.log(extra);
-      // }
     }
   }
   return result;
@@ -300,14 +329,14 @@ function _getLogColorByName(levelName) {
  */
 function _handleLog(logObj) {
   const stringifiedLogObj = _stringifyLog(logObj);
-  if (logObj.levelValue <= _opts.consoleLogLevel) {
+  if (logObj.levelValue <= _logOpts.console.level) {
     // eslint-disable-next-line no-console
     console.log(stringifiedLogObj);
   }
-  if (logObj.levelValue <= _opts.fileLogLevel) {
+  if (logObj.levelValue <= _logOpts.file.level) {
     _saveLogToFile(stringifiedLogObj);
   }
-  if (logObj.levelValue <= _opts.firebaseLogLevel) {
+  if (logObj.levelValue <= _logOpts.firebase.level) {
     _saveLogToFirebase(logObj);
   }
   setImmediate(() => {
@@ -355,65 +384,46 @@ function _stringifyLog(logObj) {
  * Saves a log object to Firebase.
  *
  * @param {Object} logObj The log object to save
+ * @return {Promise}
  */
 function _saveLogToFirebase(logObj) {
-  if (_opts.firebaseLogLevel === -1 ||
-      logObj.levelValue > _opts.firebaseLogLevel ||
-      !_opts.firebasePath) {
+  if (_logOpts.firebase.level === -1) {
+    return;
+  }
+  if (logObj.levelValue > _logOpts.firebase.level) {
     return;
   }
   if (!_fbRef) {
     _fbLogCache.push(logObj);
     if (_fbLogCache.length > 500) {
-      _warn(LOG_PREFIX, 'Firebase log cache exceeded max capacity.');
-      _opts.firebaseLogLevel = -1;
+      _fbLogCache.shift();
     }
     return;
   }
-  const now = Date.now();
-  if (_fbErrorCount > 0) {
-    if ((now - _fbLastError) > (10 * 60 * 1000)) {
-      _fbErrorCount = 0;
-    } else if (_fbErrorCount > 5) {
-      _opts.firebaseLogLevel = -1;
-      _warn(LOG_PREFIX, 'Firebase error count exceeded.');
-      return;
-    }
-  }
-  try {
-    _fbRef.child(_opts.firebasePath).push(logObj, function(err) {
-      if (err) {
-        _exception(LOG_PREFIX, 'Unable to log item to Firebase', err);
-        _fbErrorCount++;
-        _fbLastError = now;
-        return;
-      }
-    });
-  } catch (ex) {
-    _exception(LOG_PREFIX, 'Exception trying to log to Firebase', ex);
-    _fbErrorCount++;
-    _fbLastError = now;
-  }
+  return _fbRef.push(logObj)
+      .catch((err) => {
+        const msg = 'Unable to save log item to Firebase';
+        _exception(LOG_PREFIX, msg, err);
+      });
 }
 
 /**
  * Save a log object to the log file.
  *
  * @param {String} stringifiedLogObj The log object to save.
+ * @return {Promise}
  */
 function _saveLogToFile(stringifiedLogObj) {
-  try {
-    const lines = stripAnsi(stringifiedLogObj) + '\n';
-    fs.appendFile(_opts.fileFilename, lines, function(err) {
-      if (err) {
-        _opts.fileLogLevel = -1;
-        _exception(LOG_PREFIX, 'Unable to write to log file.', err);
-      }
-    });
-  } catch (ex) {
-    _opts.fileLogLevel = -1;
-    _exception(LOG_PREFIX, 'Exception while writing to log file.', ex);
+  if (_logOpts.file.level === -1) {
+    return;
   }
+  const lines = stripAnsi(stringifiedLogObj) + '\n';
+  return fsProm.appendFile(_logOpts.file.logFile, lines)
+      .catch((err) => {
+        _logOpts.file.level = -1;
+        const msg = 'Unable to save log item to file';
+        _exception(LOG_PREFIX, msg, err);
+      });
 }
 
 /**
@@ -492,8 +502,11 @@ function _humanizeDuration(seconds) {
  *
  * @function appStart
  * @static
+ *
+ * @param {String} appName Name of the app that's starting.
  */
-function _appStart() {
+function _appStart(appName) {
+  _appName = appName;
   if (!_appName) {
     throw new Error('`appName` has not been set.');
   }
@@ -663,58 +676,54 @@ function _custom(level, prefix, message, extra) {
  *
  * @function cleanFile
  * @static
- * @param {String} [logFile] The file to be cleaned.
+ * @param {String} [file] The file to be cleaned.
  * @return {Promise}
  */
-function _cleanFile(logFile) {
-  return new Promise(function(resolve, reject) {
-    if (!logFile) {
-      logFile = _opts.fileFilename;
+async function _cleanFile(file) {
+  const logFile = file || _logOpts.file.logFile;
+  const msg = `cleanFile('${logFile}')`;
+  _log(LOG_PREFIX, msg);
+  if (!logFile) {
+    _error(LOG_PREFIX, `${msg} failed - no log file specified.`);
+    return false;
+  }
+  let stats;
+  try {
+    stats = await fsProm.stat(logFile);
+  } catch (ex) {
+    if (ex.code === 'ENOENT') {
+      _error(LOG_PREFIX, `${msg} failed - file does not exist.`, ex);
+      return false;
     }
-    const msg = `cleanFile('${logFile}')`;
-    _debug(LOG_PREFIX, msg);
-    fs.stat(logFile, function(err, stats) {
-      if (err) {
-        if (err.code === 'ENOENT') {
-          _warn(LOG_PREFIX, msg + ' - file does not exist.');
-          resolve(false);
-          return;
-        }
-        _exception(LOG_PREFIX, msg + ' - failed to open file.', err);
-        reject(err);
-        return;
-      }
-      if (stats) {
-        let exceedsAge = false;
-        let exceedsSize = false;
-        if (stats.size > 250000) {
-          exceedsSize = true;
-        }
-        const oneWeek = moment().subtract(7, 'days');
-        exceedsAge = moment(stats.birthtime).isBefore(oneWeek);
-        if (exceedsAge || exceedsSize) {
-          try {
-            _debug(LOG_PREFIX, msg + ' - compressing and removing file...');
-            const gzip = zlib.createGzip();
-            const inp = fs.createReadStream(logFile);
-            const out = fs.createWriteStream(logFile + '.gz');
-            inp.pipe(gzip).pipe(out);
-            fs.unlinkSync(logFile);
-            resolve(true);
-            return;
-          } catch (ex) {
-            _exception(LOG_PREFIX, msg + ' - failed.', ex);
-            reject(ex);
-            return;
-          }
-        } else {
-          _debug(LOG_PREFIX, msg + ' - no action required.');
-          resolve(false);
-          return;
-        }
-      }
-    });
-  });
+    _error(LOG_PREFIX, `${msg} failed - unable to read file.`, ex);
+    return false;
+  }
+  if (!stats) {
+    _error(LOG_PREFIX, `${msg} failed - no stats.`);
+    return false;
+  }
+  const exceedsSize = stats.size > 250000;
+  const oneWeek = moment().subtract(7, 'days');
+  const exceedsAge = moment(stats.birthtime).isBefore(oneWeek);
+
+  if (!exceedsAge && !exceedsSize) {
+    _verbose(LOG_PREFIX, `${msg} skipped.`);
+    return false;
+  }
+
+  try {
+    _debug(LOG_PREFIX, `${msg} - compressing and removing file...`);
+    const gzip = zlib.createGzip();
+    const inp = fs.createReadStream(logFile);
+    const out = fs.createWriteStream(logFile + '.gz');
+    inp.pipe(gzip).pipe(out);
+    await fsProm.unlink(logFile);
+    _debug(LOG_PREFIX, `${msg} - completed.`);
+    return true;
+  } catch (ex) {
+    _exception(LOG_PREFIX, `${msg} failed - unable to clean log file.`, ex);
+    return false;
+  }
 }
 
 /**
@@ -722,47 +731,62 @@ function _cleanFile(logFile) {
  *
  * @function cleanLogs
  * @static
- * @param {String} path The Firebase path to clean.
+ * @param {String} [path] Path of logs.
  * @param {Number} [maxAgeDays] Remove any log item older than x days.
  * @return {Promise}
  */
-function _cleanLogs(path, maxAgeDays) {
-  maxAgeDays = maxAgeDays || 365;
-  const msg = `cleanLogs('${path}', ${maxAgeDays})`;
-  _debug(LOG_PREFIX, msg);
-  if (!_fbRef) {
-    _error(LOG_PREFIX, 'Cannot clean logs, Firebase reference not set.');
-    return Promise.reject(new Error('Firebase reference not set.'));
+async function _cleanLogs(path, maxAgeDays) {
+  const fbPath = path || _logOpts.firebase.fbPath;
+  if (!fbPath || !fbPath.startsWith('logs/')) {
+    _error(LOG_PREFIX, `cleanLogs() failed - invalid path specified.`, fbPath);
+    return false;
   }
-  if (path.indexOf('logs/') !== 0) {
-    _error(LOG_PREFIX, 'Cannot clean logs, invalid path provided.');
-    return Promise.reject(new Error('Path must start with `logs`'));
+  let maxAge = honHelpers.isValidInt(maxAgeDays, 0, Number.MAX_SAFE_INTEGER);
+  if (maxAge === null) {
+    maxAge = 365;
   }
-  const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAgeDays);
+
+  const msg = `cleanLogs('${fbPath}', ${maxAge})`;
+  _log(LOG_PREFIX, msg);
+
+  let fbRootRef;
+  try {
+    fbRootRef = await FBHelper.getRootRef(30 * 1000);
+  } catch (ex) {
+    _exception(LOG_PREFIX `${msg} failed - Unable to get Firebase root`, ex);
+    return false;
+  }
+
+  const endAt = Date.now() - (1000 * 60 * 60 * 24 * maxAge);
   const niceDate = _formatTime(endAt);
-  _debug(LOG_PREFIX, `Removing items older than ${niceDate} from ${path}`);
-  return _fbRef.child(path).orderByChild('date').endAt(endAt).once('value')
-      .then((snapshot) => {
-        const numChildren = snapshot.numChildren();
-        if (numChildren >= 50000) {
-          _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
-        }
-        _debug(LOG_PREFIX, `${msg} - found ${numChildren} items`);
-        const promises = [];
-        snapshot.forEach((item) => {
-          promises.push(item.ref().remove());
-        });
-        return Promise.all(promises);
-      })
-      .then((values) => {
-        return {path: path, count: values.length};
-      });
+  _debug(LOG_PREFIX, `Removing items older than ${niceDate} from ${fbPath}`);
+  const fbRef = await fbRootRef.child(fbPath);
+
+  const itemsSnap = await fbRef.orderByChild('date').endAt(endAt).once('value');
+  const numChildren = itemsSnap.numChildren();
+  if (numChildren >= 50000) {
+    _warn(LOG_PREFIX, `${msg} - may fail, too many items!`);
+  }
+  _verbose(LOG_PREFIX, `${msg} - found ${numChildren} items`);
+  const promises = [];
+  itemsSnap.forEach((item) => {
+    promises.push(item.ref.remove());
+  });
+  try {
+    await Promise.all(promises);
+  } catch (ex) {
+    _exception(LOG_PREFIX, `${msg} - failed to remove some items.`);
+  }
+  _debug(LOG_PREFIX, `${msg} - completed, removed ${numChildren} items.`);
+  return {path: path, count: numChildren};
 }
 
-exports.setAppName = _setAppName;
-exports.setOptions = _setOptions;
 exports.startWSS = _startWSS;
-exports.setFirebaseRef = _setFirebaseRef;
+
+exports.getOpts = _getOpts;
+exports.setConsoleLogOpts = _setConsoleLogOpts;
+exports.setFileLogOpts = _setFileLogOpts;
+exports.setFirebaseLogOpts = _setFirebaseLogOpts;
 
 exports.formatTime = _formatTime;
 exports.humanizeDuration = _humanizeDuration;

@@ -1,6 +1,6 @@
 'use strict';
 
-var noble = require('../app/node_modules/noble');
+var noble = require('../app/node_modules/@abandonware/noble');
 var ansi = require('ansi'), cursor = ansi(process.stdout);
 
 var devices = [];

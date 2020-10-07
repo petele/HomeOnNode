@@ -1,11 +1,15 @@
 'use strict';
 
+/* node14_ready */
+
 const os = require('os');
 const util = require('util');
+const fs = require('fs/promises');
 const log = require('./SystemLog2');
 const version = require('./version');
-const Firebase = require('firebase');
 const diff = require('deep-diff').diff;
+const FBHelper = require('./FBHelper');
+const honHelpers = require('./HoNHelpers');
 const exec = require('child_process').exec;
 const EventEmitter = require('events').EventEmitter;
 
@@ -17,33 +21,28 @@ const EventEmitter = require('events').EventEmitter;
  * @fires DeviceMonitor#restart_request
  * @fires DeviceMonitor#shutdown_request
  * @fires DeviceMonitor#connection_timedout
- * @param {Object} fb Firebase Object Reference.
  * @param {String} deviceName Name of the device.
+ * @param {Boolean} isMonitor
 */
-function DeviceMonitor(fb, deviceName) {
+function DeviceMonitor(deviceName, isMonitor) {
   const RESTART_TIMEOUT = 2500;
-  const MAX_DISCONNECT = 12 * 60 * 60 * 1000;
-  const _fb = fb;
   const _deviceName = deviceName || 'DEVICE_MONITOR';
   const _self = this;
+  let _fbRef;
   let _heartbeatInterval;
   let _ipAddressInterval;
-  let _lastWrite = Date.now();
-  let _hasExceededTimeout = false;
-  let _firstConnect = true;
-  let _firstAuth = true;
+  let _offlineInterval;
   let _ipAddresses = [];
+  let _disconnectedAt = null;
 
   /**
    * Init the DeviceMonitor
   */
-  function _init() {
+  async function _init() {
     log.init('DeviceMonitor', 'Starting...');
-    if (!_fb) {
-      log.error(_deviceName, 'Firebase reference not provided.');
-      _self.emit('error', 'no_firebase_ref');
-      return;
-    }
+    const fbPath = isMonitor === true ? 'monitor' : 'devices';
+    const fbRoot = await FBHelper.getRootRefUnlimited();
+    _fbRef = await fbRoot.child(fbPath);
     if (!deviceName) {
       log.error(_deviceName, 'deviceName not provided.');
       _self.emit('error', 'no_device_name');
@@ -53,6 +52,8 @@ function DeviceMonitor(fb, deviceName) {
     const now_ = log.formatTime(now);
     const lastIndexOf = process.argv[1].lastIndexOf('/') + 1;
     const appName = process.argv[1].substring(lastIndexOf).replace('.js', '');
+    const piModel = await _getPiModelInfo();
+    _ipAddresses = _getIPAddress();
     const deviceData = {
       deviceName: _deviceName,
       appName: appName,
@@ -69,8 +70,9 @@ function DeviceMonitor(fb, deviceName) {
         platform: os.platform(),
         release: os.release(),
         type: os.type(),
-        hostname: _getHostname(),
-        ipAddress: _getIPAddress(),
+        hostname: honHelpers.getHostname(),
+        ipAddress: _ipAddresses,
+        cpuModel: piModel,
       },
       restart: null,
       shutdown: null,
@@ -79,17 +81,18 @@ function DeviceMonitor(fb, deviceName) {
       uptime: 0,
       uptime_: `starting...`,
     };
-    _ipAddresses = deviceData.host.ipAddress;
+    const cpuTemp = await _getCPUTemperature();
+    if (cpuTemp) {
+      deviceData.host.cpuTemp = cpuTemp;
+    }
     log.log(_deviceName, 'Device Settings', deviceData);
-    _lastWrite = now;
-    _fb.child(_deviceName).set(deviceData);
-    _fb.root().child(`.info/connected`).on('value', _connectionChanged);
-    _fb.child(`${_deviceName}/restart`).on('value', _restartRequest);
-    _fb.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
-    _fb.root().onAuth(_authChanged);
-    _getPiModelInfo();
+    await _fbRef.child(_deviceName).set(deviceData);
+    _fbRef.root.child(`.info/connected`).on('value', _connectionChanged);
+    _fbRef.child(`${_deviceName}/restart`).on('value', _restartRequest);
+    _fbRef.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
     _heartbeatInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
     _ipAddressInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
+    _offlineInterval = setInterval(_tickOfflineCheck, 30 * 1000);
     _initUncaught();
     _initUnRejected();
     _initWarning();
@@ -102,6 +105,9 @@ function DeviceMonitor(fb, deviceName) {
     process.on('uncaughtException', (err) => {
       log.fatal(_deviceName, 'A fatal exception occured.', err);
       setTimeout(() => {
+        console.log('--FORCED EXIT--');
+        console.log(err);
+        console.log('--FORCED EXIT--');
         process.exit(1);
       }, RESTART_TIMEOUT);
     });
@@ -112,6 +118,7 @@ function DeviceMonitor(fb, deviceName) {
    */
   function _initUnRejected() {
     process.on('unhandledRejection', (reason, p) => {
+      console.log(reason);
       log.warn(_deviceName, 'An unhandled promise rejection occured.', reason);
     });
   }
@@ -133,54 +140,49 @@ function DeviceMonitor(fb, deviceName) {
     if (diff(ipAddresses, _ipAddresses)) {
       _ipAddresses = ipAddresses;
       log.verbose(_deviceName, `IP addresses changed`, _ipAddresses);
-      fb.child(`${_deviceName}/host/ipAddress`).set(_ipAddresses);
+      _fbRef.child(`${_deviceName}/host/ipAddress`).set(_ipAddresses)
+          .catch((err) => {
+            log.error(_deviceName, 'Unable to store IP address.', err);
+          });
     }
   }
 
   /**
-   *
+   * Get the RaspberryPi model info.
    */
-  function _getPiModelInfo() {
-    _readFile('/proc/device-tree/model')
-        .then((contents) => {
-          if (contents) {
-            log.log(_deviceName, 'CPU Model', contents);
-            _fb.child(`${_deviceName}/host/cpuModel`).set(contents);
-          }
-        })
-        .catch((err) => {});
+  async function _getPiModelInfo() {
+    try {
+      const fileName = '/proc/device-tree/model';
+      const model = await fs.readFile(fileName, {encoding: 'utf8'});
+      return model.trim();
+    } catch (ex) {
+      return 'N/A';
+    }
   }
 
   /**
-   * Reads a file from the local file system.
-   *
-   * @param {String} filePath
-   * @return {Promise}
+   * Get the CPU temperature on a Raspberry Pi by reading
+   * /sys/class/thermal/thermal_zone0/temp
    */
-  function _readFile(filePath) {
-    return new Promise((resolve, reject) => {
-      exec(`cat ${filePath}`, (err, stdOut, stdErr) => {
-        if (err) {
-          log.error(_deviceName, `readFile failed for ${filePath}`, err);
-          reject(err);
-          return;
-        }
-        if (stdErr) {
-          const msg = `readFile failed for ${filePath} (stdErr)`;
-          log.error(_deviceName, msg, stdErr);
-          reject(new Error('std_err'));
-          return;
-        }
-        resolve(stdOut);
-      });
-    });
+  async function _getCPUTemperature() {
+    try {
+      const fileName = '/sys/class/thermal/thermal_zone0/temp';
+      const val = await fs.readFile(fileName, {encoding: 'utf8'});
+      const temp = parseInt(val.trim(), 10) / 1000;
+      return temp;
+    } catch (ex) {
+      return null;
+    }
   }
-
 
   /**
    * Heartbeat Tick
    */
   function _tickHeartbeat() {
+    if (!_fbRef) {
+      log.error(_deviceName, 'No Firebase ref...');
+      return;
+    }
     const now = Date.now();
     const now_ = log.formatTime(now);
     const uptime = process.uptime();
@@ -194,25 +196,31 @@ function DeviceMonitor(fb, deviceName) {
       uptime: uptime,
       uptime_: uptime_,
     };
-    _fb.child(`${_deviceName}`).update(details, (err) => {
-      if (err) {
-        log.error(_deviceName, 'Error updating heartbeat info', err);
-        return;
-      }
-      _hasExceededTimeout = false;
-      _lastWrite = Date.now();
-    });
-    const timeSinceLastWrite = now - _lastWrite;
-    if (timeSinceLastWrite > MAX_DISCONNECT && _hasExceededTimeout === false) {
-      _hasExceededTimeout = true;
-      const info = {
-        now: now,
-        msSinceLastWrite: timeSinceLastWrite,
-        maxDisconnect: MAX_DISCONNECT,
-      };
-      log.warn(_deviceName, 'Time since last successful write exceeded.', info);
-      _self.emit('connection_timedout');
+    _fbRef.child(_deviceName).update(details)
+        .then(() => {
+          return _getCPUTemperature();
+        })
+        .then((cpuTemp) => {
+          if (cpuTemp) {
+            return _fbRef.child(`${deviceName}/host/cpuTemp`).set(cpuTemp);
+          }
+        })
+        .catch((err) => {
+          log.error(_deviceName, 'Error updating heartbeat info', err);
+        });
+  }
+
+  /**
+   * Check when the last connection was.
+   */
+  function _tickOfflineCheck() {
+    if (_disconnectedAt === null) {
+      return;
     }
+    const now = Date.now();
+    const offlineFor = now - _disconnectedAt;
+    log.verbose(_deviceName, `Offline for ${offlineFor / 1000}s`);
+    _self.emit('offline', offlineFor);
   }
 
   /**
@@ -223,7 +231,7 @@ function DeviceMonitor(fb, deviceName) {
   function _restartRequest(snapshot) {
     if (snapshot.val() === true) {
       log.verbose(_deviceName, 'Restart requested via FB.');
-      snapshot.ref().remove();
+      snapshot.ref.remove();
       _self.emit('restart_request', RESTART_TIMEOUT);
     }
   }
@@ -236,7 +244,7 @@ function DeviceMonitor(fb, deviceName) {
   function _shutdownRequest(snapshot) {
     if (snapshot.val() === true) {
       log.verbose(_deviceName, 'Shutdown requested via FB.');
-      snapshot.ref().remove();
+      snapshot.ref.remove();
       _self.emit('shutdown_request');
     }
   }
@@ -247,66 +255,35 @@ function DeviceMonitor(fb, deviceName) {
    * @param {Object} snapshot Firebase snapshot.
    */
   function _connectionChanged(snapshot) {
-    if (_firstConnect) {
-      _firstConnect = false;
-      return;
-    }
     const isConnected = snapshot.val();
     if (isConnected === false) {
       log.warn(_deviceName, 'Disconnected from Firebase.');
+      _disconnectedAt = Date.now();
       return;
     }
     log.log(_deviceName, 'Connected to Firebase.');
+    _disconnectedAt = null;
     const now = Date.now();
+    const uptime = process.uptime();
+    const uptime_ = log.humanizeDuration(uptime);
     const details = {
       heartbeat: now,
       heartbeat_: log.formatTime(now),
       online: true,
       shutdownAt: null,
       exitDetails: null,
+      uptime: uptime,
+      uptime_: uptime_,
     };
-    _fb.child(`${_deviceName}`)
-        .update(details);
-    _fb.child(`${_deviceName}/online`)
+    _fbRef.child(`${_deviceName}`).update(details);
+    _fbRef.child(`${_deviceName}/online`)
         .onDisconnect()
         .set(false);
-    _fb.child(`${_deviceName}/shutdownAt`)
+    _fbRef.child(`${_deviceName}/shutdownAt`)
         .onDisconnect()
-        .set(Firebase.ServerValue.TIMESTAMP);
+        .set(FBHelper.getServerTimeStamp());
   }
 
-  /**
-   * Handles a Firebase authentication state change.
-   *
-   * @param {Object} authData Firebase authentication data.
-   */
-  function _authChanged(authData) {
-    if (_firstAuth) {
-      _firstAuth = false;
-      return;
-    }
-    if (authData) {
-      log.log(_deviceName, 'Firebase client authenticated.', authData);
-      return;
-    }
-    log.warn(_deviceName, 'Firebase client unauthenticated.');
-  }
-
-  /**
-   * Get's the hostname from the device.
-   *
-   * @return {String} The hostname of the device.
-   */
-  function _getHostname() {
-    try {
-      const hostname = os.hostname();
-      log.debug(_deviceName, `Hostname: ${hostname}`);
-      return hostname;
-    } catch (ex) {
-      log.exception(_deviceName, `Unable to retreive hostname.`, ex);
-      return 'unknown';
-    }
-  }
 
   /**
    * Get's the primary IP address from the device.
@@ -351,13 +328,17 @@ function DeviceMonitor(fb, deviceName) {
       clearInterval(_ipAddressInterval);
       _ipAddressInterval = null;
     }
+    if (_offlineInterval) {
+      clearInterval(_offlineInterval);
+      _offlineInterval = null;
+    }
     const now = Date.now();
     const details = {
       online: false,
       shutdownAt: now,
       exitDetails: exitDetails,
     };
-    return _fb.child(`${_deviceName}`).update(details);
+    return _fbRef.child(`${_deviceName}`).update(details);
   }
 
   /**
@@ -367,16 +348,19 @@ function DeviceMonitor(fb, deviceName) {
    * @param {String} reason The reason the device is being shutdown.
    * @param {Number} exitCode The exit code to exit with.
    */
-  this.shutdown = function(sender, reason, exitCode) {
+  this.shutdown = async function(sender, reason, exitCode) {
     const exitDetails = {
       shutdown: true,
       sender: sender,
       reason: reason,
       exitCode: exitCode,
     };
-    _beforeExit(exitDetails).then(() => {
-      process.exit(exitCode);
-    });
+    const withTimeout = [
+      _beforeExit(exitDetails),
+      honHelpers.sleep(30 * 1000),
+    ];
+    await Promise.race(withTimeout);
+    process.exit(exitCode);
   };
 
   /**
@@ -386,23 +370,23 @@ function DeviceMonitor(fb, deviceName) {
    * @param {String} reason The reason the device is being shutdown.
    * @param {Boolean} immediate if the reboot should happen immediately.
    */
-  this.restart = function(sender, reason, immediate) {
+  this.restart = async function(sender, reason, immediate) {
     const exitDetails = {
       restart: true,
       sender: sender,
       reason: reason,
       immediate: immediate,
     };
-    _beforeExit(exitDetails).then(() => {
-      let timeout = 0;
-      if (immediate !== true) {
-        timeout = RESTART_TIMEOUT;
-        log.debug(_deviceName, `Will reboot in ${timeout} ms...`);
-      }
-      setTimeout(() => {
-        exec('sudo reboot', function(error, stdout, stderr) {});
-      }, timeout);
-    });
+    const withTimeout = [
+      _beforeExit(exitDetails),
+      honHelpers.sleep(30 * 1000),
+    ];
+    await Promise.race(withTimeout);
+    const timeout = immediate ? 1 : RESTART_TIMEOUT;
+    log.debug(_deviceName, `Will reboot in ${timeout} ms...`);
+    setTimeout(() => {
+      exec('sudo reboot', function(error, stdout, stderr) {});
+    }, timeout);
   };
 
   _init();

@@ -1,7 +1,9 @@
 'use strict';
 
+/* node14_ready */
+
 const util = require('util');
-const request = require('request');
+const fetch = require('node-fetch');
 const log = require('./SystemLog2');
 const diff = require('deep-diff').diff;
 const WSClient = require('./WSClient');
@@ -28,7 +30,6 @@ function HarmonyWS(ipAddress) {
   const _self = this;
   const HUB_PORT = 8088;
   const CONFIG_REFRESH_INTERVAL = 18 * 60 * 1000;
-  // const PING_INTERVAL = 29 * 1000;
   const COMMAND_PREFIX = 'vnd.logitech.harmony/';
   const COMMAND_STRINGS = {
     BUTTON_PRESS: 'control.button?pressType',
@@ -46,6 +47,11 @@ function HarmonyWS(ipAddress) {
     SYNC: 'setup.sync',
     PING: 'vnd.logitech.connect/vnd.logitech.ping',
   };
+  const GET_HUB_PROV_INFO = {
+    id: 1,
+    cmd: 'setup.account?getProvisionInfo',
+    params: {},
+  };
   const _ipAddress = ipAddress;
   let _wsClient;
   let _pingInterval;
@@ -55,21 +61,81 @@ function HarmonyWS(ipAddress) {
   let _activitiesById = {};
   let _activityIdByName = {};
 
+  let _connectionStarted = false;
 
-  /**
-   * Init
-   */
-  function _init() {
-    log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
-    _getHubInfo().then((hubInfo) => {
+
+  this.connect = async function(retry) {
+    if (_wsClient) {
+      return true;
+    }
+    if (_connectionStarted) {
+      log.warn(LOG_PREFIX, 'Connection attempt already in progress...');
+      return false;
+    }
+    _connectionStarted = true;
+    log.init(LOG_PREFIX, 'Connecting...');
+
+    try {
+      const hubInfo = await _getHubInfo();
       log.verbose(LOG_PREFIX, 'Hub info received', hubInfo);
       _hubId = hubInfo.activeRemoteId;
       _self.emit('hub_info', hubInfo);
-      _connect();
-    }).catch((err) => {
-      log.exception(LOG_PREFIX, 'Init failed', err);
+    } catch (ex) {
+      if (retry) {
+        _retryInitialConnection(retry);
+      } else {
+        _connectionStarted = false;
+      }
+      return false;
+    }
+
+    return new Promise((resolve, reject) => {
+      const wsQuery = `domain=svcs.myharmony.com&hubId=${_hubId}`;
+      const wsURL = `ws://${_ipAddress}:${HUB_PORT}/?${wsQuery}`;
+      _wsClient = new WSClient(wsURL, true, 'harmony');
+      _wsClient.on('message', (msg) => {
+        _wsMessageReceived(msg);
+      });
+      _wsClient.on('connect', () => {
+        log.debug(LOG_PREFIX, `Connected.`);
+        _getConfig();
+        _getActivity();
+        _self.emit('ready');
+        resolve(true);
+        setInterval(_getConfig, CONFIG_REFRESH_INTERVAL);
+      });
     });
+  };
+
+  // /**
+  //  * Init
+  //  */
+  // async function _init() {
+  //   log.init(LOG_PREFIX, 'Starting...', {ipAddress: _ipAddress});
+  //   try {
+  //     const hubInfo = await _getHubInfo();
+  //     log.verbose(LOG_PREFIX, 'Hub info received', hubInfo);
+  //     _hubId = hubInfo.activeRemoteId;
+  //     _self.emit('hub_info', hubInfo);
+  //     _connect();
+  //   } catch (ex) {
+  //     log.exception(LOG_PREFIX, 'Init failed', ex);
+  //   }
+  // }
+
+
+  /**
+   * Retry the initial connection if it didn't succeed.
+   *
+   * @param {Boolean} [retry]
+   */
+  function _retryInitialConnection(retry) {
+    setTimeout(() => {
+      _connectionStarted = false;
+      _self.connect(retry);
+    }, 90 * 1000);
   }
+
 
   /**
    * Start the activity by ID
@@ -173,76 +239,32 @@ function HarmonyWS(ipAddress) {
    *
    * @return {Promise} hubInfo
    */
-  function _getHubInfo() {
-    return new Promise((resolve, reject) => {
-      const requestOptions = {
-        uri: `http://${_ipAddress}:${HUB_PORT}`,
-        method: 'POST',
-        json: true,
-        agent: false,
-        headers: {
-          'Origin': 'http://sl.dhg.myharmony.com',
-        },
-        body: {
-          id: 1,
-          cmd: 'setup.account?getProvisionInfo',
-          params: {},
-        },
-      };
-      request(requestOptions, (error, response, respBody) => {
-        if (error) {
-          log.error(LOG_PREFIX, `_getHubInfo() error`, error);
-          reject(error);
-          return;
-        }
-        if (!respBody || respBody.code !== '200' || !respBody.code) {
-          log.error(LOG_PREFIX, `_getHubInfo() response error`, respBody);
-          if (response.headers) {
-            const headers = response.headers;
-            log.error(LOG_PREFIX, `_getHubInfo() response headers`, headers);
-          }
-          reject(new Error('get_hub_info'));
-          return;
-        }
-        resolve(respBody.data);
-      });
-    });
-  }
+  async function _getHubInfo() {
+    const url = `http://${_ipAddress}:${HUB_PORT}`;
 
-  /**
-   * Open WebSocket port & connect to the Harmony Hub
-   */
-  function _connect() {
-    const wsQuery = `domain=svcs.myharmony.com&hubId=${_hubId}`;
-    const wsURL = `ws://${_ipAddress}:${HUB_PORT}/?${wsQuery}`;
-    _wsClient = new WSClient(wsURL, true, 'harmony');
-    _wsClient.on('message', (msg) => {
-      _wsMessageReceived(msg);
-    });
-    _wsClient.on('connect', () => {
-      log.debug(LOG_PREFIX, `Connected to Harmony Hub.`);
-      _getConfig();
-      _getActivity();
-      // _startPing();
-    });
-    setInterval(_getConfig, CONFIG_REFRESH_INTERVAL);
-  }
-
-  /**
-   * Starts the system ping.
-
-  function _startPing() {
-    if (_pingInterval) {
-      log.warn(LOG_PREFIX, 'Ping interval already started.');
+    const fetchOpts = {
+      method: 'POST',
+      body: JSON.stringify(GET_HUB_PROV_INFO),
+      headers: {
+        'Content-Type': 'application/json',
+        'Origin': 'http://sl.dhg.myharmony.com',
+      },
+    };
+    let resp;
+    let respBody;
+    try {
+      resp = await fetch(url, fetchOpts);
+      if (!resp.ok) {
+        log.error(LOG_PREFIX, `_getHubInfo() response error`, resp);
+        return;
+      }
+      respBody = await resp.json();
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Server error.', ex);
       return;
     }
-    _pingInterval = setInterval(() => {
-      return _sendCommand(COMMAND_STRINGS.PING).catch((err) => {
-        // Ignore this error, it's already been reported elsewhere.
-      });
-    }, PING_INTERVAL);
+    return respBody.data;
   }
-  */
 
   /**
    * Handle incoming web socket message
@@ -370,7 +392,7 @@ function HarmonyWS(ipAddress) {
    * @param {Object} config
   */
   function _configChanged(config) {
-    if (!config.activity) {
+    if (!config || !config.activity) {
       // Config doesn't have activities, it's prob not a config obj
       const msg = `configChanged failed, config object missing 'activity'.`;
       log.error(LOG_PREFIX, msg, config);
@@ -418,8 +440,6 @@ function HarmonyWS(ipAddress) {
   function _getActivity() {
     return _sendCommand(COMMAND_STRINGS.GET_ACTIVITY);
   }
-
-  _init();
 }
 
 util.inherits(HarmonyWS, EventEmitter);
