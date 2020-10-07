@@ -10,7 +10,6 @@ scratch-*.*
 .DS_Store
 
 */**/.AppleDouble
-*/**/package-lock.json
 */**/keys*.*
 */**/Keys*.*
 */**/*.log
