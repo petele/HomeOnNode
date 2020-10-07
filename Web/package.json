@@ -19,9 +19,9 @@
   "scripts": {
     "lint": "eslint . --ext html --ignore-path .gitignore && polymer lint",
     "test": "npm run lint && polymer test",
-    "serve": "gulp serve",
-    "deploy": "gulp deploy",
-    "build": "gulp build"
+    "serve": "polymer serve",
+    "bump-version": "gulp updateVersion",
+    "deploy": "gulp updateVersion && polymer build && cd build/bundled && gcloud app deploy --appyaml=./app.yaml --version=polymer2-20201005"
   },
   "dependencies": {}
 }

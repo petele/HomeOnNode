@@ -60,6 +60,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       .hidden {
         display: none !important;
       }
+      .presetLabel {
+        line-height: 58px;
+      }
     </style>
 
     <send-command id="sendCommand"></send-command>
@@ -114,6 +117,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </details>
     </div>
 
+
     <fb-document path="config/HomeOnNode/hvac/defaultMode" data="{{defaultHVACMode}}">
     </fb-document>
     <div class="card">
@@ -130,6 +134,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </paper-dropdown-menu>
     </div>
 
+    <fb-query path="state/googleDeviceAccess/thermostat" data="{{thermostats}}">
+    </fb-query>
     <fb-query path="config/HomeOnNode/hvac/temperaturePresets" data="{{nestHVACAuto}}">
     </fb-query>
     <div class="card">
@@ -142,9 +148,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <div class="hidden">expand</div>
           </div>
         </summary>
+        <div class="app-grid grid-three">
+          <div class="presetLabel">CURRENT</div>
+          <paper-input
+            label="Living Room"
+            type="number"
+            required disabled
+            value="[[lrTemp]]">
+          </paper-input>
+          <paper-input
+            label="Bedroom"
+            type="number"
+            required disabled
+            value="[[brTemp]]">
+          </paper-input>
+        </div>
         <template is="dom-repeat" items="{{nestHVACAuto}}">
           <div class="app-grid grid-three">
-            <div>[[item.$key]]</div>
+            <div class="presetLabel">[[item.$key]]</div>
             <paper-input
               label="Living Room"
               type="number"
@@ -179,6 +200,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           nestState: Object,
           nestAway: Boolean,
           nestThermostats: Object,
+          lrTemp: Number,
+          brTemp: Number,
           autoHumidifier: {
             type: Object,
             value: {
@@ -188,6 +211,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             },
           },
         };
+      }
+
+      static get observers() {
+        return [
+          '_thermostatsChanged(thermostats.*)',
+        ];
+      }
+
+      _thermostatsChanged(change) {
+        if (!change || !change.base || change.base.length === 0) {
+          return;
+        }
+        change.base.forEach((thermostat) => {
+          const tC = thermostat.traits.temperature.ambientTemperatureCelsius;
+          const tF = this._convertCtoF(tC);
+          if (thermostat.roomName === 'Bedroom') {
+            this.brTemp = tF;
+          } else if (thermostat.roomName === 'Living Room') {
+            this.lrTemp = tF;
+          } else {
+            console.log('Unknown room', thermostat.roomName);
+          }
+        });
+      }
+
+      _convertCtoF(val) {
+        return Math.round((val * 9 / 5) + 32);
       }
 
       validateAutoHumidEntry(evt, newVal) {
