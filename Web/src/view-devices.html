@@ -134,12 +134,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <template is="dom-if" if="[[item.host.cpuTemp]]">
             <div>
               <span class="label">CPU Temperature</span>
-              <span>[[item.host.cpuTemp]]</span>
-            </div>
-          </template>
-          <template is="dom-if" if="[[item.host.cpuTemp]]">
-            <div>
-              <span class="label">CPU Temperature</span>
               <span>[[formatRound(item.host.cpuTemp)]]&deg;C</span>
             </div>
           </template>
