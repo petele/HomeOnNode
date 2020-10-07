@@ -41,7 +41,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             slot="dropdown-content"
             attr-for-selected="value"
             selected="[[hueSyncState.mode]]"
-            on-selected-changed="_modeChanged">
+            on-selected-changed="_changeMode">
               <paper-item value="powersave">Off</paper-item>
               <paper-item value="passthrough">Pass Through</paper-item>
               <paper-item value="video">Video</paper-item>
@@ -55,8 +55,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             id="pmdLevelLB"
             slot="dropdown-content"
             attr-for-selected="value"
-            selected="[[intensity]]">
-              <paper-item value="off">Off</paper-item>
+            selected="[[intensity]]"
+            on-selected-changed="_changeIntensity">
               <paper-item value="subtle">Subtle</paper-item>
               <paper-item value="moderate">Moderate</paper-item>
               <paper-item value="high">High</paper-item>
@@ -106,11 +106,20 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         ];
       }
 
-      _modeChanged(e, newVal) {
+      _changeMode(e, newVal) {
         const cmd = {
           hueSync: {
             mode: newVal.value
           }
+        };
+        this.$.sendCommand.send(cmd);
+      }
+
+      _changeIntensity(e, newVal) {
+        const cmd = {
+          hueSync: {
+            intensity: newVal.value,
+          },
         };
         this.$.sendCommand.send(cmd);
       }
