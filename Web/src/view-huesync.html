@@ -26,11 +26,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <dom-module id="view-huesync">
   <template>
     <style include="shared-styles app-grid-style">
+      paper-item {
+        cursor: pointer;
+      }
     </style>
 
     <send-command id="sendCommand"></send-command>
 
     <fb-document path="state/hueSync/execution" data="{{hueSyncState}}">
+    </fb-document>
+
+    <fb-document path="state/hueSync/hdmi" data="{{hueSyncInputs}}">
     </fb-document>
 
     <div class="card">
@@ -50,7 +56,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </paper-listbox>
         </paper-dropdown-menu>
 
-        <paper-dropdown-menu disabled$="[[disabled]]" id="pdmLevel" label="Level">
+        <paper-dropdown-menu disabled$="[[!isActive]]" id="pdmLevel" label="Level">
           <paper-listbox
             id="pmdLevelLB"
             slot="dropdown-content"
@@ -66,15 +72,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       </div>
       <div class="app-grid grid-one">
         <paper-slider id="sliderBri"
-          disabled$="[[disabled]]"
+          disabled$="[[!isActive]]"
           value="[[hueSyncState.brightness]]"
           min="0" max="200"
-          on-change="_brightnessChanged">
+          on-change="_changeBrightness">
         </paper-slider>
+      </div>
+      <div class="app-grid grid-four">
+        <template is="dom-repeat" items="[[hdmiInputs]]">
+          <paper-button
+            on-tap="_changeInput" disabled$="[[!isOn]]"
+            class$="[[_inputButtonClass(item.key, isOn, hueSyncState.hdmiSource)]]">
+              [[item.name]]
+          </paper-button>
+        </template>
       </div>
     </div>
 
-    <card-actions disabled$="[[disabled]]" kind="hue-sync" title="Presets">
+    <card-actions disabled$="[[!isOn]]" kind="hue-sync" title="Presets">
     </card-actions>
 
   </template>
@@ -90,10 +105,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             type: String,
             value: 'off',
           },
-          disabled: {
+          isOn: {
             type: Boolean,
-            value: true,
-          }
+            value: false,
+          },
+          isActive: {
+            type: Boolean,
+            value: false,
+          },
+          hdmiInputs: {
+            type: Array,
+            value: [],
+          },
         };
       }
 
@@ -102,8 +125,38 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           '_gameIntensityChanged(hueSyncState.game.intensity)',
           '_musicIntensityChanged(hueSyncState.music.intensity)',
           '_videoIntensityChanged(hueSyncState.video.intensity)',
-          '_isDisabled(hueSyncState.mode)',
+          '_modeChanged(hueSyncState.mode)',
+          '_inputChanged(hueSyncInputs)',
         ];
+      }
+
+      _inputChanged(hdmiInfo) {
+        if (!hdmiInfo || !hdmiInfo.input1) {
+          return;
+        }
+        const inputs = [];
+        inputs.push({key: 'input1', id: 1, name: hdmiInfo.input1.name});
+        inputs.push({key: 'input2', id: 2, name: hdmiInfo.input2.name});
+        inputs.push({key: 'input3', id: 3, name: hdmiInfo.input3.name});
+        inputs.push({key: 'input4', id: 4, name: hdmiInfo.input4.name});
+        this.set('hdmiInputs', inputs);
+      }
+
+      startIndterminate(button) {
+        button.classList.add('toggle-ind');
+        setTimeout(() => {
+          button.classList.remove('toggle-ind');
+        }, 20000);
+      }
+
+      _inputButtonClass(inputName) {
+        if (!inputName || !this.hueSyncState || !this.isOn) {
+          return 'button';
+        }
+        if (inputName === this.hueSyncState.hdmiSource) {
+          return 'button toggle-on';
+        }
+        return 'button';
       }
 
       _changeMode(e, newVal) {
@@ -124,7 +177,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.sendCommand.send(cmd);
       }
 
-      _brightnessChanged() {
+      _changeBrightness() {
         const val = this.$.sliderBri.value;
         const cmd = {
           hueSync: {
@@ -134,13 +187,35 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.sendCommand.send(cmd);
       }
 
-      _isDisabled(val) {
-        if (val === 'passthrough' || val === 'powersave') {
-          this.set('intensity', 'off');
-          this.set('disabled', true);
-          return;
+      _changeInput(event) {
+        const newInput = event.model.item.id;
+        const cmd = {
+          hueSync: {
+            hdmiSource: newInput,
+          },
+        };
+        this.$.sendCommand.send(cmd);
+        this.startIndterminate(event.target);
+      }
+
+      _modeChanged(val) {
+        let intensity;
+        let isOn = true;
+        let isActive = true;
+        if (val === 'powersave') {
+          intensity = 'off';
+          isOn = false;
+          isActive = false;
+        } else if (val === 'passthrough') {
+          intensity = 'off';
+          isOn = true;
+          isActive = false;
         }
-        this.set('disabled', false);
+        if (intensity) {
+          this.set('intensity', intensity);
+        }
+        this.set('isOn', isOn);
+        this.set('isActive', isActive);
       }
 
       _setIntensity(val) {
