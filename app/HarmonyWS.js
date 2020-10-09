@@ -374,10 +374,7 @@ function HarmonyWS(ipAddress) {
    * @param {Object} state State object from Harmony Hub
    */
   function _stateChanged(state) {
-    if (!state) {
-      return;
-    }
-    _saveActivityId(state.activityId);
+    _saveActivityId(state?.activityId);
     _self.emit('state_notify', state);
     return;
   }
@@ -402,9 +399,6 @@ function HarmonyWS(ipAddress) {
     if (!activityId) {
       return;
     }
-    if (_isAlreadyOnActivity(activityId)) {
-      return;
-    }
     log.verbose(LOG_PREFIX, `activityIdChanged(${activityId})`);
     _currentActivityId = parseInt(activityId);
     _self.emit('activity_id_changed', _currentActivityId);
@@ -418,16 +412,12 @@ function HarmonyWS(ipAddress) {
   */
   function _activityChanged(activityId) {
     const msg = `activityChanged(${activityId})`;
-    if (_isAlreadyOnActivity(activityId)) {
-      log.debug(LOG_PREFIX, `${msg} - skipped, already on activity.`);
-      return;
-    }
-    _saveActivityId(activityId);
     const activity = _activitiesById[activityId];
     if (!activity) {
       log.error(LOG_PREFIX, `${msg} - failed, 'activityId' not found.`);
       return;
     }
+    _saveActivityId(activityId);
     log.debug(LOG_PREFIX, msg, activity);
     _self.emit('activity_changed', activity);
   }
