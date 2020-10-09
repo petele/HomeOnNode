@@ -29,7 +29,7 @@ const LOG_PREFIX = 'HARMONY_WS';
 function HarmonyWS(ipAddress) {
   const _self = this;
   const HUB_PORT = 8088;
-  const CONFIG_REFRESH_INTERVAL = 18 * 60 * 1000;
+  const CONFIG_REFRESH_INTERVAL = 16 * 60 * 1000;
   const COMMAND_PREFIX = 'vnd.logitech.harmony/';
   const COMMAND_STRINGS = {
     BUTTON_PRESS: 'control.button?pressType',
@@ -60,6 +60,7 @@ function HarmonyWS(ipAddress) {
   let _config = {};
   let _activitiesById = {};
   let _activityIdByName = {};
+  let _currentActivityId = null;
 
   let _connectionStarted = false;
 
@@ -148,6 +149,10 @@ function HarmonyWS(ipAddress) {
     if (!activityId) {
       log.error(LOG_PREFIX, `${msg} failed, missing 'activityId'`);
       return Promise.reject(new Error('activity_id_missing'));
+    }
+    if (_isAlreadyOnActivity(activityId)) {
+      log.verbose(LOG_PREFIX, `${msg} - skipped, already on activity.`);
+      return Promise.resolve({ok: true, alreadySet: true});
     }
     const params = {
       async: true,
@@ -302,7 +307,7 @@ function HarmonyWS(ipAddress) {
     }
     if (msgJSON.type === COMMAND_STRINGS.STATE_DIGEST_NOTIFY) {
       log.verbose(LOG_PREFIX, `${msg} STATE_DIGEST_NOTIFY`, msgJSON);
-      _self.emit('state_notify', msgJSON.data);
+      _stateChanged(msgJSON.data);
       return;
     }
     if (msgJSON.type === COMMAND_STRINGS.METADATA) {
@@ -363,24 +368,67 @@ function HarmonyWS(ipAddress) {
 
 
   /**
+   * Handles state change and fires state_notify event
+   *
+   * @fires Harmony#state_notify
+   * @param {Object} state State object from Harmony Hub
+   */
+  function _stateChanged(state) {
+    if (!state) {
+      return;
+    }
+    _saveActivityId(state.activityId);
+    _self.emit('state_notify', state);
+    return;
+  }
+
+  /**
+   * Checks if the current activityId is the same as provided.
+   *
+   * @param {Number} activityId
+   * @return {Boolean} true if the same.
+   */
+  function _isAlreadyOnActivity(activityId) {
+    return parseInt(_currentActivityId) === parseInt(activityId);
+  }
+
+  /**
+   * Updates the saved activity ID
+   *
+   * @fires Harmony#activity_id_changed
+   * @param {Number} activityId New activity ID
+   */
+  function _saveActivityId(activityId) {
+    if (!activityId) {
+      return;
+    }
+    if (_isAlreadyOnActivity(activityId)) {
+      return;
+    }
+    log.verbose(LOG_PREFIX, `activityIdChanged(${activityId})`);
+    _currentActivityId = parseInt(activityId);
+    _self.emit('activity_id_changed', _currentActivityId);
+  }
+
+  /**
    * Handles activity change and fires activity_changed event
    *
    * @fires Harmony#activity_changed
    * @param {Number} activityId The Activity ID
   */
   function _activityChanged(activityId) {
-    const activity = _activitiesById[activityId];
-    if (!activity) {
-      const msg = `_activityChanged, activity '${activityId}' not found.`;
-      log.error(LOG_PREFIX, msg);
+    const msg = `activityChanged(${activityId})`;
+    if (_isAlreadyOnActivity(activityId)) {
+      log.debug(LOG_PREFIX, `${msg} - skipped, already on activity.`);
       return;
     }
-    /**
-     * Fired when the activity has changed
-     * @event Harmony#activity_changed
-     * @type {Object}
-     */
-    log.debug(LOG_PREFIX, `activityChanged(...)`, activity);
+    _saveActivityId(activityId);
+    const activity = _activitiesById[activityId];
+    if (!activity) {
+      log.error(LOG_PREFIX, `${msg} - failed, 'activityId' not found.`);
+      return;
+    }
+    log.debug(LOG_PREFIX, msg, activity);
     _self.emit('activity_changed', activity);
   }
 
@@ -412,11 +460,6 @@ function HarmonyWS(ipAddress) {
     });
     _activitiesById = activitiesById;
     _activityIdByName = activityIdByName;
-    /**
-     * Fired when the config has changed
-     * @event Harmony#config_changed
-     * @type {Object}
-     */
     log.verbose(LOG_PREFIX, 'Config changed.', config);
     _self.emit('config_changed', config);
   }
