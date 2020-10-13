@@ -71,7 +71,7 @@ async function init() {
   }
 
   // Connect to the web socket server
-  _wsClient = new WSClient(_config.wsServer, true, 'server');
+  _wsClient = new WSClient(_config.wsServer, true, 'CLI_OTT');
 
   // Initialize GCMPush
   _gcmPush = await new GCMPush();

@@ -219,7 +219,7 @@ function DeviceMonitor(deviceName, isMonitor) {
     }
     const now = Date.now();
     const offlineFor = now - _disconnectedAt;
-    log.verbose(_deviceName, `Offline for ${offlineFor / 1000}s`);
+    log.log(_deviceName, `Offline for ${offlineFor / 1000}s`);
     _self.emit('offline', offlineFor);
   }
 
