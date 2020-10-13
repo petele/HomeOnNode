@@ -5,6 +5,7 @@
 const os = require('os');
 const util = require('util');
 const fs = require('fs/promises');
+const fetch = require('node-fetch');
 const log = require('./SystemLog2');
 const version = require('./version');
 const diff = require('deep-diff').diff;
@@ -31,9 +32,11 @@ function DeviceMonitor(deviceName, isMonitor) {
   let _fbRef;
   let _heartbeatInterval;
   let _ipAddressInterval;
-  let _offlineInterval;
+  let _connectionCheckInterval;
+  let _pingGoogleInterval;
   let _ipAddresses = [];
   let _disconnectedAt = null;
+  let _lastGooglePing = Date.now();
 
   /**
    * Init the DeviceMonitor
@@ -92,7 +95,8 @@ function DeviceMonitor(deviceName, isMonitor) {
     _fbRef.child(`${_deviceName}/shutdown`).on('value', _shutdownRequest);
     _heartbeatInterval = setInterval(_tickHeartbeat, 1 * 60 * 1000);
     _ipAddressInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
-    _offlineInterval = setInterval(_tickOfflineCheck, 30 * 1000);
+    _connectionCheckInterval = setInterval(_tickConnectionCheck, 30 * 1000);
+    _pingGoogleInterval = setInterval(_tickPingGoogle, 30 * 1000);
     _initUncaught();
     _initUnRejected();
     _initWarning();
@@ -213,12 +217,33 @@ function DeviceMonitor(deviceName, isMonitor) {
   /**
    * Check when the last connection was.
    */
-  function _tickOfflineCheck() {
+  function _tickConnectionCheck() {
     if (_disconnectedAt === null) {
       return;
     }
     const now = Date.now();
     const offlineFor = now - _disconnectedAt;
+    log.log(_deviceName, `Disconnected for ${offlineFor / 1000}s`);
+    _self.emit('disconnected', offlineFor);
+  }
+
+  /**
+   * Pings google.com to verify connectivity...
+   */
+  async function _tickPingGoogle() {
+    const fetchOpts = {
+      method: 'GET',
+      timeout: 5 * 1000,
+    };
+    try {
+      await fetch('https://google.com/generate_204', fetchOpts);
+      _lastGooglePing = Date.now();
+      return;
+    } catch (ex) {
+      log.warn(_deviceName, `Unable to ping google.com`, ex);
+    }
+    const now = Date.now();
+    const offlineFor = now - _lastGooglePing;
     log.log(_deviceName, `Offline for ${offlineFor / 1000}s`);
     _self.emit('offline', offlineFor);
   }
@@ -328,9 +353,13 @@ function DeviceMonitor(deviceName, isMonitor) {
       clearInterval(_ipAddressInterval);
       _ipAddressInterval = null;
     }
-    if (_offlineInterval) {
-      clearInterval(_offlineInterval);
-      _offlineInterval = null;
+    if (_connectionCheckInterval) {
+      clearInterval(_connectionCheckInterval);
+      _connectionCheckInterval = null;
+    }
+    if (_pingGoogleInterval) {
+      clearInterval(_pingGoogleInterval);
+      _pingGoogleInterval = null;
     }
     const now = Date.now();
     const details = {
