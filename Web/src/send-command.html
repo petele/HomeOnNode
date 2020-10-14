@@ -67,20 +67,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         return this.executeActions(cmd);
       }
 
-      // send(cmd) {
-      //   window.lastUserInput = Date.now();
-      //   let ref = this.$.fbDoc.ref.push(cmd, (err) => {
-      //     if (err) {
-      //       // eslint-disable-next-line no-console
-      //       console.log('ERROR', '[-sendCommand-]', err);
-      //       this.$.toast.text = err.message;
-      //       this.$.toast.show();
-      //     }
-      //   });
-      //   // eslint-disable-next-line no-console
-      //   console.log('[-sendCommand-]', ref.key, cmd);
-      // }
-
     }
 
     window.customElements.define(SendCommand.is, SendCommand);

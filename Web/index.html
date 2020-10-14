@@ -206,7 +206,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         width: calc(100% + 72px);
       }
     </style>
-
   </head>
   <body class="loading">
 
@@ -220,26 +219,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <b>AtHome</b> Loading...
       </div>
     </div>
-
     <my-app></my-app>
-    <script src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1" async>
-    </script>
-    <script>
-      window['__onGCastApiAvailable'] = function(isAvailable) {
-        console.log('__onGCastApiAvailable', isAvailable);
-        if (isAvailable) {
-          initializeCastApi();
-        }
-      };
-
-      initializeCastApi = function() {
-        console.log('initializeCastApi');
-        const applicationId = '457E9272';
-        // const applicationId = chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID;
-        cast.framework.CastContext.getInstance().setOptions({
-          receiverApplicationId: applicationId,
-        });
-      };
-</script>
   </body>
 </html>
