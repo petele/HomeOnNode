@@ -246,6 +246,10 @@ function DeviceMonitor(deviceName, isMonitor) {
     const offlineFor = now - _lastGooglePing;
     log.log(_deviceName, `Offline for ${offlineFor / 1000}s`);
     _self.emit('offline', offlineFor);
+    const cpuTemp = await _getCPUTemperature();
+    if (cpuTemp) {
+      log.log(_deviceName, `CPU Temperature: ${cpuTemp}°C`);
+    }
   }
 
   /**
