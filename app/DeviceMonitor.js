@@ -231,6 +231,7 @@ function DeviceMonitor(deviceName, isMonitor) {
    * Pings google.com to verify connectivity...
    */
   async function _tickPingGoogle() {
+    const offlineInfo = {};
     const fetchOpts = {
       method: 'GET',
       timeout: 5 * 1000,
@@ -240,16 +241,19 @@ function DeviceMonitor(deviceName, isMonitor) {
       _lastGooglePing = Date.now();
       return;
     } catch (ex) {
-      log.warn(_deviceName, `Unable to ping google.com`, ex);
+      offlineInfo.ex = {
+        name: ex.name,
+        message: ex.message,
+      };
+      log.verbose(_deviceName, `Unable to ping google.com`, ex);
     }
-    const now = Date.now();
-    const offlineFor = now - _lastGooglePing;
-    log.log(_deviceName, `Offline for ${offlineFor / 1000}s`);
-    _self.emit('offline', offlineFor);
+    offlineInfo.offlineFor = Date.now() - _lastGooglePing;
     const cpuTemp = await _getCPUTemperature();
     if (cpuTemp) {
-      log.log(_deviceName, `CPU Temperature: ${cpuTemp}°C`);
+      offlineInfo.cpuTemp = `${cpuTemp}°C`;
     }
+    log.warn(_deviceName, `Offline`, offlineInfo);
+    _self.emit('offline', offlineInfo);
   }
 
   /**

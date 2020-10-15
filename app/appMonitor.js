@@ -34,7 +34,8 @@ async function go() {
   _deviceMonitor.on('shutdown_request', () => {
     _deviceMonitor.shutdown('FB', 'shutdown_request', false);
   });
-  _deviceMonitor.on('offline', (offlineFor) => {
+  _deviceMonitor.on('offline', (offlineInfo) => {
+    const offlineFor = offlineInfo.offlineFor;
     if (offlineFor < OFFLINE_TIMEOUT) {
       return;
     }
