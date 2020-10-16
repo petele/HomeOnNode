@@ -9,7 +9,7 @@ const honHelpers = require('./HoNHelpers');
 const LOG_PREFIX = 'SEND_ON_ERROR';
 
 log.setConsoleLogOpts(50);
-log.setFileLogOpts(90, './logs/system.log');
+log.setFileLogOpts(90, './logs/send-notifications.log');
 
 let gcmPush;
 const hostname = honHelpers.getHostname().toUpperCase();

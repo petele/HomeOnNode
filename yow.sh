@@ -14,5 +14,5 @@ export GOOGLE_APPLICATION_CREDENTIALS="/home/pi/HomeOnNode/app/KeysPubSub.json"
 
 echo "Starting app..."
 node appController.js
-node appOnError.js >> ./logs/system.log
+node appOnError.js >> ./logs/error.log
 node appSendNotification.js
