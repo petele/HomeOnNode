@@ -247,10 +247,13 @@ function DeviceMonitor(deviceName, isMonitor) {
       };
       log.verbose(_deviceName, `Unable to ping google.com`, ex);
     }
-    offlineInfo.offlineFor = Date.now() - _lastGooglePing;
+    const offlineFor = Date.now() - _lastGooglePing;
+    offlineInfo.offlineFor = offlineFor;
+    offlineInfo.offlineFor_ = `${Math.round(offlineFor / 1000)}s`;
     const cpuTemp = await _getCPUTemperature();
     if (cpuTemp) {
-      offlineInfo.cpuTemp = `${cpuTemp}°C`;
+      offlineInfo.cpuTemp = cpuTemp;
+      offlineInfo.cpuTemp_ = `${cpuTemp}°C`;
     }
     log.warn(_deviceName, `Offline`, offlineInfo);
     _self.emit('offline', offlineInfo);
