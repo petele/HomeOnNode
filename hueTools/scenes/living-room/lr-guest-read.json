@@ -25,6 +25,10 @@
       "command": {
         "bri": 128
       }
+    },
+    {
+      "lightId": 40,
+      "recipeName": "OFF"
     }
   ],
   "sceneId": "26CvDCfzwjCEecc"

@@ -3,6 +3,10 @@
   "roomId": 4,
   "lights": [
     {
+      "lightId": 11,
+      "recipeName": "OFF"
+    },
+    {
       "lightId": 12,
       "recipeName": "ROSE",
       "command": {
@@ -64,6 +68,10 @@
       "command": {
         "bri": 254
       }
+    },
+    {
+      "lightId": 40,
+      "recipeName": "OFF"
     }
   ],
   "sceneId": "5Qst6OuP6filuLh"

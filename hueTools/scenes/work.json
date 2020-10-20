@@ -21,7 +21,8 @@
     {"lightId": 11, "recipeName": "OFF"},
     {"lightId": 14, "recipeName": "OFF"},
     {"lightId": 22, "recipeName": "OFF"},
-    {"lightId": 27, "recipeName": "OFF"}
+    {"lightId": 27, "recipeName": "OFF"},
+    {"lightId": 40, "recipeName": "OFF"}
   ],
   "sceneId": "hgA0idU6BgATKe8"
 }

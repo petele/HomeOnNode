@@ -56,6 +56,10 @@
         "xy": [ 0.4283, 0.4013 ],
         "bri": 135
       }
+    },
+    {
+      "lightId": 40,
+      "recipeName": "OFF"
     }
   ],
   "sceneId": "f7aGhl8BYxyohu-"

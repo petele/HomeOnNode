@@ -3,6 +3,13 @@
   "roomId": 4,
   "lights": [
     {
+      "lightId": 11,
+      "recipeName": "ROSE_DEEP",
+      "command": {
+        "bri": 225
+      }
+    },
+    {
       "lightId": 12,
       "recipeName": "ROSE_DEEP",
       "command": {
@@ -64,6 +71,10 @@
       "command": {
         "bri": 200
       }
+    },
+    {
+      "lightId": 40,
+      "recipeName": "OFF"
     }
   ],
   "sceneId": "LbUnHQEvVvG9upW"

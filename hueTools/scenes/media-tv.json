@@ -43,10 +43,7 @@
     },
     {
       "lightId": 27,
-      "recipeName": "PEACH",
-      "command": {
-        "bri": 25
-      }
+      "recipeName": "OFF"
     }
   ],
   "sceneId": "1rv8F1G9Sm02qWK"

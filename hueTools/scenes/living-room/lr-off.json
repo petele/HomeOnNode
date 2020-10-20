@@ -12,6 +12,7 @@
     {"lightId": 27, "recipeName": "OFF"},
     {"lightId": 35, "recipeName": "OFF"},
     {"lightId": 36, "recipeName": "OFF"},
-    {"lightId": 37, "recipeName": "OFF"}
+    {"lightId": 37, "recipeName": "OFF"},
+    {"lightId": 40, "recipeName": "OFF"}
   ]
 }
