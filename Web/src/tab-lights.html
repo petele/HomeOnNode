@@ -13,7 +13,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
 <link rel="import" href="shared-styles.html">
 
-<dom-module id="elem-lights">
+<dom-module id="tab-lights">
   <template>
     <style include="shared-styles app-grid-style">
       :host {
@@ -40,8 +40,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   </template>
 
   <script>
-    class LightsElem extends Polymer.Element {
-      static get is() { return 'elem-lights'; }
+    class TabLights extends Polymer.Element {
+      static get is() { return 'tab-lights'; }
 
       static get properties() {
         return {
@@ -49,6 +49,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         };
       }
     }
-    window.customElements.define(LightsElem.is, LightsElem);
+    window.customElements.define(TabLights.is, TabLights);
   </script>
 </dom-module>
