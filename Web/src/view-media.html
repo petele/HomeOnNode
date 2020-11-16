@@ -55,7 +55,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             class$="[[harmonyActivityClass('PowerOff', currentHarmonyActivity.label, sonosSource)]]">
           Off
         </paper-button>
-        <template is="dom-repeat" items="[[harmonyActivities]]" filter="filterActivities">
+        <template is="dom-repeat" items="[[harmonyActivities]]" sort="sortActivities" filter="filterActivities">
           <paper-button on-tap="tapHarmony"
               class$="[[harmonyActivityClass(item.label, currentHarmonyActivity.label, sonosSource)]]">
             [[item.label]]
@@ -111,6 +111,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return false;
         }
         return true;
+      }
+
+      sortActivities(a, b) {
+        const valA = a.label.toLowerCase();
+        const valB = b.label.toLowerCase();
+        return this.sortComparator(valA, valB);
+      }
+
+      sortComparator(a, b) {
+        if (a > b) {
+          return 1;
+        }
+        if (a < b) {
+          return -1;
+        }
+        return 0;
       }
 
       harmonyActivityClass(activityLabel, currentActivity, sonosSource) {
