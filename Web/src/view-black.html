@@ -9,43 +9,34 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="shared-styles.html">
 
-<dom-module id="my-version">
+<dom-module id="view-black">
   <template>
     <style include="shared-styles">
       :host {
-        color: var(--secondary-text-color);
         display: block;
-        font-size: smaller;
-        /* margin-top: 16px; */
-        padding: 0 16px;
+      }
+
+      #fill {
+        width: 100vw;
+        height: 100vh;
+        position: absolute;
+        z-index: 5;
+        background-color: black;
       }
     </style>
-    <div>
-      [[appVersion]]<br>
-      [[appBuildDate]]
+
+    <div id="fill">
     </div>
+
   </template>
 
   <script>
-    class MyVersion extends Polymer.Element {
-      static get is() { return 'my-version'; }
-
-      static get properties() {
-        return {
-          appVersion: {
-            type: String,
-            value: '20201116',
-          },
-          appBuildDate: {
-            type: String,
-            value: 'November 16th 2020, 9:49 am',
-          },
-        };
-      }
-
+    class BlackView extends Polymer.Element {
+      static get is() { return 'view-black'; }
     }
 
-    window.customElements.define(MyVersion.is, MyVersion);
+    window.customElements.define(BlackView.is, BlackView);
   </script>
 </dom-module>

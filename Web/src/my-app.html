@@ -53,7 +53,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="lazy-import" href="view-remote.html">
 <link rel="lazy-import" href="view-scheduled.html">
 <link rel="lazy-import" href="view-huesync.html">
-
+<link rel="lazy-import" href="view-black.html">
 
 <dom-module id="my-app">
   <template>
@@ -90,7 +90,6 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         color: var(--primary-text-color);
         font-weight: bold;
       }
-
     </style>
 
     <my-firebase id="fbHelper"></my-firebase>
@@ -163,7 +162,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="view404"
             role="main">
-          <view-home name="home" view="{{view}}"></view-home>
+          <view-home name="home" page="{{page}}" view="{{view}}"></view-home>
+          <view-black name="black"></view-black>
           <view-nanoleaf name="nanoleaf" page="{{page}}"></view-nanoleaf>
           <view-hue-lights name="hue-lights" page="{{page}}"></view-hue-lights>
           <view-hue-groups name="hue-groups" page="{{page}}"></view-hue-groups>
@@ -173,7 +173,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <view-devices name="devices"></view-devices>
           <view-weather name="weather" page="[[page]]"></view-weather>
           <view-hvac name="hvac"></view-hvac>
-          <view-settings name="settings" view="{{view}}"></view-settings>
+          <view-settings name="settings" page="{{page}}" set-to-black="{{setToBlack}}" view="{{view}}"></view-settings>
           <view-system-logs name="system-logs"></view-system-logs>
           <view-presence-logs name="presence-logs"></view-presence-logs>
           <view-door-logs name="door-logs"></view-door-logs>
@@ -206,12 +206,14 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           view: String,
           routeData: Object,
           subroute: String,
+          setToBlack: Boolean,
         };
       }
 
       static get observers() {
         return [
           '_routePageChanged(routeData.page)',
+          '_setToBlackChanged(setToBlack)',
         ];
       }
 
@@ -219,20 +221,49 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         super.ready();
         document.querySelector('.spinner-container')
           .classList.remove('spinner-container-visible');
-        setInterval(() => {
-          if (window.location.hostname === 'localhost') {
-            return;
-          }
-          let timeElapsed = (Date.now() - window.lastUserInput) / 1000;
-          if (timeElapsed > 120 && this.page !== 'home') {
-            window.history.pushState({}, null, '/');
-            window.dispatchEvent(new CustomEvent('location-changed'));
-          }
-          if (timeElapsed > (60 * 60 * 4)) {
-            location.reload(true);
-          }
-        }, 15000);
+
         window.lastUserInput = Date.now();
+
+        setInterval(() => {
+          this._returnToHomepage();
+        }, 5 * 1000);
+
+        setInterval(() => {
+          this._reloadPage();
+        }, 2 * 60 * 1000);
+      }
+
+      _returnToHomepage() {
+        if (window.location.hostname === 'localhost') {
+          return;
+        }
+        const maxTimeOnPage = 2 * 60 * 1000;
+        const homePage = this.setToBlack ? 'black' : '/';
+        const timeElapsed = Date.now() - window.lastUserInput;
+        if (timeElapsed > maxTimeOnPage && this.page !== homePage) {
+          window.history.pushState({}, null, homePage);
+          window.dispatchEvent(new CustomEvent('location-changed'));
+        }
+      }
+
+      _reloadPage() {
+        if (window.location.hostname === 'localhost') {
+          return;
+        }
+        const timeElapsed = Date.now() - window.lastUserInput;
+        if (timeElapsed > (4 * 60 * 60 * 1000)) {
+          location.reload(true);
+        }
+      }
+
+      _setToBlackChanged(val) {
+        console.log('setToBlackChanged', val)
+        if (val === undefined) {
+          return;
+        }
+        const newPage = val === true ? '/black' : '/';
+        window.history.pushState({}, null, newPage);
+        window.dispatchEvent(new CustomEvent('location-changed'));
       }
 
       _routePageChanged(page) {
