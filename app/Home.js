@@ -1546,7 +1546,7 @@ function Home() {
         log.log(LOG_PREFIX, `${msgBase} changed '${action.wemo.on}'`, info);
 
         // Turn the humidifier on/off
-        action.wemo.id = room.wemoId;
+        action.wemo.name = room.wemoName;
         _executeAction(action, 'AutoHumidifier');
       } catch (ex) {
         log.exception(LOG_PREFIX, `Error in autoHumidifierTick`, ex);
