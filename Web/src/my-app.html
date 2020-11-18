@@ -173,7 +173,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           <view-devices name="devices"></view-devices>
           <view-weather name="weather" page="[[page]]"></view-weather>
           <view-hvac name="hvac"></view-hvac>
-          <view-settings name="settings" page="{{page}}" set-to-black="{{setToBlack}}" view="{{view}}"></view-settings>
+          <view-settings name="settings" page="{{page}}" screen-off="{{screenOff}}" view="{{view}}"></view-settings>
           <view-system-logs name="system-logs"></view-system-logs>
           <view-presence-logs name="presence-logs"></view-presence-logs>
           <view-door-logs name="door-logs"></view-door-logs>
@@ -206,14 +206,18 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           view: String,
           routeData: Object,
           subroute: String,
-          setToBlack: Boolean,
+          screenOff: {
+            type: Boolean,
+            notify: true,
+            value: false,
+            observer: '_screenOffChanged',
+          },
         };
       }
 
       static get observers() {
         return [
           '_routePageChanged(routeData.page)',
-          '_setToBlackChanged(setToBlack)',
         ];
       }
 
@@ -238,7 +242,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
         const maxTimeOnPage = 2 * 60 * 1000;
-        const homePage = this.setToBlack ? 'black' : '/';
+        const homePage = this.screenOff ? 'black' : '/';
         const timeElapsed = Date.now() - window.lastUserInput;
         if (timeElapsed > maxTimeOnPage && this.page !== homePage) {
           window.history.pushState({}, null, homePage);
@@ -256,9 +260,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      _setToBlackChanged(val) {
-        console.log('setToBlackChanged', val)
-        if (val === undefined) {
+      _screenOffChanged(val) {
+        if (typeof val !== 'boolean') {
           return;
         }
         const newPage = val === true ? '/black' : '/';

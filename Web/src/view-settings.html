@@ -16,6 +16,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/paper-item/paper-item.html">
 <link rel="import" href="../bower_components/paper-checkbox/paper-checkbox.html">
 <link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
 <link rel="import" href="shared-styles.html">
 <link rel="import" href="my-version.html">
 <link rel="import" href="fb-query.html">
@@ -29,6 +30,11 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       :host {
         display: block;
       }
+
+      paper-item {
+        cursor: pointer;
+      }
+
       .app-grid > * {
         height: inherit;
       }
@@ -37,8 +43,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <fb-query path="config/WebUI" data="{{views}}">
     </fb-query>
 
-    <fb-query path="config/HomeOnNode/showBlack" data="{{showBlackData}}">
-    </fb-query>
+    <firebase-document id="fbScreenOff" data="{{screenOff}}">
+    </firebase-document>
 
     <div class="card">
       <div>Settings</div>
@@ -57,8 +63,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </paper-dropdown-menu>
         <push-subscription></push-subscription>
         <say-this></say-this>
-        <paper-checkbox id="cbShowBlack" checked="[[setToBlack]]" on-change="changeShowBlack">
-          Show Black
+        <paper-checkbox id="cbShowBlack" checked="{{screenOff}}">
+          Screen Off
         </paper-checkbox>
         <app-install-banner></app-install-banner>
       </div>
@@ -103,22 +109,13 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             notify: true,
             reflectToAttribute: true,
           },
-          setToBlack: {
+          screenOff: {
             type: Boolean,
             notify: true,
             reflectToAttribute: true,
             value: false,
           },
-          showBlackData: {
-            type: Object,
-          },
         };
-      }
-
-      static get observers() {
-        return [
-          'showBlackDataChanged(showBlackData.*)',
-        ];
       }
 
       constructor() {
@@ -129,39 +126,17 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      showBlackDataChanged(obj) {
-        let setToBlack = false;
-        if (obj.base && obj.base.length > 0) {
-          obj.base.forEach((item) => {
-            if (item.$key === this.view || item.$key === 'ALL') {
-              if (item.$val === true) {
-                setToBlack = true;
-              }
-            }
-          });
-        }
-        this.set('setToBlack', setToBlack);
-      }
-
-      changeShowBlack() {
-        const view = this.view;
-        const newVal = this.$.cbShowBlack.checked;
-        let wasSet = false;
-        this.showBlackData.forEach((item, idx) => {
-          if (item.$key === view) {
-            this.set(`showBlackData.${idx}.$val`, newVal);
-            wasSet = true;
-          }
-        });
-        if (!wasSet) {
-          this.push('showBlackData', {$key: view, $val: newVal});
-        }
+      ready() {
+        super.ready();
+        const path = `config/WebUI/${this.view}/screenOff`;
+        this.$.fbScreenOff.path = path;
       }
 
       viewChanged(e) {
-        let view = e.detail.value;
+        const view = e.detail.value;
         this.view = view;
         localStorage.setItem('currentView', view);
+        this.$.fbScreenOff.path = `config/WebUI/${view}/screenOff`;
       }
 
       tapSignIn() {

@@ -783,6 +783,22 @@ function Home() {
           });
     }
 
+    // Web UI
+    if (action.hasOwnProperty('webUI')) {
+      if (!action.webUI.hasOwnProperty('screenOff')) {
+        log.warn(LOG_PREFIX, `webUI missing screenOff param`, action.webUI);
+        return _genResult(action, false, 'missing_param');
+      }
+      if (!action.webUI.hasOwnProperty('devices')) {
+        log.warn(LOG_PREFIX, `webUI missing devices param`, action.webUI);
+        return _genResult(action, false, 'missing_param');
+      }
+      const turnScreenOff = action.webUI.screenOff;
+      const devices = _arrayify(action.webUI.devices);
+      _updateWebUI(turnScreenOff, devices);
+      return _genResult(action, true);
+    }
+
     // Wemo
     if (action.hasOwnProperty('wemo')) {
       if (!wemo) {
@@ -2193,6 +2209,28 @@ function Home() {
     weather = new Weather(_config.forecastIO.latLon, apiKey);
     weather.on('weather', (forecast) => {
       _fbSet('state/weather', forecast);
+    });
+  }
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * Web UI Update
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Turn the WebUI screen on or off
+   * @param {Boolean} screenOff Turn the screen off
+   * @param {Array} devices A list of devices to turn off
+   */
+  function _updateWebUI(screenOff, devices) {
+    devices.forEach((deviceName) => {
+      const path = `config/WebUI/${deviceName}/screenOff`;
+      const msg = `${path}: ${screenOff}`;
+      log.verbose(LOG_PREFIX, msg);
+      _fbRootRef.child(path).set(screenOff).catch((err) => {
+        log.error(LOG_PREFIX, `Unable to set ${msg}`, err);
+      });
     });
   }
 
