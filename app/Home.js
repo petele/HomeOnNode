@@ -1672,8 +1672,8 @@ function Home() {
     const next = now < today ? today : tomorrow;
     if (next > _self.state.sun.rise) {
       _fbSet('state/sun/rise', next);
-      const msg = `Next sun RISE is at ${log.formatTime(next)}`;
-      log.log(LOG_PREFIX, msg, next);
+      _fbSet('state/sun/rise_', log.formatTime(next));
+      _scheduleSunEvent('SUNRISE', next);
     }
   }
 
@@ -1688,8 +1688,32 @@ function Home() {
     const next = now < today ? today : tomorrow;
     if (next > _self.state.sun.set) {
       _fbSet('state/sun/set', next);
-      const msg = `Next sun SET is at ${log.formatTime(next)}`;
-      log.log(LOG_PREFIX, msg, next);
+      _fbSet('state/sun/set_', log.formatTime(next));
+      _scheduleSunEvent('SUNSET', next);
+    }
+  }
+
+  /**
+   * Creates an event for the specified sun event
+   *
+   * @param {String} name Name of the sun event (rise|set)
+   * @param {Number} nextTime Time the next sun event happens
+   */
+  function _scheduleSunEvent(name, nextTime) {
+    const msg = `Next '${name}' happens at ${log.formatTime(nextTime)}`;
+    log.log(LOG_PREFIX, msg);
+    try {
+      const job = new CronJob(new Date(nextTime), () => {
+        const cmdName = `RUN_AT_${name}`;
+        if (_config.commands[cmdName]) {
+          _self.executeCommandByName(cmdName, name);
+        }
+      });
+      job.start();
+      const nextDates = job.nextDates();
+      log.debug(LOG_PREFIX, `Timer setup for ${name}`, nextDates);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Unable to create timer for ${name}`, ex);
     }
   }
 
