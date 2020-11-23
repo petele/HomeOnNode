@@ -2212,11 +2212,11 @@ function Home() {
       if (alarmClock) {
         try {
           const todayRise = forecast.today.sunriseTime * 1000;
-          const todaySet = forecast.today.sunsetTime * 1000;
-          alarmClock.setSunriseTime(todayRise, todaySet);
           const tomRise = forecast.tomorrow.sunriseTime * 1000;
+          alarmClock.setSunriseTime(todayRise, tomRise);
+          const todaySet = forecast.today.sunsetTime * 1000;
           const tomSet = forecast.tomorrow.sunsetTime * 1000;
-          alarmClock.setSunsetTime(tomRise, tomSet);
+          alarmClock.setSunsetTime(todaySet, tomSet);
         } catch (ex) {
           log.exception(LOG_PREFIX, 'Unable to update sunrise/sunset', ex);
         }
