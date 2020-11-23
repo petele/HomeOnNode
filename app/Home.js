@@ -2209,6 +2209,18 @@ function Home() {
     weather = new Weather(_config.forecastIO.latLon, apiKey);
     weather.on('weather', (forecast) => {
       _fbSet('state/weather', forecast);
+      if (alarmClock) {
+        try {
+          const todayRise = forecast.today.sunriseTime * 1000;
+          const todaySet = forecast.today.sunsetTime * 1000;
+          alarmClock.setSunriseTime(todayRise, todaySet);
+          const tomRise = forecast.tomorrow.sunriseTime * 1000;
+          const tomSet = forecast.tomorrow.sunsetTime * 1000;
+          alarmClock.setSunsetTime(tomRise, tomSet);
+        } catch (ex) {
+          log.exception(LOG_PREFIX, 'Unable to update sunrise/sunset', ex);
+        }
+      }
     });
   }
 
