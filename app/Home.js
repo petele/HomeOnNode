@@ -236,7 +236,13 @@ function Home() {
     // Find the command
     const command = _config.commands[commandName];
     if (!command) {
-      log.warn(LOG_PREFIX, `Command ${commandName} not found.`);
+      log.warn(LOG_PREFIX, `Command '${commandName}' not found.`);
+      return;
+    }
+
+    // Ensure the command is not disabled.
+    if (command.disabled) {
+      log.warn(LOG_PREFIX, `Command '${commandName}' is disabled.`, command);
       return;
     }
 
@@ -272,6 +278,18 @@ function Home() {
 
       // Make an editable copy of the action.
       const action = Object.assign({}, actionSrc);
+
+      // No op - skip the action.
+      if (action.hasOwnProperty('noop')) {
+        results.push(_genResult(action, true, 'noop'));
+        return;
+      }
+
+      // Disabled - skip the action.
+      if (action.disabled) {
+        results.push(_genResult(action, true, 'disabled'));
+        return;
+      }
 
       // Run the action on a delay.
       if (action.delay) {
@@ -343,11 +361,6 @@ function Home() {
     if (!action || typeof action !== 'object') {
       log.error(LOG_PREFIX, `executeAction failed, invalid action.`, action);
       return _genResult(action, false, 'invalid_param');
-    }
-
-    // No operation
-    if (action.hasOwnProperty('noop')) {
-      return _genResult(action, true, 'noop');
     }
 
     // Verify there is only one action per action.
@@ -1700,20 +1713,19 @@ function Home() {
    * @param {Number} nextTime Time the next sun event happens
    */
   function _scheduleSunEvent(name, nextTime) {
-    const msg = `Next '${name}' happens at ${log.formatTime(nextTime)}`;
-    log.log(LOG_PREFIX, msg);
+    const msg = `'${name}' timer for ${log.formatTime(nextTime)}`;
     try {
       const job = new CronJob(new Date(nextTime), () => {
-        const cmdName = `RUN_AT_${name}`;
+        const cmdName = `RUN_ON_${name}`;
         if (_config.commands[cmdName]) {
-          _self.executeCommandByName(cmdName, name);
+          _self.executeCommandByName(cmdName, 'SunEvent');
         }
       });
       job.start();
       const nextDates = job.nextDates();
-      log.debug(LOG_PREFIX, `Timer setup for ${name}`, nextDates);
+      log.debug(LOG_PREFIX, `Set ${msg}`, nextDates);
     } catch (ex) {
-      log.exception(LOG_PREFIX, `Unable to create timer for ${name}`, ex);
+      log.exception(LOG_PREFIX, `Unable to set ${msg}`, ex);
     }
   }
 
