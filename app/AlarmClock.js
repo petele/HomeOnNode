@@ -209,7 +209,7 @@ function AlarmClock() {
       return;
     }
 
-    if (today >= now) {
+    if (now >= today) {
       _sunrise.current = tomorrow;
       _sunrise.next = null;
     } else {
@@ -234,7 +234,7 @@ function AlarmClock() {
       return;
     }
 
-    if (today >= now) {
+    if (now >= today) {
       _sunset.current = tomorrow;
       _sunset.next = null;
     } else {
