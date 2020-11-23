@@ -121,6 +121,10 @@ function Home() {
         lastUpdated: now,
         lastUpdated_: log.formatTime(now),
       },
+      sun: {
+        rise: 0,
+        set: 0,
+      },
     };
 
     if (_fbRootRef) {
@@ -1657,6 +1661,38 @@ function Home() {
     }
   }
 
+  /**
+   * Updates the sunrise time.
+   *
+   * @param {Number} today Unix time of sunrise today
+   * @param {Number} tomorrow Unix time of sunrise tomorrow
+   */
+  function _updateSunrise(today, tomorrow) {
+    const now = Date.now();
+    const next = now < today ? today : tomorrow;
+    if (next > _self.state.sun.rise) {
+      _fbSet('state/sun/rise', next);
+      const msg = `Next sun RISE is at ${log.formatTime(next)}`;
+      log.log(LOG_PREFIX, msg, next);
+    }
+  }
+
+  /**
+   * Updates the sunset time.
+   *
+   * @param {Number} today Unix time of sunset today
+   * @param {Number} tomorrow Unix time of sunset tomorrow
+   */
+  function _updateSunset(today, tomorrow) {
+    const now = Date.now();
+    const next = now < today ? today : tomorrow;
+    if (next > _self.state.sun.set) {
+      _fbSet('state/sun/set', next);
+      const msg = `Next sun SET is at ${log.formatTime(next)}`;
+      log.log(LOG_PREFIX, msg, next);
+    }
+  }
+
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
    * Google Device Access API
@@ -2209,17 +2245,15 @@ function Home() {
     weather = new Weather(_config.forecastIO.latLon, apiKey);
     weather.on('weather', (forecast) => {
       _fbSet('state/weather', forecast);
-      if (alarmClock) {
-        try {
-          const todayRise = forecast.today.sunriseTime * 1000;
-          const tomRise = forecast.tomorrow.sunriseTime * 1000;
-          alarmClock.setSunriseTime(todayRise, tomRise);
-          const todaySet = forecast.today.sunsetTime * 1000;
-          const tomSet = forecast.tomorrow.sunsetTime * 1000;
-          alarmClock.setSunsetTime(todaySet, tomSet);
-        } catch (ex) {
-          log.exception(LOG_PREFIX, 'Unable to update sunrise/sunset', ex);
-        }
+      try {
+        const todayRise = forecast.today.sunriseTime * 1000;
+        const tomRise = forecast.tomorrow.sunriseTime * 1000;
+        _updateSunrise(todayRise, tomRise);
+        const todaySet = forecast.today.sunsetTime * 1000;
+        const tomSet = forecast.tomorrow.sunsetTime * 1000;
+        _updateSunset(todaySet, tomSet);
+      } catch (ex) {
+        log.exception(LOG_PREFIX, 'Unable to update sunrise/sunset', ex);
       }
     });
   }

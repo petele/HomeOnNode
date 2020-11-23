@@ -21,14 +21,6 @@ const LOG_PREFIX = 'ALARM_CLOCK';
 function AlarmClock() {
   const _self = this;
   const _alarms = {};
-  const _sunrise = {
-    current: null,
-    next: null,
-  };
-  const _sunset = {
-    current: null,
-    next: null,
-  };
   let _fbRef;
 
   const FB_PATH = `config/HomeOnNode/alarmClock`;
@@ -194,59 +186,6 @@ function AlarmClock() {
     log.verbose(LOG_PREFIX, `_notify('${key}')`, alarm.details);
     _self.emit('alarm_changed', key, alarm.details);
   }
-
-  /**
-   * Update the time of sun rise
-   *
-   * @param {Number} today Time of sun rise today (Unix time)
-   * @param {Number} tomorrow Time of sun rise tomorrow (Unix time)
-   */
-  function _setSunriseTime(today, tomorrow) {
-    const now = Date.now();
-    const nextSunrise = _sunrise.current;
-    // If the next sunrise is already set for today or tomorrow, bail.
-    if (today === nextSunrise || tomorrow === nextSunrise) {
-      return;
-    }
-
-    if (now >= today) {
-      _sunrise.current = tomorrow;
-      _sunrise.next = null;
-    } else {
-      _sunrise.current = today;
-      _sunrise.next = tomorrow;
-    }
-    const msg = `Sun RISE set to ${new Date(_sunrise.current)}`;
-    log.log(LOG_PREFIX, msg, _sunrise);
-  }
-
-  /**
-   * Update the time of sun set
-   *
-   * @param {Number} today Time of sun set today (Unix time)
-   * @param {Number} tomorrow Time of sun set tomorrow (Unix time)
-   */
-  function _setSunsetTime(today, tomorrow) {
-    const now = Date.now();
-    const nextSunset = _sunset.current;
-    // If the next sunset is already set for today or tomorrow, bail.
-    if (today === nextSunset || tomorrow === nextSunset) {
-      return;
-    }
-
-    if (now >= today) {
-      _sunset.current = tomorrow;
-      _sunset.next = null;
-    } else {
-      _sunset.current = today;
-      _sunset.next = tomorrow;
-    }
-    const msg = `Sun SET set to ${new Date(_sunset.current)}`;
-    log.log(LOG_PREFIX, msg, _sunset);
-  }
-
-  this.setSunriseTime = _setSunriseTime;
-  this.setSunsetTime = _setSunsetTime;
 
   _init();
 }
