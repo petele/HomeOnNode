@@ -5,6 +5,7 @@
     "src/view-404.html",
     "src/view-actions.html",
     "src/view-alarms.html",
+    "src/view-black.html",
     "src/view-devices.html",
     "src/view-door-logs.html",
     "src/view-history.html",

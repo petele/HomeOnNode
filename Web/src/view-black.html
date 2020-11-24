@@ -15,19 +15,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <template>
     <style include="shared-styles">
       :host {
-        display: block;
-      }
-
-      #fill {
         width: 100vw;
         height: 100vh;
         position: absolute;
-        z-index: 5;
         background-color: black;
+      }
+      .current-time {
+        color: #aaa;
+        font-size: 5em;
+        margin-top: 96px;
+        text-align: center;
       }
     </style>
 
-    <div id="fill">
+    <div class="current-time">
+      [[currentTime]]
     </div>
 
   </template>
@@ -35,6 +37,22 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
   <script>
     class BlackView extends Polymer.Element {
       static get is() { return 'view-black'; }
+
+      static get properties() {
+        return {
+          currentTime: String,
+        }
+      }
+
+      ready() {
+        super.ready();
+        this.clockTick();
+      }
+
+      clockTick() {
+        this.currentTime = moment().format('h:mm a');
+        setTimeout(() => { this.clockTick(); }, 3000);
+      }
     }
 
     window.customElements.define(BlackView.is, BlackView);
