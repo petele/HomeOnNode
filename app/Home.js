@@ -167,7 +167,11 @@ function Home() {
     _self.emit('ready');
     log.log(LOG_PREFIX, 'Ready');
     if (_config.readySound) {
-      _playSound(_config.readySound);
+      try {
+        _playSound(_config.readySound);
+      } catch (ex) {
+        log.error(LOG_PREFIX, 'Unable to play start up sound.', ex);
+      }
     }
 
     _initConfigWatcher();

@@ -9,7 +9,7 @@ const commander = require('commander');
 const FBHelper = require('./FBHelper');
 
 const LOG_PREFIX = 'LOG_VIEWER';
-const DEFAULT_PATH = 'server';
+const DEFAULT_PATH = 'apps/server';
 
 let _path;
 
