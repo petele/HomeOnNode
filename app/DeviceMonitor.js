@@ -107,7 +107,7 @@ function DeviceMonitor(deviceName, isMonitor) {
    */
   function _initUncaught() {
     process.on('uncaughtException', (err) => {
-      log.fatal(_deviceName, 'A fatal exception occured.', err);
+      log.fatal(_deviceName, 'A fatal uncaught exception occured.', err);
       setTimeout(() => {
         console.log('--FORCED EXIT--');
         console.log(err);

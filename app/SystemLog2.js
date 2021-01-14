@@ -588,7 +588,9 @@ function _exception(prefix, message, extra) {
  * @param {Object} [extra] Optional extra information.
  */
 function _fatal(prefix, message, extra) {
+  const stack = new Error().stack;
   _handleLog(_generateLog('FATAL', prefix, message, extra));
+  _handleLog(_generateLog('FATAL', prefix, 'Stack Trace', stack));
 }
 
 /**
