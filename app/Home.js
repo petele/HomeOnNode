@@ -1550,8 +1550,13 @@ function Home() {
           log.warn(LOG_PREFIX, `${msgBase}: Unable to get humidity`, room);
           return;
         }
+        const wemoPlug = _self.state.wemo?.[room.wemoId];
+        if (!wemoPlug) {
+          log.warm(LOG_PREFIX, `${msgBase}: Unable to get plug state.`, room);
+          return;
+        }
         // Check the current Wemo state
-        const currentWemoState = _self.state.wemo[room.wemoId].value == true;
+        const currentWemoState = wemoPlug.value == true;
 
         // Setup the action we'll send
         const action = {};

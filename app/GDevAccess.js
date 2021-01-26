@@ -31,6 +31,8 @@ function GDeviceAccess() {
   const STRUCTURE_REFRESH_INTERVAL = 45 * 60 * 1003;
 
   let _ready = false;
+  let _homeInfoTimer;
+  let _deviceInfoTimer;
   const _self = this;
   const _projectID = Keys.gDeviceAccess?.projectID;
   const _clientID = Keys.gDeviceAccess?.clientID;
@@ -116,21 +118,43 @@ function GDeviceAccess() {
     const subscription = pubSubClient.subscription('hon-events');
     subscription.on('message', _handlePubSubMessage);
     subscription.on('error', _handlePubSubError);
+    subscription.on('close', _handlePubSubClosed);
 
-    setInterval(() => {
+    _deviceInfoTimer = setInterval(() => {
       _getDeviceInfo();
     }, DEVICE_REFRESH_INTERVAL);
-    setInterval(() => {
+    _homeInfoTimer = setInterval(() => {
       _getHomeInfo();
     }, STRUCTURE_REFRESH_INTERVAL);
   }
+
+  /**
+   * Handle the subscription closed event.
+   */
+  function _handlePubSubClosed() {
+    const msg = `PubSub Subscription Closed.`;
+    _ready = false;
+    if (_deviceInfoTimer) {
+      clearInterval(_deviceInfoTimer);
+      _deviceInfoTimer = null;
+    }
+    if (_homeInfoTimer) {
+      clearInterval(_homeInfoTimer);
+      _homeInfoTimer = null;
+    }
+    log.error(LOG_PREFIX, `${msg} Will retry in 5 minutes.`);
+    setTimeout(() => {
+      _connect();
+    }, 5 * 60 * 1000);
+  }
+
 
   /**
    * Handle incoming PubSub error...
    *
    * @param {Error} err Error
    */
-  async function _handlePubSubError(err) {
+  function _handlePubSubError(err) {
     const msg = `PubSub Error`;
     log.error(LOG_PREFIX, msg, err);
   }
