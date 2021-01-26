@@ -115,6 +115,7 @@ function GDeviceAccess() {
     const pubSubClient = new PubSub({projectId: 'petele-home-automation'});
     const subscription = pubSubClient.subscription('hon-events');
     subscription.on('message', _handlePubSubMessage);
+    subscription.on('error', _handlePubSubError);
 
     setInterval(() => {
       _getDeviceInfo();
@@ -125,6 +126,16 @@ function GDeviceAccess() {
   }
 
   /**
+   * Handle incoming PubSub error...
+   *
+   * @param {Error} err Error
+   */
+  async function _handlePubSubError(err) {
+    const msg = `PubSub Error`;
+    log.error(LOG_PREFIX, msg, err);
+  }
+
+  /**
    * Handle incoming PubSub message about changes to devices...
    *
    * @param {PubSub.message} message
@@ -132,7 +143,12 @@ function GDeviceAccess() {
   async function _handlePubSubMessage(message) {
     const msgBase = `PubSub Notification:`;
     const data = JSON.parse(message.data.toString());
-    message.ack();
+    try {
+      message.ack();
+    } catch (ex) {
+      log.error(LOG_PREFIX, `${msgBase} Failed trying to ack message.`, ex);
+      return;
+    }
     if (!data.hasOwnProperty('resourceUpdate')) {
       // If it doesn't have a resourceUpdate attribute, ignore it.
       log.warn(LOG_PREFIX, `${msgBase} 'unknown' (ignored)`, data);
