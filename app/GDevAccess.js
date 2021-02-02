@@ -550,7 +550,9 @@ function GDeviceAccess() {
       }
       if (retry) {
         log.verbose(LOG_PREFIX, `${msg} - Response error (will retry)`, extra);
-        await honHelpers.sleep(2500);
+        // If we're over quota, add some extra time.
+        const overQuotaDelay = resp.status === 429 ? 90 * 1000 : 0;
+        await honHelpers.sleep(2500 + overQuotaDelay);
         return _sendRequest(requestPath, method, body, false);
       }
       log.error(LOG_PREFIX, `${msg} - Response error`, extra);
