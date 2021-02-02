@@ -1552,7 +1552,7 @@ function Home() {
         }
         const wemoPlug = _self.state.wemo?.[room.wemoId];
         if (!wemoPlug) {
-          log.warm(LOG_PREFIX, `${msgBase}: Unable to get plug state.`, room);
+          log.warn(LOG_PREFIX, `${msgBase}: Unable to get plug state.`, room);
           return;
         }
         // Check the current Wemo state
