@@ -530,7 +530,7 @@ function GDeviceAccess() {
       resp = await fetch(url, fetchOpts);
     } catch (ex) {
       if (retry) {
-        log.verbose(LOG_PREFIX, `${msg} - Request error`, ex);
+        log.verbose(LOG_PREFIX, `${msg} - Request error (will retry)`, ex);
         await honHelpers.sleep(2500);
         return _sendRequest(requestPath, method, body, false);
       }
@@ -549,7 +549,7 @@ function GDeviceAccess() {
         // Do nothing.
       }
       if (retry) {
-        log.verbose(LOG_PREFIX, `${msg} - Response error`, extra);
+        log.verbose(LOG_PREFIX, `${msg} - Response error (will retry)`, extra);
         await honHelpers.sleep(2500);
         return _sendRequest(requestPath, method, body, false);
       }
@@ -562,7 +562,7 @@ function GDeviceAccess() {
       respBody = await resp.json();
     } catch (ex) {
       if (retry) {
-        log.verbose(LOG_PREFIX, `${msg} - JSON error`, ex);
+        log.verbose(LOG_PREFIX, `${msg} - JSON error (will retry)`, ex);
         await honHelpers.sleep(2500);
         return _sendRequest(requestPath, method, body, false);
       }
@@ -572,7 +572,7 @@ function GDeviceAccess() {
 
     if (respBody.error) {
       if (retry) {
-        log.verbose(LOG_PREFIX, `${msg} - Body error`, respBody);
+        log.verbose(LOG_PREFIX, `${msg} - Body error (will retry)`, respBody);
         await honHelpers.sleep(2500);
         return _sendRequest(requestPath, method, body, false);
       }
