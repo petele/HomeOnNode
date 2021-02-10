@@ -582,7 +582,7 @@ function Hue(key, ipAddress) {
         log.warn(LOG_PREFIX, msg, sensor);
         // _self.emit('sensor_unreachable', sensor);
       }
-      if (sConfig.battery && sConfig.battery < 50) {
+      if (sConfig.battery && sConfig.battery < 35) {
         const msg = `${msgBase} has a low battery (${sConfig.battery}%)`;
         log.warn(LOG_PREFIX, msg, sensor);
         // _self.emit('sensor_low_battery', sensor);
