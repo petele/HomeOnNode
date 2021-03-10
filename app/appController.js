@@ -96,9 +96,10 @@ async function _initFBCmdListener() {
   const oldCmdsSnap = await fbCmdRef.once('value');
   const oldCmds = oldCmdsSnap.val();
   if (oldCmds) {
-    log.log(APP_NAME, 'Removing previously requested commands', oldCmds);
-    oldCmdsSnap.ref.remove();
+    log.warn(APP_NAME, 'Removing previously requested commands', oldCmds);
+    await oldCmdsSnap.ref.remove();
   }
+  log.debug(APP_NAME, 'Listening for FB commands...');
   fbCmdRef.on('child_added', (snapshot) => {
     const cmd = snapshot.val();
     const source = cmd.source || 'FB';
