@@ -382,17 +382,19 @@ function Sonos() {
     if (!_isReady()) {
       return;
     }
-    // const player = _getPlayer();
-    // player.system.getFavorites().then((favs) => {
-    _sonosSystem.getFavorites().then((favs) => {
-      if (diff(_favorites, favs)) {
-        log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
-        _self.emit('favorites-changed', favs);
-        _favorites = favs;
-      }
-    }).catch((err) => {
-      log.exception(LOG_PREFIX, 'Error in getFavorites', err);
-    });
+    try {
+      _sonosSystem.getFavorites().then((favs) => {
+        if (diff(_favorites, favs)) {
+          log.verbose(LOG_PREFIX, 'Favorites changed.', favs);
+          _self.emit('favorites-changed', favs);
+          _favorites = favs;
+        }
+      }).catch((err) => {
+        log.exception(LOG_PREFIX, 'Error in getFavorites', err);
+      });
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Critical exception in getFavorites', ex);
+    }
   }
 
   /**

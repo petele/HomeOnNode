@@ -38,17 +38,18 @@ async function init() {
   });
 
   try {
-    _home = await new Home();
+    _home = new Home();
+    _home.on('ready', () => {
+      _initHTTPServer();
+      _initWSServer();
+      _initFBCmdListener();
+      _initCronTimers();
+    });
   } catch (ex) {
     const msg = `Error initializing 'home' module.`;
     log.exception(APP_NAME, msg, ex);
     process.exit(1);
   }
-
-  _initHTTPServer();
-  _initWSServer();
-  _initFBCmdListener();
-  _initCronTimers();
 }
 
 /**
