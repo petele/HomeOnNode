@@ -38,18 +38,21 @@ async function init() {
   });
 
   try {
-    _home = new Home();
-    _home.on('ready', () => {
-      _initHTTPServer();
-      _initWSServer();
-      _initFBCmdListener();
-      _initCronTimers();
-    });
+    _home = await new Home();
   } catch (ex) {
     const msg = `Error initializing 'home' module.`;
     log.exception(APP_NAME, msg, ex);
     process.exit(1);
   }
+
+  _home.on('ready', () => {
+    log.log(APP_NAME, '_ready_ fired');
+  });
+
+  _initHTTPServer();
+  _initWSServer();
+  _initFBCmdListener();
+  _initCronTimers();
 }
 
 /**
@@ -90,6 +93,12 @@ function _initWSServer() {
 async function _initFBCmdListener() {
   const fbRootRef = await FBHelper.getRootRefUnlimited();
   const fbCmdRef = await fbRootRef.child('commands');
+  const oldCmdsSnap = await fbCmdRef.once('value');
+  const oldCmds = oldCmdsSnap.val();
+  if (oldCmds) {
+    log.log(APP_NAME, 'Removing previously requested commands', oldCmds);
+    oldCmdsSnap.ref.remove();
+  }
   fbCmdRef.on('child_added', (snapshot) => {
     const cmd = snapshot.val();
     const source = cmd.source || 'FB';
