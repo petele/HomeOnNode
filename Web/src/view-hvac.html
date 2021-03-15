@@ -149,18 +149,33 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           </div>
         </summary>
         <div class="app-grid grid-three">
-          <div class="presetLabel">CURRENT</div>
+          <div class="presetLabel">Actual</div>
           <paper-input
             label="Living Room"
             type="number"
             required disabled
-            value="[[lrTemp]]">
+            value="[[lrCurTemp]]">
           </paper-input>
           <paper-input
             label="Bedroom"
             type="number"
             required disabled
-            value="[[brTemp]]">
+            value="[[brCurTemp]]">
+          </paper-input>
+        </div>
+        <div class="app-grid grid-three">
+          <div class="presetLabel">Current</div>
+          <paper-input
+            label="Living Room"
+            type="number"
+            required disabled
+            value="[[lrSetTemp]]">
+          </paper-input>
+          <paper-input
+            label="Bedroom"
+            type="number"
+            required disabled
+            value="[[brSetTemp]]">
           </paper-input>
         </div>
         <template is="dom-repeat" items="{{nestHVACAuto}}">
@@ -200,8 +215,10 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           nestState: Object,
           nestAway: Boolean,
           nestThermostats: Object,
-          lrTemp: Number,
-          brTemp: Number,
+          lrSetTemp: Number,
+          lrCurTemp: Number,
+          brSetTemp: Number,
+          brCurTemp: Number,
           autoHumidifier: {
             type: Object,
             value: {
@@ -224,12 +241,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           return;
         }
         change.base.forEach((thermostat) => {
-          const tC = thermostat.traits.temperature.ambientTemperatureCelsius;
-          const tF = this._convertCtoF(tC);
+          const traits = thermostat.traits;
+          if (!traits) {
+            return;
+          }
+          const currentC = traits.temperature.ambientTemperatureCelsius;
+          const currentF = this._convertCtoF(currentC);
+          const setPoint = traits.thermostatTemperatureSetpoint;
+          const setC = setPoint.heatCelsius || setPoint.coolCelsius;
+          const setF = this._convertCtoF(setC);
           if (thermostat.roomName === 'Bedroom') {
-            this.brTemp = tF;
+            this.brCurTemp = currentF;
+            this.brSetTemp = setF;
           } else if (thermostat.roomName === 'Living Room') {
-            this.lrTemp = tF;
+            this.lrCurTemp = currentF;
+            this.lrSetTemp = setF;
           } else {
             console.log('Unknown room', thermostat.roomName);
           }
