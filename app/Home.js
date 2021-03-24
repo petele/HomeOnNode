@@ -132,6 +132,7 @@ function Home() {
     if (_fbRootRef) {
       const fbState = await _fbRootRef.child('state');
       await fbState.child('time').set(_self.state.time);
+      await fbState.child('delayedCommands').remove();
       const fbPrevStateSnap = await fbState.once('value');
       const fbPrevState = fbPrevStateSnap.val();
       log.log(LOG_PREFIX, 'Updating state based on previous state.');
