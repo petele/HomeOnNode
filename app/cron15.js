@@ -3,8 +3,10 @@
 'use strict';
 
 const cronJob = function() {
-  if (_home.state.systemState === 'AWAY') {
-    _home.executeCommandByName('RUN_ON_AWAY', 'AWAY_TIMER');
+  const isAway = _home?.state?.systemState === 'AWAY';
+  // const isHome = _home?.state?.systemState === 'HOME';
+  if (isAway) {
+    _home.executeCommandByName('RUN_ON_AWAY', 'CRON_15');
   }
 };
 

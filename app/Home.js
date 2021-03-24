@@ -40,6 +40,7 @@ const LOG_PREFIX = 'HOME';
 function Home() {
   const _self = this;
   _self.state = {};
+  _self.config = {};
 
   let _config;
   let _fbRootRef;
@@ -88,6 +89,7 @@ function Home() {
       const fbConfigRef = await _fbRootRef.child(`config/HomeOnNode`);
       _config = await fbConfigRef.once('value');
       _config = _config.val();
+      _self.config = Object.assign({}, _config);
     } catch (ex) {
       log.error(LOG_PREFIX, `Unable to get config from Firebase...`, ex);
     }
@@ -189,6 +191,7 @@ function Home() {
         const newConfig = newVal.val();
         if (deepDiff(_config, newConfig)) {
           _config = newConfig;
+          _self.config = Object.assign({}, _config);
           log.log(LOG_PREFIX, 'Config updated.');
           try {
             fsProm.writeFile('config.json', JSON.stringify(_config));
