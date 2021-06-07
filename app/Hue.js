@@ -302,6 +302,8 @@ function Hue(key, ipAddress) {
 
       // Rule doesn't need to be changed.
       if (!updateRule) {
+        const m = `Rule ID '${ruleId}' doesn't need to be updated.`;
+        log.warn(LOG_PREFIX, m, {ruleId, idx, sceneId});
         return null;
       }
 
