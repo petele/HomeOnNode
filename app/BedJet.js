@@ -31,6 +31,11 @@ const LOG_PREFIX = 'BEDJET';
  *      Byte 18: Unknown
  *      Byte 19: Unknown
  *      Byte 20: Unknown
+ *  * Char: 00002004-bed0-0080-aa55-4265644a6574
+ *      0101 - off
+ *      0120 - m1
+ *      0121 - m2
+ *      0122 - m3
  * @constructor
  *
  * @param {String} address Bluetooth address
