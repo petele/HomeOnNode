@@ -301,7 +301,7 @@ function Home() {
 
       // Run the action on a delay.
       if (action.delay) {
-        _runDelayedCommand(action, source);
+        _scheduleDelayedCommand(action, source);
         return;
       }
 
@@ -1344,7 +1344,7 @@ function Home() {
    * @param {Object} action Command to run
    * @param {String} source Where the command was sent from.
    */
-  function _runDelayedCommand(action, source) {
+  function _scheduleDelayedCommand(action, source) {
     // Get the CounterID
     const id = (_delayedCmdCounter++).toString();
 
@@ -1726,20 +1726,30 @@ function Home() {
    * @param {Number} nextTime Time the next sun event happens
    */
   function _scheduleSunEvent(name, nextTime) {
-    const msg = `'${name}' timer for ${log.formatTime(nextTime)}`;
-    try {
-      const job = new CronJob(new Date(nextTime), () => {
-        const cmdName = `RUN_ON_${name}`;
-        if (_config.commands[cmdName]) {
-          _self.executeCommandByName(cmdName, 'SunEvent');
-        }
-      });
-      job.start();
-      const nextDates = job.nextDates();
-      log.debug(LOG_PREFIX, `Set ${msg}`, nextDates);
-    } catch (ex) {
-      log.exception(LOG_PREFIX, `Unable to set ${msg}`, ex);
+    const msg = `Sun event (${name}) scheduled for ${log.formatTime(nextTime)}`;
+    const delay = Math.round((nextTime - Date.now()) / 1000);
+    if (delay <= 0) {
+      const extra = {nextTime, delay};
+      log.error(LOG_PREFIX, `${msg} failed, time is in the past.`, extra);
+      return;
     }
+    const cmdName = `RUN_ON_${name}`;
+    const action = {cmdName, delay};
+    _scheduleDelayedCommand(action, 'SunEvent');
+    log.log(LOG_PREFIX, msg, action);
+    // try {
+    //   const job = new CronJob(new Date(nextTime), () => {
+    //     const cmdName = `RUN_ON_${name}`;
+    //     if (_config.commands[cmdName]) {
+    //       _self.executeCommandByName(cmdName, 'SunEvent');
+    //     }
+    //   });
+    //   job.start();
+    //   const nextDates = job.nextDates();
+    //   log.debug(LOG_PREFIX, `Set ${msg}`, nextDates);
+    // } catch (ex) {
+    //   log.exception(LOG_PREFIX, `Unable to set ${msg}`, ex);
+    // }
   }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
