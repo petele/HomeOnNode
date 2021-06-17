@@ -1699,7 +1699,11 @@ function Home() {
     if (next > _self.state.sun.rise) {
       _fbSet('state/sun/rise', next);
       _fbSet('state/sun/rise_', log.formatTime(next));
-      _scheduleSunEvent('SUNRISE', next);
+      // _scheduleSunEvent('SUNRISE', next);
+      const when = moment(next).format('h:mma');
+      const cfgPath = 'config/HomeOnNode/alarmClock/run_on_sunrise/time';
+      _fbSet(cfgPath, when);
+      log.log(LOG_PREFIX, `Updated sunrise timer.`, {cfgPath, when});
     }
   }
 
@@ -1715,7 +1719,11 @@ function Home() {
     if (next > _self.state.sun.set) {
       _fbSet('state/sun/set', next);
       _fbSet('state/sun/set_', log.formatTime(next));
-      _scheduleSunEvent('SUNSET', next);
+      // _scheduleSunEvent('SUNSET', next);
+      const when = moment(next).format('h:mma');
+      const cfgPath = 'config/HomeOnNode/alarmClock/run_on_sunset/time';
+      _fbSet(cfgPath, when);
+      log.log(LOG_PREFIX, `Updated sunset timer.`, {cfgPath, when});
     }
   }
 
