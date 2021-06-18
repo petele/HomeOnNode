@@ -90,8 +90,12 @@ function Bluetooth() {
       const uuid = peripheral.uuid;
       const msg = `getSvcAndChar('${uuid}', '${svcUUID}', '${charUUID}')`;
       log.verbose(LOG_PREFIX, msg);
+      const timeout = setTimeout(() => {
+        reject(new Error('timeout_exceeded'));
+      }, 5 * 1000);
       peripheral.discoverSomeServicesAndCharacteristics([svcUUID], [charUUID],
           (err, s, c) => {
+            clearTimeout(timeout);
             if (err) {
               log.error(LOG_PREFIX, `${msg} failed`, err);
               reject(err);
@@ -118,7 +122,11 @@ function Bluetooth() {
     return new Promise(function(resolve, reject) {
       const msg = `_readCharacteristic('${characteristic.uuid}')`;
       log.verbose(LOG_PREFIX, msg);
+      const timeout = setTimeout(() => {
+        reject(new Error('timeout_exceeded'));
+      }, 5 * 1000);
       characteristic.read((err, data) => {
+        clearTimeout(timeout);
         if (err) {
           log.error(LOG_PREFIX, `${msg} failed`, err);
           reject(err);
@@ -141,13 +149,17 @@ function Bluetooth() {
       const v = JSON.stringify(value.toJSON());
       const msg = `writeChar('${characteristic.uuid}', ${v})`;
       log.verbose(LOG_PREFIX, msg);
+      const timeout = setTimeout(() => {
+        reject(new Error('timeout_exceeded'));
+      }, 5 * 1000);
       characteristic.write(value, false, (err) => {
+        clearTimeout(timeout);
         if (err) {
           log.error(LOG_PREFIX, `${msg} failed`, err);
           reject(err);
           return;
         }
-        resolve();
+        resolve(value);
       });
     });
   }
@@ -301,9 +313,6 @@ function Bluetooth() {
         .then((svcAndChar) => {
           return _readCharacteristic(svcAndChar.characteristic);
         })
-        .catch(() => {
-          // Do nothing, the error has already been reported.
-        })
         .then((val) => {
           if (atomic === true) {
             _self.disconnect(peripheral);
@@ -330,9 +339,6 @@ function Bluetooth() {
         .then((svcAndChar) => {
           const characteristic = svcAndChar.characteristic;
           return _writeCharacteristic(characteristic, value);
-        })
-        .catch(() => {
-          // Do nothing, the error has already been reported.
         })
         .then((val) => {
           if (atomic === true) {

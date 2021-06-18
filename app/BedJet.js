@@ -7,8 +7,6 @@ const EventEmitter = require('events').EventEmitter;
 const LOG_PREFIX = 'BEDJET';
 
 /**
- * BedJet API
- *
  * * SvcX:  00001000-bed0-0080-aa55-4265644a6574
  *  * Char: 00002000-bed0-0080-aa55-4265644a6574
  *      Byte 01: Unknown
@@ -21,6 +19,12 @@ const LOG_PREFIX = 'BEDJET';
  *      Byte 08: Temperature (Actual)
  *      Byte 09: Temperature (Set Point)
  *      Byte 10: Mode [01-05]
+ *                00: Off
+ *                01: heat
+ *                02: turbo
+ *                03: ext-heat
+ *                04: cool
+ *                05: dry
  *      Byte 11: Fan Speed [13=100%]
  *      Byte 12: Unknown
  *      Byte 13: Unknown
@@ -31,11 +35,24 @@ const LOG_PREFIX = 'BEDJET';
  *      Byte 18: Unknown
  *      Byte 19: Unknown
  *      Byte 20: Unknown
- *  * Char: 00002004-bed0-0080-aa55-4265644a6574
+ *  * Char: 00002001-BED0-0080-AA55-4265644A6574 (R) -- device name
+ *  * Char: 00002002-BED0-0080-AA55-4265644A6574 (R/W) -- unknown
+ *  * Char: 00002003-BED0-0080-AA55-4265644A6574 (W) -- unknown
+ *  * Char: 00002004-bed0-0080-aa55-4265644a6574 (W) -- Commands
  *      0x01 0x01 - off
+ *      0x01 0x02-6 - cool, heat, turbo, dry, ext heat
+ *      0x01 0x10-1 - fan up/down
+ *      0x01 0x12-3 - temp up/down
  *      0x01 0x20 - m1
  *      0x01 0x21 - m2
  *      0x01 0x22 - m3
+ *  * Char: 00002005-BED0-0080-AA55-4265644A6574 (R/W) -- ?version info?
+ *  * Char: 00002006-BED0-0080-AA55-4265644A6574 (R/W) -- ?version info?
+ */
+
+/**
+ * BedJet API
+ *
  * @constructor
  *
  * @param {String} address Bluetooth address
@@ -125,10 +142,26 @@ function BedJet(address, bt) {
   this.off = async function() {
     try {
       log.log(LOG_PREFIX, `Turning off BedJet`);
-      await _setBasicValue([0x01, 0x01]); // send 0101
+      await _setBasicValue([0x01, 0x01]);
       return true;
     } catch (ex) {
       log.exception(LOG_PREFIX, `Attempt to turn off BedJet failed.`, ex);
+    }
+    return false;
+  };
+
+  /**
+   * Prewarm the bed using Turbo Heat mode.
+   *
+   * @return {Boolean} If request was successful.
+   */
+  this.preWarm = async function() {
+    try {
+      log.log(LOG_PREFIX, `Pre-warming bed...`);
+      await _setBasicValue([0x01, 0x04]);
+      return true;
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Attempt to turn on BedJet failed.`, ex);
     }
     return false;
   };
@@ -146,15 +179,29 @@ function BedJet(address, bt) {
         log.error(LOG_PREFIX, `Invalid memory setting, should be 1-3`, val);
         return false;
       }
-      // const cmd = `012${id}`; // send 012(id-1);
-      const arr = [0x01, 0x1F + val];
       log.log(LOG_PREFIX, `Starting memory 'M${val}'`);
-      await _setBasicValue(arr);
+      await _setBasicValue([0x01, 0x1F + val]);
       return true;
     } catch (ex) {
       log.exception(LOG_PREFIX, `Failed to start memory 'M${val}' failed.`, ex);
     }
     return false;
+  };
+
+  /**
+   * Gets the info from the primary service.
+   *
+   * @return {Buffer}
+   */
+  this.getInfo = function() {
+    const msg = `getInfo()`;
+    const svcUUID = '00001000bed00080aa554265644a6574';
+    const charUUID = '00002000bed00080aa554265644a6574';
+    log.log(LOG_PREFIX, msg, {svcUUID, charUUID});
+    if (_isReady(_bedJet) === false) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    return _bluetooth.getValue(_bedJet, svcUUID, charUUID, true);
   };
 
   /**
