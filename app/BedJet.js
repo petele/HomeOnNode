@@ -32,10 +32,10 @@ const LOG_PREFIX = 'BEDJET';
  *      Byte 19: Unknown
  *      Byte 20: Unknown
  *  * Char: 00002004-bed0-0080-aa55-4265644a6574
- *      0101 - off
- *      0120 - m1
- *      0121 - m2
- *      0122 - m3
+ *      0x01 0x01 - off
+ *      0x01 0x20 - m1
+ *      0x01 0x21 - m2
+ *      0x01 0x22 - m3
  * @constructor
  *
  * @param {String} address Bluetooth address
@@ -77,6 +77,28 @@ function BedJet(address, bt) {
   }
 
   /**
+   * Checks if everything is ready
+   *
+   * @param {Object} peripheral The peripheral that should be ready.
+   * @return {Boolean} If everything is ready to go.
+   */
+  function _isReady(peripheral) {
+    if (!_bluetooth) {
+      log.error(LOG_PREFIX, `isReady() failed: bluetooth not available.`);
+      return false;
+    }
+    if (_bluetooth.ready !== true) {
+      log.error(LOG_PREFIX, `isReady() failed: bluetooth not ready.`);
+      return false;
+    }
+    if (!peripheral) {
+      log.error(LOG_PREFIX, `isReady() failed: peripheral not provided/found.`);
+      return false;
+    }
+    return true;
+  }
+
+  /**
    * Connects to the BedJet
    *
    * @fires BedJet#found
@@ -85,11 +107,73 @@ function BedJet(address, bt) {
    */
   function _foundBedJet(bedJet) {
     _bedJet = bedJet;
-    _bedJet.on('connect', () => {});
-    _bedJet.on('disconnect', () => {});
-    _self.emit('found', {uuid: bedJet.uuid});
+    const uuid = bedJet.uuid;
+    const deviceName = bedJet.advertisement.localName;
+    const address = bedJet.address;
+    const details = {uuid, deviceName, address};
+    const msg = `Found ${deviceName}`;
+    log.log(LOG_PREFIX, msg, details);
+    _bluetooth.watch(bedJet);
+    _self.emit('found', details);
   }
 
+  /**
+   * Turns the BedJet off.
+   *
+   * @return {Boolean} If request was successful.
+   */
+  this.off = async function() {
+    try {
+      log.log(LOG_PREFIX, `Turning off BedJet`);
+      await _setBasicValue([0x01, 0x01]); // send 0101
+      return true;
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Attempt to turn off BedJet failed.`, ex);
+    }
+    return false;
+  };
+
+  /**
+   * Start a pre-programmed mode.
+   *
+   * @param {Number} val Memory value (1-3)
+   * @return {Boolean} If the request was successful
+   */
+  this.startMemory = async function(val) {
+    try {
+      val = parseInt(val, 10);
+      if (val < 1 || val > 3 || isNaN(val)) {
+        log.error(LOG_PREFIX, `Invalid memory setting, should be 1-3`, val);
+        return false;
+      }
+      // const cmd = `012${id}`; // send 012(id-1);
+      const arr = [0x01, 0x1F + val];
+      log.log(LOG_PREFIX, `Starting memory 'M${val}'`);
+      await _setBasicValue(arr);
+      return true;
+    } catch (ex) {
+      log.exception(LOG_PREFIX, `Failed to start memory 'M${val}' failed.`, ex);
+    }
+    return false;
+  };
+
+  /**
+   * Send a basic command
+   *
+   * @param {Array} arr Value to send
+   * @return {Promise} A completed promise when the task finishes
+   */
+  function _setBasicValue(arr) {
+    const msg = `setBasicValue(${arr})`;
+    const svcUUID = '00001000bed00080aa554265644a6574';
+    const charUUID = '00002004bed00080aa554265644a6574';
+    log.debug(LOG_PREFIX, msg, {svcUUID, charUUID, val: arr});
+    if (_isReady(_bedJet) === false) {
+      return Promise.reject(new Error('not_ready'));
+    }
+    const buff = Buffer.from(arr);
+    return _bluetooth.setValue(_bedJet, svcUUID, charUUID, buff, true);
+  }
 
   _init();
 }

@@ -10,7 +10,7 @@ const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
 const Awair = require('./Awair');
 const moment = require('moment');
-
+const BedJet = require('./BedJet');
 const log = require('./SystemLog2');
 const AppleTV = require('./AppleTV');
 const Logging = require('./Logging');
@@ -48,6 +48,7 @@ function Home() {
   let alarmClock;
   let appleTV;
   let awair;
+  let bedJet;
   let bluetooth;
   let gcmPush;
   let harmony;
@@ -162,6 +163,7 @@ function Home() {
     await _initAppleTV();
     await _initBluetooth();
     await _initPresence();
+    await _initBedJet();
     await _initGoogDeviceAccess();
 
     _initCron();
@@ -431,6 +433,21 @@ function Home() {
       //       log.verbose(LOG_PREFIX, `Whoops: Awair failed.`, err);
       //       return _genResult(action, false, err);
       //     });
+    }
+
+    if (action.hasOwnProperty('bedJet')) {
+      if (!bedJet) {
+        log.error(LOG_PREFIX, 'BedJet unavailable.');
+        return _genResult(action, false, 'not_available');
+      }
+      if (action.bedJet.off === true) {
+        return bedJet.off();
+      }
+      if (action.bedJet.hasOwnProperty('memory')) {
+        return bedJet.startMemory(action.bedJet.memory);
+      }
+      log.warn(LOG_PREFIX, 'Unknown BedJet command in executeAction', action);
+      return _genResult(action, false, 'unknown_command');
     }
 
     // Default Temperature
@@ -1613,8 +1630,8 @@ function Home() {
   async function _initAwair() {
     await _fbSet('state/awair', false);
 
-    if (_config.awair.disabled === true) {
-      log.warn(LOG_PREFIX, 'Cron disabled via config.');
+    if (_config.awair?.disabled === true) {
+      log.warn(LOG_PREFIX, 'Awair disabled via config.');
       return;
     }
 
@@ -1624,6 +1641,34 @@ function Home() {
     });
   }
 
+
+  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
+   *
+   * BedJet API
+   *
+   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
+
+  /**
+   * Init the Awair API
+   */
+  async function _initBedJet() {
+    await _fbSet('state/bedJet', false);
+
+    const address = _config.bedJet?.btAddress;
+    if (!address) {
+      log.warn(LOG_PREFIX, 'BedJet disabled, no address specified.');
+      return;
+    }
+    if (_config.bedJet?.disabled === true) {
+      log.warn(LOG_PREFIX, 'BedJet disabled via config.');
+      return;
+    }
+
+    bedJet = new BedJet(address, bluetooth);
+    bedJet.on('found', (data) => {
+      _fbSet(`state/bedJet`, data);
+    });
+  }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
@@ -1727,38 +1772,38 @@ function Home() {
     }
   }
 
-  /**
-   * Creates an event for the specified sun event
-   *
-   * @param {String} name Name of the sun event (rise|set)
-   * @param {Number} nextTime Time the next sun event happens
-   */
-  function _scheduleSunEvent(name, nextTime) {
-    const msg = `Sun event (${name}) scheduled for ${log.formatTime(nextTime)}`;
-    const delay = Math.round((nextTime - Date.now()) / 1000);
-    if (delay <= 0) {
-      const extra = {nextTime, delay};
-      log.error(LOG_PREFIX, `${msg} failed, time is in the past.`, extra);
-      return;
-    }
-    const cmdName = `RUN_ON_${name}`;
-    const action = {cmdName, delay};
-    _scheduleDelayedCommand(action, 'SunEvent');
-    log.log(LOG_PREFIX, msg, action);
-    // try {
-    //   const job = new CronJob(new Date(nextTime), () => {
-    //     const cmdName = `RUN_ON_${name}`;
-    //     if (_config.commands[cmdName]) {
-    //       _self.executeCommandByName(cmdName, 'SunEvent');
-    //     }
-    //   });
-    //   job.start();
-    //   const nextDates = job.nextDates();
-    //   log.debug(LOG_PREFIX, `Set ${msg}`, nextDates);
-    // } catch (ex) {
-    //   log.exception(LOG_PREFIX, `Unable to set ${msg}`, ex);
-    // }
-  }
+  // /**
+  //  * Creates an event for the specified sun event
+  //  *
+  //  * @param {String} name Name of the sun event (rise|set)
+  //  * @param {Number} nextTime Time the next sun event happens
+  //  */
+  // function _scheduleSunEvent(name, nextTime) {
+  //   const msg = `Sun evt (${name}) scheduled at ${log.formatTime(nextTime)}`;
+  //   const delay = Math.round((nextTime - Date.now()) / 1000);
+  //   if (delay <= 0) {
+  //     const extra = {nextTime, delay};
+  //     log.error(LOG_PREFIX, `${msg} failed, time is in the past.`, extra);
+  //     return;
+  //   }
+  //   const cmdName = `RUN_ON_${name}`;
+  //   const action = {cmdName, delay};
+  //   _scheduleDelayedCommand(action, 'SunEvent');
+  //   log.log(LOG_PREFIX, msg, action);
+  //   // try {
+  //   //   const job = new CronJob(new Date(nextTime), () => {
+  //   //     const cmdName = `RUN_ON_${name}`;
+  //   //     if (_config.commands[cmdName]) {
+  //   //       _self.executeCommandByName(cmdName, 'SunEvent');
+  //   //     }
+  //   //   });
+  //   //   job.start();
+  //   //   const nextDates = job.nextDates();
+  //   //   log.debug(LOG_PREFIX, `Set ${msg}`, nextDates);
+  //   // } catch (ex) {
+  //   //   log.exception(LOG_PREFIX, `Unable to set ${msg}`, ex);
+  //   // }
+  // }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
