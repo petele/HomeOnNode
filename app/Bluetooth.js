@@ -70,10 +70,9 @@ function Bluetooth() {
       _self.emit('scanning', false);
     });
     _noble.on('warning', (message) => {
-      log.warn(LOG_PREFIX, 'Noble warning', message);
+      log.debug(LOG_PREFIX, 'Noble warning', message);
     });
     _noble.on('discover', (peripheral) => {
-      // log.debug(LOG_PREFIX, 'Discovered');
       _self.emit('discover', peripheral);
     });
   }
