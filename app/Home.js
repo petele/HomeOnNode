@@ -441,10 +441,31 @@ function Home() {
         return _genResult(action, false, 'not_available');
       }
       if (action.bedJet.off === true) {
-        return bedJet.off();
+        return bedJet.off(true)
+            .then((result) => {
+              return _genResult(action, result, result);
+            })
+            .catch((err) => {
+              return _genResult(action, false, err);
+            });
+      }
+      if (action.bedJet.preWarm === true) {
+        return bedJet.preWarm(true)
+            .then((result) => {
+              return _genResult(action, result, result);
+            })
+            .catch((err) => {
+              return _genResult(action, false, err);
+            });
       }
       if (action.bedJet.hasOwnProperty('memory')) {
-        return bedJet.startMemory(action.bedJet.memory);
+        return bedJet.startMemory(action.bedJet.memory, true)
+            .then((result) => {
+              return _genResult(action, result, result);
+            })
+            .catch((err) => {
+              return _genResult(action, false, err);
+            });
       }
       log.warn(LOG_PREFIX, 'Unknown BedJet command in executeAction', action);
       return _genResult(action, false, 'unknown_command');

@@ -2,6 +2,7 @@
 
 const util = require('util');
 const log = require('./SystemLog2');
+const honHelpers = require('./HoNHelpers');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'BEDJET';
@@ -137,9 +138,10 @@ function BedJet(address, bt) {
   /**
    * Turns the BedJet off.
    *
+   * @param {Boolean} [retry] If the request fails, should it retry
    * @return {Boolean} If request was successful.
    */
-  this.off = async function() {
+  this.off = async function(retry) {
     try {
       log.log(LOG_PREFIX, `Turning off BedJet`);
       await _setBasicValue([0x01, 0x01]);
@@ -147,21 +149,30 @@ function BedJet(address, bt) {
     } catch (ex) {
       log.exception(LOG_PREFIX, `Attempt to turn off BedJet failed.`, ex);
     }
+    if (retry) {
+      await honHelpers.sleep(7500);
+      return _self.off(false);
+    }
     return false;
   };
 
   /**
    * Prewarm the bed using Turbo Heat mode.
    *
+   * @param {Boolean} [retry] If the request fails, should it retry
    * @return {Boolean} If request was successful.
    */
-  this.preWarm = async function() {
+  this.preWarm = async function(retry) {
     try {
       log.log(LOG_PREFIX, `Pre-warming bed...`);
       await _setBasicValue([0x01, 0x04]);
       return true;
     } catch (ex) {
       log.exception(LOG_PREFIX, `Attempt to turn on BedJet failed.`, ex);
+    }
+    if (retry) {
+      await honHelpers.sleep(7500);
+      return _self.off(false);
     }
     return false;
   };
@@ -170,9 +181,10 @@ function BedJet(address, bt) {
    * Start a pre-programmed mode.
    *
    * @param {Number} val Memory value (1-3)
+   * @param {Boolean} [retry] If the request fails, should it retry
    * @return {Boolean} If the request was successful
    */
-  this.startMemory = async function(val) {
+  this.startMemory = async function(val, retry) {
     try {
       val = parseInt(val, 10);
       if (val < 1 || val > 3 || isNaN(val)) {
@@ -184,6 +196,10 @@ function BedJet(address, bt) {
       return true;
     } catch (ex) {
       log.exception(LOG_PREFIX, `Failed to start memory 'M${val}' failed.`, ex);
+    }
+    if (retry) {
+      await honHelpers.sleep(7500);
+      return _self.off(false);
     }
     return false;
   };
