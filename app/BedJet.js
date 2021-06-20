@@ -172,7 +172,7 @@ function BedJet(address, bt) {
     }
     if (retry) {
       await honHelpers.sleep(7500);
-      return _self.off(false);
+      return _self.preWarm(false);
     }
     return false;
   };
@@ -199,7 +199,7 @@ function BedJet(address, bt) {
     }
     if (retry) {
       await honHelpers.sleep(7500);
-      return _self.off(false);
+      return _self.startMemory(val, false);
     }
     return false;
   };
