@@ -207,9 +207,9 @@ function Bluetooth() {
    * @param {Object} peripheral The Noble peripheral to watch.
    */
   this.watch = function(peripheral) {
-    const uuid = peripheral.uuid;
+    const uuid = peripheral?.uuid;
     const msg = `watch('${uuid}')`;
-    if (!peripheral || !peripheral.uuid) {
+    if (!peripheral || !uuid) {
       log.error(LOG_PREFIX, `${msg} failed: no peripheral provided.`);
       return;
     }
@@ -241,7 +241,7 @@ function Bluetooth() {
       const uuid = peripheral.uuid;
       const msg = `connect('${uuid}')`;
       if (_connectedDevices.hasOwnProperty(uuid) === false) {
-        log.error(LOG_PREFIX, `${msg} failed: not watched.`);
+        log.error(LOG_PREFIX, `${msg} failed: not watched.`, _connectedDevices);
         reject(new Error('not_watched'));
         return;
       }
@@ -261,7 +261,7 @@ function Bluetooth() {
         peripheral.cancelConnect();
         log.error(LOG_PREFIX, `${msg} - failed, timeout.`);
         reject(new Error('connection_timeout'));
-      }, 15 * 1000);
+      }, 7500);
       peripheral.connect((err) => {
         clearTimeout(timeout);
         if (err) {
@@ -286,7 +286,7 @@ function Bluetooth() {
       const uuid = peripheral.uuid;
       const msg = `disconnect('${uuid}')`;
       if (_connectedDevices.hasOwnProperty(uuid) === false) {
-        log.error(LOG_PREFIX, `${msg} failed: not watched.`);
+        log.error(LOG_PREFIX, `${msg} failed: not watched.`, _connectedDevices);
         reject(new Error('not_watched'));
         return;
       }

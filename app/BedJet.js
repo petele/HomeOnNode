@@ -60,10 +60,10 @@ const LOG_PREFIX = 'BEDJET';
  * @param {Object} bt Bluetooth object
 */
 function BedJet(address, bt) {
-  let _address;
   let _bedJet;
-  const _bluetooth = bt;
   const _self = this;
+  const _bluetooth = bt;
+  const _address = address.toLowerCase();
 
   /**
    * Init the BedJet Connection
@@ -74,20 +74,19 @@ function BedJet(address, bt) {
       log.error(LOG_PREFIX, 'Bluetooth not available.');
       return;
     }
-    if (!address) {
+    if (!_address) {
       log.error(LOG_PREFIX, `No address provided.`);
       return;
     }
-    _address = address.toLowerCase();
 
     _bluetooth.on('discover', (peripheral) => {
+      if (_bedJet) {
+        // Already found a BedJet, skipping...
+        return;
+      }
       const uuid = peripheral.uuid.toLowerCase();
       if (uuid !== _address) {
         // Not the bedJet, abort...
-        return;
-      }
-      if (_bedJet) {
-        // Already found a BedJet, skipping...
         return;
       }
       _foundBedJet(peripheral);
@@ -97,10 +96,9 @@ function BedJet(address, bt) {
   /**
    * Checks if everything is ready
    *
-   * @param {Object} peripheral The peripheral that should be ready.
    * @return {Boolean} If everything is ready to go.
    */
-  function _isReady(peripheral) {
+  function _isReady() {
     if (!_bluetooth) {
       log.error(LOG_PREFIX, `isReady() failed: bluetooth not available.`);
       return false;
@@ -109,7 +107,7 @@ function BedJet(address, bt) {
       log.error(LOG_PREFIX, `isReady() failed: bluetooth not ready.`);
       return false;
     }
-    if (!peripheral) {
+    if (!_bedJet) {
       log.error(LOG_PREFIX, `isReady() failed: peripheral not provided/found.`);
       return false;
     }
@@ -124,11 +122,11 @@ function BedJet(address, bt) {
    * @param {Peripheral} bedJet BedJet peripheral
    */
   function _foundBedJet(bedJet) {
-    _bedJet = bedJet;
     const uuid = bedJet.uuid;
     const deviceName = bedJet.advertisement.localName;
     const address = bedJet.address;
     const details = {uuid, deviceName, address};
+    _bedJet = bedJet;
     const msg = `Found ${deviceName}`;
     log.log(LOG_PREFIX, msg, details);
     _bluetooth.watch(bedJet);
@@ -214,7 +212,7 @@ function BedJet(address, bt) {
     const svcUUID = '00001000bed00080aa554265644a6574';
     const charUUID = '00002000bed00080aa554265644a6574';
     log.log(LOG_PREFIX, msg, {svcUUID, charUUID});
-    if (_isReady(_bedJet) === false) {
+    if (_isReady() === false) {
       return Promise.reject(new Error('not_ready'));
     }
     return _bluetooth.getValue(_bedJet, svcUUID, charUUID, true);
@@ -231,7 +229,7 @@ function BedJet(address, bt) {
     const svcUUID = '00001000bed00080aa554265644a6574';
     const charUUID = '00002004bed00080aa554265644a6574';
     log.debug(LOG_PREFIX, msg, {svcUUID, charUUID, val: arr});
-    if (_isReady(_bedJet) === false) {
+    if (_isReady() === false) {
       return Promise.reject(new Error('not_ready'));
     }
     const buff = Buffer.from(arr);
