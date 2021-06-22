@@ -172,11 +172,9 @@ function Home() {
     _self.emit('ready');
     log.log(LOG_PREFIX, 'Ready');
     if (_config.readySound) {
-      try {
-        _playSound(_config.readySound);
-      } catch (ex) {
-        log.error(LOG_PREFIX, 'Unable to play start up sound.', ex);
-      }
+      _playSound(_config.readySound).catch((err) => {
+        log.error(LOG_PREFIX, 'Unable to play start up sound.', err);
+      });
     }
 
     _initConfigWatcher();
@@ -1015,6 +1013,7 @@ function Home() {
         result.actionName = '_action_';
       }
     }
+    log.verbose(LOG_PREFIX, 'Action completed.', result);
     return result;
   }
 

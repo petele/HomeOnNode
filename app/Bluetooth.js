@@ -182,6 +182,10 @@ function Bluetooth() {
       log.debug(LOG_PREFIX, 'startScanning - already scanning.');
       return;
     }
+    if (_connectedDeviceCount > 0) {
+      log.debug(LOG_PREFIX, 'startScanning - failed, connected to devices.');
+      return;
+    }
     _noble.startScanning([], true);
   };
 
@@ -253,9 +257,16 @@ function Bluetooth() {
       }
       _self.stopScanning();
       log.verbose(LOG_PREFIX, msg);
+      const timeout = setTimeout(() => {
+        peripheral.cancelConnect();
+        log.error(LOG_PREFIX, `${msg} - failed, timeout.`);
+        reject(new Error('connection_timeout'));
+      }, 15 * 1000);
       peripheral.connect((err) => {
+        clearTimeout(timeout);
         if (err) {
           log.error(LOG_PREFIX, `${msg} failed: on connect`, err);
+          _self.startScanning();
           reject(err);
           return;
         }
