@@ -1013,7 +1013,6 @@ function Home() {
         result.actionName = '_action_';
       }
     }
-    log.verbose(LOG_PREFIX, 'Action completed.', result);
     return result;
   }
 

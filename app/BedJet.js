@@ -194,7 +194,7 @@ function BedJet(address, bt) {
         log.error(LOG_PREFIX, `Invalid memory setting, should be 1-3`, val);
         return false;
       }
-      log.log(LOG_PREFIX, `Starting memory 'M${val}'`);
+      log.log(LOG_PREFIX, `Starting memory 'M${val}'`, {retry});
       await _setBasicValue([0x01, 0x1F + val]);
       return true;
     } catch (ex) {
