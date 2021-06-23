@@ -6,6 +6,11 @@ const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'BLUETOOTH';
 
+const READ_TIMEOUT = 3000;
+const WRITE_TIMEOUT = 3000;
+const CONNECT_TIMEOUT = 3000;
+const SCAN_TIMEOUT = 90000;
+
 /**
  * Bluetooth API
  * @constructor
@@ -66,7 +71,7 @@ function Bluetooth() {
         clearTimeout(_scanTimeout);
         _scanTimeout = null;
       }
-      _scanTimeout = setTimeout(_restartScan, 90 * 1000);
+      _scanTimeout = setTimeout(_restartScan, SCAN_TIMEOUT);
       _self.emit('scanning', false);
     });
     _noble.on('warning', (message) => {
@@ -91,8 +96,9 @@ function Bluetooth() {
       const msg = `getSvcAndChar('${uuid}', '${svcUUID}', '${charUUID}')`;
       log.verbose(LOG_PREFIX, msg);
       const timeout = setTimeout(() => {
-        reject(new Error('timeout_exceeded'));
-      }, 5 * 1000);
+        log.error(LOG_PREFIX, `${msg} failed - timeout exceeded.`);
+        reject(new Error('read_timeout_exceeded'));
+      }, READ_TIMEOUT);
       peripheral.discoverSomeServicesAndCharacteristics([svcUUID], [charUUID],
           (err, s, c) => {
             clearTimeout(timeout);
@@ -123,8 +129,9 @@ function Bluetooth() {
       const msg = `_readCharacteristic('${characteristic.uuid}')`;
       log.verbose(LOG_PREFIX, msg);
       const timeout = setTimeout(() => {
-        reject(new Error('timeout_exceeded'));
-      }, 5 * 1000);
+        log.error(LOG_PREFIX, `${msg} failed - timeout exceeded.`);
+        reject(new Error('read_timeout_exceeded'));
+      }, READ_TIMEOUT);
       characteristic.read((err, data) => {
         clearTimeout(timeout);
         if (err) {
@@ -150,8 +157,9 @@ function Bluetooth() {
       const msg = `writeChar('${characteristic.uuid}', ${v})`;
       log.verbose(LOG_PREFIX, msg);
       const timeout = setTimeout(() => {
-        reject(new Error('timeout_exceeded'));
-      }, 5 * 1000);
+        log.error(LOG_PREFIX, `${msg} failed - timeout exceeded.`);
+        reject(new Error('write_timeout_exceeded'));
+      }, WRITE_TIMEOUT);
       characteristic.write(value, false, (err) => {
         clearTimeout(timeout);
         if (err) {
@@ -260,8 +268,8 @@ function Bluetooth() {
       const timeout = setTimeout(() => {
         peripheral.cancelConnect();
         log.error(LOG_PREFIX, `${msg} - failed, timeout.`);
-        reject(new Error('connection_timeout'));
-      }, 7500);
+        reject(new Error('connect_timeout_exceeded'));
+      }, CONNECT_TIMEOUT);
       peripheral.connect((err) => {
         clearTimeout(timeout);
         if (err) {

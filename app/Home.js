@@ -439,7 +439,7 @@ function Home() {
         return _genResult(action, false, 'not_available');
       }
       if (action.bedJet.off === true) {
-        return bedJet.off(true)
+        return bedJet.off(5)
             .then((result) => {
               return _genResult(action, result, result);
             })
@@ -448,7 +448,7 @@ function Home() {
             });
       }
       if (action.bedJet.preWarm === true) {
-        return bedJet.preWarm(true)
+        return bedJet.preWarm(5)
             .then((result) => {
               return _genResult(action, result, result);
             })
@@ -457,7 +457,7 @@ function Home() {
             });
       }
       if (action.bedJet.hasOwnProperty('memory')) {
-        return bedJet.startMemory(action.bedJet.memory, true)
+        return bedJet.startMemory(action.bedJet.memory, 5)
             .then((result) => {
               return _genResult(action, result, result);
             })

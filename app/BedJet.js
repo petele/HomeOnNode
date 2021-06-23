@@ -6,6 +6,7 @@ const honHelpers = require('./HoNHelpers');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'BEDJET';
+const RETRY_TIMEOUT = 12 * 1000;
 
 /**
  * * SvcX:  00001000-bed0-0080-aa55-4265644a6574
@@ -136,20 +137,22 @@ function BedJet(address, bt) {
   /**
    * Turns the BedJet off.
    *
-   * @param {Boolean} [retry] If the request fails, should it retry
+   * @param {Number} [retry] If the request fails, should it retry
    * @return {Boolean} If request was successful.
    */
   this.off = async function(retry) {
+    log.log(LOG_PREFIX, `Turning off BedJet`, {retry});
     try {
-      log.log(LOG_PREFIX, `Turning off BedJet`);
       await _setBasicValue([0x01, 0x01]);
       return true;
     } catch (ex) {
-      log.exception(LOG_PREFIX, `Attempt to turn off BedJet failed.`, ex);
-    }
-    if (retry) {
-      await honHelpers.sleep(7500);
-      return _self.off(false);
+      const msg = `Attempt to turn off BedJet failed.`;
+      if (Number.isInteger(retry) && retry > 0) {
+        log.debug(LOG_PREFIX, `${msg} - will retry.`, ex);
+        await honHelpers.sleep(RETRY_TIMEOUT);
+        return _self.off(retry - 1);
+      }
+      log.exception(LOG_PREFIX, msg, ex);
     }
     return false;
   };
@@ -157,20 +160,22 @@ function BedJet(address, bt) {
   /**
    * Prewarm the bed using Turbo Heat mode.
    *
-   * @param {Boolean} [retry] If the request fails, should it retry
+   * @param {Number} [retry] If the request fails, should it retry
    * @return {Boolean} If request was successful.
    */
   this.preWarm = async function(retry) {
+    log.log(LOG_PREFIX, `Pre-warming bed...`, {retry});
     try {
-      log.log(LOG_PREFIX, `Pre-warming bed...`);
       await _setBasicValue([0x01, 0x04]);
       return true;
     } catch (ex) {
-      log.exception(LOG_PREFIX, `Attempt to turn on BedJet failed.`, ex);
-    }
-    if (retry) {
-      await honHelpers.sleep(7500);
-      return _self.preWarm(false);
+      const msg = `Attempt to turn on BedJet failed.`;
+      if (Number.isInteger(retry) && retry > 0) {
+        log.debug(LOG_PREFIX, `${msg} - will retry.`, ex);
+        await honHelpers.sleep(RETRY_TIMEOUT);
+        return _self.preWarm(retry - 1);
+      }
+      log.exception(LOG_PREFIX, msg, ex);
     }
     return false;
   };
@@ -179,7 +184,7 @@ function BedJet(address, bt) {
    * Start a pre-programmed mode.
    *
    * @param {Number} val Memory value (1-3)
-   * @param {Boolean} [retry] If the request fails, should it retry
+   * @param {Number} [retry] If the request fails, should it retry
    * @return {Boolean} If the request was successful
    */
   this.startMemory = async function(val, retry) {
@@ -193,11 +198,13 @@ function BedJet(address, bt) {
       await _setBasicValue([0x01, 0x1F + val]);
       return true;
     } catch (ex) {
-      log.exception(LOG_PREFIX, `Failed to start memory 'M${val}' failed.`, ex);
-    }
-    if (retry) {
-      await honHelpers.sleep(7500);
-      return _self.startMemory(val, false);
+      const msg = `Failed to start memory 'M${val}' failed.`;
+      if (Number.isInteger(retry) && retry > 0) {
+        log.debug(LOG_PREFIX, `${msg} - will retry.`, ex);
+        await honHelpers.sleep(RETRY_TIMEOUT);
+        return _self.startMemory(val, retry - 1);
+      }
+      log.exception(LOG_PREFIX, msg, ex);
     }
     return false;
   };
