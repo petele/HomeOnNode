@@ -475,7 +475,7 @@ function Home() {
         return _genResult(action, false, 'not_available');
       }
       if (action.bt.reset === true) {
-        return bluetooth.reset().then((result) => {
+        return bluetooth.resetAdapter().then((result) => {
           return _genResult(action, result, result);
         }).catch((err) => {
           return _genResult(action, false, err);
