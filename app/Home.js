@@ -397,7 +397,7 @@ function Home() {
         log.error(LOG_PREFIX, 'AppleTV unavailable.');
         return _genResult(action, false, 'not_available');
       }
-      return appleTV.send(action.appleTV)
+      return appleTV.execute(action.appleTV)
           .then((result) => {
             return _genResult(action, true, result);
           })

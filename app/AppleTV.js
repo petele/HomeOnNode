@@ -83,6 +83,7 @@ function AppleTV() {
     log.log(LOG_PREFIX, 'Connected.');
     _ready = true;
     _self.emit('ready');
+    log.debug(LOG_PREFIX, 'Available keys', appleTV.Key);
   }
 
   /**
@@ -138,6 +139,28 @@ function AppleTV() {
   }
 
   /**
+   * Supported Commands Handler
+   * @param {String} keyName
+   * @return {Promise}
+   */
+  function _sendKey(keyName) {
+    if (typeof keyName !== 'string' || keyName.length === 0) {
+      log.exception(LOG_PREFIX, 'sendKey failed, invalid key send.', keyName);
+      return Promise.reject(new Error('invalid_key'));
+    }
+    try {
+      const keyID = appleTV.Key[keyName];
+      if (!keyID) {
+        log.error(LOG_PREFIX, `sendKey failed, unknown keyname`, keyName);
+        return Promise.reject(new Error('unknown_key'));
+      }
+      return _appleTV.sendKeyCommand(keyID);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'sendKey exception', ex);
+    }
+  }
+
+  /**
    * Executes an AppleTV command
    *
    * @param {Object} command Command to execute.
@@ -145,6 +168,9 @@ function AppleTV() {
    */
   this.execute = function(command) {
     if (_ready) {
+      if (command.sendKey) {
+        return _sendKey(command.sendKey);
+      }
       return {success: false};
     }
     return {success: false, ready: false};
