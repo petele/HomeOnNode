@@ -1479,6 +1479,9 @@ function Home() {
     appleTV.on('closed', () => {
       _fbSet('state/appleTV/ready', false);
     });
+    appleTV.on('power', (state) => {
+      _fbSet('state/appleTV/isPoweredOn', state);
+    });
 
     appleTV.connect(credentials);
   }
