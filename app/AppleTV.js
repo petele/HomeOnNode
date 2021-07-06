@@ -166,19 +166,24 @@ function AppleTV() {
    * @return {Promise}
    */
   function _sendKey(keyName) {
+    const msg = `sendKey(${keyName})`;
     if (typeof keyName !== 'string' || keyName.length === 0) {
-      log.exception(LOG_PREFIX, 'sendKey failed, invalid key send.', keyName);
+      log.exception(LOG_PREFIX, `${msg} failed. Invalid param.`, keyName);
       return Promise.reject(new Error('invalid_key'));
     }
     try {
       const keyID = appleTV.AppleTV.Key[keyName];
       if (!keyID) {
-        log.error(LOG_PREFIX, `sendKey failed, unknown keyname`, keyName);
+        log.error(LOG_PREFIX, `${msg} failed. Unknown key`, keyName);
         return Promise.reject(new Error('unknown_key'));
       }
-      return _appleTV.sendKeyCommand(keyID);
+      log.verbose(LOG_PREFIX, msg, keyID);
+      return _appleTV.sendKeyCommand(keyID)
+          .then(() => {
+            return {success: true, keyName: keyName, keyID: keyID};
+          });
     } catch (ex) {
-      log.exception(LOG_PREFIX, 'sendKey exception', ex);
+      log.exception(LOG_PREFIX, `${msg} failed. Exception`, ex);
       return Promise.reject(ex);
     }
   }
@@ -190,13 +195,15 @@ function AppleTV() {
    * @return {Object} result of executed command
    */
   this.execute = function(command) {
-    if (_ready) {
-      if (command.sendKey) {
-        return _sendKey(command.sendKey);
-      }
-      return {success: false};
+    if (!_ready) {
+      log.error(LOG_PREFIX, `Execute command failed, not ready.`);
+      return {success: false, ready: false};
     }
-    return {success: false, ready: false};
+    if (command.sendKey) {
+      return _sendKey(command.sendKey);
+    }
+    log.error(LOG_PREFIX, 'Execute command failed, unknown command', command);
+    return {success: false, message: 'unknown_command'};
   };
 
   this.pairBegin = async function() {
