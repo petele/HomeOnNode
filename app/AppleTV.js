@@ -7,6 +7,7 @@ const EventEmitter = require('events').EventEmitter;
 const appleTV = require('node-appletv-x');
 
 const LOG_PREFIX = 'APPLE_TV';
+const POWER_STATE_REFRESH = 4000;
 
 /**
  * AppleTV API.
@@ -22,6 +23,7 @@ function AppleTV() {
   let _nowPlaying;
   let _playbackQueue;
   let _supportedCommands;
+  let _isPoweredOn;
   const _self = this;
 
   this.connect = async function(credentials) {
@@ -83,7 +85,7 @@ function AppleTV() {
     log.log(LOG_PREFIX, 'Connected.');
     _ready = true;
     _self.emit('ready');
-    log.debug(LOG_PREFIX, 'Available keys', appleTV.Key);
+    _checkPowerStatusTick();
   }
 
   /**
@@ -139,6 +141,26 @@ function AppleTV() {
   }
 
   /**
+   * Timer tick for power status.
+   */
+  async function _checkPowerStatusTick() {
+    try {
+      const deviceInfo = await _appleTV.sendIntroduction();
+      const deviceCount = deviceInfo.payload.logicalDeviceCount;
+      const isPoweredOn = deviceCount > 0;
+      if (_isPoweredOn !== isPoweredOn) {
+        _isPoweredOn = isPoweredOn;
+        _self.emit('power', _isPoweredOn);
+      }
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Power status check failed.', ex);
+    }
+    setTimeout(() => {
+      _checkPowerStatusTick();
+    }, POWER_STATE_REFRESH);
+  }
+
+  /**
    * Supported Commands Handler
    * @param {String} keyName
    * @return {Promise}
@@ -149,7 +171,7 @@ function AppleTV() {
       return Promise.reject(new Error('invalid_key'));
     }
     try {
-      const keyID = appleTV.Key[keyName];
+      const keyID = appleTV.AppleTV.Key[keyName];
       if (!keyID) {
         log.error(LOG_PREFIX, `sendKey failed, unknown keyname`, keyName);
         return Promise.reject(new Error('unknown_key'));
@@ -157,6 +179,7 @@ function AppleTV() {
       return _appleTV.sendKeyCommand(keyID);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'sendKey exception', ex);
+      return Promise.reject(ex);
     }
   }
 
