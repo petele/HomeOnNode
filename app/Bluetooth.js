@@ -2,7 +2,6 @@
 
 const util = require('util');
 const log = require('./SystemLog2');
-const honHelpers = require('./HoNHelpers');
 const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'BLUETOOTH';
@@ -11,7 +10,6 @@ const READ_TIMEOUT = 3000;
 const WRITE_TIMEOUT = 3000;
 const CONNECT_TIMEOUT = 3000;
 const SCAN_TIMEOUT = 90000;
-const RESET_TIMER = 5000;
 
 /**
  * Bluetooth API
@@ -182,23 +180,6 @@ function Bluetooth() {
     log.warn(LOG_PREFIX, 'Scan shutdown timeout exceeded.', _connectedDevices);
     _self.startScanning();
   }
-
-  /**
-   * Reset the bluetooth adapter.
-   */
-  this.resetAdapter = async function() {
-    log.log(LOG_PREFIX, 'Resetting Bluetooth Adapter...', _connectedDevices);
-    try {
-      _self.stopScanning();
-      _noble.reset();
-      await honHelpers.sleep(RESET_TIMER);
-      _self.startScanning();
-      return true;
-    } catch (ex) {
-      log.error(LOG_PREFIX, 'Unable to reset Bluetooth Adapter.', ex);
-      return false;
-    }
-  };
 
   /**
    * Starts Noble scanning

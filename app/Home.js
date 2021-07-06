@@ -469,22 +469,6 @@ function Home() {
       return _genResult(action, false, 'unknown_command');
     }
 
-    if (action.hasOwnProperty('bt')) {
-      if (!bluetooth) {
-        log.error(LOG_PREFIX, 'Bluetooth is unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-      if (action.bt.reset === true) {
-        return bluetooth.resetAdapter().then((result) => {
-          return _genResult(action, result, result);
-        }).catch((err) => {
-          return _genResult(action, false, err);
-        });
-      }
-      log.warn(LOG_PREFIX, 'Unknown Bluetooth cmd in executeAction', action);
-      return _genResult(action, false, 'unknown_command');
-    }
-
     // Default Temperature
     if (action.hasOwnProperty('defaultTemperature')) {
       if (!googDeviceAccess) {
