@@ -249,9 +249,8 @@ function Bluetooth() {
       const uuid = peripheral.uuid;
       const msg = `connect('${uuid}')`;
       if (_connectedDevices.hasOwnProperty(uuid) === false) {
-        log.error(LOG_PREFIX, `${msg} failed: not watched.`, _connectedDevices);
-        reject(new Error('not_watched'));
-        return;
+        log.warn(LOG_PREFIX, `${msg} failed: not watched.`, _connectedDevices);
+        _self.watch(peripheral);
       }
       if (_connectedDeviceCount > MAX_CONNECTIONS) {
         log.error(LOG_PREFIX, `${msg} failed: connection count exceeded.`);
