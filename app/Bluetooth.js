@@ -6,9 +6,9 @@ const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'BLUETOOTH';
 
-const READ_TIMEOUT = 3000;
-const WRITE_TIMEOUT = 3000;
-const CONNECT_TIMEOUT = 3000;
+const READ_TIMEOUT = 5000;
+const WRITE_TIMEOUT = 5000;
+const CONNECT_TIMEOUT = 5000;
 const SCAN_TIMEOUT = 90000;
 
 /**
@@ -223,12 +223,20 @@ function Bluetooth() {
     }
     log.debug(LOG_PREFIX, msg);
     _connectedDevices[uuid] = false;
-    peripheral.on('connect', () => {
+    peripheral.on('connect', (err) => {
+      if (err) {
+        log.error(LOG_PREFIX, `Error on connection.`, err);
+        return;
+      }
       _connectedDevices[uuid] = true;
       _connectedDeviceCount += 1;
       log.verbose(LOG_PREFIX, `connected to '${uuid}'`);
     });
-    peripheral.on('disconnect', () => {
+    peripheral.on('disconnect', (err) => {
+      if (err) {
+        log.error(LOG_PREFIX, `Error on disconnect.`, err);
+        return;
+      }
       _connectedDevices[uuid] = false;
       _connectedDeviceCount -= 1;
       log.verbose(LOG_PREFIX, `disconnected from '${uuid}'`);
