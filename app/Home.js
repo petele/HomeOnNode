@@ -1716,6 +1716,15 @@ function Home() {
     bluetooth.on('adapter_state', (adapterState) => {
       _fbSet('state/bluetooth/adapterState', adapterState);
     });
+    bluetooth.on('device_found', (info) => {
+      _fbSet(`state/bluetooth/devices/${info.uuid}`, info);
+    });
+    bluetooth.on('device_connected', (uuid) => {
+      _fbSet(`state/bluetooth/devices/${uuid}/connected`, true);
+    });
+    bluetooth.on('device_disconnected', (uuid) => {
+      _fbSet(`state/bluetooth/devices/${uuid}/connected`, false);
+    });
   }
 
   /**

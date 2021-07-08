@@ -221,7 +221,7 @@ function Bluetooth() {
       log.error(LOG_PREFIX, `${msg} failed: no peripheral provided.`);
       return;
     }
-    log.debug(LOG_PREFIX, msg);
+    log.debug(LOG_PREFIX, msg, peripheral);
     _connectedDevices[uuid] = false;
     peripheral.on('connect', (err) => {
       if (err) {
@@ -231,6 +231,7 @@ function Bluetooth() {
       _connectedDevices[uuid] = true;
       _connectedDeviceCount += 1;
       log.verbose(LOG_PREFIX, `connected to '${uuid}'`);
+      _self.emit('device_connected', uuid);
     });
     peripheral.on('disconnect', (err) => {
       if (err) {
@@ -243,7 +244,19 @@ function Bluetooth() {
       if (_connectedDeviceCount === 0) {
         _self.startScanning();
       }
+      _self.emit('device_disconnected', uuid);
     });
+    const deviceInfo = {
+      uuid: uuid,
+      connected: false,
+      address: peripheral.address,
+      addressType: peripheral.addressType || 'unknown',
+      connectable: peripheral.connectable,
+      localName: peripheral.advertisement?.localName || 'undefined',
+      txPowerLevel: peripheral.advertisement?.txPowerLevel || 0,
+      rssi: peripheral.rssi || 'unavailable',
+    };
+    _self.emit('device_found', deviceInfo);
   };
 
   /**
@@ -257,7 +270,7 @@ function Bluetooth() {
       const uuid = peripheral.uuid;
       const msg = `connect('${uuid}')`;
       if (_connectedDevices.hasOwnProperty(uuid) === false) {
-        log.warn(LOG_PREFIX, `${msg} failed: not watched.`, _connectedDevices);
+        log.warn(LOG_PREFIX, `${msg} warning: not watched.`, _connectedDevices);
         _self.watch(peripheral);
       }
       if (_connectedDeviceCount > MAX_CONNECTIONS) {
