@@ -197,13 +197,13 @@ function AppleTV() {
   this.execute = function(command) {
     if (!_ready) {
       log.error(LOG_PREFIX, `Execute command failed, not ready.`);
-      return {success: false, ready: false};
+      return Promise.reject(new Error('not_ready'));
     }
     if (command.sendKey) {
       return _sendKey(command.sendKey);
     }
     log.error(LOG_PREFIX, 'Execute command failed, unknown command', command);
-    return {success: false, message: 'unknown_command'};
+    return Promise.reject(new Error('unknown_command'));
   };
 
   this.pairBegin = async function() {
