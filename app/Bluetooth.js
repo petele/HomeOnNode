@@ -286,7 +286,11 @@ function Bluetooth() {
       _self.stopScanning();
       log.verbose(LOG_PREFIX, msg);
       const timeout = setTimeout(() => {
-        peripheral.cancelConnect();
+        try {
+          peripheral.cancelConnect();
+        } catch (ex) {
+          log.exception(LOG_PREFIX, `${msg} - cancel connect failed!`, ex);
+        }
         log.error(LOG_PREFIX, `${msg} - failed, timeout.`);
         reject(new Error('connect_timeout_exceeded'));
       }, CONNECT_TIMEOUT);
