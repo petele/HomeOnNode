@@ -127,10 +127,7 @@ async function _setLogOpts() {
   const fbConsoleLogOptRef = await fbRootRef.child(`${base}/console`);
   fbConsoleLogOptRef.on('value', (snapshot) => {
     const opts = snapshot.val();
-    if (!opts) {
-      return;
-    }
-    const level = opts.logLevel || 100;
+    const level = opts?.logLevel || 100;
     log.log(APP_NAME, `Changing 'console' log settings`, {level});
     log.setConsoleLogOpts(level);
   });
@@ -138,11 +135,8 @@ async function _setLogOpts() {
   const fbFileLogOptRef = await fbRootRef.child(`${base}/file`);
   fbFileLogOptRef.on('value', (snapshot) => {
     const opts = snapshot.val();
-    if (!opts) {
-      return;
-    }
-    const level = opts.logLevel || 50;
-    const logPath = opts.logPath || LOG_PATH_FILE;
+    const level = opts?.logLevel || 50;
+    const logPath = opts?.logPath || LOG_PATH_FILE;
     log.log(APP_NAME, `Changing 'file' log settings`, {level, logPath});
     log.setFileLogOpts(level, logPath);
   });
@@ -150,11 +144,8 @@ async function _setLogOpts() {
   const fbFirebaseLogOptRef = await fbRootRef.child(`${base}/firebase`);
   fbFirebaseLogOptRef.on('value', (snapshot) => {
     const opts = snapshot.val();
-    if (!opts) {
-      return;
-    }
-    const level = opts.logLevel || 50;
-    const logPath = opts.logPath || LOG_PATH_FB;
+    const level = opts?.logLevel || 50;
+    const logPath = opts?.logPath || LOG_PATH_FB;
     log.log(APP_NAME, `Changing 'firebase' log settings`, {level, logPath});
     log.setFirebaseLogOpts(level, logPath);
   });
