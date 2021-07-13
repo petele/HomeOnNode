@@ -9,7 +9,8 @@ const HTTPServer = require('./HTTPServer');
 const DeviceMonitor = require('./DeviceMonitor');
 
 const APP_NAME = 'HomeOnNode';
-const FB_LOG_PATH = 'logs/server';
+const LOG_PATH_FB = 'logs/apps/server';
+const LOG_PATH_FILE = './logs/system.log';
 
 let _wss;
 let _home;
@@ -17,8 +18,8 @@ let _httpServer;
 let _deviceMonitor;
 
 log.startWSS();
-log.setFileLogOpts(50, './logs/system.log');
-log.setFirebaseLogOpts(50, 'logs/apps/server');
+log.setFileLogOpts(50, LOG_PATH_FILE);
+log.setFirebaseLogOpts(50, LOG_PATH_FB);
 
 
 /**
@@ -52,6 +53,7 @@ async function init() {
   _initHTTPServer();
   _initWSServer();
   _initFBCmdListener();
+  _setLogOpts();
   _initCronTimers();
 }
 
@@ -116,6 +118,49 @@ async function _initFBCmdListener() {
 }
 
 /**
+ * Set the logging options.
+ */
+async function _setLogOpts() {
+  const fbRootRef = await FBHelper.getRootRefUnlimited();
+  const base = `/config/${APP_NAME}/logs`;
+
+  const fbConsoleLogOptRef = await fbRootRef.child(`${base}/console`);
+  fbConsoleLogOptRef.on('value', (snapshot) => {
+    const opts = snapshot.val();
+    if (!opts) {
+      return;
+    }
+    const level = opts.logLevel || 100;
+    log.log(APP_NAME, `Changing 'console' log settings`, {level});
+    log.setConsoleLogOpts(level);
+  });
+
+  const fbFileLogOptRef = await fbRootRef.child(`${base}/file`);
+  fbFileLogOptRef.on('value', (snapshot) => {
+    const opts = snapshot.val();
+    if (!opts) {
+      return;
+    }
+    const level = opts.logLevel || 50;
+    const logPath = opts.logPath || LOG_PATH_FILE;
+    log.log(APP_NAME, `Changing 'file' log settings`, {level, logPath});
+    log.setFileLogOpts(level, logPath);
+  });
+
+  const fbFirebaseLogOptRef = await fbRootRef.child(`${base}/firebase`);
+  fbFirebaseLogOptRef.on('value', (snapshot) => {
+    const opts = snapshot.val();
+    if (!opts) {
+      return;
+    }
+    const level = opts.logLevel || 50;
+    const logPath = opts.logPath || LOG_PATH_FB;
+    log.log(APP_NAME, `Changing 'firebase' log settings`, {level, logPath});
+    log.setFirebaseLogOpts(level, logPath);
+  });
+}
+
+/**
  * Initialize the daily cron timers.
  */
 function _initCronTimers() {
@@ -129,7 +174,7 @@ function _initCronTimers() {
   }, 60 * 60 * 1000);
   setInterval(() => {
     log.verbose(APP_NAME, 'CRON Daily');
-    log.cleanLogs(FB_LOG_PATH, 7);
+    log.cleanLogs(LOG_PATH_FB, 7);
     _loadAndRunJS('cronDaily.js');
   }, 24 * 60 * 60 * 1000);
 
