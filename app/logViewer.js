@@ -15,6 +15,7 @@ let _path;
 
 commander
     .version('0.2.0')
+    .option('-c, --clean <value>', 'Clean the logs to the last X days')
     .option('-n, --number <value>', 'Number of log items to show (100)', 100)
     .option('-q, --quit', 'Quit after completion')
     .arguments('[path]')
@@ -45,10 +46,21 @@ function printLogs(fbRef) {
 }
 
 /**
+ * Clean log items from the database.
+ */
+async function clean() {
+  const days = parseInt(commander.clean);
+  log.log(LOG_PREFIX, `Clean - path: ${_path} | ${days}`);
+  const result = await log.cleanLogs(_path, days);
+  log.log(LOG_PREFIX, 'Clean-up complete.', result);
+  process.exit(0);
+}
+
+/**
  * Start the app
  */
-async function go() {
-  log.log(LOG_PREFIX, `Log path: ${_path}`);
+async function view() {
+  log.log(LOG_PREFIX, `View - path: ${_path}`);
   let fbLogRef;
   try {
     const fbRootRef = await FBHelper.getRootRef(30 * 1000);
@@ -60,5 +72,8 @@ async function go() {
   printLogs(fbLogRef);
 }
 
-
-go();
+if (commander.clean) {
+  clean();
+} else {
+  view();
+}
