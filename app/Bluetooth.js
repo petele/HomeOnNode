@@ -182,6 +182,23 @@ function Bluetooth() {
   }
 
   /**
+   * Attempts to reset the Bluetooth adapter.
+   *
+   * @return {Promise<Object>} Result of the reset
+   */
+  this.resetAdapter = function() {
+    log.debug(LOG_PREFIX, `Resetting Bluetooth adapter...`);
+    try {
+      _noble.reset();
+      log.debug(LOG_PREFIX, `Bluetooth adapter reset successfully.`);
+      return Promise.resolve({success: true});
+    } catch (ex) {
+      log.debug(LOG_PREFIX, `Bluetooth adapter reset failed.`, ex);
+      return Promise.reject(ex);
+    }
+  };
+
+  /**
    * Starts Noble scanning
    */
   this.startScanning = function() {
@@ -289,7 +306,7 @@ function Bluetooth() {
         try {
           peripheral.cancelConnect();
         } catch (ex) {
-          log.exception(LOG_PREFIX, `${msg} - cancel connect failed!`, ex);
+          log.debug(LOG_PREFIX, `${msg} - cancel connect failed!`, ex);
         }
         log.error(LOG_PREFIX, `${msg} - failed, timeout.`);
         reject(new Error('connect_timeout_exceeded'));

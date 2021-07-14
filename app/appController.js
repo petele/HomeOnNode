@@ -11,6 +11,7 @@ const DeviceMonitor = require('./DeviceMonitor');
 const APP_NAME = 'HomeOnNode';
 const LOG_PATH_FB = 'logs/apps/server';
 const LOG_PATH_FILE = './logs/system.log';
+const MAX_FB_LOG_AGE = 7;
 
 let _wss;
 let _home;
@@ -165,14 +166,15 @@ function _initCronTimers() {
   }, 60 * 60 * 1000);
   setInterval(() => {
     log.verbose(APP_NAME, 'CRON Daily');
-    log.cleanLogs(LOG_PATH_FB, 7);
+    log.cleanLogs(LOG_PATH_FB, MAX_FB_LOG_AGE);
     _loadAndRunJS('cronDaily.js');
   }, 24 * 60 * 60 * 1000);
 
-  // Run the daily cron job 2min after startup...
+  // Run the daily cron job 20min after startup...
   setTimeout(() => {
+    log.cleanLogs(LOG_PATH_FB, MAX_FB_LOG_AGE);
     _loadAndRunJS('cronDaily.js');
-  }, 2 * 60 * 1000);
+  }, 20 * 60 * 1000);
 }
 
 /**

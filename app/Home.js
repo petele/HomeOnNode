@@ -469,6 +469,25 @@ function Home() {
       return _genResult(action, false, 'unknown_command');
     }
 
+    // Bluetooth
+    if (action.hasOwnProperty('bluetooth')) {
+      if (!bluetooth) {
+        log.error(LOG_PREFIX, 'Bluetooth not available');
+        return _genResult(action, false, 'not_available');
+      }
+      if (action.bluetooth === 'RESET') {
+        return bluetooth.resetAdapter()
+            .then((result) => {
+              return _genResult(action, true, result);
+            })
+            .catch((err) => {
+              return _genResult(action, false, err);
+            });
+      }
+      log.warn(LOG_PREFIX, 'Unknown Bluetooth command', action);
+      return _genResult(action, false, 'unknown_command');
+    }
+
     // Default Temperature
     if (action.hasOwnProperty('defaultTemperature')) {
       if (!googDeviceAccess) {
