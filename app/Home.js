@@ -1158,7 +1158,7 @@ function Home() {
    */
   function _playSoundLocal(file) {
     const title = `playSoundLocal('${file}')`;
-    const cmd = `mplayer -really-quiet ${file}`;
+    const cmd = `mplayer -ao alsa -really-quiet ${file}`;
     return honExec.run(title, cmd, '.', true)
         .catch((err) => {
           log.error(LOG_PREFIX, `Unable to play sound file '${file}'`, err);
