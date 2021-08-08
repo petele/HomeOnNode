@@ -9,16 +9,18 @@ instructions.
 
 [pi-setup]: https://github.com/petele/HomeOnNode/blob/main/RPi-Setup.md
 
-## Setup Flic
+## Setup Flic (optional)
 
-Follow instructions at <https://community.home-assistant.io/t/install-flic/16969/4>
+*If using Flic,* follow instructions at
+<https://community.home-assistant.io/t/install-flic/16969/4>
 
 ### Clone Repo
 
 1. `git clone https://github.com/petele/HomeOnNode.git`
 1. `cd HomeOnNode/app`
 1. `mkdir logs`
-1. `npm i onoff`
+1. `npm ci`
+1. `npm i onoff` (optional, if using GPIO)
 1. Update `Keys.js`
 1. `cp ../login.sh ~`
 

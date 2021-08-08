@@ -10,7 +10,6 @@ const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
 const Awair = require('./Awair');
 const moment = require('moment');
-const BedJet = require('./BedJet');
 const log = require('./SystemLog2');
 const AppleTV = require('./AppleTV');
 const Logging = require('./Logging');
@@ -19,6 +18,7 @@ const GCMPush = require('./GCMPush');
 const HueSync = require('./HueSync');
 const fsProm = require('fs/promises');
 const Harmony = require('./HarmonyWS');
+const WSClient = require('./WSClient');
 const Weather = require('./Weather');
 const NanoLeaf = require('./NanoLeaf');
 const Presence = require('./Presence');
@@ -48,7 +48,7 @@ function Home() {
   let alarmClock;
   let appleTV;
   let awair;
-  let bedJet;
+  let bedJetWSClient;
   let bluetooth;
   let gcmPush;
   let harmony;
@@ -347,6 +347,7 @@ function Home() {
   this.shutdown = function() {
     log.log(LOG_PREFIX, 'Shutting down...');
     _shutdownBluetooth();
+    _shutdownBedJet();
     _shutdownHarmony();
     _shutdownTivo();
     _shutdownLGTV();
@@ -433,59 +434,18 @@ function Home() {
       //     });
     }
 
+    // Send command to the BedJet server
     if (action.hasOwnProperty('bedJet')) {
-      if (!bedJet) {
+      if (!bedJetWSClient) {
         log.error(LOG_PREFIX, 'BedJet unavailable.');
         return _genResult(action, false, 'not_available');
       }
-      if (action.bedJet.off === true) {
-        return bedJet.off(5)
-            .then((result) => {
-              return _genResult(action, result, result);
-            })
-            .catch((err) => {
-              return _genResult(action, false, err);
-            });
-      }
-      if (action.bedJet.preWarm === true) {
-        return bedJet.preWarm(5)
-            .then((result) => {
-              return _genResult(action, result, result);
-            })
-            .catch((err) => {
-              return _genResult(action, false, err);
-            });
-      }
-      if (action.bedJet.hasOwnProperty('memory')) {
-        return bedJet.startMemory(action.bedJet.memory, 5)
-            .then((result) => {
-              return _genResult(action, result, result);
-            })
-            .catch((err) => {
-              return _genResult(action, false, err);
-            });
-      }
-      log.warn(LOG_PREFIX, 'Unknown BedJet command in executeAction', action);
-      return _genResult(action, false, 'unknown_command');
-    }
-
-    // Bluetooth
-    if (action.hasOwnProperty('bluetooth')) {
-      if (!bluetooth) {
-        log.error(LOG_PREFIX, 'Bluetooth not available');
-        return _genResult(action, false, 'not_available');
-      }
-      if (action.bluetooth === 'RESET') {
-        return bluetooth.resetAdapter()
-            .then((result) => {
-              return _genResult(action, true, result);
-            })
-            .catch((err) => {
-              return _genResult(action, false, err);
-            });
-      }
-      log.warn(LOG_PREFIX, 'Unknown Bluetooth command', action);
-      return _genResult(action, false, 'unknown_command');
+      const strCmd = JSON.stringify(action.bedJet);
+      return bedJetWSClient.sendMessage(strCmd).then(() => {
+        return _genResult(action, true);
+      }).catch((err) => {
+        return _genResult(action, false, err);
+      });
     }
 
     // Default Temperature
@@ -1693,9 +1653,8 @@ function Home() {
    * Init the Awair API
    */
   async function _initBedJet() {
-    await _fbSet('state/bedJet', false);
-
-    const address = _config.bedJet?.btAddress;
+    await _fbSet('state/bedJet/client', false);
+    const address = _config.bedJet?.wsAddress;
     if (!address) {
       log.warn(LOG_PREFIX, 'BedJet disabled, no address specified.');
       return;
@@ -1705,10 +1664,19 @@ function Home() {
       return;
     }
 
-    bedJet = new BedJet(address, bluetooth);
-    bedJet.on('found', (data) => {
-      _fbSet(`state/bedJet`, data);
+    bedJetWSClient = new WSClient(address, true, 'bedjet');
+    bedJetWSClient.on('connected', (val) => {
+      _fbSet(`state/bedJet/client/connected`, val);
     });
+  }
+
+  /**
+   * Shutdown the Bluetooth Services
+   */
+  function _shutdownBedJet() {
+    if (bedJetWSClient) {
+      bedJetWSClient.shutdown();
+    }
   }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **

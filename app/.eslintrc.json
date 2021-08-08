@@ -9,5 +9,6 @@
     "no-prototype-builtins": 0
   },
   "globals": {
-  }
+  },
+  "ignorePatterns": ["FlicLib/**/*", "BedJetLib/**/*"]
 }
