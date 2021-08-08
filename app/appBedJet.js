@@ -10,7 +10,7 @@ const CronJob = require('cron').CronJob;
 const HonHelpers = require('./HoNHelpers');
 const DeviceMonitor = require('./DeviceMonitor');
 
-const BedJet = require('./BedJetLib');
+const {BedJet} = require('./BedJetLib');
 
 const LOG_FILE = './logs/bedjet.log';
 const LOG_PREFIX = 'BEDJET';
