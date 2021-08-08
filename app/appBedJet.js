@@ -234,7 +234,7 @@ function _initBedJet() {
     _fbSet('ready', true);
   });
   _bedJet.on('connected', (val) => {
-    log.debug(LOG_PREFIX, `BedJet Connected: ${val}`);
+    log.log(LOG_PREFIX, `BedJet Connected: ${val}`);
     _fbSet('connected', val);
   });
 }
