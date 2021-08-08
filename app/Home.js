@@ -441,7 +441,7 @@ function Home() {
         return _genResult(action, false, 'not_available');
       }
       const strCmd = JSON.stringify(action.bedJet);
-      return bedJetWSClient.sendMessage(strCmd).then(() => {
+      return bedJetWSClient.send(strCmd).then(() => {
         return _genResult(action, true);
       }).catch((err) => {
         return _genResult(action, false, err);
