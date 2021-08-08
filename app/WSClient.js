@@ -64,6 +64,7 @@ function WSClient(host, retry, serverName) {
     _self.connected = false;
     log.log(_logPrefix, `WebSocket closed.`);
     _self.emit('disconnect');
+    _self.emit('connected', false);
     _clearPingPong();
     if (_retry === true) {
       log.debug(_logPrefix, `Will reconnect in 3 seconds...`);
@@ -85,6 +86,7 @@ function WSClient(host, retry, serverName) {
     _self.connected = true;
     log.verbose(_logPrefix, 'WebSocket opened.');
     _self.emit('connect');
+    _self.emit('connected', true);
     _interval = setInterval(() => {
       _ws.ping(_noop);
     }, PING_INTERVAL);
