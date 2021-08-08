@@ -165,17 +165,17 @@ function validateConfig(config) {
  */
 function _initWSServer() {
   _wsServer = new WSServer('WSS', _config.serverPort || 8884);
-  _wsServer.on('message', (cmd, sender) => {
-    const msg = `Incoming message`;
-    const info = {cmd, sender};
+  _wsServer.on('message', (msg, sender) => {
+    const logMsg = `Incoming message`;
+    const info = {msg, sender};
     if (_config.disabled) {
-      log.log(LOG_PREFIX, `${msg}: ignored (disabled)`, info);
+      log.log(LOG_PREFIX, `${logMsg}: ignored (disabled)`, info);
       return;
     }
-    if (cmd.sendButton) {
-      return _sendButton(cmd.sendButton);
+    if (msg.cmd?.sendButton) {
+      return _sendButton(msg.cmd.sendButton);
     }
-    log.warn(LOG_PREFIX, `${msg}: ignored (unknown)`, info);
+    log.warn(LOG_PREFIX, `${logMsg}: ignored (unknown)`, info);
   });
 }
 
