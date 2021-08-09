@@ -1671,8 +1671,9 @@ function Home() {
     bedJetWSClient.on('message', (msg) => {
       if (msg.state) {
         _fbSet(`state/bedJet/state`, msg.state);
+        return;
       }
-      log.log(LOG_PREFIX, 'BedJet Message', msg);
+      log.log(LOG_PREFIX, 'Unknown BedJet Message', msg);
     });
     bedJetWSClient.on('shutdown', () => {
       log.log(LOG_PREFIX, 'BedJet shutdown received.');

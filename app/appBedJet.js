@@ -258,11 +258,20 @@ function _parseState(rawState) {
   const now = Date.now();
   temp.lastUpdated = now;
   temp.lastUpdated_ = log.formatTime(now);
-  const result = {
-    state: temp,
-    info: _bedJet.deviceInfo,
-  };
-  log.debug(LOG_PREFIX, 'State', result);
+  let offAt = Date.now();
+  if (temp.timeRemain.hours) {
+    offAt += temp.timeRemain.hours * 60 * 60 * 1000;
+  }
+  if (temp.timeRemain.minutes) {
+    offAt += temp.timeRemain.minutes * 60 * 1000;
+  }
+  if (temp.timeRemain.seconds) {
+    offAt += temp.timeRemain.seconds * 1000;
+  }
+  temp.timeRemain.offAt = offAt;
+  temp.timeRemain.offAt_ = log.formatTime(offAt);
+  const result = {state: temp};
+  log.debug(LOG_PREFIX, 'State', temp);
   return result;
 }
 
