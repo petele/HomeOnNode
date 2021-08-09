@@ -204,8 +204,9 @@ async function _sendButton(button) {
     await _bedJet.sendButton(button, BJ_RETRIES);
     log.verbose(LOG_PREFIX, `${msg} - getting state...`);
     const rawState = await _bedJet.getState(BJ_RETRIES);
-    const state = _parseState(rawState);
-    _wsBroadcast({state: state});
+    // const state = _parseState(rawState);
+    // _wsBroadcast({state: state});
+    _wsBroadcast({state: _parseState(rawState)});
     log.verbose(LOG_PREFIX, `${msg} - disconnecting...`);
     await _bedJet.disconnect(BJ_RETRIES);
   } catch (ex) {
@@ -224,14 +225,15 @@ async function _sendButton(button) {
  * @param {object} state State object
  */
 async function _parseState(state) {
-  if (state.raw) {
-    delete state.raw;
+  const result = Object.assign({}, state);
+  if (result.raw) {
+    delete result.raw;
   }
   const now = Date.now();
-  state.lastUpdated = now;
-  state.lastUpdated_ = log.formatTime(now);
-  log.debug(LOG_PREFIX, 'State', state);
-  return state;
+  result.lastUpdated = now;
+  result.lastUpdated_ = log.formatTime(now);
+  log.debug(LOG_PREFIX, 'State', result);
+  return result;
 }
 
 /**
