@@ -17,11 +17,13 @@ const LOG_PREFIX = 'BEDJET';
 const CONFIG_FILE = 'config.json';
 const APP_NAME = 'BedJetController';
 const BJ_RETRIES = 5;
+const STATE_INTERVAL = 7 * 60 * 1000;
 
 let _bedJet;
 let _config;
 let _wsServer;
 let _deviceMonitor;
+let _stateInterval;
 
 let _ready = false;
 let _commandInProgress = false;
@@ -218,6 +220,31 @@ async function _sendButton(button) {
 }
 
 /**
+ * Get the current BedJet state.
+ */
+async function _getState() {
+  const msg = `getState()`;
+  if (_commandInProgress) {
+    log.debug(LOG_PREFIX, `${msg} - skipped.`);
+    return;
+  }
+  _commandInProgress = true;
+  log.debug(LOG_PREFIX, msg);
+  try {
+    log.verbose(LOG_PREFIX, `${msg} - connecting...`);
+    await _bedJet.connect(BJ_RETRIES);
+    log.verbose(LOG_PREFIX, `${msg} - getting state...`);
+    const rawState = await _bedJet.getState(BJ_RETRIES);
+    _wsBroadcast(_parseState(rawState));
+    log.verbose(LOG_PREFIX, `${msg} - disconnecting...`);
+    await _bedJet.disconnect(BJ_RETRIES);
+  } catch (ex) {
+    log.exception(LOG_PREFIX, `${msg} - failed.`, ex);
+  }
+  _commandInProgress = false;
+}
+
+/**
  * Parse state object and save it to Firebase.
  *
  * @param {object} rawState State object
@@ -231,7 +258,10 @@ function _parseState(rawState) {
   const now = Date.now();
   temp.lastUpdated = now;
   temp.lastUpdated_ = log.formatTime(now);
-  const result = {state: temp};
+  const result = {
+    state: temp,
+    info: _bedJet.deviceInfo,
+  };
   log.debug(LOG_PREFIX, 'State', result);
   return result;
 }
@@ -249,6 +279,9 @@ function _initBedJet() {
     _ready = true;
     _wsBroadcast({ready: true});
     log.log(LOG_PREFIX, 'BedJet ready.');
+    _stateInterval = setInterval(() => {
+      _getState();
+    }, STATE_INTERVAL);
   });
   _bedJet.on('connected', (val) => {
     log.log(LOG_PREFIX, `BedJet Connected: ${val}`);
@@ -276,6 +309,10 @@ function _wsBroadcast(msg) {
 function _close() {
   log.log(LOG_PREFIX, 'Preparing to exit, closing all connections...');
   _ready = false;
+  if (_stateInterval) {
+    clearInterval(_stateInterval);
+    _stateInterval = null;
+  }
   if (_wsServer) {
     _wsServer.shutdown();
   }
