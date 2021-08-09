@@ -205,7 +205,7 @@ async function _sendButton(button) {
     log.verbose(LOG_PREFIX, `${msg} - getting state...`);
     const rawState = await _bedJet.getState(BJ_RETRIES);
     const state = _parseState(rawState);
-    _wsBroadcast({state});
+    _wsBroadcast({state: state});
     log.verbose(LOG_PREFIX, `${msg} - disconnecting...`);
     await _bedJet.disconnect(BJ_RETRIES);
   } catch (ex) {
