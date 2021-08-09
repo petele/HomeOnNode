@@ -1668,6 +1668,12 @@ function Home() {
     bedJetWSClient.on('connected', (val) => {
       _fbSet(`state/bedJet/client/connected`, val);
     });
+    bedJetWSClient.on('message', (msg) => {
+      log.log(LOG_PREFIX, 'BedJet Message', msg);
+    });
+    bedJetWSClient.on('shutdown', () => {
+      log.log(LOG_PREFIX, 'BedJet shutdown received.');
+    });
   }
 
   /**

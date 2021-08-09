@@ -185,12 +185,13 @@ function _initWSServer() {
  * @param {string} button Button id to send
  */
 async function _sendButton(button) {
+  const msg = `sendButton('${button}')`;
   if (_commandInProgress) {
+    log.debug(LOG_PREFIX, `${msg} - queued.`);
     _queue.push(button);
     return;
   }
   _commandInProgress = true;
-  const msg = `sendButton('${button}')`;
   log.log(LOG_PREFIX, msg);
   try {
     await _bedJet.connect(BJ_RETRIES);
@@ -217,7 +218,14 @@ async function _updateState(state) {
   if (state.raw) {
     delete state.raw;
   }
+  const now = Date.now();
+  state.lastUpdated = now;
+  state.lastUpdated_ = log.formatTime(now);
   _fbSet('state', state);
+  if (_wsServer) {
+    const strState = JSON.stringify(state);
+    _wsServer.broadcast(strState);
+  }
 }
 
 /**
@@ -247,10 +255,13 @@ function _initBedJet() {
  */
 function _fbSet(path, value) {
   if (!_fbState) {
-    log.error(LOG_FILE, 'Unable to update Firebase state', {path, value});
+    log.debug(LOG_FILE, 'Unable to update Firebase state', {path, value});
     return;
   }
-  _fbState.child(path).set(value);
+  _fbState.child(path).set(value).catch((err) => {
+    const msg = 'Exception while trying to update FB State.';
+    log.error(LOG_PREFIX, msg, {path, value});
+  });
 }
 
 /**

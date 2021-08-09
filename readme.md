@@ -9,20 +9,13 @@ instructions.
 
 [pi-setup]: https://github.com/petele/HomeOnNode/blob/main/RPi-Setup.md
 
-## Setup Flic (optional)
-
-*If using Flic,* follow instructions at
-<https://community.home-assistant.io/t/install-flic/16969/4>
-
 ### Clone Repo
 
 1. `git clone https://github.com/petele/HomeOnNode.git`
 1. `cd HomeOnNode/app`
 1. `mkdir logs`
 1. `npm ci`
-1. `npm i onoff` (optional, if using GPIO)
 1. Update `Keys.js`
-1. `cp ../login.sh ~`
 
 ### Set up log rotation
 
@@ -37,26 +30,43 @@ Edit `/etc/logrotate.conf` and add:
 }
 ```
 
+### appGPIO
+
+1. `cd ~/HomeOnNode/app`
+1. `npm i onoff`
+
+### appBedJet
+
+1. `cd ~/HomeOnNode/app`
+1. `npm i node-ble`
+1. Setup BLE permissions: <https://www.npmjs.com/package/node-ble>
+1. Create initial `config.json` file
+
+### appFlic
+
+1. Follow instructions at <https://community.home-assistant.io/t/install-flic/16969/4>
+
 ## Set `login.sh` to run automatically
 
+1. `cp ~/HomeOnNode/login.sh ~`
 1. Edit `~/login.sh` and have it start whatever is necessary.
 1. Edit `.bashrc` and add `./login.sh` to the bottom of the file.
 
 Celebrate!
 
-### Other notes and resources
+## Other notes and resources
 
-#### Interesting projects
+### Interesting projects
 
 * [HomeAssistant](https://github.com/balloob/home-assistant/)
 * [Node Sonos](https://github.com/bencevans/node-sonos)
 
-#### Harmony Info
+### Harmony Info
 
 * [Protocol Guide 1](https://github.com/jterrace/pyharmony/blob/master/PROTOCOL.md)
 * [Protocol Guide 2](https://github.com/swissmanu/harmonyhubjs-client/tree/master/docs/protocol)
 
-## No longer used
+## Archive - No longer used
 
 ### Install Z-Wave
 
