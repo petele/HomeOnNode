@@ -63,11 +63,11 @@ function WSClient(host, retry, serverName) {
   function _wsClose() {
     if (_self.connected) {
       log.log(_logPrefix, `WebSocket closed.`);
+      _self.emit('disconnect');
+      _self.emit('connected', false);
+      _self.connected = false;
     }
-    _self.connected = false;
-    _self.emit('disconnect');
-    _self.emit('connected', false);
-    _clearPingPong();
+    _resetWS();
     if (_retry === true) {
       log.debug(_logPrefix, `Will reconnect in 3 seconds...`);
       setTimeout(() => {
@@ -171,16 +171,28 @@ function WSClient(host, retry, serverName) {
   this.shutdown = function() {
     log.log(_logPrefix, 'Shutting down...');
     _retry = false;
-    _clearPingPong();
-    if (_ws) {
-      _ws.removeAllListeners('open');
-      _ws.removeAllListeners('close');
-      _ws.removeAllListeners('message');
-      _ws.close();
-      _ws.removeAllListeners('error');
-    }
+    _resetWS();
     _self.emit('shutdown');
   };
+
+  /**
+   * Close the WebSocket and remove all listeners.
+   *
+   * @return2 {void}
+   */
+  function _resetWS() {
+    if (!_ws) {
+      return;
+    }
+    _clearPingPong();
+    _ws.removeAllListeners('open');
+    _ws.removeAllListeners('close');
+    _ws.removeAllListeners('message');
+    _ws.close();
+    _ws.removeAllListeners('error');
+    _ws.removeAllListeners();
+    _ws = null;
+  }
 
   _init();
 }
