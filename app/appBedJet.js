@@ -106,7 +106,7 @@ function _initRebootCron() {
     log.log(LOG_PREFIX, 'Creating reboot cron job.', pattern);
     const job = new CronJob(pattern, () => {
       _close();
-      DeviceMonitor.restart('cron', 'cron_restart', false);
+      _deviceMonitor.restart('cron', 'cron_restart', false);
     }, null, true, 'America/New_York');
     job.start();
     _cronJobs.push(job);

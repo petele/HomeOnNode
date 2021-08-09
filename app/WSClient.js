@@ -61,8 +61,10 @@ function WSClient(host, retry, serverName) {
    * Handles the close event
    */
   function _wsClose() {
+    if (_self.connected) {
+      log.log(_logPrefix, `WebSocket closed.`);
+    }
     _self.connected = false;
-    log.log(_logPrefix, `WebSocket closed.`);
     _self.emit('disconnect');
     _self.emit('connected', false);
     _clearPingPong();
