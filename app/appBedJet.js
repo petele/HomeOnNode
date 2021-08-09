@@ -194,10 +194,14 @@ async function _sendButton(button) {
   _commandInProgress = true;
   log.log(LOG_PREFIX, msg);
   try {
+    log.verbose(LOG_PREFIX, `${msg} - connecting...`);
     await _bedJet.connect(BJ_RETRIES);
+    log.verbose(LOG_PREFIX, `${msg} - sending button press...`);
     await _bedJet.sendButton(button, BJ_RETRIES);
+    log.verbose(LOG_PREFIX, `${msg} - getting state...`);
     const state = await _bedJet.getState(BJ_RETRIES);
     _updateState(state);
+    log.verbose(LOG_PREFIX, `${msg} - disconnecting...`);
     await _bedJet.disconnect(BJ_RETRIES);
   } catch (ex) {
     log.exception(LOG_PREFIX, `${msg} - failed.`, ex);
@@ -222,6 +226,7 @@ async function _updateState(state) {
   state.lastUpdated = now;
   state.lastUpdated_ = log.formatTime(now);
   _fbSet('state', state);
+  log.log(LOG_PREFIX, 'BedJet State', state);
   if (_wsServer) {
     const strState = JSON.stringify(state);
     _wsServer.broadcast(strState);
