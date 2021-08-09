@@ -16,14 +16,14 @@ const LOG_FILE = './logs/bedjet.log';
 const LOG_PREFIX = 'BEDJET';
 const CONFIG_FILE = 'config.json';
 const APP_NAME = 'BedJetController';
-const FB_STATE_PATH = 'state/bedJet/host';
 const BJ_RETRIES = 5;
 
 let _bedJet;
 let _config;
-let _fbState;
 let _wsServer;
 let _deviceMonitor;
+
+let _ready = false;
 let _commandInProgress = false;
 
 const _queue = [];
@@ -118,7 +118,6 @@ function _initRebootCron() {
  */
 async function _initConfigListeners() {
   const fbRoot = await FBHelper.getRootRefUnlimited();
-  _fbState = await fbRoot.child(FB_STATE_PATH);
   const fbConfig = await fbRoot.child(`config/${APP_NAME}`);
   fbConfig.on('value', async (snapshot) => {
     const newConfig = snapshot.val();
@@ -172,6 +171,11 @@ function _initWSServer() {
       log.log(LOG_PREFIX, `${msg}: ignored (disabled)`, info);
       return;
     }
+    if (!_ready) {
+      log.warn(LOG_PREFIX, `${msg}: skipped (not_ready)`, info);
+      _wsBroadcast({ready: false});
+      return;
+    }
     if (cmd.sendButton) {
       return _sendButton(cmd.sendButton);
     }
@@ -199,8 +203,9 @@ async function _sendButton(button) {
     log.verbose(LOG_PREFIX, `${msg} - sending button press...`);
     await _bedJet.sendButton(button, BJ_RETRIES);
     log.verbose(LOG_PREFIX, `${msg} - getting state...`);
-    const state = await _bedJet.getState(BJ_RETRIES);
-    _updateState(state);
+    const rawState = await _bedJet.getState(BJ_RETRIES);
+    const state = _parseState(rawState);
+    _wsBroadcast({state});
     log.verbose(LOG_PREFIX, `${msg} - disconnecting...`);
     await _bedJet.disconnect(BJ_RETRIES);
   } catch (ex) {
@@ -218,19 +223,15 @@ async function _sendButton(button) {
  *
  * @param {object} state State object
  */
-async function _updateState(state) {
+async function _parseState(state) {
   if (state.raw) {
     delete state.raw;
   }
   const now = Date.now();
   state.lastUpdated = now;
   state.lastUpdated_ = log.formatTime(now);
-  _fbSet('state', state);
-  log.log(LOG_PREFIX, 'BedJet State', state);
-  if (_wsServer) {
-    const strState = JSON.stringify(state);
-    _wsServer.broadcast(strState);
-  }
+  log.debug(LOG_PREFIX, 'State', state);
+  return state;
 }
 
 /**
@@ -243,30 +244,28 @@ function _initBedJet() {
     log.exception(LOG_PREFIX, `BedJet API error`, err);
   });
   _bedJet.on('ready', () => {
+    _ready = true;
+    _wsBroadcast({ready: true});
     log.log(LOG_PREFIX, 'BedJet ready.');
-    _fbSet('ready', true);
   });
   _bedJet.on('connected', (val) => {
     log.log(LOG_PREFIX, `BedJet Connected: ${val}`);
-    _fbSet('connected', val);
   });
 }
 
 /**
- * Saves data to Firebase.
+ * Send a message to all connected clients.
  *
- * @param {string} path Child path to set
- * @param {any} value Value to save
+ * @param {object} msg Message to send to all clients
  */
-function _fbSet(path, value) {
-  if (!_fbState) {
-    log.debug(LOG_FILE, 'Unable to update Firebase state', {path, value});
+function _wsBroadcast(msg) {
+  if (!_wsServer) {
+    log.verbose(LOG_PREFIX, `wsBroadcast() skipped, no WS server.`);
     return;
   }
-  _fbState.child(path).set(value).catch((err) => {
-    const msg = 'Exception while trying to update FB State.';
-    log.error(LOG_PREFIX, msg, {path, value});
-  });
+  log.log(LOG_PREFIX, 'Broadcast', msg);
+  const strMsg = JSON.stringify(msg);
+  _wsServer.broadcast(strMsg);
 }
 
 /**
@@ -274,13 +273,13 @@ function _fbSet(path, value) {
 */
 function _close() {
   log.log(LOG_PREFIX, 'Preparing to exit, closing all connections...');
+  _ready = false;
   if (_wsServer) {
     _wsServer.shutdown();
   }
   if (_bedJet) {
     _bedJet.destroy();
   }
-  _fbSet('ready', false);
 }
 
 process.on('SIGINT', function() {

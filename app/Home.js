@@ -1653,7 +1653,7 @@ function Home() {
    * Init the Awair API
    */
   async function _initBedJet() {
-    await _fbSet('state/bedJet/client', false);
+    await _fbSet('state/bedJet', false);
     const address = _config.bedJet?.wsAddress;
     if (!address) {
       log.warn(LOG_PREFIX, 'BedJet disabled, no address specified.');
@@ -1666,9 +1666,12 @@ function Home() {
 
     bedJetWSClient = new WSClient(address, true, 'bedjet');
     bedJetWSClient.on('connected', (val) => {
-      _fbSet(`state/bedJet/client/connected`, val);
+      _fbSet(`state/bedJet/connected`, val);
     });
     bedJetWSClient.on('message', (msg) => {
+      if (msg.state) {
+        _fbSet(`state/bedJet/state`, msg.state);
+      }
       log.log(LOG_PREFIX, 'BedJet Message', msg);
     });
     bedJetWSClient.on('shutdown', () => {
