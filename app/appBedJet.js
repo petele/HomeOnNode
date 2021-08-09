@@ -204,9 +204,8 @@ async function _sendButton(button) {
     await _bedJet.sendButton(button, BJ_RETRIES);
     log.verbose(LOG_PREFIX, `${msg} - getting state...`);
     const rawState = await _bedJet.getState(BJ_RETRIES);
-    // const state = _parseState(rawState);
-    // _wsBroadcast({state: state});
-    _wsBroadcast({state: _parseState(rawState)});
+    const state = _parseState(rawState);
+    _wsBroadcast(state);
     log.verbose(LOG_PREFIX, `${msg} - disconnecting...`);
     await _bedJet.disconnect(BJ_RETRIES);
   } catch (ex) {
@@ -222,16 +221,17 @@ async function _sendButton(button) {
 /**
  * Parse state object and save it to Firebase.
  *
- * @param {object} state State object
+ * @param {object} rawState State object
  */
-async function _parseState(state) {
-  const result = Object.assign({}, state);
-  if (result.raw) {
-    delete result.raw;
+async function _parseState(rawState) {
+  const temp = Object.assign({}, rawState);
+  if (temp.raw) {
+    delete temp.raw;
   }
   const now = Date.now();
-  result.lastUpdated = now;
-  result.lastUpdated_ = log.formatTime(now);
+  temp.lastUpdated = now;
+  temp.lastUpdated_ = log.formatTime(now);
+  const result = {state: temp};
   log.debug(LOG_PREFIX, 'State', result);
   return result;
 }
