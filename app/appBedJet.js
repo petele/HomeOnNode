@@ -18,15 +18,16 @@ const CONFIG_FILE = 'config.json';
 const APP_NAME = 'BedJetController';
 const BJ_RETRIES = 5;
 const STATE_INTERVAL = 7 * 60 * 1000;
+const COMMAND_TIMEOUT = 4 * 60 * 1000;
 
 let _bedJet;
 let _config;
 let _wsServer;
 let _deviceMonitor;
 let _stateInterval;
+let _commandInProgress;
 
 let _ready = false;
-let _commandInProgress = false;
 
 const _queue = [];
 const _cronJobs = [];
@@ -197,7 +198,7 @@ async function _sendButton(button) {
     _queue.push(button);
     return;
   }
-  _commandInProgress = true;
+  _startCommandInProgress();
   log.log(LOG_PREFIX, msg);
   try {
     log.verbose(LOG_PREFIX, `${msg} - connecting...`);
@@ -212,11 +213,35 @@ async function _sendButton(button) {
   } catch (ex) {
     log.exception(LOG_PREFIX, `${msg} - failed.`, ex);
   }
-  _commandInProgress = false;
+  _clearCommandInProgress();
   if (_queue.length > 0) {
     await HonHelpers.sleep(750);
     await _sendButton(_queue.shift());
   }
+}
+
+/**
+ * Start the timer for Command in Progress, if timeout is exceeded, system
+ * will reboot.
+ */
+function _startCommandInProgress() {
+  _clearCommandInProgress();
+  _commandInProgress = setTimeout(() => {
+    log.warn(LOG_PREFIX, `Timeout exceeded.`);
+    _close();
+    _deviceMonitor.restart('timeout', 'timeout_exceeded', false);
+  }, COMMAND_TIMEOUT);
+}
+
+/**
+ * Clear the timer for Command in Progress.
+ */
+function _clearCommandInProgress() {
+  if (!_commandInProgress) {
+    return;
+  }
+  clearTimeout(_commandInProgress);
+  _commandInProgress = null;
 }
 
 /**
@@ -228,7 +253,7 @@ async function _getState() {
     log.debug(LOG_PREFIX, `${msg} - skipped.`);
     return;
   }
-  _commandInProgress = true;
+  _startCommandInProgress();
   log.debug(LOG_PREFIX, msg);
   try {
     log.verbose(LOG_PREFIX, `${msg} - connecting...`);
@@ -241,7 +266,7 @@ async function _getState() {
   } catch (ex) {
     log.exception(LOG_PREFIX, `${msg} - failed.`, ex);
   }
-  _commandInProgress = false;
+  _clearCommandInProgress();
 }
 
 /**
