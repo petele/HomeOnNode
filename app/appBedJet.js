@@ -292,6 +292,7 @@ function _parseState(rawState) {
   if (temp.mode === 'off') {
     offAt = 0;
   } else {
+    offAt = now;
     if (temp.timeRemain.hours) {
       offAt += temp.timeRemain.hours * 60 * 60 * 1000;
     }
