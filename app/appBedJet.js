@@ -16,7 +16,9 @@ const LOG_FILE = './logs/bedjet.log';
 const LOG_PREFIX = 'BEDJET';
 const CONFIG_FILE = 'config.json';
 const APP_NAME = 'BedJetController';
+
 const BJ_RETRIES = 5;
+const DELAY_BETWEEN_COMMANDS = 1500;
 const STATE_INTERVAL = 7 * 60 * 1000;
 const COMMAND_TIMEOUT = 4 * 60 * 1000;
 
@@ -74,7 +76,7 @@ async function init() {
   setInterval(async () => {
     await log.cleanFile(LOG_FILE);
     await log.cleanLogs(null, 7);
-  }, 60 * 60 * 24 * 1000);
+  }, 24 * 60 * 60 * 1000);
 }
 
 
@@ -216,7 +218,7 @@ async function _sendButton(button) {
   }
   _clearCommandInProgress();
   if (_queue.length > 0) {
-    await HonHelpers.sleep(750);
+    await HonHelpers.sleep(DELAY_BETWEEN_COMMANDS);
     await _sendButton(_queue.shift());
   }
 }
