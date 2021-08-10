@@ -321,7 +321,7 @@ function _initBedJet() {
     }, STATE_INTERVAL);
   });
   _bedJet.on('connected', (val) => {
-    log.log(LOG_PREFIX, `BedJet Connected: ${val}`);
+    log.debug(LOG_PREFIX, `BedJet Connected: ${val}`);
   });
 }
 
