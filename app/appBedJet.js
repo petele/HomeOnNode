@@ -229,8 +229,10 @@ async function _sendButton(button) {
  */
 function _startCommandInProgress() {
   _clearCommandInProgress();
-  _commandInProgress = setTimeout(() => {
+  _commandInProgress = setTimeout(async () => {
     log.warn(LOG_PREFIX, `Timeout exceeded.`);
+    _wsBroadcast({log: {reboot: true, message: 'timeout_exceeded'}});
+    await HonHelpers.sleep(1000);
     _close();
     _deviceMonitor.restart('timeout', 'timeout_exceeded', false);
   }, COMMAND_TIMEOUT);
@@ -286,15 +288,19 @@ function _parseState(rawState) {
   const now = Date.now();
   temp.lastUpdated = now;
   temp.lastUpdated_ = log.formatTime(now);
-  let offAt = Date.now();
-  if (temp.timeRemain.hours) {
-    offAt += temp.timeRemain.hours * 60 * 60 * 1000;
-  }
-  if (temp.timeRemain.minutes) {
-    offAt += temp.timeRemain.minutes * 60 * 1000;
-  }
-  if (temp.timeRemain.seconds) {
-    offAt += temp.timeRemain.seconds * 1000;
+  let offAt;
+  if (temp.mode === 'off') {
+    offAt = 0;
+  } else {
+    if (temp.timeRemain.hours) {
+      offAt += temp.timeRemain.hours * 60 * 60 * 1000;
+    }
+    if (temp.timeRemain.minutes) {
+      offAt += temp.timeRemain.minutes * 60 * 1000;
+    }
+    if (temp.timeRemain.seconds) {
+      offAt += temp.timeRemain.seconds * 1000;
+    }
   }
   temp.timeRemain.offAt = offAt;
   temp.timeRemain.offAt_ = log.formatTime(offAt);

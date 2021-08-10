@@ -1673,6 +1673,14 @@ function Home() {
         _fbSet(`state/bedJet/state`, msg.state);
         return;
       }
+      if (msg.ready) {
+        log.debug('BEDJET', 'BedJet ready.', msg);
+        return;
+      }
+      if (msg.log) {
+        log.log('BEDJET', 'BedJet log message', msg.log);
+        return;
+      }
       log.log(LOG_PREFIX, 'Unknown BedJet Message', msg);
     });
     bedJetWSClient.on('shutdown', () => {
