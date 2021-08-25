@@ -118,13 +118,18 @@ function _initRebootCron(jobs) {
       log.warn(LOG_PREFIX, 'Invalid cron reboot pattern', info);
       return;
     }
-    log.log(LOG_PREFIX, 'Creating reboot cron job.', pattern);
-    const job = new CronJob(pattern, () => {
-      _close();
-      _deviceMonitor.restart('cron', 'cron_restart', false);
-    }, null, true, 'America/New_York');
-    job.start();
-    _cronJobs.push(job);
+    try {
+      const job = new CronJob(pattern, () => {
+        _close();
+        _deviceMonitor.restart('cron', 'cron_restart', false);
+      }, null, true, 'America/New_York');
+      job.start();
+      log.log(LOG_PREFIX, 'Creating reboot cron job.', pattern);
+      _cronJobs.push(job);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Error creating cron reboot job', pattern);
+      log.exception(LOG_PREFIX, `Error cont'd`, ex);
+    }
   });
 }
 
