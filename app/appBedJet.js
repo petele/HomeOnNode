@@ -50,7 +50,7 @@ async function init() {
     log.log(LOG_PREFIX, `Reading config from '${CONFIG_FILE}'`);
     const encOpt = {encoding: 'utf8'};
     const config = JSON.parse(await fs.readFile(CONFIG_FILE, encOpt));
-    _parseConfig(config);
+    _parseConfig(config, true);
   } catch (ex) {
     log.fatal(LOG_PREFIX, `Unable to read/parse '${CONFIG_FILE}'.`, ex);
     process.exit(1);
@@ -58,9 +58,6 @@ async function init() {
 
   // Start the device monitor.
   _initDeviceMonitor();
-
-  // Initialize the Reboot Cron Job
-  _initRebootCron();
 
   // Listen for config changes.
   _initConfigListeners();
@@ -103,6 +100,10 @@ function _initRebootCron(jobs) {
   while (_cronJobs.length > 0) {
     const job = _cronJobs.shift();
     job.stop();
+  }
+  if (!jobs || !Array.isArray(jobs)) {
+    log.log(LOG_PREFIX, 'No jobs provided.', jobs);
+    return;
   }
   jobs.forEach((pattern) => {
     if (!pattern || typeof pattern !== 'string' || pattern.length === 0) {
@@ -159,8 +160,9 @@ async function _initConfigListeners() {
  * Parse the config object and update any timers.
  *
  * @param {Object} newConfig Config options
+ * @param {boolean} firstRun First run (setup reboot cron jobs)
  */
-function _parseConfig(newConfig) {
+function _parseConfig(newConfig, firstRun) {
   if (!newConfig) {
     throw new Error('no_config');
   }
@@ -188,6 +190,9 @@ function _parseConfig(newConfig) {
     _stateIntervalMinutes = newInterval;
   } else {
     _stateIntervalMinutes = 7;
+  }
+  if (firstRun) {
+    _initRebootCron(newConfig.rebootCron);
   }
 }
 
