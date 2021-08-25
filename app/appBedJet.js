@@ -26,6 +26,7 @@ let _disabled;
 let _wsServer;
 let _bjRetries;
 let _serverPort;
+let _bjConnected;
 let _deviceMonitor;
 let _stateInterval;
 let _commandInProgress;
@@ -363,6 +364,10 @@ function _initBedJet() {
     _updateStateTick();
   });
   _bedJet.on('connected', (val) => {
+    if (_bjConnected === val) {
+      return;
+    }
+    _bjConnected = val;
     log.debug(LOG_PREFIX, `BedJet Connected: ${val}`);
   });
 }
