@@ -17,17 +17,19 @@ const LOG_PREFIX = 'BEDJET';
 const CONFIG_FILE = 'config.json';
 const APP_NAME = 'BedJetController';
 
-const BJ_RETRIES = 5;
 const DELAY_BETWEEN_COMMANDS = 1500;
-const STATE_INTERVAL = 7 * 60 * 1000;
 const COMMAND_TIMEOUT = 4 * 60 * 1000;
 
 let _bedJet;
-let _config;
+let _address;
+let _disabled;
 let _wsServer;
+let _bjRetries;
+let _serverPort;
 let _deviceMonitor;
 let _stateInterval;
 let _commandInProgress;
+let _stateIntervalMinutes;
 
 let _ready = false;
 
@@ -48,10 +50,7 @@ async function init() {
     log.log(LOG_PREFIX, `Reading config from '${CONFIG_FILE}'`);
     const encOpt = {encoding: 'utf8'};
     const config = JSON.parse(await fs.readFile(CONFIG_FILE, encOpt));
-    if (!validateConfig(config)) {
-      throw new Error('invalid_config');
-    }
-    _config = config;
+    _parseConfig(config);
   } catch (ex) {
     log.fatal(LOG_PREFIX, `Unable to read/parse '${CONFIG_FILE}'.`, ex);
     process.exit(1);
@@ -97,15 +96,25 @@ function _initDeviceMonitor() {
 
 /**
  * Init the Reboot Cron Job
+ *
+ * @param {Array<Object>} jobs List of cron jobs
  */
-function _initRebootCron() {
+function _initRebootCron(jobs) {
   while (_cronJobs.length > 0) {
     const job = _cronJobs.shift();
     job.stop();
   }
-  const jobs = _config.rebootCron || [];
   jobs.forEach((pattern) => {
     if (!pattern || typeof pattern !== 'string' || pattern.length === 0) {
+      log.warn(LOG_PREFIX, 'Invalid cron reboot pattern provided', pattern);
+      return;
+    }
+    if (pattern.split(' ').length !== 5) {
+      const info = {
+        expected: '# # * * *',
+        got: pattern,
+      };
+      log.warn(LOG_PREFIX, 'Invalid cron reboot pattern', info);
       return;
     }
     log.log(LOG_PREFIX, 'Creating reboot cron job.', pattern);
@@ -126,11 +135,12 @@ async function _initConfigListeners() {
   const fbConfig = await fbRoot.child(`config/${APP_NAME}`);
   fbConfig.on('value', async (snapshot) => {
     const newConfig = snapshot.val();
-    if (!validateConfig(newConfig)) {
-      log.error(LOG_PREFIX, `New config is invalid`, newConfig);
+    try {
+      _parseConfig(newConfig);
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Error parsing config data', ex);
       return;
     }
-    _config = newConfig;
     try {
       log.log(LOG_PREFIX, `Writing updated config to '${CONFIG_FILE}'.`);
       await fs.writeFile(CONFIG_FILE, JSON.stringify(newConfig, null, 2));
@@ -139,40 +149,57 @@ async function _initConfigListeners() {
     }
   });
   const fbCronConfig = await fbRoot.child(`config/${APP_NAME}/rebootCron`);
-  fbCronConfig.on('value', () => {
-    _initRebootCron();
+  fbCronConfig.on('value', (snapshot) => {
+    const jobs = snapshot.val() || [];
+    _initRebootCron(jobs);
   });
 }
 
-
 /**
- * Validate the config file meets the requirements.
+ * Parse the config object and update any timers.
  *
- * @param {Object} config
- * @return {Boolean} true if good.
+ * @param {Object} newConfig Config options
  */
-function validateConfig(config) {
-  if (!config) {
-    return false;
+function _parseConfig(newConfig) {
+  if (!newConfig) {
+    throw new Error('no_config');
   }
-  if (config._configType !== 'bedJet') {
-    return false;
+  if (newConfig._configType !== 'bedJet') {
+    throw new Error('wrong_config_type');
   }
-  if (!config.hasOwnProperty('address')) {
-    return false;
+  if (!newConfig.hasOwnProperty('address')) {
+    throw new Error('config_missing_address');
   }
-  return true;
+  _address = newConfig.address;
+  _disabled = newConfig.disabled === true;
+  if (typeof newConfig.serverPort === 'number') {
+    _serverPort = newConfig.serverPort;
+  } else {
+    _serverPort = 8884;
+  }
+  const newRetries = newConfig.retries;
+  if (typeof newRetries === 'number' && newRetries > 0) {
+    _bjRetries = newRetries;
+  } else {
+    _bjRetries = 5;
+  }
+  const newInterval = newConfig.stateInterval;
+  if (typeof newInterval === 'number' && newInterval > 0) {
+    _stateIntervalMinutes = newInterval;
+  } else {
+    _stateIntervalMinutes = 7;
+  }
 }
 
 /**
  * Setup the Web Socket Server
  */
 function _initWSServer() {
-  _wsServer = new WSServer('WSS', _config.serverPort || 8884);
+  _wsServer = new WSServer('WSS', _serverPort);
   _wsServer.on('message', (cmd, sender) => {
     const msg = `Incoming message`;
     const info = {cmd, sender};
-    if (_config.disabled) {
+    if (_disabled) {
       log.log(LOG_PREFIX, `${msg}: ignored (disabled)`, info);
       return;
     }
@@ -204,14 +231,14 @@ async function _sendButton(button) {
   log.log(LOG_PREFIX, msg);
   try {
     log.verbose(LOG_PREFIX, `${msg} - connecting...`);
-    await _bedJet.connect(BJ_RETRIES);
+    await _bedJet.connect(_bjRetries);
     log.verbose(LOG_PREFIX, `${msg} - connected, sending button press...`);
-    await _bedJet.sendButton(button, BJ_RETRIES);
+    await _bedJet.sendButton(button, _bjRetries);
     log.verbose(LOG_PREFIX, `${msg} - getting state...`);
-    const rawState = await _bedJet.getState(BJ_RETRIES);
+    const rawState = await _bedJet.getState(_bjRetries);
     _wsBroadcast(_parseState(rawState));
     log.verbose(LOG_PREFIX, `${msg} - disconnecting...`);
-    await _bedJet.disconnect(BJ_RETRIES);
+    await _bedJet.disconnect(_bjRetries);
     log.verbose(LOG_PREFIX, `${msg} - disconnected.`);
   } catch (ex) {
     log.exception(LOG_PREFIX, `${msg} - failed.`, ex);
@@ -262,12 +289,12 @@ async function _getState() {
   log.debug(LOG_PREFIX, msg);
   try {
     log.verbose(LOG_PREFIX, `${msg} - connecting...`);
-    await _bedJet.connect(BJ_RETRIES);
+    await _bedJet.connect(_bjRetries);
     log.verbose(LOG_PREFIX, `${msg} - getting state...`);
-    const rawState = await _bedJet.getState(BJ_RETRIES);
+    const rawState = await _bedJet.getState(_bjRetries);
     _wsBroadcast(_parseState(rawState));
     log.verbose(LOG_PREFIX, `${msg} - disconnecting...`);
-    await _bedJet.disconnect(BJ_RETRIES);
+    await _bedJet.disconnect(_bjRetries);
   } catch (ex) {
     log.exception(LOG_PREFIX, `${msg} - failed.`, ex);
   }
@@ -314,8 +341,8 @@ function _parseState(rawState) {
  * Init the BedJet
  */
 function _initBedJet() {
-  log.init(LOG_PREFIX, 'Init BedJet');
-  _bedJet = new BedJet(_config.address);
+  log.init(LOG_PREFIX, 'Init BedJet', _address);
+  _bedJet = new BedJet(_address);
   _bedJet.on('error', (err) => {
     log.exception(LOG_PREFIX, `BedJet API error`, err);
   });
@@ -323,14 +350,23 @@ function _initBedJet() {
     _ready = true;
     _wsBroadcast({ready: true});
     log.log(LOG_PREFIX, 'BedJet ready.');
-    _stateInterval = setInterval(() => {
-      _getState();
-    }, STATE_INTERVAL);
+    _updateStateTick();
   });
   _bedJet.on('connected', (val) => {
     log.debug(LOG_PREFIX, `BedJet Connected: ${val}`);
   });
 }
+
+/**
+ * Refreshes the BedJet state every stateIntervalMinutes
+ */
+async function _updateStateTick() {
+  await _getState();
+  _stateInterval = setTimeout(() => {
+    _updateStateTick();
+  }, _stateIntervalMinutes * 60 * 1000);
+}
+
 
 /**
  * Send a message to all connected clients.
@@ -354,7 +390,7 @@ function _close() {
   log.log(LOG_PREFIX, 'Preparing to exit, closing all connections...');
   _ready = false;
   if (_stateInterval) {
-    clearInterval(_stateInterval);
+    clearTimeout(_stateInterval);
     _stateInterval = null;
   }
   if (_wsServer) {
