@@ -17,9 +17,6 @@ const LOG_PREFIX = 'BEDJET';
 const CONFIG_FILE = 'config.json';
 const APP_NAME = 'BedJetController';
 
-const DELAY_BETWEEN_COMMANDS = 1500;
-const COMMAND_TIMEOUT = 4 * 60 * 1000;
-
 let _bedJet;
 let _address;
 let _disabled;
@@ -31,6 +28,8 @@ let _deviceMonitor;
 let _stateInterval;
 let _commandInProgress;
 let _stateIntervalMinutes;
+let _commandTimeoutSeconds;
+let _delayBetweenCommandMS;
 
 let _ready = false;
 
@@ -178,12 +177,18 @@ function _parseConfig(newConfig, firstRun) {
   if (!newConfig.hasOwnProperty('address')) {
     throw new Error('config_missing_address');
   }
+  log.debug(LOG_PREFIX, 'Updating config', newConfig);
   _address = newConfig.address;
   _disabled = newConfig.disabled === true;
+  _delayBetweenCommandMS = 1500;
+  const oldPort = _serverPort;
   if (typeof newConfig.serverPort === 'number') {
     _serverPort = newConfig.serverPort;
   } else {
     _serverPort = 8884;
+  }
+  if (oldPort !== _serverPort && !firstRun) {
+    _wsBroadcast({log: {message: 'Server Port Changed, reboot required.'}});
   }
   const newRetries = newConfig.retries;
   if (typeof newRetries === 'number' && newRetries > 0) {
@@ -196,6 +201,12 @@ function _parseConfig(newConfig, firstRun) {
     _stateIntervalMinutes = newInterval;
   } else {
     _stateIntervalMinutes = 7;
+  }
+  const newTimeout = newConfig.timeoutSec;
+  if (typeof newTimeout === 'number' && newTimeout > 0) {
+    _commandTimeoutSeconds = newTimeout;
+  } else {
+    _commandTimeoutSeconds = 240;
   }
   if (firstRun) {
     _initRebootCron(newConfig.rebootCron);
@@ -256,7 +267,7 @@ async function _sendButton(button) {
   }
   _clearCommandInProgress();
   if (_queue.length > 0) {
-    await HonHelpers.sleep(DELAY_BETWEEN_COMMANDS);
+    await HonHelpers.sleep(_delayBetweenCommandMS);
     await _sendButton(_queue.shift());
   }
 }
@@ -270,10 +281,10 @@ function _startCommandInProgress() {
   _commandInProgress = setTimeout(async () => {
     log.warn(LOG_PREFIX, `Timeout exceeded.`);
     _wsBroadcast({log: {reboot: true, message: 'timeout_exceeded'}});
-    await HonHelpers.sleep(1000);
+    await HonHelpers.sleep(_delayBetweenCommandMS);
     _close();
     _deviceMonitor.restart('timeout', 'timeout_exceeded', false);
-  }, COMMAND_TIMEOUT);
+  }, _commandTimeoutSeconds);
 }
 
 /**
