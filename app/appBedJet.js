@@ -284,7 +284,7 @@ function _startCommandInProgress() {
     await HonHelpers.sleep(_delayBetweenCommandMS);
     _close();
     _deviceMonitor.restart('timeout', 'timeout_exceeded', false);
-  }, _commandTimeoutSeconds);
+  }, _commandTimeoutSeconds * 1000);
 }
 
 /**
