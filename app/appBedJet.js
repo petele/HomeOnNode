@@ -23,6 +23,7 @@ let _disabled;
 let _wsServer;
 let _bjRetries;
 let _serverPort;
+let _startTimer;
 let _bjConnected;
 let _deviceMonitor;
 let _stateInterval;
@@ -64,6 +65,16 @@ async function init() {
 
   // Start the WebSocket Server
   _initWSServer();
+
+  // Start the start-up timer.
+  _startTimer = setTimeout(async () => {
+    const msg = `BedJet start timer - timeout.`;
+    log.exception(LOG_PREFIX, msg);
+    _wsBroadcast({log: {reboot: true, message: msg}});
+    await HonHelpers.sleep(_delayBetweenCommandMS);
+    _close();
+    _deviceMonitor.restart('timeout', 'start_timeout_exceeded', false);
+  }, 120 * 1000);
 
   // Initialize BedJet API
   _initBedJet();
@@ -369,6 +380,8 @@ function _initBedJet() {
     log.exception(LOG_PREFIX, `BedJet API error`, err);
   });
   _bedJet.on('ready', () => {
+    clearTimeout(_startTimer);
+    _startTimer = null;
     _ready = true;
     _wsBroadcast({ready: true});
     log.log(LOG_PREFIX, 'BedJet ready.');

@@ -1677,8 +1677,12 @@ function Home() {
         log.debug('BEDJET', 'BedJet ready.', msg);
         return;
       }
+      if (msg.ready === false) {
+        log.error('BEDJET', 'BedJet not ready.');
+        return;
+      }
       if (msg.log) {
-        log.log('BEDJET', 'BedJet log message', msg.log);
+        log.log('BEDJET', `BedJet message: ${msg.log.message}`, msg.log);
         return;
       }
       log.log(LOG_PREFIX, 'Unknown BedJet Message', msg);
