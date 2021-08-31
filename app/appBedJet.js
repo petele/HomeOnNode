@@ -275,6 +275,14 @@ async function _sendButton(button) {
     log.verbose(LOG_PREFIX, `${msg} - disconnected.`);
   } catch (ex) {
     log.exception(LOG_PREFIX, `${msg} - failed.`, ex);
+    const reason = ex.message || ex.name || 'Unknown exception.';
+    const bcast = {
+      log: {
+        kind: 'exception',
+        message: `${msg} - failed: ${reason}`,
+      },
+    };
+    _wsBroadcast(bcast);
   }
   _clearCommandInProgress();
   if (_queue.length > 0) {
@@ -330,6 +338,14 @@ async function _getState() {
     await _bedJet.disconnect(_bjRetries);
   } catch (ex) {
     log.exception(LOG_PREFIX, `${msg} - failed.`, ex);
+    const reason = ex.message || ex.name || 'Unknown exception.';
+    const bcast = {
+      log: {
+        kind: 'exception',
+        message: `${msg} - failed: ${reason}`,
+      },
+    };
+    _wsBroadcast(bcast);
   }
   _clearCommandInProgress();
 }
