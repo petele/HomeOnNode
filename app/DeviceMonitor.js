@@ -61,10 +61,7 @@ function DeviceMonitor(deviceName, isMonitor) {
     const cpuTemp = await _getCPUTemperature();
     const deviceData = {
       deviceName: _deviceName,
-      processTitle: process.title,
       appName: appName,
-      pid: process.pid,
-      ppid: process.ppid,
       heartbeat: now,
       heartbeat_: now_,
       version: version.head,
@@ -83,8 +80,15 @@ function DeviceMonitor(deviceName, isMonitor) {
         cpuModel: piModel,
         cpuTemp: cpuTemp,
       },
-      cpuUsage: process.cpuUsage(),
-      memoryUsage: process.memoryUsage(),
+      process: {
+        id: process.pid,
+        parent: process.ppid,
+        title: process.title,
+      },
+      resourceUsage: {
+        cpu: process.cpuUsage(),
+        memory: process.memoryUsage(),
+      },
       restart: null,
       shutdown: null,
       exitDetails: null,
@@ -203,8 +207,10 @@ function DeviceMonitor(deviceName, isMonitor) {
       uptime_: log.humanizeDuration(uptime),
     };
     const cpuTemp = await _getCPUTemperature();
-    const cpuUsage = process.cpuUsage();
-    const memUsage = process.memoryUsage();
+    const resourceUsage = {
+      cpu: process.cpuUsage(),
+      memory: process.memoryUsage(),
+    };
 
     // Update hearbeat times...
     try {
@@ -220,18 +226,11 @@ function DeviceMonitor(deviceName, isMonitor) {
       log.error(_deviceName, 'Unable to store the CPU temperature.', err);
     }
 
-    // Update CPU usage data...
+    // Update resource usage data...
     try {
-      await _fbRef.child(`${_deviceName}/cpuUsage`).set(cpuUsage);
+      await _fbRef.child(`${_deviceName}/resourceUsage`).set(resourceUsage);
     } catch (err) {
       log.error(_deviceName, 'Unable to update the CPU usage info.', err);
-    }
-
-    // Update memory usage data....
-    try {
-      await _fbRef.child(`${_deviceName}/memoryUsage`).set(memUsage);
-    } catch (err) {
-      log.error(_deviceName, 'Unable to update the memory usage info.', err);
     }
   }
 
