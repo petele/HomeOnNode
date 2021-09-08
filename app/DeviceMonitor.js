@@ -34,7 +34,11 @@ function DeviceMonitor(deviceName, isMonitor) {
   let _ipAddressInterval;
   let _connectionCheckInterval;
   let _pingGoogleInterval;
+  let _cpuInfoInterval;
+  let _cpuTempInterval;
   let _ipAddresses = [];
+  let _cpuInfo = null;
+  let _cpuTemp = null;
   let _disconnectedAt = null;
   let _lastGooglePing = Date.now();
 
@@ -57,6 +61,7 @@ function DeviceMonitor(deviceName, isMonitor) {
     const appName = process.argv[1].substring(lastIndexOf).replace('.js', '');
     const piModel = await _getPiModelInfo();
     _ipAddresses = _getIPAddress();
+    _cpuInfo = os.cpus();
     const deviceData = {
       deviceName: _deviceName,
       appName: appName,
@@ -69,7 +74,7 @@ function DeviceMonitor(deviceName, isMonitor) {
       startedAt_: now_,
       host: {
         architecture: os.arch(),
-        cpus: os.cpus(),
+        cpus: _cpuInfo,
         platform: os.platform(),
         release: os.release(),
         type: os.type(),
@@ -84,9 +89,9 @@ function DeviceMonitor(deviceName, isMonitor) {
       uptime: 0,
       uptime_: `starting...`,
     };
-    const cpuTemp = await _getCPUTemperature();
-    if (cpuTemp) {
-      deviceData.host.cpuTemp = cpuTemp;
+    _cpuTemp = await _getCPUTemperature();
+    if (_cpuTemp) {
+      deviceData.host.cpuTemp = _cpuTemp;
     }
     log.log(_deviceName, 'Device Settings', deviceData);
     await _fbRef.child(_deviceName).set(deviceData);
@@ -97,6 +102,8 @@ function DeviceMonitor(deviceName, isMonitor) {
     _ipAddressInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
     _connectionCheckInterval = setInterval(_tickConnectionCheck, 30 * 1000);
     _pingGoogleInterval = setInterval(_tickPingGoogle, 30 * 1000);
+    _cpuInfoInterval = setInterval(_tickCPUInfo, 1 * 60 * 1000);
+    _cpuTempInterval = setInterval(_tickCPUTemp, 30 * 1000);
     _initUncaught();
     _initUnRejected();
     _initWarning();
@@ -152,6 +159,43 @@ function DeviceMonitor(deviceName, isMonitor) {
   }
 
   /**
+   * Refreshes the CPU info data.
+   */
+  async function _tickCPUInfo() {
+    const cpuInfo = os.cpus();
+    if (!diff(cpuInfo, _cpuInfo)) {
+      // CPU info is unchanged.
+      return;
+    }
+    _cpuInfo = cpuInfo;
+    log.verbose(_deviceName, `CPU info updated`, _cpuInfo);
+    try {
+      await _fbRef.child(`${_deviceName}/host/cpus`).set(_cpuInfo);
+    } catch (err) {
+      log.error(_deviceName, 'Unable to update the CPU info.', err);
+    }
+  }
+
+  /**
+   * Refreshes the CPU info data.
+   */
+  async function _tickCPUTemp() {
+    const cpuTemp = await _getCPUTemperature();
+    if (!diff(cpuTemp, _cpuTemp)) {
+      // CPU temp is unchanged.
+      return;
+    }
+    _cpuTemp = cpuTemp;
+    log.verbose(_deviceName, `CPU temperature updated`, _cpuTemp);
+    try {
+      await _fbRef.child(`${_deviceName}/host/cpuTemp`).set(_cpuTemp);
+    } catch (err) {
+      log.error(_deviceName, 'Unable to store the CPU temperature.', err);
+    }
+  }
+
+
+  /**
    * Get the RaspberryPi model info.
    */
   async function _getPiModelInfo() {
@@ -182,7 +226,7 @@ function DeviceMonitor(deviceName, isMonitor) {
   /**
    * Heartbeat Tick
    */
-  function _tickHeartbeat() {
+  async function _tickHeartbeat() {
     if (!_fbRef) {
       log.error(_deviceName, 'No Firebase ref...');
       return;
@@ -200,18 +244,11 @@ function DeviceMonitor(deviceName, isMonitor) {
       uptime: uptime,
       uptime_: uptime_,
     };
-    _fbRef.child(_deviceName).update(details)
-        .then(() => {
-          return _getCPUTemperature();
-        })
-        .then((cpuTemp) => {
-          if (cpuTemp) {
-            return _fbRef.child(`${deviceName}/host/cpuTemp`).set(cpuTemp);
-          }
-        })
-        .catch((err) => {
-          log.error(_deviceName, 'Error updating heartbeat info', err);
-        });
+    try {
+      await _fbRef.child(_deviceName).update(details);
+    } catch (err) {
+      log.error(_deviceName, 'Unable to update the heartbeat.', err);
+    }
   }
 
   /**
@@ -356,22 +393,12 @@ function DeviceMonitor(deviceName, isMonitor) {
    */
   function _beforeExit(exitDetails) {
     log.appStop(exitDetails.sender, exitDetails);
-    if (_heartbeatInterval) {
-      clearInterval(_heartbeatInterval);
-      _heartbeatInterval = null;
-    }
-    if (_ipAddressInterval) {
-      clearInterval(_ipAddressInterval);
-      _ipAddressInterval = null;
-    }
-    if (_connectionCheckInterval) {
-      clearInterval(_connectionCheckInterval);
-      _connectionCheckInterval = null;
-    }
-    if (_pingGoogleInterval) {
-      clearInterval(_pingGoogleInterval);
-      _pingGoogleInterval = null;
-    }
+    _honClearInterval(_heartbeatInterval);
+    _honClearInterval(_ipAddressInterval);
+    _honClearInterval(_connectionCheckInterval);
+    _honClearInterval(_pingGoogleInterval);
+    _honClearInterval(_cpuInfoInterval);
+    _honClearInterval(_cpuTempInterval);
     const now = Date.now();
     const details = {
       online: false,
@@ -379,6 +406,18 @@ function DeviceMonitor(deviceName, isMonitor) {
       exitDetails: exitDetails,
     };
     return _fbRef.child(`${_deviceName}`).update(details);
+  }
+
+  /**
+   * Clears and resets a timer created by setInterval.
+   *
+   * @param {Interval} id Interval timer to clear
+   */
+  function _honClearInterval(id) {
+    if (id) {
+      clearInterval(id);
+      id = null;
+    }
   }
 
   /**
