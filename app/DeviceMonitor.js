@@ -5,6 +5,7 @@
 const os = require('os');
 const util = require('util');
 const fs = require('fs/promises');
+const process = require('process');
 const fetch = require('node-fetch');
 const log = require('./SystemLog2');
 const version = require('./version');
@@ -34,11 +35,7 @@ function DeviceMonitor(deviceName, isMonitor) {
   let _ipAddressInterval;
   let _connectionCheckInterval;
   let _pingGoogleInterval;
-  let _cpuInfoInterval;
-  let _cpuTempInterval;
   let _ipAddresses = [];
-  let _cpuInfo = null;
-  let _cpuTemp = null;
   let _disconnectedAt = null;
   let _lastGooglePing = Date.now();
 
@@ -61,10 +58,13 @@ function DeviceMonitor(deviceName, isMonitor) {
     const appName = process.argv[1].substring(lastIndexOf).replace('.js', '');
     const piModel = await _getPiModelInfo();
     _ipAddresses = _getIPAddress();
-    _cpuInfo = os.cpus();
+    const cpuTemp = await _getCPUTemperature();
     const deviceData = {
       deviceName: _deviceName,
+      processTitle: process.title,
       appName: appName,
+      pid: process.pid,
+      ppid: process.ppid,
       heartbeat: now,
       heartbeat_: now_,
       version: version.head,
@@ -74,14 +74,17 @@ function DeviceMonitor(deviceName, isMonitor) {
       startedAt_: now_,
       host: {
         architecture: os.arch(),
-        cpus: _cpuInfo,
+        cpus: os.cpus(),
         platform: os.platform(),
         release: os.release(),
         type: os.type(),
         hostname: honHelpers.getHostname(),
         ipAddress: _ipAddresses,
         cpuModel: piModel,
+        cpuTemp: cpuTemp,
       },
+      cpuUsage: process.cpuUsage(),
+      memoryUsage: process.memoryUsage(),
       restart: null,
       shutdown: null,
       exitDetails: null,
@@ -89,10 +92,6 @@ function DeviceMonitor(deviceName, isMonitor) {
       uptime: 0,
       uptime_: `starting...`,
     };
-    _cpuTemp = await _getCPUTemperature();
-    if (_cpuTemp) {
-      deviceData.host.cpuTemp = _cpuTemp;
-    }
     log.log(_deviceName, 'Device Settings', deviceData);
     await _fbRef.child(_deviceName).set(deviceData);
     _fbRef.root.child(`.info/connected`).on('value', _connectionChanged);
@@ -102,8 +101,6 @@ function DeviceMonitor(deviceName, isMonitor) {
     _ipAddressInterval = setInterval(_tickIPAddress, 15 * 60 * 1000);
     _connectionCheckInterval = setInterval(_tickConnectionCheck, 30 * 1000);
     _pingGoogleInterval = setInterval(_tickPingGoogle, 30 * 1000);
-    _cpuInfoInterval = setInterval(_tickCPUInfo, 1 * 60 * 1000);
-    _cpuTempInterval = setInterval(_tickCPUTemp, 30 * 1000);
     _initUncaught();
     _initUnRejected();
     _initWarning();
@@ -159,43 +156,6 @@ function DeviceMonitor(deviceName, isMonitor) {
   }
 
   /**
-   * Refreshes the CPU info data.
-   */
-  async function _tickCPUInfo() {
-    const cpuInfo = os.cpus();
-    if (!diff(cpuInfo, _cpuInfo)) {
-      // CPU info is unchanged.
-      return;
-    }
-    _cpuInfo = cpuInfo;
-    log.verbose(_deviceName, `CPU info updated`, _cpuInfo);
-    try {
-      await _fbRef.child(`${_deviceName}/host/cpus`).set(_cpuInfo);
-    } catch (err) {
-      log.error(_deviceName, 'Unable to update the CPU info.', err);
-    }
-  }
-
-  /**
-   * Refreshes the CPU info data.
-   */
-  async function _tickCPUTemp() {
-    const cpuTemp = await _getCPUTemperature();
-    if (!diff(cpuTemp, _cpuTemp)) {
-      // CPU temp is unchanged.
-      return;
-    }
-    _cpuTemp = cpuTemp;
-    log.verbose(_deviceName, `CPU temperature updated`, _cpuTemp);
-    try {
-      await _fbRef.child(`${_deviceName}/host/cpuTemp`).set(_cpuTemp);
-    } catch (err) {
-      log.error(_deviceName, 'Unable to store the CPU temperature.', err);
-    }
-  }
-
-
-  /**
    * Get the RaspberryPi model info.
    */
   async function _getPiModelInfo() {
@@ -232,22 +192,46 @@ function DeviceMonitor(deviceName, isMonitor) {
       return;
     }
     const now = Date.now();
-    const now_ = log.formatTime(now);
     const uptime = process.uptime();
-    const uptime_ = log.humanizeDuration(uptime);
     const details = {
       heartbeat: now,
-      heartbeat_: now_,
+      heartbeat_: log.formatTime(now),
       online: true,
       shutdownAt: null,
       exitDetails: null,
       uptime: uptime,
-      uptime_: uptime_,
+      uptime_: log.humanizeDuration(uptime),
     };
+    const cpuTemp = await _getCPUTemperature();
+    const cpuUsage = process.cpuUsage();
+    const memUsage = process.memoryUsage();
+
+    // Update hearbeat times...
     try {
       await _fbRef.child(_deviceName).update(details);
     } catch (err) {
       log.error(_deviceName, 'Unable to update the heartbeat.', err);
+    }
+
+    // Update CPU temperature....
+    try {
+      await _fbRef.child(`${_deviceName}/host/cpuTemp`).set(cpuTemp);
+    } catch (err) {
+      log.error(_deviceName, 'Unable to store the CPU temperature.', err);
+    }
+
+    // Update CPU usage data...
+    try {
+      await _fbRef.child(`${_deviceName}/cpuUsage`).set(cpuUsage);
+    } catch (err) {
+      log.error(_deviceName, 'Unable to update the CPU usage info.', err);
+    }
+
+    // Update memory usage data....
+    try {
+      await _fbRef.child(`${_deviceName}/memoryUsage`).set(memUsage);
+    } catch (err) {
+      log.error(_deviceName, 'Unable to update the memory usage info.', err);
     }
   }
 
@@ -397,8 +381,6 @@ function DeviceMonitor(deviceName, isMonitor) {
     _honClearInterval(_ipAddressInterval);
     _honClearInterval(_connectionCheckInterval);
     _honClearInterval(_pingGoogleInterval);
-    _honClearInterval(_cpuInfoInterval);
-    _honClearInterval(_cpuTempInterval);
     const now = Date.now();
     const details = {
       online: false,
