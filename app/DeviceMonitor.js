@@ -81,6 +81,7 @@ function DeviceMonitor(deviceName, isMonitor) {
         cpuTemp: cpuTemp,
       },
       process: {
+        argv: process.argv.join(' '),
         id: process.pid,
         parent: process.ppid,
         title: process.title,
@@ -92,7 +93,6 @@ function DeviceMonitor(deviceName, isMonitor) {
       restart: null,
       shutdown: null,
       exitDetails: null,
-      argv: process.argv.join(' '),
       uptime: 0,
       uptime_: `starting...`,
     };
