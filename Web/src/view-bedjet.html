@@ -1,0 +1,260 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="../bower_components/app-layout/app-grid/app-grid-style.html">
+<link rel="import" href="../bower_components/iron-icon/iron-icon.html">
+<link rel="import" href="../bower_components/polymerfire/polymerfire.html">
+<link rel="import" href="shared-styles.html">
+<link rel="import" href="send-command.html">
+
+<dom-module id="view-bedjet">
+  <template>
+    <style include="shared-styles app-grid-style">
+      :host {
+        display: block;
+      }
+      .secondary {
+        color: var(--secondary-text-color);
+      }
+      .card h3 {
+        margin-bottom: .25em;
+        margin-top: .25em;
+      }
+
+      #status {
+        width: 1em;
+        height: 1em;
+        background-color: #607D8B;
+        border-radius: 50%;
+        margin-bottom: .2em;
+        float: right;
+      }
+      #status.online {
+        background-color: #C8E6C9;
+      }
+      #status.offline {
+        background-color: #F44336;
+      }
+      .up-down {
+        height: var(--app-grid-item-height) * 2;
+      }
+      .wide {
+        width: 100%;
+      }
+      .center {
+        text-align: center;
+        align-self: center;
+      }
+      .fan {
+        font-size: 1.5em;
+        border-right: 1px solid var(--paper-grey-200);
+        height: var(--app-grid-item-height);
+        margin-right:0;
+      }
+      .temperature {
+        border-left: 1px solid var(--paper-grey-200);
+        height: var(--app-grid-item-height);
+        margin-left: 0;
+      }
+    </style>
+
+    <firebase-document
+      path="/state/bedJet"
+      data="{{fbState}}">
+    </firebase-document>
+
+    <send-command id="sendCommand"></send-command>
+
+    <div class="card">
+      <h3>
+        BedJet
+        <div id="status" class$="[[isConnected]]">
+        </div>
+      </h3>
+      <div class="app-grid grid-three">
+        <paper-button class$="[[classes.off]]" on-tap="onButtonTap" data-ind="true" data-bjbutton="OFF">
+          Off
+        </paper-button>
+        <paper-button class$="[[classes.cool]]" on-tap="onButtonTap" data-ind="true" data-bjbutton="COOL">
+          Cool
+        </paper-button>
+        <paper-button class$="[[classes.dry]]" on-tap="onButtonTap" data-ind="true" data-bjbutton="DRY">
+          Dry
+        </paper-button>
+      </div>
+      <div class="app-grid grid-three">
+        <paper-button class$="[[classes.heat]]" on-tap="onButtonTap" data-ind="true" data-bjbutton="HEAT">
+          Heat
+        </paper-button>
+        <paper-button class$="[[classes.turbo]]" on-tap="onButtonTap" data-ind="true" data-bjbutton="TURBO">
+          Turbo
+        </paper-button>
+        <paper-button class$="[[classes.extHeat]]" on-tap="onButtonTap" data-ind="true" data-bjbutton="EXT_HEAT">
+          Ext Heat
+        </paper-button>
+      </div>
+      <div class="app-grid grid-four">
+        <div class="up-down">
+          <paper-button class="button wide" disabled on-tap="onButtonTap" data-bjbutton="FAN_UP">
+            Up
+          </paper-button>
+          <paper-button class="button wide" disabled on-tap="onButtonTap" data-bjbutton="FAN_DOWN">
+            Down
+          </paper-button>
+        </div>
+        <div id="fanSpeedContainer" class="center fan up-down">
+          [[fbState.state.fanSpeed]]%
+        </div>
+        <div id="temperatureContainer" class="center temperature">
+          [[fbState.state.temperature.set]]°F<br>
+          [[fbState.state.temperature.actual]]°F
+        </div>
+        <div class="up-down">
+          <paper-button class="button wide" disabled on-tap="onButtonTap" data-bjbutton="TEMP_UP">
+            Up
+          </paper-button>
+          <paper-button class="button wide" disabled on-tap="onButtonTap" data-bjbutton="TEMP_DOWN">
+            Down
+          </paper-button>
+        </div>
+      </div>
+      <div class="app-grid grid-three">
+        <paper-button class="button" on-tap="onButtonTap" data-bjbutton="M1">
+          M1
+        </paper-button>
+        <paper-button class="button" on-tap="onButtonTap" data-bjbutton="M2">
+          M2
+        </paper-button>
+        <paper-button class="button" on-tap="onButtonTap" data-bjbutton="M3">
+          M3
+        </paper-button>
+      </div>
+      <template is="dom-if" if="[[isOn]]">
+        <div class="center">
+          Auto off: [[timeRemainHuman]]<br>
+          Off at: [[offAtHuman]]
+        </div>
+      </template>
+    </div>
+
+  </template>
+
+  <script>
+    class BedJetView extends Polymer.Element {
+      static get is() { return 'view-bedjet'; }
+
+      static get properties() {
+        return {
+          classes: {
+            ifOn: {
+              type: Boolean,
+              value: false,
+            },
+            offAt: Number,
+            offAtHuman: String,
+            timeRemainHuman: String,
+            type: Object,
+            value: {
+              off: 'button',
+              cool: 'button',
+              dry: 'button',
+              heat: 'button',
+              turbo: 'button',
+              extHeat: 'button',
+            },
+            isConnected: String,
+          }
+        };
+      }
+
+      static get observers() {
+        return [
+          '_modeChanged(fbState.state.mode)',
+          '_connectedChanged(fbState.connected)',
+          '_offAtChanged(fbState.state.timeRemain.offAt)',
+        ];
+      }
+
+      ready() {
+        super.ready();
+        this._startTick();
+      }
+
+      _modeChanged(newVal) {
+        if (!newVal) {
+          return;
+        }
+        Object.keys(this.classes).forEach((key) => {
+          let buttonClass = 'button';
+          if (newVal === key) {
+            buttonClass += ' toggle-on';
+          }
+          this.set(`classes.${key}`, buttonClass);
+        });
+        this.isOn = newVal === 'off' ? false : true;
+        this.$.fanSpeedContainer.classList.toggle('secondary', !this.isOn);
+        this.$.temperatureContainer.classList.toggle('secondary', !this.isOn);
+      }
+
+      _connectedChanged(newVal) {
+        if (newVal === null || newVal === undefined) {
+          return;
+        }
+        this.isConnected = newVal === true ? 'online' : 'offline';
+      }
+
+      _offAtChanged(newVal) {
+        if (!newVal) {
+          this.offAt = null;
+          this.offAtHuman = null;
+          return;
+        }
+        this.offAt = newVal;
+        this.offAtHuman = moment(newVal).format('h:mm a');
+      }
+
+      _startTick() {
+        setInterval(() => {
+          if (!this.offAt || this.offAt <= 0) {
+            return;
+          }
+          const dur = moment.duration(this.offAt - Date.now());
+          const hours = dur.hours();
+          const minutes = dur.minutes() < 10 ? `0${dur.minutes()}` : dur.minutes();
+          const seconds = dur.seconds() < 10 ? `0${dur.seconds()}` : dur.seconds();
+          const val = `${hours}:${minutes}:${seconds}`;
+          this.timeRemainHuman = val;
+        }, 250);
+      }
+
+      onButtonTap(e) {
+        const but = e.target;
+        const buttonName = but.dataset.bjbutton;
+
+        if (but.dataset.ind) {
+          but.classList.add('toggle-ind');
+          setTimeout(() => {
+            but.classList.remove('toggle-ind');
+          }, 15 * 1000);
+        }
+        const cmd = {
+          bedJet: {
+            sendButton: buttonName,
+          }
+        }
+        this.$.sendCommand.send(cmd);
+      }
+    }
+
+    window.customElements.define(BedJetView.is, BedJetView);
+  </script>
+</dom-module>

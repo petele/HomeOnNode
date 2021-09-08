@@ -55,6 +55,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         height: 2em;
         outline: none;
       }
+      .left-indent {
+        margin-left: 24px;
+      }
     </style>
 
     <firebase-query
@@ -65,7 +68,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </firebase-query>
 
     <firebase-document
-      path="state"
+      path="/state"
       data="{{fbState}}">
     </firebase-document>
 
@@ -106,7 +109,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span class="secondary">Sonos Volume:</span>
         <span>[[speakerVol._group]]</span>
       </div>
-      <div>
+      <div class="hidden">
         <span class="secondary">Tivo:</span>
         <span>[[fbState.tivo.data]]</span>
       </div>
@@ -162,17 +165,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span class="secondary">Temperature:</span>
         <span>[[convertCtoF(data.awair.BR.sensors.temp.value)]]°F</span>
         <span class="secondary">(Awair)</span>
+        <!--
         <span>||</span>
         <span>[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.temperature]]°F</span>
         <span class="secondary">(Nest)</span>
+        -->
       </div>
       <div>
         <span class="secondary">Humidity:</span>
         <span>[[round(data.awair.BR.sensors.humid.value)]]%</span>
         <span class="secondary">(Awair)</span>
+        <!--
         <span>||</span>
         <span>[[data.thermostats.dQ2cONq2P3NPOgLG6WFYC7X_gKS0QBk1.humidity]]%</span>
         <span class="secondary">(Nest)</span>
+        -->
       </div>
       <div>
         <span class="secondary">Air Quality:</span>
@@ -187,6 +194,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span class="secondary">VOC:</span>
         <span>[[data.awair.BR.sensors.voc.value]]ppb</span>
       </div>
+      <div>
+        <span class="secondary">BedJet:</span>
+        <span>[[fbState.bedJet.state.mode]]</span>
+        <span> || </span>
+        <span class="secondary">Connected:</span>
+        <span>[[fbState.bedJet.connected]]</span>
+      </div>
+      <template is="dom-if" if="[[fbState.bedJet.state.timeRemain.offAt]]">
+      <div class="left-indent">
+        <span class="secondary">Fan:</span>
+        <span>[[fbState.bedJet.state.fanSpeed]]<span class="secondary">%</span></span>
+        <span> || </span>
+        <span class="secondary">Temperature: </span>
+        <span>[[fbState.bedJet.state.temperature.set]]°F</span>
+        <span class="secondary">(set)</span>
+        <span> || </span>
+        <span>[[fbState.bedJet.state.temperature.actual]]°F</span>
+        <span class="secondary">(actual)</span>
+      </div>
+      <div class="left-indent">
+        <span class="secondary">Off At:</span>
+        <span>[[formatDate(fbState.bedJet.state.timeRemain.offAt)]]</span>
+      </div>
+      </template>
     </div>
 
     <div class="card">
@@ -216,17 +247,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         <span class="secondary">Temperature:</span>
         <span>[[convertCtoF(data.awair.LR.sensors.temp.value)]]°F</span>
         <span class="secondary">(Awair)</span>
+        <!--
         <span>||</span>
         <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.temperature]]°F</span>
         <span class="secondary">(Nest)</span>
+        -->
       </div>
       <div>
         <span class="secondary">Humidity:</span>
         <span>[[round(data.awair.LR.sensors.humid.value)]]%</span>
         <span class="secondary">(Awair)</span>
+        <!--
         <span>||</span>
         <span>[[data.thermostats.dQ2cONq2P3MTSPzuctw3jrX_gKS0QBk1.humidity]]%</span>
         <span class="secondary">(Nest)</span>
+        -->
       </div>
       <div>
         <span class="secondary">Air Quality:</span>
@@ -285,40 +320,62 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         if (!state) {
           return;
         }
+
+        let value;
+
         try {
-          let value;
           value = state._group.volume;
           if (state._group.isMuted) {
             value = 'Muted';
           }
           this.set('speakerVol._group', value);
+        } catch (ex) {
+          console.error(`Unable to calculate 'group'`, state);
+        }
 
+        try {
           value = state.Bathroom.volume;
           if (state.Bathroom.isMuted) {
             value = 'Muted';
           }
           this.set('speakerVol.bathroom', value);
+        } catch (ex) {
+          console.error(`Unable to calculate 'bathroom'`, state);
+        }
 
+        try {
           value = state.Bedroom.volume;
           if (state.Bedroom.isMuted) {
             value = 'Muted';
           }
           this.set('speakerVol.bedroom', value);
+        } catch (ex) {
+          console.log(`Unable to calculate 'bedroom'`, state);
+          console.log('err', ex);
+        }
 
+        try {
           value = state.Kitchen.volume;
           if (state.Kitchen.isMuted) {
             value = 'Muted';
           }
           this.set('speakerVol.kitchen', value);
+        } catch (ex) {
+          console.error(`Unable to calculate 'kitchen'`, state);
+        }
 
+        try {
           value = state['Living Room'].volume;
           if (state['Living Room'].isMuted) {
             value = 'Muted';
           }
           this.set('speakerVol.livingRoom', value);
         } catch (ex) {
-          console.error('oops', ex, state);
+          console.error(`Unable to calculate 'living room'`, state);
         }
+        // } catch (ex) {
+        //   console.error('oops', ex, state);
+        // }
       }
 
       formatDate(val) {

@@ -21,7 +21,9 @@
     "test": "npm run lint && polymer test",
     "serve": "polymer serve",
     "bump-version": "gulp updateVersion",
-    "deploy": "gulp updateVersion && polymer build && cd build/bundled && gcloud app deploy --appyaml=./app.yaml --version=polymer2-20201005"
+    "build": "polymer build",
+    "deploy": "gulp updateVersion && polymer build && cd build/bundled && gcloud app deploy --appyaml=./app.yaml --version=polymer2-20201005",
+    "gdeploy": "cd build/bundled && gcloud app deploy --appyaml=./app.yaml --version=polymer2-20210810-1 --project=petele-home-automation"
   },
   "dependencies": {}
 }
