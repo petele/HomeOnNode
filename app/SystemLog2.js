@@ -462,9 +462,10 @@ function _formatTime(now, short) {
  * @static
  *
  * @param {Number} seconds Number of seconds to humanize.
+ * @param {Boolean} includeMS Include milliseconds.
  * @return {String} Amount of time passed.
  */
-function _humanizeDuration(seconds) {
+function _humanizeDuration(seconds, includeMS) {
   const d = moment.duration(seconds, 'seconds');
   const result = [];
   const years = Math.floor(d.asYears());
@@ -487,9 +488,16 @@ function _humanizeDuration(seconds) {
     result.push(`${hours} hours`);
     d.subtract(hours, 'hours');
   }
-  const minutes = Math.round(d.asMinutes());
+  const minutes = Math.floor(d.asMinutes());
   if (minutes) {
     result.push(`${minutes} minutes`);
+    d.substract(minutes, 'minutes');
+  }
+  if (includeMS) {
+    const ms = Math.round(d.asMilliseconds());
+    const sec = Math.round(ms / 1000);
+    result.push(`${sec} seconds`);
+    return result.join(', ');
   }
   if (result.length > 0) {
     return result.join(', ');

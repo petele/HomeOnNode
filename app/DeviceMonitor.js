@@ -87,7 +87,7 @@ function DeviceMonitor(deviceName, isMonitor) {
         title: process.title,
       },
       resourceUsage: {
-        cpu: process.cpuUsage(),
+        cpu: _getCPUUsage(),
         memory: process.memoryUsage(),
       },
       restart: null,
@@ -173,6 +173,18 @@ function DeviceMonitor(deviceName, isMonitor) {
   }
 
   /**
+   * Get the CPU usage info, including humanized durations.
+   *
+   * @return {Object}
+   */
+  function _getCPUUsage() {
+    const usage = process.cpuUsage();
+    usage.system_ = log.humanizeDuration(usage.system / 1000000, true);
+    usage.user_ = log.humanizeDuration(usage.user / 1000000, true);
+    return usage;
+  }
+
+  /**
    * Get the CPU temperature on a Raspberry Pi by reading
    * /sys/class/thermal/thermal_zone0/temp
    */
@@ -208,7 +220,7 @@ function DeviceMonitor(deviceName, isMonitor) {
     };
     const cpuTemp = await _getCPUTemperature();
     const resourceUsage = {
-      cpu: process.cpuUsage(),
+      cpu: _getCPUUsage(),
       memory: process.memoryUsage(),
     };
 
