@@ -491,11 +491,11 @@ function _humanizeDuration(seconds, includeMS) {
   const minutes = Math.floor(d.asMinutes());
   if (minutes) {
     result.push(`${minutes} minutes`);
-    d.substract(minutes, 'minutes');
+    d.subtract(minutes, 'minutes');
   }
   if (includeMS) {
     const ms = Math.round(d.asMilliseconds());
-    const sec = Math.round(ms / 1000);
+    const sec = Math.round(ms) / 1000;
     result.push(`${sec} seconds`);
     return result.join(', ');
   }
