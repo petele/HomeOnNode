@@ -24,7 +24,8 @@ const ENUM_MODES = [
  */
 function HueSync(ipAddress, bearerToken) {
   const REQUEST_TIMEOUT = 15 * 1000;
-  const CONFIG_REFRESH_INTERVAL = 3 * 60 * 1000;
+  // const CONFIG_REFRESH_INTERVAL = 3 * 60 * 1000;
+  const CONFIG_REFRESH_INTERVAL = 19 * 1000;
   const AGENT_OPTS = {
     rejectUnauthorized: false,
     maxSockets: 4,
