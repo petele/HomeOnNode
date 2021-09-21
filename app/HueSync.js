@@ -25,7 +25,7 @@ const ENUM_MODES = [
 function HueSync(ipAddress, bearerToken) {
   const REQUEST_TIMEOUT = 15 * 1000;
   // const CONFIG_REFRESH_INTERVAL = 3 * 60 * 1000;
-  const CONFIG_REFRESH_INTERVAL = 19 * 1000;
+  const CONFIG_REFRESH_INTERVAL = 16 * 1000;
   const AGENT_OPTS = {
     rejectUnauthorized: false,
     maxSockets: 4,
@@ -177,10 +177,18 @@ function HueSync(ipAddress, bearerToken) {
    * @return {Promise<Object>} Device info.
    */
   async function _updateConfig(retry) {
+    // Get the config info
     const deviceInfo = await _makeRequest('', 'GET', null, retry);
-    if (diff(_self.deviceInfo, deviceInfo)) {
-      _self.deviceInfo = deviceInfo;
-      _self.emit('config_changed', _self.deviceInfo);
+
+    // Remove the registrations object
+    const diNoReg = Object.assign({}, deviceInfo);
+    delete diNoReg.registrations;
+
+    // Compare the existing object to the new value (ignoring registration)
+    if (diff(_self.deviceInfo, diNoReg)) {
+      // If they're different, update the stored value and emit the whole val
+      _self.deviceInfo = diNoReg;
+      _self.emit('config_changed', deviceInfo);
     }
     return _self.deviceInfo;
   }

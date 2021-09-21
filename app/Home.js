@@ -2288,11 +2288,22 @@ function Home() {
     });
 
     sonos.on('transport-state', (state) => {
+      // Param - state.avTransportUri
+      // TV: "x-sonos-htastream:RINCON_48A6B8B7A4B101400:spdif"
+      // WNYC: "x-rincon-stream:RINCON_5CAAFD0C01DC01400"
+      // Music Queue: "x-rincon-queue:RINCON_48A6B8B7A4B101400#0"
+      // AirPlay: "x-sonos-vli:RINCON_48A6B8B7A4B101400:1,airplay:..."
+      // Spotify: "x-sonos-vli:RINCON_48A6B8B7A4B101400:2,spotify:..."
       try {
         state = JSON.parse(JSON.stringify(state));
         _fbSet('state/sonos/transportState', state);
       } catch (ex) {
         log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
+      }
+      if (state?.avTransportUri?.startsWith('x-sonos-htastream')) {
+        log.log(LOG_PREFIX, 'HueSync refresh initiated by Sonos');
+        const action = {hueSync: {refresh: true}};
+        _self.executeActions(action, `SONOS`);
       }
     });
 
