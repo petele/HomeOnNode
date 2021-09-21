@@ -26,6 +26,7 @@ function Sonos() {
   let _sonosSystem;
   let _favorites;
   let _services;
+  let _currentSource;
   const _self = this;
   let _ready = false;
 
@@ -81,6 +82,13 @@ function Sonos() {
     _sonosSystem.on('transport-state', (transportState) => {
       _self.emit('transport-state', transportState);
       log.verbose(LOG_PREFIX, 'Transport state changed', transportState);
+      if (!transportState?.avTransportUri) {
+        return;
+      }
+      if (_currentSource !== transportState.avTransportUri) {
+        _currentSource = transportState.avTransportUri;
+        _self.emit('source_changed', _currentSource);
+      }
     });
 
     // Mute - single

@@ -2300,7 +2300,13 @@ function Home() {
       } catch (ex) {
         log.debug(LOG_PREFIX, 'Unable to save Sonos transport state', ex);
       }
-      if (state?.avTransportUri?.startsWith('x-sonos-htastream')) {
+    });
+
+    sonos.on('source_changed', (val) => {
+      if (typeof val !== 'string') {
+        return;
+      }
+      if (val.startsWith('x-sonos-htastream')) {
         log.log(LOG_PREFIX, 'HueSync refresh initiated by Sonos');
         const action = {hueSync: {refresh: true}};
         _self.executeActions(action, `SONOS`);
