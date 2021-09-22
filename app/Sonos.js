@@ -20,6 +20,7 @@ const LOG_PREFIX = 'SONOS';
  * @fires Sonos#player-state
  * @fires Sonos#topology-changed
  * @fires Sonos#favorites-changed
+ * @fires Sonos#source-changed
 */
 function Sonos() {
   const SERVICES_INTERVAL = 6 * 60 * 60 * 1000;
@@ -87,7 +88,7 @@ function Sonos() {
       }
       if (_currentSource !== transportState.avTransportUri) {
         _currentSource = transportState.avTransportUri;
-        _self.emit('source_changed', _currentSource);
+        _self.emit('source-changed', _currentSource);
       }
     });
 
@@ -161,7 +162,7 @@ function Sonos() {
       preset.uri = command.uri;
       return _applyPreset(preset);
     }
-    if (command.name === 'PAUSE') {
+    if (command.name === 'PAUSE' || command.name === 'OFF') {
       return _pause();
     }
     if (command.name === 'PLAY') {

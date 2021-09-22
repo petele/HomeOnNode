@@ -773,6 +773,12 @@ function Home() {
       }
       return sonos.executeCommand(action.sonos, _config.sonosPresetOptions)
           .then((result) => {
+            if (action.sonos.name === 'OFF') {
+              _sonosOff();
+            }
+            return result;
+          })
+          .then((result) => {
             return _genResult(action, true, result);
           })
           .catch((err) => {
@@ -2288,12 +2294,6 @@ function Home() {
     });
 
     sonos.on('transport-state', (state) => {
-      // Param - state.avTransportUri
-      // TV: "x-sonos-htastream:RINCON_48A6B8B7A4B101400:spdif"
-      // WNYC: "x-rincon-stream:RINCON_5CAAFD0C01DC01400"
-      // Music Queue: "x-rincon-queue:RINCON_48A6B8B7A4B101400#0"
-      // AirPlay: "x-sonos-vli:RINCON_48A6B8B7A4B101400:1,airplay:..."
-      // Spotify: "x-sonos-vli:RINCON_48A6B8B7A4B101400:2,spotify:..."
       try {
         state = JSON.parse(JSON.stringify(state));
         _fbSet('state/sonos/transportState', state);
@@ -2302,14 +2302,30 @@ function Home() {
       }
     });
 
-    sonos.on('source_changed', (val) => {
+    sonos.on('source-changed', (val) => {
       if (typeof val !== 'string') {
         return;
       }
+      // TV: "x-sonos-htastream:RINCON_48A6B8B7A4B101400:spdif"
+      // WNYC: "x-rincon-stream:RINCON_5CAAFD0C01DC01400"
+      // Music Queue: "x-rincon-queue:RINCON_48A6B8B7A4B101400#0"
+      // AirPlay: "x-sonos-vli:RINCON_48A6B8B7A4B101400:1,airplay:..."
+      // Spotify: "x-sonos-vli:RINCON_48A6B8B7A4B101400:2,spotify:..."
+      const cmdNameBase = `SONOS_SOURCE`;
+      let cmdName = null;
       if (val.startsWith('x-sonos-htastream')) {
-        log.log(LOG_PREFIX, 'HueSync refresh initiated by Sonos');
-        const action = {hueSync: {refresh: true}};
-        _self.executeActions(action, `SONOS`);
+        cmdName = `${cmdNameBase}_TV`;
+      } else if (val.startsWith('x-rincon-stream')) {
+        cmdName = `${cmdNameBase}_RADIO`;
+      } else if (val.startsWith('x-rincon-queue')) {
+        cmdName = `${cmdNameBase}_MUSIC`;
+      } else if (val.startsWith('x-sonos-vli')) {
+        cmdName = `${cmdNameBase}_MUSIC`;
+      } else {
+        log.warn(LOG_PREFIX, 'Unknown Sonos source input', val);
+      }
+      if (cmdName && _config.commands[cmdName]) {
+        _self.executeCommandByName(cmdName, 'SONOS');
       }
     });
 
@@ -2344,6 +2360,16 @@ function Home() {
     });
 
     sonos.connect();
+  }
+
+  /**
+   * Updates the Firebase state to indicate Sonos has been stopped.
+   */
+  function _sonosOff() {
+    const uriOff = 'x-hon-off';
+    const currentTrack = {uri: uriOff};
+    _fbSet('state/sonos/transportState/state/currentTrack', currentTrack);
+    _fbSet('state/sonos/transportState/avTransportUri', uriOff);
   }
 
 
