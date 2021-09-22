@@ -1703,38 +1703,6 @@ function Home() {
     }
   }
 
-  // /**
-  //  * Creates an event for the specified sun event
-  //  *
-  //  * @param {String} name Name of the sun event (rise|set)
-  //  * @param {Number} nextTime Time the next sun event happens
-  //  */
-  // function _scheduleSunEvent(name, nextTime) {
-  //   const msg = `Sun evt (${name}) scheduled at ${log.formatTime(nextTime)}`;
-  //   const delay = Math.round((nextTime - Date.now()) / 1000);
-  //   if (delay <= 0) {
-  //     const extra = {nextTime, delay};
-  //     log.error(LOG_PREFIX, `${msg} failed, time is in the past.`, extra);
-  //     return;
-  //   }
-  //   const cmdName = `RUN_ON_${name}`;
-  //   const action = {cmdName, delay};
-  //   _scheduleDelayedCommand(action, 'SunEvent');
-  //   log.log(LOG_PREFIX, msg, action);
-  //   // try {
-  //   //   const job = new CronJob(new Date(nextTime), () => {
-  //   //     const cmdName = `RUN_ON_${name}`;
-  //   //     if (_config.commands[cmdName]) {
-  //   //       _self.executeCommandByName(cmdName, 'SunEvent');
-  //   //     }
-  //   //   });
-  //   //   job.start();
-  //   //   const nextDates = job.nextDates();
-  //   //   log.debug(LOG_PREFIX, `Set ${msg}`, nextDates);
-  //   // } catch (ex) {
-  //   //   log.exception(LOG_PREFIX, `Unable to set ${msg}`, ex);
-  //   // }
-  // }
 
   /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
    *
