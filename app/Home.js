@@ -16,7 +16,6 @@ const honExec = require('./HoNExec');
 const GCMPush = require('./GCMPush');
 const HueSync = require('./HueSync');
 const fsProm = require('fs/promises');
-const Harmony = require('./HarmonyWS');
 const WSClient = require('./WSClient');
 const Weather = require('./Weather');
 const NanoLeaf = require('./NanoLeaf');
@@ -50,7 +49,6 @@ function Home() {
   let bedJetWSClient;
   let bluetooth;
   let gcmPush;
-  let harmony;
   let hue;
   let hueSync;
   let googDeviceAccess;
@@ -152,7 +150,6 @@ function Home() {
     await _initNanoLeaf();
     await _initHueSync();
     await _initSonos();
-    await _initHarmony();
     await _initWeather();
     await _initWemo();
     await _initAwair();
@@ -345,7 +342,6 @@ function Home() {
     log.log(LOG_PREFIX, 'Shutting down...');
     _shutdownBluetooth();
     _shutdownBedJet();
-    _shutdownHarmony();
     _shutdownLGTV();
   };
 
@@ -504,38 +500,6 @@ function Home() {
           })
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: googDev command failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
-    // Harmony activity
-    if (action.hasOwnProperty('harmonyActivity')) {
-      if (!harmony) {
-        log.error(LOG_PREFIX, 'Harmony unavailable.', action);
-        return _genResult(action, false, 'not_available');
-      }
-
-      return harmony.setActivityByName(action.harmonyActivity)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            return _genResult(action, false, err);
-          });
-    }
-
-    // Harmony key
-    if (action.hasOwnProperty('harmonyKey')) {
-      if (!harmony) {
-        log.error(LOG_PREFIX, 'Harmony unavailable.', action);
-        return _genResult(action, false, 'not_available');
-      }
-
-      return harmony.sendKey(action.harmonyKey)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
             return _genResult(action, false, err);
           });
     }
@@ -1863,66 +1827,6 @@ function Home() {
       }
     }
     return results;
-  }
-
-
-  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
-   *
-   * Harmony API
-   *
-   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Init Harmony API
-   */
-  async function _initHarmony() {
-    await _fbSet('state/harmony', false);
-
-    if (_config.harmony.disabled === true) {
-      log.warn(LOG_PREFIX, 'Harmony disabled via config.');
-      return;
-    }
-
-    const ip = _config.harmony.ipAddress;
-    if (!ip) {
-      log.error(LOG_PREFIX, `Harmony unavailable, no IP address specified.`);
-      return;
-    }
-    harmony = new Harmony(ip);
-    harmony.on('hub_info', (data) => {
-      _fbSet('state/harmony/info', data);
-    });
-    harmony.on('activity_changed', (activity) => {
-      _fbSet('state/harmony/activity', activity);
-      if (activity && activity.label) {
-        const honCmdName = `HARMONY_${activity.label.toUpperCase()}`;
-        if (_config.commands[honCmdName]) {
-          _self.executeCommandByName(honCmdName, 'Harmony');
-        }
-      }
-    });
-    harmony.on('config_changed', (config) => {
-      _fbSet('state/harmony/config', config);
-    });
-    harmony.on('state_notify', (data) => {
-      _fbSet('state/harmony/state', data);
-    });
-    harmony.on('metadata_notify', (data) => {
-      _fbSet('state/harmony/meta', data);
-    });
-
-    harmony.connect();
-  }
-
-  /**
-   * Shutdown the Harmony API
-   */
-  function _shutdownHarmony() {
-    log.log(LOG_PREFIX, 'Shutting down Harmony.');
-    if (harmony) {
-      harmony.close();
-    }
-    harmony = null;
   }
 
 
