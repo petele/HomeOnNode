@@ -2104,6 +2104,7 @@ function Home() {
       // Music Queue: "x-rincon-queue:RINCON_48A6B8B7A4B101400#0"
       // AirPlay: "x-sonos-vli:RINCON_48A6B8B7A4B101400:1,airplay:..."
       // Spotify: "x-sonos-vli:RINCON_48A6B8B7A4B101400:2,spotify:..."
+      // Spotify: "x-sonosapi-radio:spotify%3aartistRadio%..."
       const cmdNameBase = `SONOS_SOURCE`;
       let cmdName = null;
       if (val.startsWith('x-sonos-htastream')) {
@@ -2114,8 +2115,11 @@ function Home() {
         cmdName = `${cmdNameBase}_MUSIC`;
       } else if (val.startsWith('x-sonos-vli')) {
         cmdName = `${cmdNameBase}_MUSIC`;
+      } else if (val.startsWith('x-sonosapi-radio')) {
+        cmdName = `${cmdNameBase}_MUSIC`;
       } else {
-        log.warn(LOG_PREFIX, 'Unknown Sonos source input', val);
+        log.warn(LOG_PREFIX, 'Unknown Sonos source input (assume music)', val);
+        cmdName = `${cmdNameBase}_MUSIC`;
       }
       if (cmdName && _config.commands[cmdName]) {
         _self.executeCommandByName(cmdName, 'SONOS');
