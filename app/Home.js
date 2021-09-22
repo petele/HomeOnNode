@@ -669,20 +669,6 @@ function Home() {
           });
     }
 
-    // Say This
-    if (action.hasOwnProperty('sayThis')) {
-      const utterance = action.sayThis.utterance;
-      const opts = action.sayThis.opts || {};
-      return _sayThis(utterance, opts)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: sayThis failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
     // Send Notifications
     if (action.hasOwnProperty('sendNotification')) {
       if (!gcmPush) {
@@ -1053,31 +1039,6 @@ function Home() {
         .catch((err) => {
           log.error(LOG_PREFIX, `Unable to play sound file '${file}'`, err);
         });
-  }
-
-  /**
-   * Uses Google Home to speak
-   *
-   * @param {String} utterance The words to say
-   * @param {Object} opts Options
-   * @return {Promise} A promise that resolves to the result of the request
-   */
-  function _sayThis(utterance, opts) {
-    return Promise.reject(new Error('Not Implemented'));
-    // const force = !!opts.force;
-    // if (!utterance) {
-    //   log.error(LOG_PREFIX, 'sayThis failed, no utterance provided.');
-    //   return Promise.reject(new Error('no_utterance'));
-    // }
-    // if (!googleHome) {
-    //   log.error(LOG_PREFIX, 'Unable to speak, Google Home not available.');
-    //   return Promise.reject(new Error('gh_not_available'));
-    // }
-    // log.debug(LOG_PREFIX, `sayThis('${utterance}', ${force})`);
-    // if (_self.state.doNotDisturb === false || force === true) {
-    //   return googleHome.say(utterance);
-    // }
-    // return Promise.reject(new Error('do_not_disturb'));
   }
 
   /**
