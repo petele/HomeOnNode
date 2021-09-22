@@ -404,32 +404,6 @@ function Home() {
           });
     }
 
-    // Awair
-    if (action.hasOwnProperty('awair')) {
-      log.warn(LOG_PREFIX, 'Awair unavailable.');
-      return _genResult(action, false, 'not_available');
-      // if (!awair) {
-      //   log.error(LOG_PREFIX, 'Awair unavailable.');
-      //   return _genResult(action, false, 'not_available');
-      // }
-      // const deviceName = action.awair.deviceName;
-      // const deviceKey = awair.getDeviceKeyByName(deviceName);
-      // if (!deviceKey) {
-      //   log.error(LOG_PREFIX, `AWAIR: Could not find ${deviceName}`);
-      //   return _genResult(action, false, 'device_not_found');
-      // }
-      // const deviceType = deviceKey.deviceType;
-      // const deviceId = deviceKey.deviceId;
-      // return awair.updateSettings(deviceType, deviceId, action.awair)
-      //     .then((result) => {
-      //       return _genResult(action, true, result);
-      //     })
-      //     .catch((err) => {
-      //       log.verbose(LOG_PREFIX, `Whoops: Awair failed.`, err);
-      //       return _genResult(action, false, err);
-      //     });
-    }
-
     // Send command to the BedJet server
     if (action.hasOwnProperty('bedJet')) {
       if (!bedJetWSClient) {
@@ -1642,7 +1616,7 @@ function Home() {
    ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
 
   /**
-   * Init the Awair API
+   * Init the BedJet API
    */
   async function _initBedJet() {
     await _fbSet('state/bedJet', false);
