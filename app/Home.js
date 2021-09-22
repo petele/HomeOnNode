@@ -6,7 +6,6 @@ const util = require('util');
 const Hue = require('./Hue');
 const LGTV = require('./LGtv');
 const Wemo = require('./Wemo');
-const Tivo = require('./Tivo');
 const Sonos = require('./Sonos');
 const Awair = require('./Awair');
 const moment = require('moment');
@@ -60,7 +59,6 @@ function Home() {
   let nanoLeaf;
   let presence;
   let sonos;
-  let tivo;
   let weather;
   let wemo;
 
@@ -158,7 +156,6 @@ function Home() {
     await _initWeather();
     await _initWemo();
     await _initAwair();
-    await _initTivo();
     await _initLGTV();
     await _initAppleTV();
     await _initBluetooth();
@@ -349,7 +346,6 @@ function Home() {
     _shutdownBluetooth();
     _shutdownBedJet();
     _shutdownHarmony();
-    _shutdownTivo();
     _shutdownLGTV();
   };
 
@@ -815,22 +811,6 @@ function Home() {
           })
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: state failed.`, err);
-            return _genResult(action, false, err);
-          });
-    }
-
-    // Tivo
-    if (action.hasOwnProperty('tivo')) {
-      if (!tivo) {
-        log.warn(LOG_PREFIX, 'TiVo unavailable.');
-        return _genResult(action, false, 'not_available');
-      }
-      return tivo.send(action.tivo)
-          .then((result) => {
-            return _genResult(action, true, result);
-          })
-          .catch((err) => {
-            log.verbose(LOG_PREFIX, `Whoops: TiVo failed.`, err);
             return _genResult(action, false, err);
           });
     }
@@ -2379,48 +2359,6 @@ function Home() {
     _fbSet('state/sonos/transportState/state/currentTrack', currentTrack);
     _fbSet('state/sonos/transportState/avTransportUri', uriOff);
     return Promise.resolve(true);
-  }
-
-
-  /** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **
-   *
-   * TiVo API
-   *
-   ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** **/
-
-  /**
-   * Init TiVo
-   */
-  async function _initTivo() {
-    await _fbSet('state/tivo', false);
-
-    if (_config.tivo.disabled === true) {
-      log.warn(LOG_PREFIX, 'TiVo disabled via config.');
-      return;
-    }
-
-    const tivoIP = _config.tivo.ip;
-    if (!tivoIP) {
-      log.warn(LOG_PREFIX, `TiVo unavailable, no IP address specified.`);
-      return;
-    }
-    tivo = new Tivo(tivoIP);
-    tivo.on('data', (data) => {
-      _fbSet('state/tivo/data', data);
-    });
-
-    tivo.connect();
-  }
-
-  /**
-   * Shutdown the Tivo API
-   */
-  function _shutdownTivo() {
-    log.log(LOG_PREFIX, 'Shutting down Tivo.');
-    if (tivo) {
-      tivo.close();
-    }
-    tivo = null;
   }
 
 
