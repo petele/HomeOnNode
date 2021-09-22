@@ -773,13 +773,19 @@ function Home() {
       }
       return sonos.executeCommand(action.sonos, _config.sonosPresetOptions)
           .then((result) => {
-            if (action.sonos.name === 'OFF') {
-              _sonosOff();
-            }
-            return result;
-          })
-          .then((result) => {
             return _genResult(action, true, result);
+          })
+          .catch((err) => {
+            log.verbose(LOG_PREFIX, `Whoops: sonos failed.`, err);
+            return _genResult(action, false, err);
+          });
+    }
+
+    // Sonos - off
+    if (action.hasOwnProperty('sonosOff')) {
+      return _sonosOff()
+          .then(() => {
+            _genResult(action, true, {success: true});
           })
           .catch((err) => {
             log.verbose(LOG_PREFIX, `Whoops: sonos failed.`, err);
@@ -2364,12 +2370,15 @@ function Home() {
 
   /**
    * Updates the Firebase state to indicate Sonos has been stopped.
+   *
+   * @return {Promise<boolean>}
    */
   function _sonosOff() {
     const uriOff = 'x-hon-off';
     const currentTrack = {uri: uriOff};
     _fbSet('state/sonos/transportState/state/currentTrack', currentTrack);
     _fbSet('state/sonos/transportState/avTransportUri', uriOff);
+    return Promise.resolve(true);
   }
 
 

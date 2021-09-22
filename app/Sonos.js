@@ -162,7 +162,7 @@ function Sonos() {
       preset.uri = command.uri;
       return _applyPreset(preset);
     }
-    if (command.name === 'PAUSE' || command.name === 'OFF') {
+    if (command.name === 'PAUSE') {
       return _pause();
     }
     if (command.name === 'PLAY') {
