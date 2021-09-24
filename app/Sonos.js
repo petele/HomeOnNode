@@ -86,9 +86,14 @@ function Sonos() {
       if (!transportState?.avTransportUri) {
         return;
       }
-      if (_currentSource !== transportState.avTransportUri) {
-        _currentSource = transportState.avTransportUri;
+      let newSource = transportState.avTransportUri;
+      if (transportState.avTransportUri.includes(':')) {
+        newSource = newSource.substring(0, newSource.indexOf(':'));
+      }
+      if (_currentSource !== newSource) {
+        _currentSource = newSource;
         _self.emit('source-changed', _currentSource);
+        log.debug(LOG_PREFIX, `Source changed to ${newSource}`);
       }
     });
 
