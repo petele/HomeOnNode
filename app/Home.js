@@ -2124,6 +2124,7 @@ function Home() {
       if (cmdName && _config.commands[cmdName]) {
         _self.executeCommandByName(cmdName, 'SONOS');
       }
+      _fbSet(`state/sonos/source`, val);
     });
 
     // single vol
