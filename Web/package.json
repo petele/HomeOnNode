@@ -22,8 +22,8 @@
     "serve": "polymer serve",
     "bump-version": "gulp updateVersion",
     "build": "polymer build",
-    "deploy": "gulp updateVersion && polymer build && cd build/bundled && gcloud app deploy --appyaml=./app.yaml --version=polymer2-20201005",
-    "gdeploy": "cd build/bundled && gcloud app deploy --appyaml=./app.yaml --version=polymer2-20210810-1 --project=petele-home-automation"
+    "build-prod": "gulp updateVersion && polymer build",
+    "deploy": "cd build/bundled && gcloud app deploy --appyaml=./app.yaml --version=polymer2-20210810-2 --project=petele-home-automation"
   },
   "dependencies": {}
 }

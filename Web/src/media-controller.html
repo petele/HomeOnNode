@@ -73,17 +73,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
 
-    <fb-document path="state/harmony/activity/label" data="{{harmonyActivity}}">
+    <fb-document path="state/hueSync" data="{{hueSyncState}}">
     </fb-document>
     <fb-document path="state/sonos/transportState/state" data="{{sonosState}}">
     </fb-document>
-
 
     <div class="outerContainer">
       <div class="container">
 
         <div class="trackNavButtons">
-          <paper-icon-button id="skipBack" icon="hon-icons:skip-back"
+          <paper-icon-button id="skipBack" class="hidden" icon="hon-icons:skip-back"
               cmd="SONOS_PREVIOUS" on-tap="tapSonos"></paper-icon-button>
         </div>
 
@@ -95,7 +94,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         </div>
 
         <div class="trackNavButtons">
-          <paper-icon-button id="skipForward" icon="hon-icons:skip-forward"
+          <paper-icon-button id="skipForward" class="hidden" icon="hon-icons:skip-forward"
               cmd="SONOS_NEXT" on-tap="tapSonos"></paper-icon-button>
         </div>
 
@@ -111,24 +110,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           icon="hon-icons:volume-tv" cmd="ACTION_VOL_TV" on-tap="tapSonos">
         </paper-icon-button>
 
-        <paper-icon-button class="hidden" id="butTivo"
-          icon="hon-icons:tivo" cmd="TELEPORT TIVO" on-tap="tapTivo">
-        </paper-icon-button>
-
-        <paper-icon-button class="hidden" id="butTivoGuide"
-          icon="hon-icons:tivo-guide" cmd="TELEPORT GUIDE" on-tap="tapTivo">
-        </paper-icon-button>
-
-        <paper-icon-button class="hidden" id="butSonosPlayPause"
+        <paper-icon-button class="xhidden" id="butSonosPlayPause"
           icon="hon-icons:play" on-tap="tapSonosPlayPause">
-        </paper-icon-button>
-
-        <paper-icon-button class="hidden" id="butTivoSkip30"
-          icon="hon-icons:skip-30" cmd="IRCODE ADVANCE" on-tap="tapTivo">
-        </paper-icon-button>
-
-        <paper-icon-button class="hidden" id="butTivoSkip"
-          icon="hon-icons:tivo-skip" cmd="IRCODE ACTION_D" on-tap="tapTivo">
         </paper-icon-button>
 
         <paper-icon-button id="butVolUp" icon="hon-icons:volume-up"
@@ -147,19 +130,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       static get properties() {
         return {
           sonosState: Object,
-          harmonyActivity: String,
           nowPlaying: {
             type: Object,
             value: {
               top: null,
               bottom: null,
             },
-          },
-          sonosSource: {
-            type: String,
-            notify: true,
-            reflectToAttribute: true,
-            value: null,
           },
           visible: {
             type: Boolean,
@@ -172,92 +148,75 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       static get observers() {
         return [
-          '_harmonyActivityChanged(harmonyActivity)',
-          '_sonosTrackChanged(sonosState.currentTrack)',
+          '_trackChanged(sonosState.currentTrack, hueSyncState.execution.hdmiActive, hueSyncState.execution.hdmiSource)',
           '_sonosPlayStateChanged(sonosState.playbackState)',
           '_startMarquee(nowPlaying)',
         ];
       }
 
-      _harmonyActivityChanged(activity) {
-        if (typeof activity !== 'string') {
+      _trackChanged(currentTrack, hdmiActive, hdmiSource) {
+        // console.log('trackChange', currentTrack, hdmiActive, hdmiSource);
+        if (!currentTrack || !hdmiSource) {
           return;
         }
-        if (activity === 'PowerOff') {
-          this.visible = false;
+        const info = this._getTrackInfo(currentTrack, hdmiActive, hdmiSource);
+        if (!info.visible) {
           this.updateStyles({display: 'none'});
-          this.nowPlaying = {
-            top: null,
-            bottom: null,
-          };
+          this.visible = false;
           return;
         }
-
-        let showTivo = false;
-        let showPlayPause = false;
-        let showSkip = false;
-        let showTVVolButton = false;
-
-        if (activity === 'TiVO') {
-          showTivo = true;
-        }
-        if (activity === 'AppleTV' ||
-            activity === 'Switch' ||
-            activity === 'TiVO') {
-          showTVVolButton = true;
-        }
-        if (activity === 'Sonos') {
-          showPlayPause = true;
-          showSkip = true;
-        }
-
-        this._showTivoControls(showTivo);
-        this._showPlayPause(showPlayPause);
-        this._showSkipControls(showSkip);
-        this.$.butVolTV.classList.toggle('hidden', !showTVVolButton);
-
-        if (activity === 'Sonos') {
-          this._sonosTrackChanged(this.sonosState.currentTrack);
-        } else {
-          this.nowPlaying = {
-            top: activity,
-            bottom: null,
-          };
-        }
-
+        this.nowPlaying = {
+          top: info.nowPlaying.top,
+          bottom: info.nowPlaying.bottom,
+        };
+        this.$.butSonosPlayPause.classList.toggle('hidden', !info.showPlayPause);
+        this.$.skipBack.classList.toggle('hidden', !info.showSkip);
+        this.$.skipForward.classList.toggle('hidden', !info.showSkip);
         this.updateStyles({display: 'block'});
         this.visible = true;
       }
 
-      _sonosTrackChanged(currentTrack) {
-        if (!currentTrack) {
-          return;
-        }
-        let lineTop = null;
-        let lineBottom = null;
-        if (currentTrack.type === 'line_in') {
-          if (currentTrack.uri.includes('spdif')) {
-            lineTop = this.harmonyActivity;
-          } else {
-            lineTop = 'WNYC';
-            lineBottom = 'FM Radio';
-          }
-        } else {
-          lineTop = currentTrack.title;
-          if (currentTrack.artist && currentTrack.album) {
-            lineBottom = currentTrack.artist + ' - ' + currentTrack.album;
-          } else if (currentTrack.artist || currentTrack.album) {
-            lineBottom = currentTrack.artist || currentTrack.album;
-          }
-        }
-
-        this.nowPlaying = {
-          top: lineTop,
-          bottom: lineBottom,
+      _getTrackInfo(currentTrack, hdmiActive, hdmiSource) {
+        const result = {
+          nowPlaying: {
+            top: null,
+            bottom: null,
+          },
+          showPlayPause: false,
+          showSkip: false,
+          visible: false,
         };
-
-        const showSkipControls = currentTrack.type === 'line_in' ? false : true;
-        this._showSkipControls(showSkipControls);
+        if (currentTrack.uri.includes('x-hon-off')) {
+          return result;
+        }
+        if (currentTrack.uri.includes('x-rincon-stream')) {
+          result.visible = true;
+          result.nowPlaying.top = currentTrack.title;
+          result.showPlayPause = true;
+          return result;
+        }
+        if (currentTrack.uri.includes('x-sonos-htastream')) {
+          if (hdmiActive) {
+            result.visible = true;
+            try {
+              result.nowPlaying.top = this.hueSyncState.hdmi[hdmiSource].name;
+            } catch (ex) {
+              console.log('Whoops, couldn\'t find now playing');
+            }
+            return result;
+          }
+          return result;
+        }
+        result.visible = true;
+        result.nowPlaying.top = currentTrack.title;
+        if (currentTrack.artist && currentTrack.album) {
+          result.nowPlaying.bottom = currentTrack.artist + ' - ' + currentTrack.album;
+        } else if (currentTrack.artist || currentTrack.album) {
+          result.nowPlaying.bottom = currentTrack.artist || currentTrack.album;
+        }
+        result.showPlayPause = true;
+        result.showSkip = true;
+        return result;
       }
 
       _sonosPlayStateChanged(state) {
@@ -273,29 +232,8 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         }
       }
 
-      _showTivoControls(visible) {
-        this.$.butTivo.classList.toggle('hidden', !visible);
-        this.$.butTivoGuide.classList.toggle('hidden', !visible);
-        this.$.butTivoSkip.classList.toggle('hidden', !visible);
-        this.$.butTivoSkip30.classList.toggle('hidden', !visible);
-      }
-
-      _showPlayPause(visible) {
-        this.$.butSonosPlayPause.classList.toggle('hidden', !visible);
-      }
-
-      _showSkipControls(visible) {
-        this.$.skipBack.classList.toggle('hidden', !visible);
-        this.$.skipForward.classList.toggle('hidden', !visible);
-      }
-
       tapSonos(event) {
         const cmd = {cmdName: event.target.getAttribute('cmd')};
-        this.$.sendCommand.send(cmd);
-      }
-
-      tapTivo(event) {
-        const cmd = {tivo: event.target.getAttribute('cmd')};
         this.$.sendCommand.send(cmd);
       }
 

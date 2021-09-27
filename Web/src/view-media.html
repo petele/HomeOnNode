@@ -37,42 +37,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
     <send-command id="sendCommand"></send-command>
 
+    <fb-query path="state/sonos/favorites" data="{{sonosFavorites}}">
+    </fb-query>
+
     <div class="card">
       <media-controller id="mediaController"
         sonos-source="{{sonosSource}}"
         visible="{{mediaControllerVisible}}"></media-controller>
     </div>
 
-    <fb-document path="state/harmony/activity" data="{{currentHarmonyActivity}}">
-    </fb-document>
-
-    <fb-query path="state/harmony/config/activity" data="{{harmonyActivities}}">
-    </fb-query>
-
-    <div class="card activities">
-      <div class="app-grid grid-medium" id="harmonyButtons">
-        <paper-button on-tap="tapOff"
-            class$="[[harmonyActivityClass('PowerOff', currentHarmonyActivity.label, sonosSource)]]">
-          Off
-        </paper-button>
-        <template is="dom-repeat" items="[[harmonyActivities]]" sort="sortActivities" filter="filterActivities">
-          <paper-button on-tap="tapHarmony"
-              class$="[[harmonyActivityClass(item.label, currentHarmonyActivity.label, sonosSource)]]">
-            [[item.label]]
-          </paper-button>
-        </template>
-        <paper-button on-tap="tapRadio"
-            class$="[[harmonyActivityClass('radio', currentHarmonyActivity.label, sonosSource)]]">
-          WNYC
-        </paper-button>
-      </div>
-    </div>
-
-    <fb-query path="state/sonos/favorites" data="{{sonosFavorites}}">
-    </fb-query>
     <div class="card">
       <h2>Stations</h2>
       <div class="app-grid grid-medium">
+        <paper-button on-tap="tapOff" class="button">
+          Off
+        </paper-button>
         <template is="dom-repeat" items="[[sonosFavorites]]">
           <paper-button class="button" on-tap="tapSonosFav">
             [[item.title]]
@@ -106,88 +85,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         this.$.mediaController.parentElement.classList.toggle('hidden', !show);
       }
 
-      filterActivities(item) {
-        if (item.id === '-1') {
-          return false;
-        }
-        return true;
-      }
-
-      sortActivities(a, b) {
-        const valA = a.label.toLowerCase();
-        const valB = b.label.toLowerCase();
-        return this.sortComparator(valA, valB);
-      }
-
-      sortComparator(a, b) {
-        if (a > b) {
-          return 1;
-        }
-        if (a < b) {
-          return -1;
-        }
-        return 0;
-      }
-
-      harmonyActivityClass(activityLabel, currentActivity, sonosSource) {
-        if (!activityLabel || !currentActivity) {
-          return 'button';
-        }
-        activityLabel = activityLabel.toLowerCase();
-        currentActivity = currentActivity.toLowerCase();
-
-        if (currentActivity === 'sonos') {
-          if (activityLabel === 'sonos' && sonosSource !== 'line_in') {
-            return 'button toggle-on';
-          }
-          if (activityLabel === 'radio' && sonosSource === 'line_in') {
-            return 'button toggle-on';
-          }
-          return 'button';
-        }
-
-        if (activityLabel === currentActivity) {
-          return 'button toggle-on';
-        }
-        return 'button';
-      }
-
-      tapHarmony(event) {
-        const cmd = {harmonyActivity: event.model.item.label};
-        this.$.sendCommand.send(cmd);
-        this.startIndterminate(event.target);
-      }
-
-      tapRadio() {
-        this.$.sendCommand.send({cmdName: 'SONOS_FM'});
-      }
-
       tapOff(event) {
-        const cmd = {harmonyActivity: 'PowerOff'};
-        this.$.sendCommand.send(cmd);
-        this.startIndterminate(event.target);
+        this.$.sendCommand.send({cmdName: 'MEDIA_OFF'});
       }
 
       tapSonosFav(event) {
         const cmd = {
           sonos: {
             name: 'PRESET',
-            options: 'music',
+            options: 'basic',
             uri: event.model.item.uri,
           },
         };
         this.$.sendCommand.send(cmd);
-        if (this.currentHarmonyActivity.label !== 'Sonos') {
-          this.$.sendCommand.send({harmonyActivity: 'Sonos'});
-        }
       }
 
-      startIndterminate(button) {
-        button.classList.add('toggle-ind');
-        setTimeout(() => {
-          button.classList.remove('toggle-ind');
-        }, 20000);
-      }
     }
 
     window.customElements.define(MediaView.is, MediaView);
