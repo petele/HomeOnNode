@@ -5,6 +5,7 @@ const log = require('./SystemLog2');
 const diff = require('deep-diff').diff;
 const EventEmitter = require('events').EventEmitter;
 const appleTV = require('node-appletv-x');
+const HoNHelpers = require('./HoNHelpers');
 
 const LOG_PREFIX = 'APPLE_TV';
 const POWER_STATE_REFRESH = 4000;
@@ -66,6 +67,7 @@ function AppleTV() {
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Error trying to find AppleTV', ex);
     }
+    await HoNHelpers.sleep(59 * 1000);
     return _findAppleTV();
   }
 
