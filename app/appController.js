@@ -158,14 +158,15 @@ async function _setLogOpts() {
 function _initCronTimers() {
   setInterval(() => {
     log.verbose(APP_NAME, 'CRON 15');
-    _loadAndRunJS('cron15.js');
+    _home.executeCommandByName('CRON_15', 'CRON_15');
   }, 15 * 60 * 1000);
   setInterval(() => {
     log.verbose(APP_NAME, 'CRON Hourly');
-    _loadAndRunJS('cron60.js');
+    _home.executeCommandByName('CRON_60', 'CRON_60');
   }, 60 * 60 * 1000);
   setInterval(() => {
     log.verbose(APP_NAME, 'CRON Daily');
+    _home.executeCommandByName('CRON_DAILY', 'CRON_DAILY');
     log.cleanLogs(LOG_PATH_FB, MAX_FB_LOG_AGE);
     _loadAndRunJS('cronDaily.js');
   }, 24 * 60 * 60 * 1000);
