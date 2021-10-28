@@ -2080,6 +2080,12 @@ function Home() {
       playerState = JSON.parse(JSON.stringify(playerState));
       _fbSet('state/sonos/state', playerState);
     });
+    
+    sonos.on('services-changed', (services) => {
+      services = JSON.parse(JSON.stringify(services));
+      log.debug(LOG_PREFIX, 'Sonos services changed', services);
+      _fbSet('state/sonos/services', services);
+    });
 
     sonos.on('favorites-changed', (favorites) => {
       favorites = JSON.parse(JSON.stringify(favorites));
