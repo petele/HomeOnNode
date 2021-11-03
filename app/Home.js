@@ -1723,6 +1723,9 @@ function Home() {
 
     googDeviceAccess = new GoogDeviceAccess();
     googDeviceAccess.on('device_changed', (device) => {
+      const now = Date.now();
+      device.lastUpdated = now;
+      device.lastUpdated_ = log.formatTime(now);
       const path = `${device.typeShort}/${device.id}`;
       _fbSet(`state/googleDeviceAccess/${path}`, device);
     });
