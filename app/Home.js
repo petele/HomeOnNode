@@ -108,7 +108,7 @@ function Home() {
     _self.state = {
       delayedCommands: {},
       doNotDisturb: false,
-      hasNotification: false,
+      hasNotifications: false,
       presence: {
         people: {},
         state: 'NONE',
@@ -134,7 +134,7 @@ function Home() {
       const fbPrevState = fbPrevStateSnap.val();
       log.log(LOG_PREFIX, 'Updating state based on previous state.');
       _self.state.doNotDisturb = fbPrevState.doNotDisturb;
-      _self.state.hasNotification = fbPrevState.hasNotification;
+      _self.state.hasNotifications = fbPrevState.hasNotifications;
       _self.state.systemState = fbPrevState.systemState;
     } else {
       log.error(LOG_PREFIX, `No fbRootRef, can't get prev state`);
@@ -2006,8 +2006,8 @@ function Home() {
             if (snapshot.val()) {
               _self.executeCommandByName('NEW_NOTIFICATION', 'HOME');
               log.log(LOG_PREFIX, 'New notification received.');
-              return snapshot.ref.set(false);
             }
+            return snapshot.ref.set(false);
           });
         })
         .catch((err) => {
