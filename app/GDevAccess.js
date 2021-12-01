@@ -37,7 +37,7 @@ function GDeviceAccess() {
   let _homeInfoTimer;
   let _deviceInfoTimer;
   let _defaultHVACMode = 'OFF';
-  
+
   const _self = this;
   const _projectID = Keys.gDeviceAccess?.projectID;
   const _clientID = Keys.gDeviceAccess?.clientID;
@@ -261,7 +261,10 @@ function GDeviceAccess() {
     if (!deviceName) {
       return Promise.reject(new Error(`No 'deviceName' provided.`));
     }
-    // TODO: Move deviceID calculation to here.
+    const deviceID = _deviceLookup.get(deviceName);
+    if (!deviceID) {
+      return Promise.reject(new Error(`Device not found: '${deviceName}'`));
+    }
     const value = command.value;
     if (value === undefined) {
       return Promise.reject(new Error(`No 'value' provided.`));
@@ -269,10 +272,12 @@ function GDeviceAccess() {
 
     // Run the commands
     if (action === 'setTemperature') {
-      return _setTemperature(deviceName, value);
+      log.log(LOG_PREFIX, `setTemperature('${deviceName}', ${value})`, command);
+      return _setTemperature(deviceID, value);
     }
     if (action === 'setHVACMode') {
-      return _setHVACMode(deviceName, value);
+      log.log(LOG_PREFIX, `setHVACMode('${deviceName}', '${value}')`, command);
+      return _setHVACMode(deviceID, value);
     }
 
     return Promise.reject(new Error(`Unknown command: '${action}'`));
@@ -282,21 +287,14 @@ function GDeviceAccess() {
   /**
    * Set the temperature in a room.
    *
-   * @param {String} deviceName LR/BR
+   * @param {String} deviceId Device identifier
    * @param {Number} temperature Temperature in F
    * @return {Promise}
    */
-  async function _setTemperature(deviceName, temperature) {
-    const msg = `setTemperature('${deviceName}', ${temperature})`;
-    log.log(LOG_PREFIX, msg);
+  async function _setTemperature(deviceId, temperature) {
+    const msg = `setTemperature('${deviceId}', ${temperature})`;
 
-    const deviceId = _deviceLookup.get(deviceName);
-    if (!deviceId) {
-      log.error(LOG_PREFIX, `${msg} - failed, unable to find deviceId`);
-      throw new Error(`Unknown roomID: '${deviceName}'`);
-    }
-
-    const cMode = await _setHVACMode(deviceName, 'ON');
+    const cMode = await _setHVACMode(deviceId, 'ON');
 
     const body = {
       command: 'sdm.devices.commands.ThermostatTemperatureSetpoint',
@@ -313,6 +311,7 @@ function GDeviceAccess() {
       throw new Error(`Unknown Mode: '${cMode}'`);
     }
 
+    log.verbose(LOG_PREFIX, msg, body);
     const reqPath = `devices/${deviceId}:executeCommand`;
     const result = await _sendRequest(reqPath, 'POST', body, true);
     return result;
@@ -321,24 +320,12 @@ function GDeviceAccess() {
   /**
    * Set the HVAC mode for a thermostat to a specific mode.
    *
-   * @param {String} deviceName LR/BR
+   * @param {String} deviceId Device identifier
    * @param {String} newMode HEAT/COOL/OFF/ECO
    * @return {Promise}
    */
-  async function _setHVACMode(deviceName, newMode) {
-    const msg = `setHVACMode('${deviceName}', '${newMode}')`;
-    if (!deviceName || !newMode) {
-      log.error(LOG_PREFIX, msg);
-      return;
-    }
-
-    log.log(LOG_PREFIX, msg);
-
-    const deviceId = _deviceLookup.get(deviceName);
-    if (!deviceId) {
-      log.error(LOG_PREFIX, `${msg} - failed, '${deviceName}' not found.`);
-      throw new Error(`Unknown roomID: '${deviceName}'`);
-    }
+  async function _setHVACMode(deviceId, newMode) {
+    const msg = `setHVACMode('${deviceId}', '${newMode}')`;
 
     if (newMode === 'ON') {
       newMode = _defaultHVACMode;
@@ -349,47 +336,45 @@ function GDeviceAccess() {
       throw new Error(`Unknown Mode: '${newMode}'`);
     }
 
-    const reqPath = `devices/${deviceId}`;
-    const current = await _sendRequest(reqPath, 'GET', null, true);
+    const getPath = `devices/${deviceId}`;
+    const current = await _sendRequest(getPath, 'GET', null, true);
     const cMode = current.traits['sdm.devices.traits.ThermostatMode'].mode;
     const cEcoMode = current.traits['sdm.devices.traits.ThermostatEco'].mode;
     const isEco = cEcoMode === 'MANUAL_ECO';
 
     if (newMode === 'ECO' && isEco) {
-      // already in eco mode, no need to change.
+      log.verbose(LOG_PREFIX, `${msg} - already set to ECO`);
       return newMode;
     }
-    if (newMode === cMode) {
-      // Already that mode, no change needed.
+    if (newMode === cMode && !isEco) {
+      log.verbose(LOG_PREFIX, `${msg} - already set to ${newMode}`);
       return newMode;
     }
 
+    const setPath = `${getPath}:executeCommand`;
     const body = {params: {}};
-    
-    // TODO
-    // if new mode is ECO -- set ECO & return.
-    
-    // if eco is on, turn it off...
-    // set new mode
-
-    // Currently in ECO, turn ECO off...
-    if (isEco) {
-      log.debug(LOG_PREFIX, `${msg} - turning ECO off...`);
-      body.command = 'sdm.devices.commands.ThermostatEco.SetMode';
-      body.params.mode = 'OFF';
-      await _sendRequest(reqPath, 'POST', body, true);
-      await honHelpers.sleep(5000);
-    }
 
     if (newMode === 'ECO') {
       body.command = 'sdm.devices.commands.ThermostatEco.SetMode';
       body.params.mode = 'MANUAL_ECO';
-    } else {
-      body.command = 'sdm.devices.commands.ThermostatMode.SetMode';
-      body.params.mode = newMode;
+      log.verbose(LOG_PREFIX, `${msg} - Starting ECO...`, body);
+      await _sendRequest(setPath, 'POST', body, true);
+      return newMode;
     }
 
-    await _sendRequest(`${reqPath}:executeCommand`, 'POST', body, true);
+    if (isEco) {
+      body.command = 'sdm.devices.commands.ThermostatEco.SetMode';
+      body.params.mode = 'OFF';
+      log.verbose(LOG_PREFIX, `${msg} - Turning ECO off...`, body);
+      await _sendRequest(setPath, 'POST', body, true);
+      await honHelpers.sleep(5000);
+    }
+
+    body.command = 'sdm.devices.commands.ThermostatMode.SetMode';
+    body.params.mode = newMode;
+
+    log.verbose(LOG_PREFIX, `${msg} - Starting ${newMode}...`, body);
+    await _sendRequest(setPath, 'POST', body, true);
     return newMode;
   }
 
