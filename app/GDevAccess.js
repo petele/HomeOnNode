@@ -344,7 +344,7 @@ function GDeviceAccess() {
     const isEco = cEcoMode === 'MANUAL_ECO';
 
     if (newMode === 'ECO' && isEco) {
-      // already in eco mode, no need to change
+      // already in eco mode, no need to change.
       return newMode;
     }
     if (newMode === cMode) {
@@ -356,10 +356,11 @@ function GDeviceAccess() {
 
     // Currently in ECO, turn ECO off...
     if (isEco) {
+      log.debug(LOG_PREFIX, `${msg} - turning ECO off...`);
       body.command = 'sdm.devices.commands.ThermostatEco.SetMode';
       body.params.mode = 'OFF';
       await _sendRequest(reqPath, 'POST', body, true);
-      await honHelpers.sleep(2500);
+      await honHelpers.sleep(5000);
     }
 
     if (newMode === 'ECO') {
