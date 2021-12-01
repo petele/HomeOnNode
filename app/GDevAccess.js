@@ -24,6 +24,9 @@ const VALID_MODES = ['HEAT', 'COOL', 'OFF', 'ECO'];
  * After adding a new device to your Nest collection, visit
  * https://nestservices.google.com/partnerconnections
  *
+ * Be sure to place KeysPubSub.json in project root, otherwise
+ * no PubSub messages will be received.
+ *
  */
 function GDeviceAccess() {
   const REQUEST_TIMEOUT = 15 * 1000;
@@ -33,6 +36,8 @@ function GDeviceAccess() {
   let _ready = false;
   let _homeInfoTimer;
   let _deviceInfoTimer;
+  let _defaultHVACMode = 'OFF';
+  
   const _self = this;
   const _projectID = Keys.gDeviceAccess?.projectID;
   const _clientID = Keys.gDeviceAccess?.clientID;
@@ -42,7 +47,6 @@ function GDeviceAccess() {
       `v1/enterprises/${_projectID}`;
 
   const _deviceState = {};
-  let _defaultHVACMode = 'OFF';
   const _deviceLookup = new Map();
 
   let _accessToken;
@@ -185,6 +189,7 @@ function GDeviceAccess() {
       return;
     }
     try {
+      // TODO: Add throttle to limit updates as required per limits
       const deviceName = data.resourceUpdate.name;
       const deviceId = deviceName.substring(deviceName.lastIndexOf('/') + 1);
       log.debug(LOG_PREFIX, `${msgBase} '${msgType}'`, data);
@@ -249,10 +254,17 @@ function GDeviceAccess() {
 
     // Get & validate the action & value
     const action = command.action;
-    const deviceName = command.deviceName;
-    const value = command.value;
     if (!action) {
       return Promise.reject(new Error(`No 'action' provided.`));
+    }
+    const deviceName = command.deviceName;
+    if (!deviceName) {
+      return Promise.reject(new Error(`No 'deviceName' provided.`));
+    }
+    // TODO: Move deviceID calculation to here.
+    const value = command.value;
+    if (value === undefined) {
+      return Promise.reject(new Error(`No 'value' provided.`));
     }
 
     // Run the commands
@@ -353,6 +365,12 @@ function GDeviceAccess() {
     }
 
     const body = {params: {}};
+    
+    // TODO
+    // if new mode is ECO -- set ECO & return.
+    
+    // if eco is on, turn it off...
+    // set new mode
 
     // Currently in ECO, turn ECO off...
     if (isEco) {
@@ -506,6 +524,10 @@ function GDeviceAccess() {
 
   /**
    * Helper function to make an HTTP request
+   *
+   * Rate limits https://developers.google.com/nest/device-access/project/limits
+   *  - devices.executeCommand 10QPM
+   *  - devices.get 10QPM
    *
    * @param {String} requestPath the URL/request path to hit
    * @param {String} method the HTTP method to use
