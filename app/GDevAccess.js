@@ -188,17 +188,7 @@ function GDeviceAccess() {
       log.debug(LOG_PREFIX, `${msgBase} '${msgType}' (ignored)`, data);
       return;
     }
-    try {
-      // TODO: Add throttle to limit updates as required per limits
-      const deviceName = data.resourceUpdate.name;
-      const deviceId = deviceName.substring(deviceName.lastIndexOf('/') + 1);
-      log.debug(LOG_PREFIX, `${msgBase} '${msgType}'`, data);
-      const reqPath = `devices/${deviceId}`;
-      const device = await _sendRequest(reqPath, 'GET', null, true);
-      return _parseDevice(device);
-    } catch (ex) {
-      log.error(LOG_PREFIX, `${msgBase} '${msgType}' (FAILED)`, ex);
-    }
+    _parseResourceUpdate(data.resourceUpdate);
   }
 
   /**
@@ -444,6 +434,32 @@ function GDeviceAccess() {
     if (diff(_deviceState[id], result)) {
       _deviceState[id] = result;
       _self.emit('device_changed', result);
+    }
+  }
+
+  /**
+   * Parse a resource update PubSub message.
+   *
+   * @param {Object} resourceUpdate resourceUpdate
+   */
+  function _parseResourceUpdate(resourceUpdate) {
+    try {
+      const deviceName = resourceUpdate.name;
+      const deviceId = deviceName.substring(deviceName.lastIndexOf('/') + 1);
+      const device = _deviceState[deviceId];
+      if (!device) {
+        return;
+      }
+      const traits = Object.keys(resourceUpdate.traits);
+      if (!traits) {
+        return;
+      }
+      traits.forEach((key) => {
+        const shortKey = _getShortTraitName(key);
+        device.traits[shortKey] = resourceUpdate.traits[key];
+      });
+    } catch (ex) {
+      log.exception(LOG_PREFIX, 'Unable to parse resource update', ex);
     }
   }
 
