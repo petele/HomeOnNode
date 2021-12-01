@@ -13,7 +13,7 @@ const EventEmitter = require('events').EventEmitter;
 
 const LOG_PREFIX = 'G_DEVICE_ACCESS';
 
-const VALID_MODES = ['HEAT', 'COOL', 'OFF'];
+const VALID_MODES = ['HEAT', 'COOL', 'OFF', 'ECO'];
 
 /**
  * Google Device Access API.
@@ -284,28 +284,7 @@ function GDeviceAccess() {
       throw new Error(`Unknown roomID: '${deviceName}'`);
     }
 
-    const reqPath = `devices/${deviceId}`;
-    const current = await _sendRequest(reqPath, 'GET', null, true);
-    let cMode = current.traits['sdm.devices.traits.ThermostatMode'].mode;
-
-    if (cMode === 'OFF' && _defaultHVACMode === 'OFF') {
-      log.warn(LOG_PREFIX, `${msg} - failed, default mode is 'OFF'`);
-      throw new Error(`HVAC mode is 'OFF'`);
-    }
-
-    if (cMode === 'OFF') {
-      const newVal = _defaultHVACMode;
-      const msgChgMode = `HVAC '${deviceName}' is off, changing to '${newVal}'`;
-      try {
-        log.debug(LOG_PREFIX, msgChgMode);
-        await _setHVACMode(deviceName, newVal);
-        await honHelpers.sleep(5000);
-        cMode = newVal;
-      } catch (ex) {
-        log.warn(LOG_PREFIX, `${msgChgMode} - failed.`, ex);
-        throw new Error('Could Not Change Mode');
-      }
-    }
+    const cMode = await _setHVACMode(deviceName, 'ON');
 
     const body = {
       command: 'sdm.devices.commands.ThermostatTemperatureSetpoint',
@@ -322,9 +301,8 @@ function GDeviceAccess() {
       throw new Error(`Unknown Mode: '${cMode}'`);
     }
 
-    const reqPathExec = `${reqPath}:executeCommand`;
-    const result = await _sendRequest(reqPathExec, 'POST', body, true);
-    // _getDeviceInfo(250);
+    const reqPath = `devices/${deviceId}:executeCommand`;
+    const result = await _sendRequest(reqPath, 'POST', body, true);
     return result;
   }
 
@@ -332,11 +310,16 @@ function GDeviceAccess() {
    * Set the HVAC mode for a thermostat to a specific mode.
    *
    * @param {String} deviceName LR/BR
-   * @param {String} mode HEAT/COOL/OFF
+   * @param {String} newMode HEAT/COOL/OFF/ECO
    * @return {Promise}
    */
-  async function _setHVACMode(deviceName, mode) {
-    const msg = `setHVACMode('${deviceName}', '${mode}')`;
+  async function _setHVACMode(deviceName, newMode) {
+    const msg = `setHVACMode('${deviceName}', '${newMode}')`;
+    if (!deviceName || !newMode) {
+      log.error(LOG_PREFIX, msg);
+      return;
+    }
+
     log.log(LOG_PREFIX, msg);
 
     const deviceId = _deviceLookup.get(deviceName);
@@ -345,25 +328,50 @@ function GDeviceAccess() {
       throw new Error(`Unknown roomID: '${deviceName}'`);
     }
 
-    if (mode.toUpperCase() === 'ON') {
-      mode = _defaultHVACMode;
+    if (newMode === 'ON') {
+      newMode = _defaultHVACMode;
     }
 
-    if (!VALID_MODES.includes(mode)) {
-      log.error(LOG_PREFIX, `${msg} - failed, unknown HVAC mode: '${mode}'`);
-      throw new Error(`Unknown Mode: '${mode}'`);
+    if (!VALID_MODES.includes(newMode)) {
+      log.error(LOG_PREFIX, `${msg} - failed, unknown HVAC mode: '${newMode}'`);
+      throw new Error(`Unknown Mode: '${newMode}'`);
     }
 
-    const reqPath = `devices/${deviceId}:executeCommand`;
-    const body = {
-      command: 'sdm.devices.commands.ThermostatMode.SetMode',
-      params: {
-        mode: mode,
-      },
-    };
-    const result = await _sendRequest(reqPath, 'POST', body, true);
-    // _getDeviceInfo(250);
-    return result;
+    const reqPath = `devices/${deviceId}`;
+    const current = await _sendRequest(reqPath, 'GET', null, true);
+    const cMode = current.traits['sdm.devices.traits.ThermostatMode'].mode;
+    const cEcoMode = current.traits['sdm.devices.traits.ThermostatEco'].mode;
+    const isEco = cEcoMode === 'MANUAL_ECO';
+
+    if (newMode === 'ECO' && isEco) {
+      // already in eco mode, no need to change
+      return newMode;
+    }
+    if (newMode === cMode) {
+      // Already that mode, no change needed.
+      return newMode;
+    }
+
+    const body = {params: {}};
+
+    // Currently in ECO, turn ECO off...
+    if (isEco) {
+      body.command = 'sdm.devices.commands.ThermostatEco.SetMode';
+      body.params.mode = 'OFF';
+      await _sendRequest(reqPath, 'POST', body, true);
+      await honHelpers.sleep(2500);
+    }
+
+    if (newMode === 'ECO') {
+      body.command = 'sdm.devices.commands.ThermostatEco.SetMode';
+      body.params.mode = 'MANUAL_ECO';
+    } else {
+      body.command = 'sdm.devices.commands.ThermostatMode.SetMode';
+      body.params.mode = newMode;
+    }
+
+    await _sendRequest(`${reqPath}:executeCommand`, 'POST', body, true);
+    return newMode;
   }
 
   /**
