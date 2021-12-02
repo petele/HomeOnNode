@@ -461,6 +461,7 @@ function GDeviceAccess() {
         const shortKey = _getShortTraitName(key);
         device.traits[shortKey] = resourceUpdate.traits[key];
       });
+      _self.emit('device_changed', device);
       log.verbose(LOG_PREFIX, msg, resourceUpdate);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to parse resource update', ex);
