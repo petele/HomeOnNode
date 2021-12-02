@@ -447,17 +447,21 @@ function GDeviceAccess() {
       const deviceName = resourceUpdate.name;
       const deviceId = deviceName.substring(deviceName.lastIndexOf('/') + 1);
       const device = _deviceState[deviceId];
+      const msg = `parseResourceUpdate('${deviceName}')`;
       if (!device) {
+        log.warn(LOG_PREFIX, `${msg} - no matching device`, resourceUpdate);
         return;
       }
       const traits = Object.keys(resourceUpdate.traits);
       if (!traits) {
+        log.warn(LOG_PREFIX, `${msg} - no traits`, resourceUpdate);
         return;
       }
       traits.forEach((key) => {
         const shortKey = _getShortTraitName(key);
         device.traits[shortKey] = resourceUpdate.traits[key];
       });
+      log.verbose(LOG_PREFIX, msg, device);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to parse resource update', ex);
     }
