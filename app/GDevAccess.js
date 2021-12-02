@@ -37,6 +37,7 @@ function GDeviceAccess() {
   let _homeInfoTimer;
   let _deviceInfoTimer;
   let _defaultHVACMode = 'OFF';
+  let _deviceChangeTimer;
 
   const _self = this;
   const _projectID = Keys.gDeviceAccess?.projectID;
@@ -461,8 +462,16 @@ function GDeviceAccess() {
         const shortKey = _getShortTraitName(key);
         device.traits[shortKey] = resourceUpdate.traits[key];
       });
-      _self.emit('device_changed', device);
+
       log.verbose(LOG_PREFIX, msg, resourceUpdate);
+
+      if (_deviceChangeTimer) {
+        clearTimeout(_deviceChangeTimer);
+      }
+      _deviceChangeTimer = setTimeout(() => {
+        _deviceChangeTimer = null;
+        _self.emit('device_changed', device);
+      }, 1250);
     } catch (ex) {
       log.exception(LOG_PREFIX, 'Unable to parse resource update', ex);
     }
