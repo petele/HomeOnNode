@@ -1198,28 +1198,58 @@ function Home() {
    * Checks if the current time is between the specified range
    *
    * @param {string} range - Format smtwtfsThh:hhDmm.
-   *                         - 0-6: days to run, use '-' to skip day.
-   *                         - 7: Must be 'T'.
-   *                         - 8-12: Time to start 24 hr format, eg 23:30.
-   *                         - 13: Must be 'D'.
-   *                         - 14+: Number of minutes the duration lasts.
-   *                         - EG: '---X---T23:30D60'
+   *                         - 0-6: days to run, 'X' for on, or '-' to skip.
+   *                         - 7: Use be 'T' for Time, or 'S' for Sun event.
+   *                         - If (T) Time:
+   *                           - 8-12: Time to start 24 hr format, eg 23:30.
+   *                           - 13: Must be 'D' (duration).
+   *                           - 14+: Number of minutes the duration lasts.
+   *                         - If (S) Sun event:
+   *                           - 8+: 'RISE' or 'SET'.
+   *                           - 11+: Must be 'D' (duration).
+   *                           - 14+: Number of minutes the duration lasts.
+   *  Examples:
+   *   - '---X---T23:30D60': Wednesday at 11:30pm or up to 60 minutes.
+   *   - 'XXXXXXXSSETD30': Every day at Sun Set or up to 30 minutes later.
    * @return {boolean}
    */
   function _inRange(range) {
-    const RE_RANGE = /^(.{7})T(\d\d):(\d\d)D(\d+)$/;
+    const RE_RANGE = /^([-X]{7})((T)(\d\d):(\d\d)|(S)(SET|RISE))D(\d+)$/;
     const matched = range.match(RE_RANGE);
-    if (!matched || matched.length !== 5) {
+    if (!matched || matched.length !== 9) {
       return false;
     }
+
     const maDay = matched[1];
-    const maHour = matched[2];
-    const maMinute = matched[3];
-    const maDuration = parseInt(matched[4]);
+    const maHour = matched[4];
+    const maMinute = matched[5];
+
+    const maSunEvent = matched[7];
+
+    const maDuration = parseInt(matched[8]);
+
     const now = moment().second(0).millisecond(0);
     const tomorrow = now.clone().hour(0).minute(0).add(1, 'day');
 
-    const mStart = now.clone().hour(maHour).minute(maMinute);
+    let mStart;
+    if (maSunEvent === 'RISE') {
+      const sunrise = _self.state?.weather?.today?.sunriseTime * 1000;
+      if (isNaN(sunrise)) {
+        log.error(LOG_PREFIX, 'inRange, no sunrise time available', range);
+        return false;
+      }
+      mStart = moment(sunrise).second(0).millisecond(0);
+    } else if (maSunEvent === 'SET') {
+      const sunset = _self.state?.weather?.today?.sunsetTime * 1000;
+      if (isNaN(sunset)) {
+        log.error(LOG_PREFIX, 'inRange, no sunset time available', range);
+        return false;
+      }
+      mStart = moment(sunset).second(0).millisecond(0);
+    } else {
+      mStart = now.clone().hour(maHour).minute(maMinute);
+    }
+
     const mStop = mStart.clone().add(maDuration, 'minutes');
 
     if (mStop.isAfter(tomorrow)) {
@@ -2083,7 +2113,7 @@ function Home() {
       playerState = JSON.parse(JSON.stringify(playerState));
       _fbSet('state/sonos/state', playerState);
     });
-    
+
     sonos.on('services-changed', (services) => {
       services = JSON.parse(JSON.stringify(services));
       log.debug(LOG_PREFIX, 'Sonos services changed', services);
