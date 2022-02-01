@@ -10,6 +10,9 @@ echo "Configuring Node..."
 nvm use
 echo ""
 
+echo "Starting page watcher..."
+forever start --minUptime 1000 --spinSleepTime 1000 ~/maverick/forever.json
+
 export GOOGLE_APPLICATION_CREDENTIALS="/home/pi/HomeOnNode/app/KeysPubSub.json"
 
 echo "Starting app..."
