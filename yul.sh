@@ -8,4 +8,6 @@ nvm use
 echo ""
 echo ""
 
+forever start --minUptime 1000 --spinSleepTime 1000 ~/watch-pages/forever.json
+
 node appGPIO.js FrontDoor
